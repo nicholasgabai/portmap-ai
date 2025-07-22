@@ -1,0 +1,3 @@
+Purpose: Terminal interface
+
+tbc...
