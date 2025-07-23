@@ -1,0 +1,150 @@
+[
+    [
+        "com.apple.safari.safebrowsing.service",
+        "High port used by unknown program"
+    ],
+    [
+        "addressbooksourcesync",
+        "High port used by unknown program"
+    ],
+    [
+        "mobileactivationd",
+        "High port used by unknown program"
+    ],
+    [
+        "mdnsresponder",
+        "High port used by unknown program"
+    ],
+    [
+        "code helper (plugin)",
+        "High port used by unknown program"
+    ],
+    [
+        "appstoreagent",
+        "High port used by unknown program"
+    ],
+    [
+        "com.cisco.anyconnect.macos.acsockext",
+        "High port used by unknown program"
+    ],
+    [
+        "replicatord",
+        "High port used by unknown program"
+    ],
+    [
+        "rapportd",
+        "High port used by unknown program"
+    ],
+    [
+        "music",
+        "High port used by unknown program"
+    ],
+    [
+        "biometrickitd",
+        "High port used by unknown program"
+    ],
+    [
+        "google chrome helper",
+        "High port used by unknown program"
+    ],
+    [
+        "corespeechd",
+        "High port used by unknown program"
+    ],
+    [
+        "mobileassetd",
+        "High port used by unknown program"
+    ],
+    [
+        "submitdiaginfo",
+        "High port used by unknown program"
+    ],
+    [
+        "com.apple.geod",
+        "High port used by unknown program"
+    ],
+    [
+        "syslogd",
+        "High port used by unknown program"
+    ],
+    [
+        "timed",
+        "High port used by unknown program"
+    ],
+    [
+        "trustd",
+        "High port used by unknown program"
+    ],
+    [
+        "rtcreportingd",
+        "High port used by unknown program"
+    ],
+    [
+        "powerchime",
+        "High port used by unknown program"
+    ],
+    [
+        "code helper",
+        "High port used by unknown program"
+    ],
+    [
+        "cloudd",
+        "High port used by unknown program"
+    ],
+    [
+        "mobileactivationd",
+        "Program has excessive outbound connections"
+    ],
+    [
+        "nbagent",
+        "High port used by unknown program"
+    ],
+    [
+        "findmydeviced",
+        "High port used by unknown program"
+    ],
+    [
+        "corekdld",
+        "High port used by unknown program"
+    ],
+    [
+        "airplayxpchelper",
+        "High port used by unknown program"
+    ],
+    [
+        "privatecloudcomputed",
+        "High port used by unknown program"
+    ],
+    [
+        "transparencyd",
+        "High port used by unknown program"
+    ],
+    [
+        "nsurlsessiond",
+        "High port used by unknown program"
+    ],
+    [
+        "lskdd",
+        "High port used by unknown program"
+    ],
+    [
+        "sharingd",
+        "High port used by unknown program"
+    ],
+    [
+        "remoted",
+        "High port used by unknown program"
+    ],
+    [
+        "softwareupdated",
+        "High port used by unknown program"
+    ],
+    [
+        "google chrome helper",
+        "Program has excessive outbound connections"
+    ],
+    [
+        "apsd",
+        "High port used by unknown program"
+    ]
+]

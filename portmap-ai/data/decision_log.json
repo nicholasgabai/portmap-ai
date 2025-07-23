@@ -1,0 +1,29 @@
+[
+    {
+        "action": "skipped",
+        "program": "AddressBookSourceSync",
+        "pid": "13700",
+        "port": "58552",
+        "reason": "High port used by unknown program",
+        "mode": "prompt",
+        "timestamp": "2025-07-23 18:45:42"
+    },
+    {
+        "action": "skipped",
+        "program": "transparencyd",
+        "pid": "484",
+        "port": "58548",
+        "reason": "High port used by unknown program",
+        "mode": "prompt",
+        "timestamp": "2025-07-23 18:51:15"
+    },
+    {
+        "action": "skipped",
+        "program": "cloudd",
+        "pid": "460",
+        "port": "58547",
+        "reason": "High port used by unknown program",
+        "mode": "prompt",
+        "timestamp": "2025-07-23 18:51:17"
+    }
+]
