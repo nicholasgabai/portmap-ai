@@ -1,0 +1,15 @@
+# .gitignore
+__pycache__/
+*.pyc
+.env
+*.log
+*.sqlite
+*.db
+*.DS_Store
+*.pkl
+*.bak
+.env/
+.vscode/
+*.egg-info/
+portmap-ai-env/
+
