@@ -1,0 +1,6 @@
+{
+  "mode": "worker",
+  "node_id": "raspi-001",
+  "master_ip": "192.168.1.100",
+  "port": 9000
+}

@@ -1,0 +1,280 @@
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}
+{
+  "program": "dummy_app",
+  "pid": 1234,
+  "port": 8080,
+  "payload": "GET /",
+  "flags": "S",
+  "protocol": "HTTP",
+  "ml_flag": "normal",
+  "score": 0.028
+}
+{
+  "program": "dummy_db",
+  "pid": 5678,
+  "port": 3306,
+  "payload": "SELECT * FROM users;",
+  "flags": "",
+  "protocol": "MySQL",
+  "ml_flag": "anomaly",
+  "score": -0.002
+}

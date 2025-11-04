@@ -1,0 +1,10 @@
+{
+    "mode": "worker",
+    "worker_id": "worker-002",
+    "master_ip": "127.0.0.1",
+    "port": 9000,
+    "scan_interval": 5,
+    "features": [
+        "port_scan"
+    ]
+}

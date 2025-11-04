@@ -1,0 +1,7 @@
+{
+  "node_role": "worker",
+  "node_id": "worker-001",
+  "master_ip": "127.0.0.1",
+  "port": 9000,
+  "scan_interval": 5
+}

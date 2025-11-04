@@ -1,0 +1,11 @@
+{
+  "node_role": "master",
+  "master_ip": "localhost",
+  "listen_port": 9003,
+  "accepted_nodes": ["worker-rpi", "worker-lab", "worker-cloud"],
+  "ui_flags": {
+    "log_realtime": true,
+    "auto_accept_new_workers": false
+  }
+}
+

@@ -1,0 +1,11 @@
+{
+    "mode": "worker",
+    "worker_id": "worker-offline",
+    "master_ip": null,
+    "port": null,
+    "scan_interval": 15,
+    "features": [
+        "port_scan",
+        "offline_cache"
+    ]
+}

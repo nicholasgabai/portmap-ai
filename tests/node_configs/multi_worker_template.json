@@ -1,0 +1,12 @@
+{
+    "mode": "worker",
+    "worker_id": "worker-XYZ",
+    "master_ip": "192.168.1.XYZ",
+    "port": 9000,
+    "scan_interval": 10,
+    "features": [
+        "port_scan",
+        "ml_score",
+        "log_stream"
+    ]
+}

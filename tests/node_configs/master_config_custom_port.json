@@ -1,0 +1,7 @@
+{
+  "node_role": "master",
+  "master_ip": "192.168.1.5",
+  "listen_port": 9999,
+  "accepted_nodes": ["worker-rpi"]
+}
+

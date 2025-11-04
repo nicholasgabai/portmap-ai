@@ -1,0 +1,7 @@
+{
+  "node_role": "master",
+  "master_ip": "127.0.0.1",
+  "listen_port": 9002,
+  "accepted_nodes": []
+}
+
