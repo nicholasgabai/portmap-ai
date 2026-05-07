@@ -6,6 +6,7 @@ import argparse
 import json
 import logging
 import socket
+import ssl
 import sys
 from pathlib import Path
 from urllib import error, request
@@ -15,8 +16,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from core_engine.config_loader import load_node_config
+from core_engine.config_validation import require_valid_config
 from core_engine.dispatcher import dispatch_alert
 from core_engine.logging_utils import configure_logger, update_log_level
+from core_engine.remediation_safety import enforce_remediation_command_safety, firewall_dry_run
+from core_engine.tls_utils import create_server_context, merge_tls_config
 
 
 def parse_level(level_name: str) -> int:
@@ -26,7 +30,11 @@ def parse_level(level_name: str) -> int:
         raise argparse.ArgumentTypeError(f"Invalid log level '{level_name}'")
 
 
-def build_remediation_command(payload: dict, decision) -> dict | None:
+def _firewall_dry_run(settings: dict | None) -> bool:
+    return firewall_dry_run(settings)
+
+
+def build_remediation_command(payload: dict, decision, settings: dict | None = None) -> dict | None:
     if not decision or decision.action == "monitor":
         return None
 
@@ -49,11 +57,15 @@ def build_remediation_command(payload: dict, decision) -> dict | None:
         "decision": remediation_decision,
         "reason": decision.reason,
         "score": decision.score,
-        "metadata": {"mode": decision.mode},
+        "dry_run": _firewall_dry_run(settings),
+        "metadata": {
+            "mode": decision.mode,
+            "enforcement": "dry_run" if _firewall_dry_run(settings) else "active",
+        },
     }
     if connection:
         command["connection"] = connection
-    return command
+    return enforce_remediation_command_safety(command, settings)
 
 
 def _queue_orchestrator_command(orchestrator_url, orchestrator_token, node_id, command, logger):
@@ -84,6 +96,7 @@ def start_master_server(
     settings: dict,
     orchestrator_url: str | None,
     orchestrator_token: str | None,
+    tls_context: ssl.SSLContext | None,
 ) -> None:
     logger.info("🧠 Master node listening on %s:%s", bind_ip, port)
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -93,7 +106,16 @@ def start_master_server(
 
     try:
         while True:
-            conn, addr = server_socket.accept()
+            raw_conn, addr = server_socket.accept()
+            if tls_context:
+                try:
+                    conn = tls_context.wrap_socket(raw_conn, server_side=True)
+                except ssl.SSLError as exc:
+                    logger.warning("TLS handshake failed from %s: %s", addr, exc)
+                    raw_conn.close()
+                    continue
+            else:
+                conn = raw_conn
             logger.info("🔗 Connection from %s", addr)
             with conn:
                 data = conn.recv(65536)
@@ -110,7 +132,7 @@ def start_master_server(
                     )
                     logger.debug("Payload detail: %s", payload)
                     decision = dispatch_alert(payload, logger=logger, settings=settings)
-                    command = build_remediation_command(payload, decision)
+                    command = build_remediation_command(payload, decision, settings=settings)
                     if command:
                         _queue_orchestrator_command(
                             orchestrator_url,
@@ -135,9 +157,13 @@ def start_master_server(
         server_socket.close()
 
 
-def run_master_node(config_path: str, log_level: int) -> None:
+def run_master_node(config_path: str, log_level: int, profile: str | None = None) -> None:
     try:
-        config, settings = load_node_config(config_path, defaults={"node_role": "master"})
+        defaults = {"node_role": "master"}
+        if profile:
+            defaults["profile"] = profile
+        config, settings = load_node_config(config_path, defaults=defaults, profile=profile)
+        validation = require_valid_config(config, settings, path=config_path, expected_role="master")
     except Exception as exc:
         print(f"❌ Failed to load config '{config_path}': {exc}")
         sys.exit(1)
@@ -153,20 +179,39 @@ def run_master_node(config_path: str, log_level: int) -> None:
         backup_count=log_backup_count,
     )
     update_log_level(logger, log_level)
+    for warning in validation.warnings:
+        logger.warning("Config warning: %s", warning)
 
     bind_ip = config.get("master_ip", "0.0.0.0")
     port = int(config.get("port", 9000))
     orchestrator_url = config.get("orchestrator_url") or settings.get("orchestrator_url")
     orchestrator_token = config.get("orchestrator_token") or settings.get("orchestrator_token")
-    start_master_server(bind_ip, port, logger, settings, orchestrator_url, orchestrator_token)
+    tls_config = merge_tls_config(settings.get("tls"), config.get("tls"))
+    tls_context = None
+    if tls_config.get("enabled"):
+        try:
+            tls_context = create_server_context(tls_config)
+        except Exception as exc:
+            print(f"❌ Failed to initialize TLS: {exc}")
+            sys.exit(1)
+    start_master_server(
+        bind_ip,
+        port,
+        logger,
+        settings,
+        orchestrator_url,
+        orchestrator_token,
+        tls_context,
+    )
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Portmap-ai Master Node")
     parser.add_argument("--config", required=True, help="Path to master node config JSON")
     parser.add_argument("--log-level", type=parse_level, default=logging.INFO, help="Logging verbosity")
+    parser.add_argument("--profile", help="Config profile name to load before the config file")
     args = parser.parse_args(argv)
-    run_master_node(args.config, args.log_level)
+    run_master_node(args.config, args.log_level, profile=args.profile)
 
 
 if __name__ == "__main__":

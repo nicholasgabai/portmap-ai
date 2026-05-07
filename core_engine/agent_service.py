@@ -18,9 +18,12 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from core_engine.config_loader import load_node_config
+from core_engine.command_audit import record_command_event
 from core_engine.logging_utils import configure_logger, update_log_level
+from core_engine.platform_utils import local_node_address
+from core_engine.remediation_safety import enforce_remediation_command_safety
 from core_engine.worker_node import DEFAULT_MASTER_IP, DEFAULT_PORT, DEFAULT_TIMEOUT, send_to_master
-from core_engine.firewall_hooks import execute_firewall_action
+from core_engine.firewall_hooks import configure_firewall, execute_firewall_action
 
 
 class BackgroundAgent:
@@ -35,7 +38,7 @@ class BackgroundAgent:
         self.interval_override = interval_override
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
-
+        # Load configuration up front so attributes exist before logger setup
         self._reload_config()
 
         log_max_bytes = int(self.config.get("log_max_bytes", self.settings.get("log_max_bytes", 0)) or 0)
@@ -49,6 +52,7 @@ class BackgroundAgent:
             backup_count=log_backup_count,
         )
         update_log_level(self.logger, log_level)
+        configure_firewall(self.settings.get("firewall"), self.logger)
 
     def _reload_config(self):
         self.config, self.settings = load_node_config(self.config_path, defaults={"node_role": "worker"})
@@ -61,6 +65,8 @@ class BackgroundAgent:
         self.autolearn = bool(self.settings.get("enable_autolearn"))
         self.orchestrator_url = self.config.get("orchestrator_url") or self.settings.get("orchestrator_url")
         self.orchestrator_token = self.config.get("orchestrator_token") or self.settings.get("orchestrator_token")
+        if hasattr(self, "logger"):
+            configure_firewall(self.settings.get("firewall"), self.logger)
 
     def start(self):
         if self._thread and self._thread.is_alive():
@@ -152,7 +158,7 @@ class BackgroundAgent:
         payload = {
             "node_id": self.node_id,
             "role": "worker",
-            "address": socket.gethostbyname(socket.gethostname()),
+            "address": local_node_address(),
             "meta": {
                 "master_ip": self.master_ip,
                 "port": self.port,
@@ -174,43 +180,97 @@ class BackgroundAgent:
                 "autolearn": self.autolearn,
             },
         }
-        return self._call_orchestrator("/heartbeat", payload) or {}
+        try:
+            return self._call_orchestrator("/heartbeat", payload) or {}
+        except RuntimeError as exc:
+            if str(exc).startswith("HTTP 404"):
+                self.logger.info("Agent registration missing at orchestrator; re-registering %s", self.node_id)
+                self._register_with_orchestrator()
+                return {}
+            raise
 
     def _process_commands(self, commands):
         extra_scan = False
         for cmd in commands:
             cmd_type = cmd.get("type")
+            record_command_event(self.node_id, cmd, "received", logger=self.logger)
             if cmd_type == "scan_now":
                 extra_scan = True
+                record_command_event(
+                    self.node_id,
+                    cmd,
+                    "applied",
+                    result={"extra_scan": True},
+                    logger=self.logger,
+                )
             elif cmd_type == "set_interval":
                 try:
                     new_interval = int(cmd.get("value", 0))
                     if new_interval > 0:
                         self.interval = new_interval
                         self.logger.info("Interval updated via orchestrator: %ss", self.interval)
+                        record_command_event(
+                            self.node_id,
+                            cmd,
+                            "applied",
+                            result={"interval": self.interval},
+                            logger=self.logger,
+                        )
+                    else:
+                        raise ValueError("interval must be greater than 0")
                 except Exception as exc:
                     self.logger.warning("Invalid interval command: %s", exc)
+                    record_command_event(self.node_id, cmd, "failed", error=str(exc), logger=self.logger)
             elif cmd_type == "set_autolearn":
                 self.autolearn = bool(cmd.get("value"))
                 self.logger.info("Autolearn toggled via orchestrator: %s", self.autolearn)
+                record_command_event(
+                    self.node_id,
+                    cmd,
+                    "applied",
+                    result={"autolearn": self.autolearn},
+                    logger=self.logger,
+                )
             elif cmd_type == "reload_config":
                 self.logger.info("Reloading agent configuration per orchestrator command")
-                self._reload_config()
+                try:
+                    self._reload_config()
+                    record_command_event(self.node_id, cmd, "applied", result={"reloaded": True}, logger=self.logger)
+                except Exception as exc:
+                    self.logger.warning("Config reload command failed: %s", exc)
+                    record_command_event(self.node_id, cmd, "failed", error=str(exc), logger=self.logger)
             elif cmd_type == "apply_remediation":
+                cmd = enforce_remediation_command_safety(cmd, self.settings)
                 decision = cmd.get("decision", "review")
                 connection = cmd.get("connection") or {}
-                reason = cmd.get("reason", "")
+                reason = cmd.get("reason", "orchestrator")
+                dry_run = bool(cmd.get("dry_run", False))
                 self.logger.info(
-                    "Applying remediation action from orchestrator: %s (reason=%s)",
+                    "Applying remediation action from orchestrator: %s (reason=%s dry_run=%s)",
                     decision,
                     reason,
+                    dry_run,
                 )
                 try:
-                    execute_firewall_action(connection, decision)
+                    execute_firewall_action(connection, decision, reason=reason, dry_run=dry_run)
+                    record_command_event(
+                        self.node_id,
+                        cmd,
+                        "applied",
+                        result={
+                            "decision": decision,
+                            "dry_run": dry_run,
+                            "port": connection.get("port"),
+                            "program": connection.get("program"),
+                        },
+                        logger=self.logger,
+                    )
                 except Exception as exc:
                     self.logger.error("Failed to execute remediation action: %s", exc)
+                    record_command_event(self.node_id, cmd, "failed", error=str(exc), logger=self.logger)
             else:
                 self.logger.warning("Unknown orchestrator command: %s", cmd_type)
+                record_command_event(self.node_id, cmd, "ignored", error="unknown command", logger=self.logger)
         return extra_scan
 
 

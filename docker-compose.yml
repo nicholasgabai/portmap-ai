@@ -1,0 +1,69 @@
+services:
+  orchestrator:
+    build:
+      context: .
+      dockerfile: docker/orchestrator.Dockerfile
+    image: portmap-ai-orchestrator:dev
+    environment:
+      PORTMAP_ORCHESTRATOR_TOKEN: ${PORTMAP_ORCHESTRATOR_TOKEN:?Set PORTMAP_ORCHESTRATOR_TOKEN to a long random value before running Docker Compose}
+      PORTMAP_EXPORT_DIR: /root/.portmap-ai/exports
+    command: ["portmap-orchestrator", "--config", "docker/config/orchestrator.json", "--log-level", "INFO"]
+    ports:
+      - "${PORTMAP_ORCHESTRATOR_PORT:-9100}:9100"
+    volumes:
+      - portmap-runtime:/root/.portmap-ai
+      - ./docker/config:/app/docker/config:ro
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import os, urllib.request; token=os.environ['PORTMAP_ORCHESTRATOR_TOKEN']; req=urllib.request.Request('http://127.0.0.1:9100/healthz', headers={'Authorization': 'Bearer ' + token}); urllib.request.urlopen(req, timeout=2).read()\""]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  master:
+    build:
+      context: .
+      dockerfile: docker/master.Dockerfile
+    image: portmap-ai-master:dev
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+    environment:
+      PORTMAP_ORCHESTRATOR_URL: http://orchestrator:9100
+      PORTMAP_ORCHESTRATOR_TOKEN: ${PORTMAP_ORCHESTRATOR_TOKEN:?Set PORTMAP_ORCHESTRATOR_TOKEN to a long random value before running Docker Compose}
+      PORTMAP_EXPORT_DIR: /root/.portmap-ai/exports
+    command: ["portmap-master", "--config", "docker/config/master.json", "--log-level", "INFO"]
+    ports:
+      - "${PORTMAP_MASTER_PORT:-9000}:9000"
+    volumes:
+      - portmap-runtime:/root/.portmap-ai
+      - ./docker/config:/app/docker/config:ro
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/worker.Dockerfile
+    image: portmap-ai-worker:dev
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+      master:
+        condition: service_started
+    environment:
+      PORTMAP_NODE_ID: ${PORTMAP_NODE_ID:-worker-001}
+      PORTMAP_MASTER_HOST: master
+      PORTMAP_MASTER_PORT: 9000
+      PORTMAP_ORCHESTRATOR_URL: http://orchestrator:9100
+      PORTMAP_ORCHESTRATOR_TOKEN: ${PORTMAP_ORCHESTRATOR_TOKEN:?Set PORTMAP_ORCHESTRATOR_TOKEN to a long random value before running Docker Compose}
+      PORTMAP_SCAN_INTERVAL: ${PORTMAP_SCAN_INTERVAL:-5}
+      PORTMAP_EXPORT_DIR: /root/.portmap-ai/exports
+    command: ["portmap-worker", "--config", "docker/config/worker.json", "--continuous", "--log-level", "INFO"]
+    volumes:
+      - portmap-runtime:/root/.portmap-ai
+      - ./docker/config:/app/docker/config:ro
+    restart: unless-stopped
+
+volumes:
+  portmap-runtime:

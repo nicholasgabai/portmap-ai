@@ -1,0 +1,9 @@
+{
+  "description": "Low-resource Linux/ARM profile suitable for Raspberry Pi OS and small always-on hosts",
+  "master_ip": "${PORTMAP_MASTER_HOST:127.0.0.1}",
+  "port": "${PORTMAP_MASTER_PORT:9000}",
+  "timeout": "${PORTMAP_MASTER_TIMEOUT:5}",
+  "scan_interval": "${PORTMAP_SCAN_INTERVAL:15}",
+  "log_max_bytes": "${PORTMAP_LOG_MAX_BYTES:1048576}",
+  "log_backup_count": "${PORTMAP_LOG_BACKUP_COUNT:3}"
+}

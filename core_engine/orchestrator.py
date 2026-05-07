@@ -13,8 +13,10 @@ from socketserver import ThreadingMixIn
 from typing import Callable, Tuple
 
 from core_engine.config_loader import load_node_config
+from core_engine.config_validation import require_valid_config
 from core_engine.logging_utils import configure_logger, update_log_level
 from core_engine.orchestrator_service import OrchestratorState
+from core_engine.security import validate_node_identity, verify_bearer_header
 
 try:
     from http.server import HTTPServer
@@ -55,10 +57,7 @@ def make_handler(state: OrchestratorState, auth_token: str | None, logger: loggi
                 raise ValueError("Invalid JSON body")
 
         def _check_auth(self) -> bool:
-            if not auth_token:
-                return True
-            header = self.headers.get("Authorization")
-            return header == f"Bearer {auth_token}"
+            return verify_bearer_header(self.headers.get("Authorization"), auth_token)
 
         def do_GET(self) -> None:
             if not self._check_auth():
@@ -72,6 +71,11 @@ def make_handler(state: OrchestratorState, auth_token: str | None, logger: loggi
             if self.path == "/nodes":
                 nodes = state.list_nodes()
                 self._send_json(HTTPStatus.OK, {"nodes": nodes})
+                return
+
+            if self.path == "/metrics":
+                metrics = state.get_metrics()
+                self._send_json(HTTPStatus.OK, metrics)
                 return
 
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
@@ -91,6 +95,10 @@ def make_handler(state: OrchestratorState, auth_token: str | None, logger: loggi
                 if missing:
                     self._send_json(HTTPStatus.BAD_REQUEST, {"error": f"Missing fields: {', '.join(missing)}"})
                     return
+                identity_errors = validate_node_identity(payload.get("node_id"), payload.get("role"))
+                if identity_errors:
+                    self._send_json(HTTPStatus.BAD_REQUEST, {"error": "; ".join(identity_errors)})
+                    return
                 node = state.register_node(
                     node_id=payload["node_id"],
                     role=payload["role"],
@@ -104,6 +112,10 @@ def make_handler(state: OrchestratorState, auth_token: str | None, logger: loggi
                 missing = [k for k in ("node_id", "status") if k not in payload]
                 if missing:
                     self._send_json(HTTPStatus.BAD_REQUEST, {"error": f"Missing fields: {', '.join(missing)}"})
+                    return
+                identity_errors = validate_node_identity(payload.get("node_id"), "worker")
+                if identity_errors:
+                    self._send_json(HTTPStatus.BAD_REQUEST, {"error": "; ".join(identity_errors)})
                     return
                 try:
                     result = state.record_heartbeat(
@@ -121,6 +133,13 @@ def make_handler(state: OrchestratorState, auth_token: str | None, logger: loggi
                 missing = [k for k in ("node_id", "command") if k not in payload]
                 if missing:
                     self._send_json(HTTPStatus.BAD_REQUEST, {"error": f"Missing fields: {', '.join(missing)}"})
+                    return
+                identity_errors = validate_node_identity(payload.get("node_id"), "worker")
+                if identity_errors:
+                    self._send_json(HTTPStatus.BAD_REQUEST, {"error": "; ".join(identity_errors)})
+                    return
+                if not isinstance(payload.get("command"), dict):
+                    self._send_json(HTTPStatus.BAD_REQUEST, {"error": "command must be an object"})
                     return
                 try:
                     state.enqueue_command(node_id=payload["node_id"], command=payload["command"])
@@ -142,12 +161,17 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 
-def run_orchestrator(config_path: str, log_level: int) -> None:
+def run_orchestrator(config_path: str, log_level: int, profile: str | None = None) -> None:
     try:
+        defaults = {"node_role": "orchestrator", "bind_ip": "0.0.0.0", "port": 9100}
+        if profile:
+            defaults["profile"] = profile
         config, settings = load_node_config(
             config_path,
-            defaults={"node_role": "orchestrator", "bind_ip": "0.0.0.0", "port": 9100},
+            defaults=defaults,
+            profile=profile,
         )
+        validation = require_valid_config(config, settings, path=config_path, expected_role="orchestrator")
     except Exception as exc:
         print(f"❌ Failed to load orchestrator config '{config_path}': {exc}")
         sys.exit(1)
@@ -163,12 +187,18 @@ def run_orchestrator(config_path: str, log_level: int) -> None:
         backup_count=log_backup_count,
     )
     update_log_level(logger, log_level)
+    for warning in validation.warnings:
+        logger.warning("Config warning: %s", warning)
 
     bind_ip = config.get("bind_ip", "0.0.0.0")
     port = int(config.get("port", 9100))
     auth_token = config.get("auth_token") or settings.get("orchestrator_token")
 
-    state = OrchestratorState(logger=logger)
+    node_stale_after = int(config.get("node_stale_after", settings.get("node_stale_after", 60)) or 0)
+    state = OrchestratorState(
+        logger=logger,
+        stale_after_seconds=node_stale_after if node_stale_after > 0 else None,
+    )
     handler_cls = make_handler(state, auth_token, logger)
     server = ThreadedHTTPServer((bind_ip, port), handler_cls)
 
@@ -188,8 +218,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="PortMap-AI Orchestrator Service")
     parser.add_argument("--config", required=True, help="Path to orchestrator config JSON")
     parser.add_argument("--log-level", type=parse_level, default=logging.INFO, help="Logging verbosity")
+    parser.add_argument("--profile", help="Config profile name to load before the config file")
     args = parser.parse_args(argv)
-    run_orchestrator(args.config, args.log_level)
+    run_orchestrator(args.config, args.log_level, profile=args.profile)
 
 
 if __name__ == "__main__":

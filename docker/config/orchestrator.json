@@ -1,0 +1,9 @@
+{
+  "node_role": "orchestrator",
+  "bind_ip": "0.0.0.0",
+  "port": "${PORTMAP_ORCHESTRATOR_PORT:9100}",
+  "auth_token": "${secret:PORTMAP_ORCHESTRATOR_TOKEN}",
+  "node_stale_after": "${PORTMAP_NODE_STALE_AFTER:60}",
+  "log_max_bytes": "${PORTMAP_LOG_MAX_BYTES:5242880}",
+  "log_backup_count": "${PORTMAP_LOG_BACKUP_COUNT:5}"
+}

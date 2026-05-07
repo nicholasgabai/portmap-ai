@@ -1,0 +1,18 @@
+[Unit]
+Description=PortMap-AI worker node
+Documentation=file:/usr/share/portmap-ai/docs/raspberry_pi_deployment.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-%h/.portmap-ai/portmap-ai.env
+Environment=PORTMAP_EXPORT_DIR=%h/.portmap-ai/exports
+Environment=PORTMAP_ORCHESTRATOR_URL=http://127.0.0.1:9100
+ExecStart=/usr/bin/env portmap-worker --config %h/.portmap-ai/data/worker.json --continuous --watch-config --log-level INFO
+Restart=on-failure
+RestartSec=10
+WorkingDirectory=%h
+
+[Install]
+WantedBy=default.target

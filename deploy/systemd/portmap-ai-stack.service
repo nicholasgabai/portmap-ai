@@ -1,0 +1,17 @@
+[Unit]
+Description=PortMap-AI local stack
+Documentation=file:/usr/share/portmap-ai/docs/raspberry_pi_deployment.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-%h/.portmap-ai/portmap-ai.env
+Environment=PORTMAP_EXPORT_DIR=%h/.portmap-ai/exports
+ExecStart=/usr/bin/env portmap stack --no-dashboard --verbose --worker-args --watch-config
+Restart=on-failure
+RestartSec=10
+WorkingDirectory=%h
+
+[Install]
+WantedBy=default.target

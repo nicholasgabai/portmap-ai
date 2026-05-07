@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "portmap-ai"
+version = "0.1.0"
+description = "Local distributed network-security scanner, risk scorer, and remediation dashboard."
+readme = "docs/README.txt"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+authors = [
+  {name = "PortMap-AI Contributors"}
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: System Administrators",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Security",
+  "Topic :: System :: Networking",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+portmap = "cli.main:main"
+portmap-agent = "portmap_agent:main"
+portmap-dashboard = "cli.dashboard:main"
+portmap-export-logs = "cli.logs:main"
+portmap-master = "core_engine.master_node:main"
+portmap-orchestrator = "core_engine.orchestrator:main"
+portmap-worker = "core_engine.worker_node:main"
+
+[tool.setuptools]
+include-package-data = true
+py-modules = ["portmap_agent"]
+
+[tool.setuptools.packages.find]
+include = ["ai_agent*", "cli*", "core_engine*", "gui*"]
+
+[tool.setuptools.package-data]
+core_engine = ["default_configs/*.json"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.data-files]
+"share/portmap-ai/config/profiles" = [
+  "config/profiles/default.json",
+  "config/profiles/raspberry_pi.json",
+]
+"share/portmap-ai/systemd" = [
+  "deploy/systemd/portmap-ai-stack.service",
+  "deploy/systemd/portmap-ai-worker.service",
+]
+"share/portmap-ai/scripts" = [
+  "scripts/install_systemd_user.sh",
+]
+"share/portmap-ai" = [
+  "CHANGELOG.md",
+  "SECURITY.md",
+]
+"share/portmap-ai/docs" = [
+  "docs/README.txt",
+  "docs/api_reference.md",
+  "docs/architecture.md",
+  "docs/ai_layer.md",
+  "docs/beginner_guide.md",
+  "docs/configuration.md",
+  "docs/deployment_options.md",
+  "docs/docker_deployment.md",
+  "docs/firewall_plugins.md",
+  "docs/logging_audit.md",
+  "docs/master_roadmap.md",
+  "docs/network_control_layer.md",
+  "docs/packaging.md",
+  "docs/platform_abstraction.md",
+  "docs/quick_start.md",
+  "docs/raspberry_pi_deployment.md",
+  "docs/release_candidate.md",
+  "docs/remediation_safety.md",
+  "docs/saas_architecture.md",
+  "docs/scanner_risk_engine.md",
+  "docs/security_authentication.md",
+  "docs/stack_stability.md",
+  "docs/tui_dashboard.md",
+]
+"share/portmap-ai/node_configs" = [
+  "tests/node_configs/master1.json",
+  "tests/node_configs/orchestrator.json",
+  "tests/node_configs/worker_orchestrated.json",
+]

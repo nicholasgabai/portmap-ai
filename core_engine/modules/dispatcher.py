@@ -19,7 +19,7 @@ def process_packet_batch(connections, logger=None, autolearn=False):
 
         decision = decide(conn)
         conn["decision"] = decision
-        execute_firewall_action(conn, decision)
+        execute_firewall_action(conn, decision, reason="module_dispatcher")
 
 def decide(conn):
     score = conn.get("score", 0)
@@ -28,4 +28,3 @@ def decide(conn):
     elif score >= 0.45:
         return "review"
     return "allow"
-

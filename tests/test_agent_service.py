@@ -38,15 +38,18 @@ def make_config(tmp_path, **overrides):
 
 def test_process_commands_updates_interval(tmp_path, temp_logs, monkeypatch):
     config_path = make_config(tmp_path)
+    log_dir, _ = temp_logs
 
     monkeypatch.setattr("socket.gethostbyname", lambda host: "127.0.0.1")
 
     agent = BackgroundAgent(str(config_path), log_level=logging.INFO)
     triggered = {}
 
-    def fake_firewall(connection, decision):
+    def fake_firewall(connection, decision, reason="", dry_run=False):
         triggered["decision"] = decision
         triggered["port"] = connection.get("port")
+        triggered["reason"] = reason
+        triggered["dry_run"] = dry_run
 
     monkeypatch.setattr("core_engine.agent_service.execute_firewall_action", fake_firewall)
 
@@ -61,6 +64,7 @@ def test_process_commands_updates_interval(tmp_path, temp_logs, monkeypatch):
             "decision": "block",
             "connection": {"program": "dummy", "port": 443},
             "reason": "unit-test",
+            "dry_run": True,
         },
     ])
 
@@ -69,6 +73,82 @@ def test_process_commands_updates_interval(tmp_path, temp_logs, monkeypatch):
     assert extra_scan is True
     assert triggered["decision"] == "block"
     assert triggered["port"] == 443
+    assert triggered["reason"] == "unit-test"
+    assert triggered["dry_run"] is True
+
+    audit_records = [
+        json.loads(line)
+        for line in (log_dir / "command_events.jsonl").read_text().splitlines()
+    ]
+    statuses = [(record["command_type"], record["status"]) for record in audit_records]
+    assert ("set_interval", "applied") in statuses
+    assert ("set_autolearn", "applied") in statuses
+    assert ("scan_now", "applied") in statuses
+    assert ("apply_remediation", "applied") in statuses
+
+    for handler in list(agent.logger.handlers):
+        handler.close()
+        agent.logger.removeHandler(handler)
+
+
+def test_apply_remediation_forces_dry_run_without_safety_confirmation(tmp_path, temp_logs, monkeypatch):
+    config_path = make_config(tmp_path)
+    agent = BackgroundAgent(str(config_path), log_level=logging.INFO)
+    agent.settings["firewall"] = {"options": {"dry_run": False}}
+    triggered = {}
+
+    def fake_firewall(connection, decision, reason="", dry_run=False):
+        triggered["decision"] = decision
+        triggered["dry_run"] = dry_run
+
+    monkeypatch.setattr("core_engine.agent_service.execute_firewall_action", fake_firewall)
+
+    agent._process_commands([
+        {
+            "type": "apply_remediation",
+            "decision": "block",
+            "connection": {"program": "dummy", "port": 443},
+            "reason": "unit-test",
+            "dry_run": False,
+        },
+    ])
+
+    assert triggered == {"decision": "block", "dry_run": True}
+
+    for handler in list(agent.logger.handlers):
+        handler.close()
+        agent.logger.removeHandler(handler)
+
+
+def test_apply_remediation_allows_confirmed_active_policy(tmp_path, temp_logs, monkeypatch):
+    config_path = make_config(tmp_path)
+    agent = BackgroundAgent(str(config_path), log_level=logging.INFO)
+    agent.settings["firewall"] = {"options": {"dry_run": False}}
+    agent.settings["remediation_safety"] = {
+        "active_enforcement_enabled": True,
+        "confirmation_token": "confirm-123",
+    }
+    triggered = {}
+
+    def fake_firewall(connection, decision, reason="", dry_run=False):
+        triggered["decision"] = decision
+        triggered["dry_run"] = dry_run
+
+    monkeypatch.setattr("core_engine.agent_service.execute_firewall_action", fake_firewall)
+
+    agent._process_commands([
+        {
+            "type": "apply_remediation",
+            "decision": "block",
+            "connection": {"program": "dummy", "port": 443},
+            "reason": "unit-test",
+            "dry_run": False,
+            "confirmed": True,
+            "confirmation_token": "confirm-123",
+        },
+    ])
+
+    assert triggered == {"decision": "block", "dry_run": False}
 
     for handler in list(agent.logger.handlers):
         handler.close()
@@ -95,6 +175,29 @@ def test_register_handles_errors(tmp_path, temp_logs, monkeypatch):
 
     response = agent._send_heartbeat()
     assert response.get("commands") == []
+
+    for handler in list(agent.logger.handlers):
+        handler.close()
+        agent.logger.removeHandler(handler)
+
+
+def test_heartbeat_reregisters_after_orchestrator_state_loss(tmp_path, temp_logs, monkeypatch):
+    config_path = make_config(tmp_path)
+    agent = BackgroundAgent(str(config_path), log_level=logging.INFO)
+    calls = []
+
+    def fake_call(endpoint, payload):
+        calls.append(endpoint)
+        if endpoint == "/heartbeat":
+            raise RuntimeError("HTTP 404 Not Found: unknown node")
+        return {"node": {"node_id": agent.node_id}}
+
+    monkeypatch.setattr(agent, "_call_orchestrator", fake_call)
+
+    response = agent._send_heartbeat()
+
+    assert response == {}
+    assert calls == ["/heartbeat", "/register"]
 
     for handler in list(agent.logger.handlers):
         handler.close()

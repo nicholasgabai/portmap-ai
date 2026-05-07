@@ -26,7 +26,7 @@ Example (macOS/Linux):
 scripts/run_orchestrator.sh
 scripts/run_master.sh
 scripts/run_worker.sh
-PORTMAP_ORCHESTRATOR_TOKEN=test-token scripts/run_dashboard.sh
+scripts/run_dashboard.sh
 ```
 
 Example (Windows PowerShell):
@@ -34,8 +34,7 @@ Example (Windows PowerShell):
 scripts\run_orchestrator.bat
 scripts\run_master.bat
 scripts\run_worker.bat
-$env:PORTMAP_ORCHESTRATOR_TOKEN = 'test-token'
 scripts\run_dashboard.bat
 ```
 
-The scripts automatically set `PYTHONPATH` so the modules resolve correctly.
+The scripts automatically set `PYTHONPATH` so the modules resolve correctly. For shared or non-loopback deployments, set a long random `PORTMAP_ORCHESTRATOR_TOKEN` consistently for every service instead of relying on local development defaults.

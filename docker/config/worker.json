@@ -1,0 +1,12 @@
+{
+  "node_role": "worker",
+  "node_id": "${PORTMAP_NODE_ID:worker-001}",
+  "master_ip": "${PORTMAP_MASTER_HOST:master}",
+  "port": "${PORTMAP_MASTER_PORT:9000}",
+  "timeout": "${PORTMAP_MASTER_TIMEOUT:5}",
+  "scan_interval": "${PORTMAP_SCAN_INTERVAL:5}",
+  "orchestrator_url": "${PORTMAP_ORCHESTRATOR_URL:http://orchestrator:9100}",
+  "orchestrator_token": "${secret:PORTMAP_ORCHESTRATOR_TOKEN}",
+  "log_max_bytes": "${PORTMAP_LOG_MAX_BYTES:5242880}",
+  "log_backup_count": "${PORTMAP_LOG_BACKUP_COUNT:5}"
+}

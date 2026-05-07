@@ -8,12 +8,24 @@ from pathlib import Path
 from typing import Iterable, Optional
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from .config_loader import DATA_DIR, LOG_DIR, ensure_runtime_dirs
+from core_engine.audit_events import filter_audit_events
+from .config_loader import DATA_DIR, LOG_DIR, get_default_export_dir, load_settings, ensure_runtime_dirs
+
+DEFAULT_EXPORT_DIR = Path(get_default_export_dir()).expanduser()
 
 
 def _iter_paths(root: Path, patterns: Iterable[str]) -> Iterable[Path]:
     for pattern in patterns:
         yield from root.glob(pattern)
+
+
+def resolve_export_dir(output_dir: Optional[str] = None) -> Path:
+    if output_dir:
+        return Path(output_dir).expanduser()
+
+    settings = load_settings(defaults={"export_dir": get_default_export_dir()})
+    configured = settings.get("export_dir") or get_default_export_dir()
+    return Path(configured).expanduser()
 
 
 def export_logs(output_dir: Optional[str] = None, include_state: bool = True) -> Path:
@@ -23,7 +35,7 @@ def export_logs(output_dir: Optional[str] = None, include_state: bool = True) ->
     Parameters
     ----------
     output_dir:
-        Destination directory for the archive. Defaults to ``~/.portmap-ai/logs/exports``.
+        Destination directory for the archive. Defaults to ``settings.export_dir`` or ``~/Downloads/portmap-ai-exports``.
     include_state:
         When True, include relevant files from ``~/.portmap-ai/data`` for full audit trails.
 
@@ -36,7 +48,7 @@ def export_logs(output_dir: Optional[str] = None, include_state: bool = True) ->
     ensure_runtime_dirs()
     timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 
-    dest_dir = Path(output_dir).expanduser() if output_dir else Path(LOG_DIR) / "exports"
+    dest_dir = resolve_export_dir(output_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
 
     archive_path = dest_dir / f"portmap-logs-{timestamp}.zip"
@@ -57,4 +69,4 @@ def export_logs(output_dir: Optional[str] = None, include_state: bool = True) ->
     return archive_path
 
 
-__all__ = ["export_logs"]
+__all__ = ["export_logs", "filter_audit_events", "resolve_export_dir"]

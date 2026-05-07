@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 from core_engine import logging_utils
+from core_engine import log_exporter
 
 
 def test_configure_logger_uses_rotation(tmp_path, monkeypatch):
@@ -58,3 +59,48 @@ def test_export_logs_creates_archive(tmp_path, monkeypatch):
         names = zf.namelist()
         assert any(name.endswith("worker.log") for name in names)
         assert any(name.endswith("connection_state.json") for name in names)
+
+
+def test_export_logs_defaults_to_settings_export_dir(tmp_path, monkeypatch):
+    log_dir = tmp_path / "logs"
+    data_dir = tmp_path / "data"
+    export_dir = tmp_path / "downloads" / "portmap-ai-exports"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    export_dir.mkdir(parents=True, exist_ok=True)
+
+    (log_dir / "worker.log").write_text("sample log line")
+
+    monkeypatch.setattr("core_engine.config_loader.LOG_DIR", log_dir)
+    monkeypatch.setattr("core_engine.config_loader.DATA_DIR", data_dir)
+    monkeypatch.setattr("core_engine.log_exporter.LOG_DIR", log_dir)
+    monkeypatch.setattr("core_engine.log_exporter.DATA_DIR", data_dir)
+    monkeypatch.setattr("core_engine.log_exporter.load_settings", lambda defaults=None: {"export_dir": str(export_dir)})
+
+    archive_path = log_exporter.export_logs()
+
+    assert archive_path.parent == export_dir
+    assert archive_path.exists()
+
+
+def test_export_logs_explicit_output_dir_overrides_settings(tmp_path, monkeypatch):
+    log_dir = tmp_path / "logs"
+    data_dir = tmp_path / "data"
+    export_dir = tmp_path / "downloads" / "portmap-ai-exports"
+    explicit_dir = tmp_path / "custom-exports"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    export_dir.mkdir(parents=True, exist_ok=True)
+
+    (log_dir / "worker.log").write_text("sample log line")
+
+    monkeypatch.setattr("core_engine.config_loader.LOG_DIR", log_dir)
+    monkeypatch.setattr("core_engine.config_loader.DATA_DIR", data_dir)
+    monkeypatch.setattr("core_engine.log_exporter.LOG_DIR", log_dir)
+    monkeypatch.setattr("core_engine.log_exporter.DATA_DIR", data_dir)
+    monkeypatch.setattr("core_engine.log_exporter.load_settings", lambda defaults=None: {"export_dir": str(export_dir)})
+
+    archive_path = log_exporter.export_logs(output_dir=explicit_dir)
+
+    assert archive_path.parent == explicit_dir
+    assert archive_path.exists()

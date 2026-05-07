@@ -17,7 +17,7 @@ import argparse
 
 from simulator import get_test_packet_batch
 from inbound_monitor import inspect_inbound_payloads
-from firewall_hooks import execute_firewall_action
+from firewall_hooks import configure_firewall
 from scapy.all import sniff, IP, TCP, UDP
 from modules.protocol_labeler import label_protocols, guess_protocol_from_payload
 from modules.dispatcher import process_packet_batch
@@ -44,6 +44,8 @@ if SETTINGS_FILE.exists():
             FIREWALL_SETTINGS = json.load(f)
     except Exception as e:
         logger.warning(f"Failed to load settings: {e}")
+
+configure_firewall(FIREWALL_SETTINGS.get("firewall"), logger)
 
 def summarize_flags(packet):
     flags = ""

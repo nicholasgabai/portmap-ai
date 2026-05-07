@@ -1,0 +1,7 @@
+{
+  "description": "Default profile used for local testing",
+  "master_ip": "${MASTER_IP:127.0.0.1}",
+  "port": 9000,
+  "timeout": 5,
+  "scan_interval": 5
+}

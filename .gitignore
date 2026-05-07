@@ -3,6 +3,10 @@ __pycache__/
 *.pyc
 .env
 *.log
+*.jsonl
+*.zip
+*.whl
+*.tar.gz
 *.sqlite
 *.db
 *.DS_Store
@@ -12,4 +16,10 @@ __pycache__/
 .vscode/
 *.egg-info/
 portmap-ai-env/
-
+build/
+dist/
+data/
+logs/
+tmp_logs/
+core_engine/logs/
+.pytest_cache/

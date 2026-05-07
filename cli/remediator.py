@@ -1,5 +1,6 @@
-import subprocess
 from rich.console import Console
+
+from core_engine import platform_utils
 
 console = Console()
 
@@ -40,11 +41,10 @@ def execute_actions(actions):
     for action in actions:
         if action["action"] == "kill_process":
             try:
-                subprocess.run(["kill", "-9", str(action["pid"])])
+                platform_utils.terminate_pid(int(action["pid"]), force=True)
                 console.print(f"[bold red]💀 Killed suspicious PID {action['pid']}[/bold red]")
             except Exception as e:
                 console.print(f"[yellow]⚠ Could not kill PID {action['pid']}: {e}[/yellow]")
 
         elif action["action"] == "log_only":
             console.print(f"[blue]📝 Logged excessive behavior for {action['program']}[/blue]")
-

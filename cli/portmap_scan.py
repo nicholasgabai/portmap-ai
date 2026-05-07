@@ -1,8 +1,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-import socket
-import psutil
 import argparse
 import json
 import requests
@@ -14,7 +12,8 @@ import time
 
 from rich.console import Console
 from rich.table import Table
-from remediator import remediate, execute_actions
+from cli.remediator import remediate, execute_actions
+from core_engine import platform_utils
 
 
 # Safe cross-platform log directory
@@ -40,7 +39,7 @@ def get_direction(conn):
     return "Unknown"
 
 def scan_ports(protocol="inet"):
-    connections = psutil.net_connections(kind=protocol)
+    connections = platform_utils.net_connections(kind=protocol)
     results = []
 
     for conn in connections:
@@ -49,12 +48,7 @@ def scan_ports(protocol="inet"):
 
         port = str(conn.laddr.port)
         pid = str(conn.pid) if conn.pid else "N/A"
-        proc_name = "Unknown"
-        if conn.pid:
-            try:
-                proc_name = psutil.Process(conn.pid).name()
-            except Exception:
-                pass
+        proc_name = platform_utils.process_name(conn.pid)
 
         direction = get_direction(conn)
         raddr = f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "-"
@@ -111,7 +105,7 @@ def print_table(results):
     console.print(table)
 
 def clear_screen():
-    os.system("clear" if os.name == "posix" else "cls")
+    platform_utils.clear_terminal()
 
 def handle_sigint(sig, frame):
     console.print("\n[bold red]⏹ Watch mode terminated by user[/bold red]")
@@ -153,7 +147,7 @@ def main():
 
                             if user_input == "y":
                                 try:
-                                    os.kill(int(pid), signal.SIGKILL)
+                                    platform_utils.terminate_pid(int(pid), force=True)
                                     logger.info(f"Remediated PID {pid} ({program}) - Reason: {reason}")
                                     console.print(f"[green]✔ Killed {program} (PID {pid})[/green]")
                                 except Exception as e:
