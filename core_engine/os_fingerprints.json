@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "families": [
+    {
+      "name": "Windows",
+      "ttl_initial": [128],
+      "ttl_observed_min": 65,
+      "ttl_observed_max": 128,
+      "tcp_window_sizes": [8192, 64240, 65535],
+      "tcp_option_markers": ["mss", "nop", "sack", "wscale"],
+      "service_markers": ["RDP", "SMB", "WinRM", "MSRPC"],
+      "banner_patterns": ["Microsoft", "Windows", "IIS"]
+    },
+    {
+      "name": "Linux",
+      "ttl_initial": [64],
+      "ttl_observed_min": 33,
+      "ttl_observed_max": 64,
+      "tcp_window_sizes": [5840, 29200, 64240],
+      "tcp_option_markers": ["mss", "sack", "timestamp", "wscale"],
+      "service_markers": ["SSH", "HTTP", "HTTPS"],
+      "banner_patterns": ["OpenSSH", "Ubuntu", "Debian", "Linux", "nginx", "Apache"]
+    },
+    {
+      "name": "macOS",
+      "ttl_initial": [64],
+      "ttl_observed_min": 33,
+      "ttl_observed_max": 64,
+      "tcp_window_sizes": [65535],
+      "tcp_option_markers": ["mss", "nop", "wscale", "timestamp", "sack"],
+      "service_markers": ["mDNS", "SSH"],
+      "banner_patterns": ["Darwin", "macOS", "Bonjour"]
+    },
+    {
+      "name": "BSD",
+      "ttl_initial": [64],
+      "ttl_observed_min": 33,
+      "ttl_observed_max": 64,
+      "tcp_window_sizes": [65535, 16384],
+      "tcp_option_markers": ["mss", "nop", "wscale", "sack"],
+      "service_markers": ["SSH", "HTTP"],
+      "banner_patterns": ["FreeBSD", "OpenBSD", "NetBSD"]
+    },
+    {
+      "name": "network_appliance",
+      "ttl_initial": [255],
+      "ttl_observed_min": 129,
+      "ttl_observed_max": 255,
+      "tcp_window_sizes": [4128, 16384, 65535],
+      "tcp_option_markers": ["mss", "sack"],
+      "service_markers": ["DNS", "SNMP", "Telnet", "mDNS"],
+      "banner_patterns": ["Cisco", "Juniper", "MikroTik", "RouterOS", "Ubiquiti"]
+    }
+  ]
+}

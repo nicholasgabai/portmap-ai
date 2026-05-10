@@ -1,64 +1,43 @@
 # PortMap-AI Architecture
 
-PortMap-AI is a local-first network security stack. It can run as a single local tool, as a local distributed orchestrator/master/worker stack, or as an always-on Linux service. Docker is optional.
+PortMap-AI is a local-first network observability platform that can run as a single CLI tool, a local orchestrator/master/worker stack, an always-on Linux service, or an optional Docker Compose deployment. The main handoff document remains the source of truth for phase-by-phase implementation status.
 
-## Runtime Components
+## Core Boundaries
 
-### CLI
+- `cli/` exposes the installed `portmap` command and wraps scanner, stack, dashboard, validation, export, and analysis workflows.
+- `core_engine/` contains orchestration, worker/master services, runtime setup, platform helpers, telemetry modules, cluster planning, integrations, advisory workflow helpers, and vulnerability intelligence.
+- `ai_agent/` contains scoring, behavior baselines, payload classification, correlation, and recommendation helpers.
+- `gui/` contains the Textual terminal dashboard and reusable visualization helpers.
+- `saas/` contains local/offline organization, workspace, licensing, and sync-manifest primitives.
+- `docs/` contains operator and developer documentation.
 
-`cli.main` exposes the installed `portmap` command. It wraps the existing scanner, stack launcher, TUI, API status checks, configuration validation, log export, runtime setup, diagnostics, and network posture commands.
+## Runtime Flow
 
-### Orchestrator
+The orchestrator exposes the local HTTP control API. Worker nodes register, send heartbeats, receive queued commands, run local scans when configured, and send payloads to the master. The master records telemetry, applies scoring and decision logic, and queues administrator-controlled remediation workflow commands through the orchestrator when enabled by policy.
 
-`core_engine.orchestrator` provides the HTTP API used by local agents and the dashboard. It handles registration, heartbeat, command queues, health, node inventory, metrics, and persisted state. Authentication is bearer-token based and implemented through `core_engine.security`.
+## Data Model
 
-### Master Node
+Runtime data defaults to `~/.portmap-ai`:
 
-`core_engine.master_node` receives worker scan payloads over sockets, writes structured telemetry, evaluates remediation decisions, and queues remediation commands through the orchestrator when policy allows.
+- `data/settings.json` for local settings.
+- `data/orchestrator_state.json` for orchestrator state.
+- `logs/*.jsonl` for audit, command, remediation, scan, and flow telemetry.
+- `exports/` for generated log bundles.
 
-### Worker Node
-
-`core_engine.worker_node` runs scans, scores findings, sends results to the master, registers with the orchestrator, sends heartbeats, and executes supported orchestrator commands.
-
-### Scanner and Risk Engine
-
-`core_engine.modules.scanner` uses the platform abstraction layer to inspect connections. `ai_agent.scoring` combines deterministic heuristics, known risky ports, service hints, optional local ML scoring, and provider validation from `ai_agent.interface`.
-
-### TUI
-
-`gui.app` provides the Textual operator dashboard. It displays node health, metrics, scan samples, remediation events, command outcomes, expected services, and log tails.
-
-## Data and Logs
-
-Runtime state defaults to `~/.portmap-ai`:
-
-- `data/settings.json` for local settings;
-- `data/orchestrator_state.json` for orchestrator state;
-- `logs/*.jsonl` for structured audit and telemetry records;
-- `exports/` for log archive output.
-
-Package defaults and examples remain in the repository and installed package data.
+Packaged defaults and examples remain in the repository and installed package data.
 
 ## Platform Boundary
 
-`core_engine.platform_utils` centralizes OS, process, port, subprocess, and network-interface helpers. Core modules should use this layer instead of hardcoding platform-specific behavior. macOS and Linux are current targets, Raspberry Pi OS is supported as Linux/ARM, and Windows remains a future compatibility target.
+`core_engine.platform_utils` centralizes OS, process, socket, subprocess, and network-interface helpers. Platform-sensitive modules should use this layer rather than hardcoding OS behavior. Linux/macOS are the current local validation targets, Raspberry Pi OS is treated as Linux/ARM, and Windows runtime support remains pending external validation.
 
-## Security Boundary
+## Safety Boundary
 
-PortMap-AI uses these local security controls:
+PortMap-AI follows the global safety guarantees in `PORTMAP_AI_HANDOFF.md`. It supports authorized observability and diagnostics, keeps remediation administrator-controlled, and avoids autonomous offensive operations.
 
-- bearer-token checks for orchestrator APIs;
-- config validation before runtime startup;
-- environment-backed secret interpolation;
-- secret scrubbing before state persistence;
-- remediation safety gates with dry-run defaults;
-- structured audit events for commands and remediation decisions.
+## Related Docs
 
-## Deployment Modes
-
-Recommended order:
-
-1. Local install: `pip install -e .`, `portmap setup`, `portmap stack`, `portmap tui`.
-2. Always-on Linux/Raspberry Pi service: user-scoped `systemd` templates.
-3. Docker Compose: optional advanced deployment for operators who already want containers.
-4. Future SaaS: documented in `docs/saas_architecture.md`.
+- `docs/DEPLOYMENT.md`
+- `docs/SECURITY_MODEL.md`
+- `docs/CLI_REFERENCE.md`
+- `docs/PHASE_HISTORY.md`
+- `docs/real_device_validation.md`

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "portmap-ai"
 version = "0.1.0"
-description = "Local distributed network-security scanner, risk scorer, and remediation dashboard."
+description = "Local distributed network observability, telemetry analysis, and remediation workflow dashboard."
 readme = "docs/README.txt"
 requires-python = ">=3.11"
 dynamic = ["dependencies"]
@@ -39,10 +39,10 @@ include-package-data = true
 py-modules = ["portmap_agent"]
 
 [tool.setuptools.packages.find]
-include = ["ai_agent*", "cli*", "core_engine*", "gui*"]
+include = ["ai_agent*", "cli*", "core_engine*", "gui*", "saas*"]
 
 [tool.setuptools.package-data]
-core_engine = ["default_configs/*.json"]
+core_engine = ["default_configs/*.json", "os_fingerprints.json", "service_fingerprints.json"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
@@ -61,32 +61,61 @@ dependencies = {file = ["requirements.txt"]}
 ]
 "share/portmap-ai" = [
   "CHANGELOG.md",
+  "PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md",
   "SECURITY.md",
 ]
 "share/portmap-ai/docs" = [
   "docs/README.txt",
+  "docs/CLI_REFERENCE.md",
+  "docs/DEPLOYMENT.md",
+  "docs/PHASE_HISTORY.md",
+  "docs/ROADMAP.md",
+  "docs/SECURITY_MODEL.md",
   "docs/api_reference.md",
+  "docs/alerting_siem_integrations.md",
   "docs/architecture.md",
+  "docs/ai_behavioral_learning.md",
   "docs/ai_layer.md",
+  "docs/ai_payload_classification.md",
+  "docs/ai_recommendation_engine.md",
   "docs/beginner_guide.md",
   "docs/configuration.md",
+  "docs/cve_intelligence.md",
   "docs/deployment_options.md",
+  "docs/deep_packet_inspection.md",
   "docs/docker_deployment.md",
+  "docs/distributed_cluster_scanning.md",
+  "docs/enterprise_cloud_orchestration.md",
+  "docs/enterprise_security.md",
   "docs/firewall_plugins.md",
+  "docs/high_speed_scan_engine.md",
+  "docs/ipv6_dual_stack.md",
   "docs/logging_audit.md",
   "docs/master_roadmap.md",
   "docs/network_control_layer.md",
+  "docs/network_asset_inventory.md",
+  "docs/os_fingerprinting.md",
   "docs/packaging.md",
+  "docs/packet_capture.md",
   "docs/platform_abstraction.md",
+  "docs/protocol_dissectors.md",
   "docs/quick_start.md",
   "docs/raspberry_pi_deployment.md",
+  "docs/real_device_validation.md",
   "docs/release_candidate.md",
   "docs/remediation_safety.md",
   "docs/saas_architecture.md",
   "docs/scanner_risk_engine.md",
   "docs/security_authentication.md",
+  "docs/service_enumeration.md",
   "docs/stack_stability.md",
+  "docs/threat_correlation.md",
   "docs/tui_dashboard.md",
+  "docs/tls_intelligence.md",
+  "docs/traffic_flow_reconstruction.md",
+  "docs/udp_scanning.md",
+  "docs/visualization_gui_platform.md",
+  "docs/vulnerability_correlation.md",
 ]
 "share/portmap-ai/node_configs" = [
   "tests/node_configs/master1.json",

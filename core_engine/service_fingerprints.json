@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "services": [
+    {
+      "name": "SSH",
+      "default_ports": [22],
+      "banner_patterns": ["^SSH-"],
+      "probes": ["banner"]
+    },
+    {
+      "name": "HTTP",
+      "default_ports": [80, 8080],
+      "banner_patterns": ["HTTP/", "Server:"],
+      "probes": ["http_head"]
+    },
+    {
+      "name": "HTTPS",
+      "default_ports": [443, 8443],
+      "banner_patterns": ["HTTP/", "Server:"],
+      "probes": ["https_head"]
+    },
+    {
+      "name": "FTP",
+      "default_ports": [21],
+      "banner_patterns": ["^220.*FTP", "^220"],
+      "probes": ["banner"]
+    },
+    {
+      "name": "SMTP",
+      "default_ports": [25, 587],
+      "banner_patterns": ["^220.*SMTP", "^220"],
+      "probes": ["banner", "smtp_ehlo"]
+    },
+    {
+      "name": "DNS",
+      "default_ports": [53],
+      "banner_patterns": [],
+      "probes": ["port_hint"]
+    },
+    {
+      "name": "SMB",
+      "default_ports": [445],
+      "banner_patterns": [],
+      "probes": ["port_hint"]
+    },
+    {
+      "name": "RDP",
+      "default_ports": [3389],
+      "banner_patterns": [],
+      "probes": ["port_hint"]
+    }
+  ]
+}

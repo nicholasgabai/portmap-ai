@@ -6,6 +6,7 @@ import pytest
 pytest.importorskip("textual")
 
 from gui import app as gui_app
+from gui import visualization
 
 
 def test_compute_metrics():
@@ -114,6 +115,9 @@ def test_operator_help_text_defines_key_terms(tmp_path):
     assert "Scan Results: latest sampled ports" in text
     assert "Expected Services: move normal services" in text
     assert "Command Outcomes: whether queued commands" in text
+    assert "Risk Timeline: recent score buckets" in text
+    assert "Topology Edges: passive flow relationships" in text
+    assert "Traffic Flows: bidirectional session summaries" in text
     assert "Firewall plugin: noop" in text
     assert "Enforcement mode: dry_run" in text
     assert str(tmp_path / "exports") in text
@@ -199,6 +203,94 @@ def test_load_scan_results_falls_back_to_remediation_events(monkeypatch, tmp_pat
     assert rows[0]["node_id"] == "worker-2"
     assert rows[0]["score"] == 0.9
     assert rows[0]["score_factors"] == ["sensitive_port:5432"]
+
+
+def test_visualization_builds_risk_timeline():
+    timeline = visualization.build_risk_timeline(
+        [
+            {"timestamp": 10, "risk_score": 0.2, "action": "monitor"},
+            {"timestamp": 20, "risk_score": 0.82, "action": "prompt_operator"},
+            {"timestamp": 310, "risk_score": 0.95, "action": "block"},
+            {"timestamp": "2026-05-10T12:00:00Z", "risk_score": 0.51, "action": "monitor"},
+        ],
+        bucket_seconds=300,
+    )
+
+    assert len(timeline) == 3
+    assert timeline[0]["event_count"] == 2
+    assert timeline[0]["buckets"]["high"] == 1
+    assert timeline[1]["buckets"]["critical"] == 1
+    assert timeline[2]["buckets"]["medium"] == 1
+    assert "L/M/H/C=1/0/1/0" in visualization.render_risk_timeline(timeline)
+
+
+def test_visualization_builds_topology_and_flow_rows():
+    report = visualization.build_flow_visualization(
+        [
+            {
+                "timestamp": 1,
+                "protocol": "TCP",
+                "src_ip": "10.0.0.5",
+                "src_port": 51515,
+                "dst_ip": "10.0.0.10",
+                "dst_port": 443,
+                "payload_bytes": 120,
+                "application_protocol": "https",
+            }
+        ]
+    )
+
+    edges = visualization.topology_edge_rows(report["topology"])
+    flows = visualization.flow_rows(report["flows"])
+    summary = visualization.visualization_summary(
+        nodes=[{"node_id": "worker-1"}],
+        risk_timeline=[],
+        flows=report["flows"],
+        topology=report["topology"],
+    )
+
+    assert edges[0]["src_ip"] == "10.0.0.5"
+    assert edges[0]["application_protocols"] == "HTTPS"
+    assert "10.0.0.5:51515 -> 10.0.0.10:443" == flows[0]["flow"]
+    assert summary["flow_count"] == 1
+    assert summary["raw_payload_stored"] is False
+    assert summary["automatic_changes"] is False
+
+
+def test_load_flow_visualization_reads_flow_events(monkeypatch, tmp_path):
+    flow_log = tmp_path / "flow_events.jsonl"
+    flow_log.write_text(
+        json.dumps(
+            {
+                "timestamp": 1,
+                "protocol": "TCP",
+                "src_ip": "10.0.0.5",
+                "src_port": 51515,
+                "dst_ip": "10.0.0.10",
+                "dst_port": 443,
+                "payload_bytes": 120,
+            }
+        )
+    )
+    monkeypatch.setattr(gui_app, "FLOW_EVENTS_LOG", flow_log)
+    monkeypatch.setattr(gui_app, "MASTER_EVENTS_LOG", tmp_path / "missing.log")
+
+    dashboard = gui_app.PortMapDashboard()
+    report = dashboard._load_flow_visualization(limit=5)
+
+    assert report["flows"][0]["payload_bytes"] == 120
+    assert report["topology"]["edges"][0]["packet_count"] == 1
+
+
+def test_flow_events_from_master_events_extracts_nested_rows():
+    rows = gui_app._flow_events_from_master_events(
+        [
+            {"event_type": "worker_telemetry", "flows": [{"src_ip": "10.0.0.1", "dst_ip": "10.0.0.2"}]},
+            {"event_type": "traffic_flow", "src_ip": "10.0.0.3", "dst_ip": "10.0.0.4"},
+        ]
+    )
+
+    assert [row["src_ip"] for row in rows] == ["10.0.0.1", "10.0.0.3"]
 
 
 def test_load_orchestrator_health_reads_health_and_metrics(monkeypatch):

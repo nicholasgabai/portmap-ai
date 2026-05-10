@@ -16,12 +16,22 @@ from textual.widgets import Button, DataTable, Footer, Header, Static, Label
 
 from core_engine.config_loader import load_settings, save_settings
 from core_engine.log_exporter import export_logs, resolve_export_dir
+from gui.visualization import (
+    build_flow_visualization,
+    build_risk_timeline,
+    flow_rows,
+    read_jsonl,
+    render_risk_timeline,
+    topology_edge_rows,
+    visualization_summary,
+)
 
 ORCHESTRATOR_STATE = Path.home() / ".portmap-ai" / "data" / "orchestrator_state.json"
 MASTER_LOG = Path.home() / ".portmap-ai" / "logs" / "master.log"
 MASTER_EVENTS_LOG = Path.home() / ".portmap-ai" / "logs" / "master_events.log"
 REMEDIATION_LOG = Path.home() / ".portmap-ai" / "logs" / "remediation_events.jsonl"
 COMMAND_AUDIT_LOG = Path.home() / ".portmap-ai" / "logs" / "command_events.jsonl"
+FLOW_EVENTS_LOG = Path.home() / ".portmap-ai" / "logs" / "flow_events.jsonl"
 DEFAULT_ORCHESTRATOR_URL = os.environ.get("PORTMAP_ORCHESTRATOR_URL", "http://127.0.0.1:9100")
 DEFAULT_ORCHESTRATOR_TOKEN = os.environ.get("PORTMAP_ORCHESTRATOR_TOKEN", "test-token")
 
@@ -213,9 +223,27 @@ def _operator_help_text(export_dir: Path, firewall_status: Dict[str, str]) -> st
         "- Expected Services: move normal services into the allowlist so scoring explains them as expected.\n"
         "- Command Outcomes: whether queued commands were received, applied, failed, or ignored.\n"
         "- Master Log Tail: most recent master-node runtime lines.\n\n"
+        "Visualization:\n"
+        "- Risk Timeline: recent score buckets for quick trend review.\n"
+        "- Topology Edges: passive flow relationships from flow telemetry when available.\n"
+        "- Traffic Flows: bidirectional session summaries without raw payload storage.\n\n"
         f"Export destination: {export_dir}\n"
         "Shortcuts: ? help, e export logs"
     )
+
+
+def _flow_events_from_master_events(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for event in events:
+        if event.get("event_type") in {"traffic_flow", "packet_metadata", "dpi_observation"}:
+            rows.append(event)
+            continue
+        for key in ("flows", "events", "packet_events"):
+            nested = event.get(key)
+            if not isinstance(nested, list):
+                continue
+            rows.extend(item for item in nested if isinstance(item, dict))
+    return rows
 
 
 class NodeTable(DataTable):
@@ -284,6 +312,15 @@ class MetricsPanel(Static):
                 f"API counters - registers: {counters.get('registers', '-')}, "
                 f"heartbeats: {counters.get('heartbeats', '-')}, "
                 f"queued: {counters.get('commands_queued', '-')}"
+            )
+        visualization = metrics.get("visualization") or {}
+        if visualization:
+            text += (
+                "\nVisualization - "
+                f"flows: {visualization.get('flow_count', 0)}, "
+                f"topology: {visualization.get('topology_nodes', 0)} nodes/"
+                f"{visualization.get('topology_edges', 0)} edges, "
+                f"latest max score: {_format_risk_score(visualization.get('latest_max_score'))}"
             )
         self.update(text)
 
@@ -399,6 +436,59 @@ class ExpectedServicesPanel(DataTable):
             self.add_row(_service_label(candidate), _service_label(expected), key=str(index))
 
 
+class RiskTimelinePanel(Static):
+    def update_timeline(self, timeline: List[Dict[str, Any]]) -> None:
+        self.update(render_risk_timeline(timeline))
+
+
+class TopologyPanel(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Source")
+        self.add_column("Destination")
+        self.add_column("Flows")
+        self.add_column("Packets")
+        self.add_column("Bytes")
+        self.add_column("Transport")
+        self.add_column("Application")
+
+    def update_topology(self, rows: List[Dict[str, Any]]) -> None:
+        self.clear()
+        for row in rows:
+            self.add_row(
+                str(row.get("src_ip", "-")),
+                str(row.get("dst_ip", "-")),
+                str(row.get("flow_count", 0)),
+                str(row.get("packet_count", 0)),
+                str(row.get("payload_bytes", 0)),
+                str(row.get("protocols", "-")),
+                str(row.get("application_protocols", "-")),
+            )
+
+
+class TrafficFlowsPanel(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("First")
+        self.add_column("Last")
+        self.add_column("Flow")
+        self.add_column("Application")
+        self.add_column("Packets")
+        self.add_column("Bytes")
+        self.add_column("Findings")
+
+    def update_flows(self, rows: List[Dict[str, Any]]) -> None:
+        self.clear()
+        for row in rows:
+            self.add_row(
+                _format_timestamp(row.get("first_seen")),
+                _format_timestamp(row.get("last_seen")),
+                str(row.get("flow", "-")),
+                str(row.get("application_protocols", "-")),
+                str(row.get("packet_count", 0)),
+                str(row.get("payload_bytes", 0)),
+                str(row.get("findings", "-")),
+            )
+
+
 class PortMapDashboard(App):
     CSS = """
     .panel-heading {
@@ -476,6 +566,36 @@ class PortMapDashboard(App):
             )
             self.expected_services_panel = ExpectedServicesPanel()
             yield self.expected_services_panel
+            with Horizontal():
+                with Container():
+                    yield Static(
+                        _panel_heading(
+                            "Risk Timeline",
+                            "Recent score buckets for quick historical trend review.",
+                        ),
+                        classes="panel-heading",
+                    )
+                    self.risk_timeline_panel = RiskTimelinePanel()
+                    yield self.risk_timeline_panel
+                with Container():
+                    yield Static(
+                        _panel_heading(
+                            "Topology Edges",
+                            "Passive initiator-to-responder relationships when flow telemetry exists.",
+                        ),
+                        classes="panel-heading",
+                    )
+                    self.topology_panel = TopologyPanel()
+                    yield self.topology_panel
+            yield Static(
+                _panel_heading(
+                    "Traffic Flows",
+                    "Bidirectional flow summaries with packet and byte counts, no raw payload storage.",
+                ),
+                classes="panel-heading",
+            )
+            self.traffic_flows_panel = TrafficFlowsPanel()
+            yield self.traffic_flows_panel
             yield Static(
                 _panel_heading(
                     "Command Outcomes",
@@ -538,6 +658,14 @@ class PortMapDashboard(App):
         self.remediation_panel.update_events(remediation_events)
         scan_results = self._load_scan_results(remediation_events, limit=self.tail_size)
         self.scan_results_panel.update_results(scan_results)
+        risk_timeline = build_risk_timeline([*remediation_events, *scan_results], limit=self.tail_size)
+        flow_visualization = self._load_flow_visualization(limit=max(self.tail_size * 4, 20))
+        if hasattr(self, "risk_timeline_panel"):
+            self.risk_timeline_panel.update_timeline(risk_timeline)
+        if hasattr(self, "topology_panel"):
+            self.topology_panel.update_topology(topology_edge_rows(flow_visualization.get("topology"), limit=self.tail_size))
+        if hasattr(self, "traffic_flows_panel"):
+            self.traffic_flows_panel.update_flows(flow_rows(flow_visualization.get("flows") or [], limit=self.tail_size))
         self._allowlist_candidates = self._build_allowlist_candidates(remediation_events)
         self._expected_services = [
             item for item in self.runtime_settings.get("expected_services", []) if isinstance(item, dict)
@@ -549,6 +677,12 @@ class PortMapDashboard(App):
             metrics = _compute_metrics(nodes, remediation_events)
             metrics["firewall_status"] = getattr(self, "firewall_status", _resolve_firewall_status({}))
             metrics["orchestrator_health"] = self._load_orchestrator_health()
+            metrics["visualization"] = visualization_summary(
+                nodes=nodes,
+                risk_timeline=risk_timeline,
+                flows=flow_visualization.get("flows") or [],
+                topology=flow_visualization.get("topology"),
+            )
             self.metrics_panel.update_metrics(metrics)
 
     def _load_orchestrator_defaults(self) -> None:
@@ -602,20 +736,25 @@ class PortMapDashboard(App):
         return events
 
     def _load_worker_telemetry_events(self, limit: int = 200) -> List[Dict[str, Any]]:
+        return [
+            event
+            for event in self._load_master_events(limit=limit)
+            if event.get("event_type") == "worker_telemetry"
+        ]
+
+    def _load_master_events(self, limit: int = 200) -> List[Dict[str, Any]]:
         if not MASTER_EVENTS_LOG.exists():
             return []
-        events = []
+        return read_jsonl(MASTER_EVENTS_LOG, limit=limit)
+
+    def _load_flow_visualization(self, limit: int = 200) -> Dict[str, Any]:
+        flow_events = read_jsonl(FLOW_EVENTS_LOG, limit=limit)
+        if not flow_events:
+            flow_events = _flow_events_from_master_events(self._load_master_events(limit=limit))
         try:
-            for line in MASTER_EVENTS_LOG.read_text().splitlines()[-limit:]:
-                try:
-                    event = json.loads(line)
-                    if event.get("event_type") == "worker_telemetry":
-                        events.append(event)
-                except Exception:
-                    continue
+            return build_flow_visualization(flow_events)
         except Exception:
-            return []
-        return events
+            return {"ok": False, "flows": [], "topology": {"nodes": [], "edges": []}, "raw_payload_stored": False}
 
     def _load_scan_results(
         self,
