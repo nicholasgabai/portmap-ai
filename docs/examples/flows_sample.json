@@ -1,0 +1,76 @@
+{
+  "ok": true,
+  "window_seconds": 60.0,
+  "flow_count": 2,
+  "flows": [
+    {
+      "flow_id": "sample-flow-encrypted",
+      "flow_key": "TCP:192.0.2.10:51515-203.0.113.50:8443",
+      "initiator": {
+        "ip": "192.0.2.10",
+        "port": 51515
+      },
+      "responder": {
+        "ip": "203.0.113.50",
+        "port": 8443
+      },
+      "first_seen": 1.0,
+      "last_seen": 3.0,
+      "duration_seconds": 2.0,
+      "packet_count": 6,
+      "payload_bytes": 960,
+      "captured_bytes": 1500,
+      "directions": {
+        "initiator_to_responder": {
+          "packets": 3,
+          "payload_bytes": 420
+        },
+        "responder_to_initiator": {
+          "packets": 3,
+          "payload_bytes": 540
+        }
+      },
+      "transports": ["TCP"],
+      "application_protocols": ["HTTPS"],
+      "findings": [],
+      "evidence": ["encrypted_transport"]
+    },
+    {
+      "flow_id": "sample-flow-unencrypted",
+      "flow_key": "TCP:198.51.100.30:51516-192.0.2.20:8080",
+      "initiator": {
+        "ip": "198.51.100.30",
+        "port": 51516
+      },
+      "responder": {
+        "ip": "192.0.2.20",
+        "port": 8080
+      },
+      "first_seen": 5.0,
+      "last_seen": 9.0,
+      "duration_seconds": 4.0,
+      "packet_count": 8,
+      "payload_bytes": 4096,
+      "captured_bytes": 6200,
+      "directions": {
+        "initiator_to_responder": {
+          "packets": 4,
+          "payload_bytes": 2048
+        },
+        "responder_to_initiator": {
+          "packets": 4,
+          "payload_bytes": 2048
+        }
+      },
+      "transports": ["TCP"],
+      "application_protocols": ["HTTP"],
+      "findings": ["cleartext_protocol_observed"],
+      "evidence": ["unencrypted_application_protocol"]
+    }
+  ],
+  "topology": {
+    "nodes": [],
+    "edges": []
+  },
+  "raw_payload_stored": false
+}

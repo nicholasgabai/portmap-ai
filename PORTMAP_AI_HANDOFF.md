@@ -667,6 +667,16 @@ portmap-ai/
 ✅ Added `docs/local_visibility_operator_tooling.md` and package-data inclusion.
 ✅ Added focused visibility, service-detection, CLI, and packaging tests.
 
+**Phase 42 — Sanitized Example Visibility Datasets (Complete Baseline)**
+✅ Added sanitized JSON examples under `docs/examples/` for assets, services, flows, and policy inputs.
+✅ Example data uses RFC5737 TEST-NET addresses and placeholders for MACs, interfaces, versions, IDs, and environment-specific details.
+✅ Examples demonstrate multiple assets, exposed and internal-only services, encrypted and unencrypted flow summaries, advisory findings, dry-run policy fields, and administrator-controlled workflow settings.
+✅ `portmap visibility` now accepts either inline JSON or JSON file paths for assets, services, flows, and policy inputs.
+✅ Updated `docs/local_visibility_operator_tooling.md` with file-based example commands and safety notes.
+✅ Example files are packaged under `share/portmap-ai/docs/examples`.
+✅ Added tests that load example JSON, validate expected shapes, run the visibility CLI against file paths, generate advisory findings, and check examples for private/local identifiers.
+✅ This phase follows the global PortMap-AI safety guarantees and does not add automatic remediation, router changes, raw payload persistence, or environment-specific samples.
+
 ---
 
 ## 🧠 Technical Highlights
@@ -698,7 +708,7 @@ portmap-ai/
 | Phase 3 | Configuration Hardening | Config validation fails clearly before runtime startup |
 | Phase 4 | Platform Abstraction | Host/process/network inspection centralized for cross-platform support |
 | Phase 5 | Stack Stability | Restart, disconnect, shutdown, and port-conflict resilience |
-| Phase 6-41 | Safety, Deployment, Release, UDP, IPv6, Inventory, Services, OS, Async Scan, Capture, Dissection, DPI, TLS, Flows, Behavior, Payload AI, Correlation, Recommendations, CVE, Vulnerability Correlation, Enterprise Security, Alerting/SIEM, Visualization/GUI, Cluster Scanning, Enterprise Cloud Orchestration, Local Visibility | Logging, remediation safety, TUI, Docker, Raspberry Pi, packaging, auth, SaaS prep, docs, RC, UDP scanner, dual-stack scanner, network asset inventory, service enumeration, OS fingerprinting, high-speed async scanning, packet capture core, protocol dissectors, deep packet inspection, TLS intelligence, traffic flow reconstruction, AI behavioral learning, AI payload classification, threat correlation, AI recommendations, CVE intelligence, vulnerability correlation, enterprise security primitives, alerting and SIEM integrations, visualization and GUI platform, distributed cluster scan planning, organization/workspace management, licensing/usage metrics, optional cloud sync manifests, administrator advisory workflows, and local visibility summaries |
+| Phase 6-42 | Safety, Deployment, Release, UDP, IPv6, Inventory, Services, OS, Async Scan, Capture, Dissection, DPI, TLS, Flows, Behavior, Payload AI, Correlation, Recommendations, CVE, Vulnerability Correlation, Enterprise Security, Alerting/SIEM, Visualization/GUI, Cluster Scanning, Enterprise Cloud Orchestration, Local Visibility, Sanitized Examples | Logging, remediation safety, TUI, Docker, Raspberry Pi, packaging, auth, SaaS prep, docs, RC, UDP scanner, dual-stack scanner, network asset inventory, service enumeration, OS fingerprinting, high-speed async scanning, packet capture core, protocol dissectors, deep packet inspection, TLS intelligence, traffic flow reconstruction, AI behavioral learning, AI payload classification, threat correlation, AI recommendations, CVE intelligence, vulnerability correlation, enterprise security primitives, alerting and SIEM integrations, visualization and GUI platform, distributed cluster scan planning, organization/workspace management, licensing/usage metrics, optional cloud sync manifests, administrator advisory workflows, local visibility summaries, and sanitized example datasets |
 
 ---
 
@@ -820,9 +830,9 @@ from ai_agent.scoring import get_score
 from core_engine.modules.scanner import basic_scan
 ```
 **Behavior:** Sends JSON scan payloads to master node, validates startup/reload config, re-registers after orchestrator state loss, uses shared platform helpers for local address resolution, and scores connections through the replaceable AI provider interface.
-**Next:** Phase 41 local visibility and operator tooling is complete. Do not commit until the user asks.
+**Next:** Phase 42 sanitized visibility examples are complete. Do not commit until the user asks.
 
 ---
 
 ### ✅ Handoff Purpose
-This summary provides **Codex** or any development assistant with a structural and contextual snapshot of PortMap-AI as of the **Phase 41 local-visibility-and-operator-tooling baseline**.
+This summary provides **Codex** or any development assistant with a structural and contextual snapshot of PortMap-AI as of the **Phase 42 sanitized-visibility-examples baseline**.

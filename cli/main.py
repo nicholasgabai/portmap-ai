@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any
 from urllib import error, request
 
@@ -1131,18 +1132,18 @@ def cmd_cluster_plan(args: argparse.Namespace) -> int:
 
 def cmd_visibility(args: argparse.Namespace) -> int:
     try:
-        assets = _extract_json_rows(args.assets_json, list_keys=("assets", "records")) if args.assets_json else []
-        services = _extract_json_rows(args.services_json, list_keys=("services", "results")) if args.services_json else []
+        assets = _extract_json_rows(args.assets_json, list_keys=("assets", "records"), allow_file=True) if args.assets_json else []
+        services = _extract_json_rows(args.services_json, list_keys=("services", "results"), allow_file=True) if args.services_json else []
         flows_payload: list[dict[str, Any]] | dict[str, Any] = []
         if args.flows_json:
-            parsed_flows = json.loads(args.flows_json)
+            parsed_flows = _load_json_arg(args.flows_json)
             if isinstance(parsed_flows, dict):
                 flows_payload = parsed_flows
             elif isinstance(parsed_flows, list):
                 flows_payload = [row for row in parsed_flows if isinstance(row, dict)]
             else:
                 raise ValueError("--flows-json must decode to a flow report object or list")
-        policy = _json_object(args.policy_json, label="--policy-json") if args.policy_json else None
+        policy = _json_object(args.policy_json, label="--policy-json", allow_file=True) if args.policy_json else None
         payload = build_visibility_report(
             assets=assets,
             services=services,
@@ -1315,8 +1316,19 @@ def _email_payload_summary(message: Any) -> dict[str, Any]:
     }
 
 
-def _extract_json_rows(value: str, *, list_keys: tuple[str, ...]) -> list[dict[str, Any]]:
-    payload = json.loads(value)
+def _load_json_arg(value: str) -> Any:
+    stripped = value.strip()
+    if stripped.startswith(("{", "[")):
+        return json.loads(value)
+    candidate = Path(value)
+    if candidate.exists() and candidate.is_file():
+        with open(candidate, "r", encoding="utf-8") as handle:
+            return json.load(handle)
+    return json.loads(value)
+
+
+def _extract_json_rows(value: str, *, list_keys: tuple[str, ...], allow_file: bool = False) -> list[dict[str, Any]]:
+    payload = _load_json_arg(value) if allow_file else json.loads(value)
     if isinstance(payload, dict):
         for key in list_keys:
             if isinstance(payload.get(key), list):
@@ -1327,8 +1339,8 @@ def _extract_json_rows(value: str, *, list_keys: tuple[str, ...]) -> list[dict[s
     raise ValueError("JSON input must decode to an object, list, or supported report object")
 
 
-def _json_object(value: str, *, label: str) -> dict[str, Any]:
-    payload = json.loads(value)
+def _json_object(value: str, *, label: str, allow_file: bool = False) -> dict[str, Any]:
+    payload = _load_json_arg(value) if allow_file else json.loads(value)
     if not isinstance(payload, dict):
         raise ValueError(f"{label} must decode to an object")
     return payload
@@ -1591,10 +1603,10 @@ def build_parser() -> argparse.ArgumentParser:
     cluster_plan.set_defaults(func=cmd_cluster_plan)
 
     visibility = subparsers.add_parser("visibility", help="Summarize assets, services, flows, and operator review drafts")
-    visibility.add_argument("--assets-json", help="Asset inventory row/list or discover JSON report")
-    visibility.add_argument("--services-json", help="Service row/list or services JSON report")
-    visibility.add_argument("--flows-json", help="Flow row/list or flow report JSON")
-    visibility.add_argument("--policy-json", help="Optional visibility policy JSON object")
+    visibility.add_argument("--assets-json", help="Asset inventory row/list, discover JSON report, or JSON file path")
+    visibility.add_argument("--services-json", help="Service row/list, services JSON report, or JSON file path")
+    visibility.add_argument("--flows-json", help="Flow row/list, flow report JSON, or JSON file path")
+    visibility.add_argument("--policy-json", help="Optional visibility policy JSON object or JSON file path")
     visibility.add_argument("--output", choices=["table", "json"], default="json", help="Output format")
     visibility.set_defaults(func=cmd_visibility)
 

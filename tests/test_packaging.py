@@ -90,6 +90,11 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/udp_scanning.md" in data_files["share/portmap-ai/docs"]
     assert "docs/visualization_gui_platform.md" in data_files["share/portmap-ai/docs"]
     assert "docs/vulnerability_correlation.md" in data_files["share/portmap-ai/docs"]
+    assert "share/portmap-ai/docs/examples" in data_files
+    assert "docs/examples/assets_sample.json" in data_files["share/portmap-ai/docs/examples"]
+    assert "docs/examples/services_sample.json" in data_files["share/portmap-ai/docs/examples"]
+    assert "docs/examples/flows_sample.json" in data_files["share/portmap-ai/docs/examples"]
+    assert "docs/examples/policy_sample.json" in data_files["share/portmap-ai/docs/examples"]
     assert "tests/node_configs/orchestrator.json" in data_files["share/portmap-ai/node_configs"]
 
 

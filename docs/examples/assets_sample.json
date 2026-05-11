@@ -1,0 +1,65 @@
+{
+  "assets": [
+    {
+      "asset_type": "network_asset",
+      "host": "192.0.2.10",
+      "ip_version": 4,
+      "status": "reachable",
+      "target_source": "documentation_sample",
+      "private": false,
+      "loopback": false,
+      "methods": ["tcp"],
+      "evidence": [
+        {
+          "method": "tcp",
+          "port": 10022,
+          "reachable": true,
+          "state": "open",
+          "reason": "documentation_sample"
+        }
+      ],
+      "mac": "<MAC_ADDRESS>",
+      "interface": "<INTERFACE_NAME>",
+      "open_ports": [10022, 8443],
+      "closed_ports": [8080]
+    },
+    {
+      "asset_type": "network_asset",
+      "host": "192.0.2.20",
+      "ip_version": 4,
+      "status": "reachable",
+      "target_source": "documentation_sample",
+      "private": false,
+      "loopback": false,
+      "methods": ["tcp"],
+      "evidence": [
+        {
+          "method": "tcp",
+          "port": 15432,
+          "reachable": true,
+          "state": "open",
+          "reason": "documentation_sample"
+        }
+      ],
+      "mac": "<MAC_ADDRESS>",
+      "interface": "<INTERFACE_NAME>",
+      "open_ports": [15432],
+      "closed_ports": [10022]
+    },
+    {
+      "asset_type": "network_asset",
+      "host": "198.51.100.30",
+      "ip_version": 4,
+      "status": "unknown",
+      "target_source": "documentation_sample",
+      "private": false,
+      "loopback": false,
+      "methods": [],
+      "evidence": [],
+      "mac": "<MAC_ADDRESS>",
+      "interface": "<INTERFACE_NAME>",
+      "open_ports": [],
+      "closed_ports": []
+    }
+  ]
+}

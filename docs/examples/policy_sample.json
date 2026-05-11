@@ -1,0 +1,13 @@
+{
+  "management_ports": [10022],
+  "database_ports": [15432],
+  "high_payload_bytes": 1024,
+  "review_unknown_services": true,
+  "review_public_endpoints": true,
+  "require_approval": true,
+  "dry_run": true,
+  "administrator_controlled": true,
+  "automatic_changes": false,
+  "raw_payload_stored": false,
+  "enforcement_mode": "review_only"
+}

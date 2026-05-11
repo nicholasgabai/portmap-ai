@@ -118,6 +118,12 @@ dependencies = {file = ["requirements.txt"]}
   "docs/visualization_gui_platform.md",
   "docs/vulnerability_correlation.md",
 ]
+"share/portmap-ai/docs/examples" = [
+  "docs/examples/assets_sample.json",
+  "docs/examples/services_sample.json",
+  "docs/examples/flows_sample.json",
+  "docs/examples/policy_sample.json",
+]
 "share/portmap-ai/node_configs" = [
   "tests/node_configs/master1.json",
   "tests/node_configs/orchestrator.json",

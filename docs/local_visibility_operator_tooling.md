@@ -23,7 +23,7 @@ Summarize asset and service evidence:
 ```bash
 portmap visibility \
   --assets-json '{"assets":[{"host":"<LAN_IP>","status":"reachable","methods":["arp"]}]}' \
-  --services-json '[{"target":"<LAN_IP>","port":22,"state":"open","service":"SSH","confidence":0.92}]' \
+  --services-json '[{"target":"<LAN_IP>","port":10022,"state":"open","service":"SSH","confidence":0.92}]' \
   --output json
 ```
 
@@ -31,7 +31,7 @@ Summarize flow evidence:
 
 ```bash
 portmap visibility \
-  --flows-json '{"flows":[{"flow_id":"<FLOW_ID>","initiator":{"ip":"<LAN_IP>","port":51515},"responder":{"ip":"<REMOTE_IP>","port":443},"payload_bytes":2048,"application_protocols":["HTTPS"]}]}' \
+  --flows-json '{"flows":[{"flow_id":"<FLOW_ID>","initiator":{"ip":"<LAN_IP>","port":51515},"responder":{"ip":"<REMOTE_IP>","port":8443},"payload_bytes":2048,"application_protocols":["HTTPS"]}]}' \
   --output table
 ```
 
@@ -39,10 +39,23 @@ Apply a local review policy:
 
 ```bash
 portmap visibility \
-  --services-json '[{"target":"<LAN_IP>","port":3306,"state":"open","service":"MySQL"}]' \
-  --policy-json '{"database_ports":[3306,5432],"high_payload_bytes":1048576,"require_approval":true}' \
+  --services-json '[{"target":"<LAN_IP>","port":15432,"state":"open","service":"PostgreSQL"}]' \
+  --policy-json '{"database_ports":[15432],"high_payload_bytes":1048576,"require_approval":true}' \
   --output json
 ```
+
+Run the fully sanitized example dataset:
+
+```bash
+portmap visibility \
+  --assets-json docs/examples/assets_sample.json \
+  --services-json docs/examples/services_sample.json \
+  --flows-json docs/examples/flows_sample.json \
+  --policy-json docs/examples/policy_sample.json \
+  --output table
+```
+
+The files under `docs/examples/` use RFC5737 TEST-NET addresses and placeholders only. They are intended for command testing, screenshots, and training material without exposing local infrastructure details.
 
 ## Result Shape
 
@@ -65,7 +78,7 @@ Example finding:
   "severity": "high",
   "type": "management_service_open",
   "target": "<LAN_IP>",
-  "message": "Management service SSH is open on port 22.",
+  "message": "Management service SSH is open on port 10022.",
   "recommended_action": "review_access_policy"
 }
 ```
@@ -109,3 +122,11 @@ This phase follows the global PortMap-AI safety guarantees:
 - destructive actions are not generated or executed
 - no raw payload bytes are required or retained
 - resource usage remains proportional to already-collected evidence
+
+The sanitized examples preserve these fields so operators can verify safety behavior:
+
+- `automatic_changes: false`
+- `administrator_controlled: true`
+- `raw_payload_stored: false`
+- `dry_run: true`
+- `require_approval: true`

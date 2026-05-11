@@ -35,6 +35,7 @@ Start here:
 - `docs/network_control_layer.md` - advisory gateway and exposed-service posture assessment.
 - `docs/network_asset_inventory.md` - authorized asset inventory, ARP evidence, reachability checks, and topology context.
 - `docs/local_visibility_operator_tooling.md` - local visibility summaries, categorized findings, and operator review drafts.
+- `docs/examples/` - sanitized JSON examples for testing visibility workflows without local infrastructure data.
 - `docs/os_fingerprinting.md` - probabilistic OS-family inference from passive and service evidence.
 - `docs/packet_capture.md` - safe packet metadata capture, PCAP output, filters, and permission handling.
 - `docs/protocol_dissectors.md` - passive protocol parsing for captured packet metadata.

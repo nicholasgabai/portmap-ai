@@ -1,0 +1,64 @@
+{
+  "services": [
+    {
+      "target": "192.0.2.10",
+      "port": 10022,
+      "remote": "192.0.2.10:10022",
+      "ip_version": 4,
+      "state": "open",
+      "service": "SSH",
+      "version": "<SERVICE_VERSION>",
+      "confidence": 0.55,
+      "banner": "",
+      "probe": "port_hint",
+      "evidence": ["port_hint:10022"],
+      "reason": "documentation_sample",
+      "exposure": "operator_review"
+    },
+    {
+      "target": "192.0.2.10",
+      "port": 8443,
+      "remote": "192.0.2.10:8443",
+      "ip_version": 4,
+      "state": "open",
+      "service": "HTTPS",
+      "version": "<SERVICE_VERSION>",
+      "confidence": 0.92,
+      "banner": "HTTP/1.1 200 OK",
+      "probe": "https_head",
+      "evidence": ["banner:HTTP/"],
+      "reason": "documentation_sample",
+      "exposure": "encrypted_service"
+    },
+    {
+      "target": "192.0.2.20",
+      "port": 15432,
+      "remote": "192.0.2.20:15432",
+      "ip_version": 4,
+      "state": "open",
+      "service": "PostgreSQL",
+      "version": "<SERVICE_VERSION>",
+      "confidence": 0.55,
+      "banner": "",
+      "probe": "port_hint",
+      "evidence": ["port_hint:15432"],
+      "reason": "documentation_sample",
+      "exposure": "internal_only"
+    },
+    {
+      "target": "198.51.100.30",
+      "port": 8080,
+      "remote": "198.51.100.30:8080",
+      "ip_version": 4,
+      "state": "open",
+      "service": "unknown",
+      "version": "",
+      "confidence": 0.0,
+      "banner": "",
+      "probe": "http_head",
+      "evidence": [],
+      "reason": "documentation_sample",
+      "exposure": "operator_review"
+    }
+  ]
+}
