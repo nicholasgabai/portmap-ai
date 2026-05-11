@@ -41,6 +41,7 @@ from core_engine.modules.udp_scanner import scan_udp_target
 from core_engine.network_control import assess_network_posture, summarize_posture
 from core_engine.runtime_setup import initialize_runtime, packaging_diagnostics
 from core_engine.rbac import authorize, role_report
+from core_engine.visibility import build_visibility_report
 from core_engine.vuln.cve_client import analyze_service_cves, fetch_nvd_cves, load_cves_from_json
 from core_engine.vuln.cve_store import load_cve_cache, merge_cve_records, save_cve_cache
 from core_engine.vuln.vuln_correlator import correlate_vulnerabilities
@@ -439,6 +440,43 @@ def _render_cluster_plan_table(payload: dict[str, Any]) -> None:
         str(payload.get("mode", "dry_run")),
     )
     console.print(table)
+
+
+def _render_visibility_table(payload: dict[str, Any]) -> None:
+    summary = payload.get("summary") or {}
+    table = Table(title="PortMap-AI Visibility Summary")
+    table.add_column("Assets", justify="right")
+    table.add_column("Services", justify="right")
+    table.add_column("Flows", justify="right")
+    table.add_column("Findings", justify="right")
+    table.add_column("Review Drafts", justify="right")
+    table.add_row(
+        str(summary.get("asset_count", 0)),
+        str(summary.get("service_count", 0)),
+        str(summary.get("flow_count", 0)),
+        str(summary.get("finding_count", 0)),
+        str(summary.get("response_workflow_count", 0)),
+    )
+    console.print(table)
+
+    findings = payload.get("findings") or []
+    if not findings:
+        return
+    finding_table = Table(title="Categorized Findings")
+    finding_table.add_column("Severity")
+    finding_table.add_column("Category")
+    finding_table.add_column("Type")
+    finding_table.add_column("Target")
+    finding_table.add_column("Action")
+    for item in findings:
+        finding_table.add_row(
+            str(item.get("severity") or "-"),
+            str(item.get("category") or "-"),
+            str(item.get("type") or "-"),
+            str(item.get("target") or "-"),
+            str(item.get("recommended_action") or "-"),
+        )
+    console.print(finding_table)
 
 
 def _endpoint_text(endpoint: dict[str, Any]) -> str:
@@ -1091,6 +1129,37 @@ def cmd_cluster_plan(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_visibility(args: argparse.Namespace) -> int:
+    try:
+        assets = _extract_json_rows(args.assets_json, list_keys=("assets", "records")) if args.assets_json else []
+        services = _extract_json_rows(args.services_json, list_keys=("services", "results")) if args.services_json else []
+        flows_payload: list[dict[str, Any]] | dict[str, Any] = []
+        if args.flows_json:
+            parsed_flows = json.loads(args.flows_json)
+            if isinstance(parsed_flows, dict):
+                flows_payload = parsed_flows
+            elif isinstance(parsed_flows, list):
+                flows_payload = [row for row in parsed_flows if isinstance(row, dict)]
+            else:
+                raise ValueError("--flows-json must decode to a flow report object or list")
+        policy = _json_object(args.policy_json, label="--policy-json") if args.policy_json else None
+        payload = build_visibility_report(
+            assets=assets,
+            services=services,
+            flows=flows_payload,
+            policy=policy,
+        )
+    except (json.JSONDecodeError, ValueError) as exc:
+        print(f"Visibility summary error: {exc}", file=sys.stderr)
+        return 1
+
+    if args.output == "json":
+        _print_json(payload)
+    else:
+        _render_visibility_table(payload)
+    return 0
+
+
 def cmd_workspace(args: argparse.Namespace) -> int:
     try:
         tenant = _json_object(args.tenant_json, label="--tenant-json")
@@ -1520,6 +1589,14 @@ def build_parser() -> argparse.ArgumentParser:
     cluster_plan.add_argument("--aggressive", action="store_true", help="Allow planning above default safe limits")
     cluster_plan.add_argument("--output", choices=["table", "json"], default="json", help="Output format")
     cluster_plan.set_defaults(func=cmd_cluster_plan)
+
+    visibility = subparsers.add_parser("visibility", help="Summarize assets, services, flows, and operator review drafts")
+    visibility.add_argument("--assets-json", help="Asset inventory row/list or discover JSON report")
+    visibility.add_argument("--services-json", help="Service row/list or services JSON report")
+    visibility.add_argument("--flows-json", help="Flow row/list or flow report JSON")
+    visibility.add_argument("--policy-json", help="Optional visibility policy JSON object")
+    visibility.add_argument("--output", choices=["table", "json"], default="json", help="Output format")
+    visibility.set_defaults(func=cmd_visibility)
 
     workspace = subparsers.add_parser("workspace", help="Manage local tenant, organization, team, and workspace metadata")
     workspace.add_argument("--tenant-json", required=True, help="Tenant record JSON object")

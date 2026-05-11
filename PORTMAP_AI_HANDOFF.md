@@ -657,6 +657,16 @@ portmap-ai/
 ✅ Runtime CLI smokes for workspace, license, cloud-sync, and advisory commands pass locally.
 ✅ Full-suite verification after Phase 40 passes: `366 passed, 1 skipped`.
 
+**Phase 41 — Local Visibility and Operator Tooling (Complete Baseline)**
+✅ Added `core_engine.visibility` for offline local visibility reports from existing asset, service, and flow evidence.
+✅ Visibility reports include summaries, categorized asset/service/flow findings, policy details, dry-run response workflow drafts, and explicit `automatic_changes: false`, `administrator_controlled: true`, and `raw_payload_stored: false` fields.
+✅ Added `portmap visibility --assets-json ... --services-json ... --flows-json ... --policy-json ... --output json|table`.
+✅ Expanded service fingerprint coverage for MySQL/MariaDB-compatible banners, PostgreSQL, Redis, MongoDB, Elasticsearch, MSSQL, Oracle, VNC, WinRM, POP3, and IMAP.
+✅ Visibility workflows remain opt-in and consume already-collected evidence; they do not run scans, execute remediation, transmit data, or store raw payload bytes.
+✅ This phase follows the global PortMap-AI safety guarantees and uses placeholders in public docs.
+✅ Added `docs/local_visibility_operator_tooling.md` and package-data inclusion.
+✅ Added focused visibility, service-detection, CLI, and packaging tests.
+
 ---
 
 ## 🧠 Technical Highlights
@@ -674,6 +684,7 @@ portmap-ai/
 | `core_engine/log_exporter.py` | Audit archive utility | ✅ Packages rotated logs + state |
 | `core_engine/agent_service.py` | Daemon agent loop | ✅ Pulls orchestrator commands, executes remediation |
 | `core_engine/enrollment.py` | Future SaaS enrollment schemas | ✅ Local-only validation/redaction helpers |
+| `core_engine/visibility.py` | Offline local visibility summaries, categorized findings, and review drafts | ✅ Working |
 
 ---
 
@@ -687,7 +698,7 @@ portmap-ai/
 | Phase 3 | Configuration Hardening | Config validation fails clearly before runtime startup |
 | Phase 4 | Platform Abstraction | Host/process/network inspection centralized for cross-platform support |
 | Phase 5 | Stack Stability | Restart, disconnect, shutdown, and port-conflict resilience |
-| Phase 6-40 | Safety, Deployment, Release, UDP, IPv6, Inventory, Services, OS, Async Scan, Capture, Dissection, DPI, TLS, Flows, Behavior, Payload AI, Correlation, Recommendations, CVE, Vulnerability Correlation, Enterprise Security, Alerting/SIEM, Visualization/GUI, Cluster Scanning, Enterprise Cloud Orchestration | Logging, remediation safety, TUI, Docker, Raspberry Pi, packaging, auth, SaaS prep, docs, RC, UDP scanner, dual-stack scanner, network asset inventory, service enumeration, OS fingerprinting, high-speed async scanning, packet capture core, protocol dissectors, deep packet inspection, TLS intelligence, traffic flow reconstruction, AI behavioral learning, AI payload classification, threat correlation, AI recommendations, CVE intelligence, vulnerability correlation, enterprise security primitives, alerting and SIEM integrations, visualization and GUI platform, distributed cluster scan planning, organization/workspace management, licensing/usage metrics, optional cloud sync manifests, and administrator advisory workflows |
+| Phase 6-41 | Safety, Deployment, Release, UDP, IPv6, Inventory, Services, OS, Async Scan, Capture, Dissection, DPI, TLS, Flows, Behavior, Payload AI, Correlation, Recommendations, CVE, Vulnerability Correlation, Enterprise Security, Alerting/SIEM, Visualization/GUI, Cluster Scanning, Enterprise Cloud Orchestration, Local Visibility | Logging, remediation safety, TUI, Docker, Raspberry Pi, packaging, auth, SaaS prep, docs, RC, UDP scanner, dual-stack scanner, network asset inventory, service enumeration, OS fingerprinting, high-speed async scanning, packet capture core, protocol dissectors, deep packet inspection, TLS intelligence, traffic flow reconstruction, AI behavioral learning, AI payload classification, threat correlation, AI recommendations, CVE intelligence, vulnerability correlation, enterprise security primitives, alerting and SIEM integrations, visualization and GUI platform, distributed cluster scan planning, organization/workspace management, licensing/usage metrics, optional cloud sync manifests, administrator advisory workflows, and local visibility summaries |
 
 ---
 
@@ -809,9 +820,9 @@ from ai_agent.scoring import get_score
 from core_engine.modules.scanner import basic_scan
 ```
 **Behavior:** Sends JSON scan payloads to master node, validates startup/reload config, re-registers after orchestrator state loss, uses shared platform helpers for local address resolution, and scores connections through the replaceable AI provider interface.
-**Next:** Phase 40 enterprise cloud orchestration is complete. Do not commit until the user asks.
+**Next:** Phase 41 local visibility and operator tooling is complete. Do not commit until the user asks.
 
 ---
 
 ### ✅ Handoff Purpose
-This summary provides **Codex** or any development assistant with a structural and contextual snapshot of PortMap-AI as of the **Phase 40 enterprise-cloud-orchestration baseline**.
+This summary provides **Codex** or any development assistant with a structural and contextual snapshot of PortMap-AI as of the **Phase 41 local-visibility-and-operator-tooling baseline**.

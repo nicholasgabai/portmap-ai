@@ -27,6 +27,7 @@ The installed command is `portmap`. This reference lists the primary command fam
 - `portmap dpi` analyzes packet/payload metadata.
 - `portmap tls` analyzes TLS posture.
 - `portmap flows` reconstructs passive flow summaries.
+- `portmap visibility` summarizes asset, service, and flow evidence into categorized findings and operator review drafts.
 
 ## Intelligence and Advisory Workflows
 

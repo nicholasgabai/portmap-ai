@@ -48,6 +48,72 @@
       "default_ports": [3389],
       "banner_patterns": [],
       "probes": ["port_hint"]
+    },
+    {
+      "name": "MySQL",
+      "default_ports": [3306],
+      "banner_patterns": ["^\\s*[0-9]+\\.[0-9]+(?:\\.[0-9]+)?.*(mysql|mariadb)", "^\\s*[0-9]+\\.[0-9]+(?:\\.[0-9]+)?"],
+      "probes": ["banner"]
+    },
+    {
+      "name": "PostgreSQL",
+      "default_ports": [5432],
+      "banner_patterns": ["postgresql", "unsupported frontend protocol"],
+      "probes": ["port_hint"]
+    },
+    {
+      "name": "Redis",
+      "default_ports": [6379],
+      "banner_patterns": ["^-ERR", "^-NOAUTH", "^\\+PONG", "redis_version:"],
+      "probes": ["banner"]
+    },
+    {
+      "name": "MongoDB",
+      "default_ports": [27017],
+      "banner_patterns": ["mongodb", "mongo"],
+      "probes": ["port_hint"]
+    },
+    {
+      "name": "Elasticsearch",
+      "default_ports": [9200],
+      "banner_patterns": ["elasticsearch", "You Know, for Search"],
+      "probes": ["http_head"]
+    },
+    {
+      "name": "MSSQL",
+      "default_ports": [1433],
+      "banner_patterns": ["microsoft sql server", "mssql"],
+      "probes": ["port_hint"]
+    },
+    {
+      "name": "Oracle",
+      "default_ports": [1521],
+      "banner_patterns": ["oracle", "tns"],
+      "probes": ["port_hint"]
+    },
+    {
+      "name": "VNC",
+      "default_ports": [5900],
+      "banner_patterns": ["^RFB "],
+      "probes": ["banner"]
+    },
+    {
+      "name": "WinRM",
+      "default_ports": [5985, 5986],
+      "banner_patterns": ["Microsoft-HTTPAPI", "WSMan"],
+      "probes": ["http_head"]
+    },
+    {
+      "name": "POP3",
+      "default_ports": [110, 995],
+      "banner_patterns": ["^\\+OK.*POP", "^\\+OK"],
+      "probes": ["banner"]
+    },
+    {
+      "name": "IMAP",
+      "default_ports": [143, 993],
+      "banner_patterns": ["^\\* OK.*IMAP", "IMAP4"],
+      "probes": ["banner"]
     }
   ]
 }

@@ -20,7 +20,32 @@ DEFAULT_MAX_PORTS = 128
 DEFAULT_RATE_DELAY = 0.01
 AGGRESSIVE_MAX_TARGETS = 1024
 AGGRESSIVE_MAX_PORTS = 4096
-COMMON_ENUMERATION_PORTS = (21, 22, 25, 53, 80, 443, 445, 587, 3389, 8080, 8443)
+COMMON_ENUMERATION_PORTS = (
+    21,
+    22,
+    25,
+    53,
+    80,
+    110,
+    143,
+    443,
+    445,
+    587,
+    993,
+    995,
+    1433,
+    1521,
+    3306,
+    3389,
+    5432,
+    5900,
+    5985,
+    6379,
+    8080,
+    8443,
+    9200,
+    27017,
+)
 PACKAGE_FINGERPRINTS = Path(__file__).resolve().parents[1] / "service_fingerprints.json"
 REPO_FINGERPRINTS = Path(__file__).resolve().parents[2] / "data" / "service_fingerprints.json"
 
@@ -182,6 +207,15 @@ def _extract_version(service: str, banner: str) -> str:
         match = re.search(r"(?im)^Server:\s*([^\r\n]+)", banner)
         return match.group(1).strip() if match else ""
     if service in {"FTP", "SMTP"}:
+        first_line = banner.splitlines()[0] if banner.splitlines() else banner
+        return first_line[:120]
+    if service == "MySQL":
+        match = re.search(r"\s*([0-9]+\.[0-9]+(?:\.[0-9]+)?[^\x00\s]*)", banner)
+        return match.group(1) if match else ""
+    if service == "Redis":
+        match = re.search(r"redis_version:([^\r\n]+)", banner, flags=re.IGNORECASE)
+        return match.group(1).strip() if match else ""
+    if service in {"Elasticsearch", "MongoDB", "PostgreSQL", "MSSQL", "Oracle", "VNC", "WinRM", "POP3", "IMAP"}:
         first_line = banner.splitlines()[0] if banner.splitlines() else banner
         return first_line[:120]
     return ""

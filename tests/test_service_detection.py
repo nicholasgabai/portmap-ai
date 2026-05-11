@@ -144,6 +144,35 @@ def test_detect_service_identifies_smb_by_port_hint_when_open_without_banner():
     assert row["evidence"] == ["port_hint:445"]
 
 
+def test_detect_service_identifies_mysql_banner():
+    fake = FakeSocket(responses=[b"\x0a8.0.35\x00mysql_native_password\x00"])
+
+    row = service_detection.detect_service(
+        parse_target("127.0.0.1"),
+        3306,
+        socket_factory=socket_factory_for(fake),
+    )
+
+    assert row["state"] == "open"
+    assert row["service"] == "MySQL"
+    assert row["version"] == "8.0.35"
+    assert row["confidence"] >= 0.9
+
+
+def test_detect_service_identifies_redis_error_banner():
+    fake = FakeSocket(responses=[b"-NOAUTH Authentication required.\r\n"])
+
+    row = service_detection.detect_service(
+        parse_target("127.0.0.1"),
+        6379,
+        socket_factory=socket_factory_for(fake),
+    )
+
+    assert row["state"] == "open"
+    assert row["service"] == "Redis"
+    assert row["confidence"] >= 0.9
+
+
 def test_enumerate_services_supports_cidr_targets():
     fake = FakeSocket(responses=[b"SSH-2.0-OpenSSH_9.6\r\n", b"SSH-2.0-OpenSSH_9.6\r\n"])
 

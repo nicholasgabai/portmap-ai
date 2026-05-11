@@ -273,6 +273,51 @@ def test_cluster_plan_rejects_bad_workers_json(capsys):
     assert "workers-json" in capsys.readouterr().err
 
 
+def test_visibility_outputs_json(monkeypatch, capsys):
+    seen = {}
+
+    def fake_build_visibility_report(**kwargs):
+        seen.update(kwargs)
+        return {
+            "ok": True,
+            "summary": {"finding_count": 1},
+            "findings": [{"type": "management_service_open"}],
+            "automatic_changes": False,
+        }
+
+    monkeypatch.setattr(cli_main, "build_visibility_report", fake_build_visibility_report)
+
+    result = cli_main.main([
+        "visibility",
+        "--assets-json",
+        '{"assets":[{"host":"203.0.113.10","status":"reachable"}]}',
+        "--services-json",
+        '[{"target":"203.0.113.10","port":22,"state":"open","service":"SSH"}]',
+        "--flows-json",
+        '{"flows":[{"flow_id":"flow-1"}]}',
+        "--policy-json",
+        '{"management_ports":[22]}',
+        "--output",
+        "json",
+    ])
+
+    assert result == 0
+    assert seen == {
+        "assets": [{"host": "203.0.113.10", "status": "reachable"}],
+        "services": [{"target": "203.0.113.10", "port": 22, "state": "open", "service": "SSH"}],
+        "flows": {"flows": [{"flow_id": "flow-1"}]},
+        "policy": {"management_ports": [22]},
+    }
+    assert json.loads(capsys.readouterr().out)["summary"]["finding_count"] == 1
+
+
+def test_visibility_rejects_bad_flow_json(capsys):
+    result = cli_main.main(["visibility", "--flows-json", '"not-a-flow-list"'])
+
+    assert result == 1
+    assert "must decode to a flow report object or list" in capsys.readouterr().err
+
+
 def test_workspace_outputs_user_access_json(capsys):
     result = cli_main.main([
         "workspace",

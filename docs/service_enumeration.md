@@ -24,6 +24,17 @@ Initial common-service support covers:
 - DNS
 - SMB
 - RDP
+- MySQL/MariaDB-compatible banners
+- PostgreSQL port hints
+- Redis
+- MongoDB
+- Elasticsearch
+- Microsoft SQL Server
+- Oracle
+- VNC
+- WinRM
+- POP3
+- IMAP
 
 ## Fingerprints
 
