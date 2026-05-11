@@ -215,14 +215,14 @@ Read `docs/deep_packet_inspection.md` and confirm DPI stores metadata instead of
 ## 4w. TLS Intelligence Checks
 ```bash
 python -m pytest tests/test_tls_inspector.py tests/test_cli_main.py tests/test_packaging.py
-portmap tls --observation-json '{"target":"legacy.example.com","server_name":"legacy.example.com","tls_version":"TLSv1.0","cipher":{"name":"RC4-MD5","bits":64},"certificate":{"subject":{"commonName":"legacy.example.com"},"issuer":{"commonName":"Legacy CA"},"san_dns":["legacy.example.com"],"not_after":"2026-04-01T00:00:00+00:00"}}' --output json
+portmap tls --observation-json '{"target":"legacy.example.com","server_name":"legacy.example.com","tls_version":"TLSv1.0","cipher":{"name":"RC4-MD5","bits":64},"certificate":{"subject":{"commonName":"legacy.example.com"},"issuer":{"commonName":"Legacy CA"},"san_dns":["legacy.example.com"],"not_after":"<CERT_NOT_AFTER>"}}' --output json
 ```
 Read `docs/tls_intelligence.md` and confirm TLS inspection is read-only, reports protocol/cipher/certificate/hostname posture, supports offline observations for deterministic tests, and performs no authentication, exploit, network configuration, or remediation behavior.
 
 ## 4x. Traffic Flow Reconstruction Checks
 ```bash
 python -m pytest tests/test_flow_tracker.py tests/test_packet_capture.py tests/test_cli_main.py tests/test_packaging.py
-portmap flows --events-json '[{"timestamp":1,"protocol":"TCP","src_ip":"10.0.0.5","src_port":51515,"dst_ip":"10.0.0.10","dst_port":443,"payload_bytes":128}]' --output json
+portmap flows --events-json '[{"timestamp":1,"protocol":"TCP","src_ip":"<LAN_IP>","src_port":51515,"dst_ip":"<LAN_IP>","dst_port":443,"payload_bytes":128}]' --output json
 portmap capture --duration 0.1 --max-packets 1 --filter tcp --flows --output json
 ```
 Read `docs/traffic_flow_reconstruction.md` and confirm flow reconstruction groups passive metadata into bidirectional flows, tracks directional counters and topology summaries, stores no raw payloads, and performs no packet crafting, authentication, exploit, network configuration, or remediation behavior.
@@ -230,7 +230,7 @@ Read `docs/traffic_flow_reconstruction.md` and confirm flow reconstruction group
 ## 4y. AI Behavioral Learning Checks
 ```bash
 python -m pytest tests/test_behavior_model.py tests/test_cli_main.py tests/test_packaging.py
-portmap behavior --events-json '[{"device_id":"worker-1","metadata":{"protocol":"TCP","dst_ip":"10.0.0.10","dst_port":443},"application_protocol":"TLS"}]' --output json
+portmap behavior --events-json '[{"device_id":"worker-1","metadata":{"protocol":"TCP","dst_ip":"<LAN_IP>","dst_port":443},"application_protocol":"TLS"}]' --output json
 ```
 Read `docs/ai_behavioral_learning.md` and confirm behavior learning is local, advisory, opt-in for baseline updates via `--learn`, stores no raw payloads, and performs no authentication, exploit, network configuration, or remediation behavior.
 
@@ -251,7 +251,7 @@ Read `docs/threat_correlation.md` and confirm correlation is local and advisory,
 ## 4ab. AI Recommendation Engine Checks
 ```bash
 python -m pytest tests/test_recommendation_engine.py tests/test_cli_main.py tests/test_packaging.py
-portmap recommend --incidents-json '{"incidents":[{"incident_id":"inc-1","type":"chained_behavior_payload_risk","severity":"high","score":0.9,"entity":"worker-1","peers":["10.0.0.10"],"findings":["new_peer","credential_marker"],"event_count":2}]}' --output json
+portmap recommend --incidents-json '{"incidents":[{"incident_id":"inc-1","type":"chained_behavior_payload_risk","severity":"high","score":0.9,"entity":"worker-1","peers":["<LAN_IP>"],"findings":["new_peer","credential_marker"],"event_count":2}]}' --output json
 ```
 Read `docs/ai_recommendation_engine.md` and confirm recommendations are advisory, destructive drafts are approval-required and dry-run, no remediation is executed, no raw payloads are stored, and existing safety gates remain the enforcement boundary.
 

@@ -23,7 +23,7 @@ Reconstruct flows from packet metadata or DPI records:
 
 ```bash
 portmap flows \
-  --events-json '[{"timestamp":1,"protocol":"TCP","src_ip":"10.0.0.5","src_port":51515,"dst_ip":"10.0.0.10","dst_port":443,"payload_bytes":128}]' \
+  --events-json '[{"timestamp":1,"protocol":"TCP","src_ip":"<LAN_IP>","src_port":51515,"dst_ip":"<LAN_IP>","dst_port":443,"payload_bytes":128}]' \
   --output json
 ```
 

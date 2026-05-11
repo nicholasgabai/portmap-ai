@@ -6,7 +6,7 @@ def test_normalize_event_accepts_behavior_payload_and_flow_shapes():
         "model": "local_behavior_baseline",
         "device_id": "worker-1",
         "score": 0.55,
-        "observation": {"peer": "10.0.0.10", "port": 443, "application": "TLS", "timestamp": 1},
+        "observation": {"peer": "203.0.113.10", "port": 443, "application": "TLS", "timestamp": 1},
         "findings": [{"type": "new_peer"}],
     })
     payload = normalize_event({
@@ -14,22 +14,22 @@ def test_normalize_event_accepts_behavior_payload_and_flow_shapes():
         "timestamp": 2,
         "label": "sensitive_cleartext",
         "risk_score": 0.85,
-        "network": {"src_ip": "10.0.0.5", "dst_ip": "10.0.0.10", "dst_port": 80},
+        "network": {"src_ip": "203.0.113.5", "dst_ip": "203.0.113.10", "dst_port": 80},
         "findings": [{"type": "credential_marker"}],
     })
     flow = normalize_event({
         "flow_id": "flow-1",
         "first_seen": 3,
-        "initiator": {"ip": "10.0.0.5", "port": 51515},
-        "responder": {"ip": "10.0.0.10", "port": 443},
+        "initiator": {"ip": "203.0.113.5", "port": 51515},
+        "responder": {"ip": "203.0.113.10", "port": 443},
         "findings": ["truncated_tls_record"],
     })
 
     assert behavior["kind"] == "behavior"
     assert behavior["entity"] == "worker-1"
-    assert behavior["peer"] == "10.0.0.10"
+    assert behavior["peer"] == "203.0.113.10"
     assert payload["kind"] == "payload"
-    assert payload["entity"] == "10.0.0.5"
+    assert payload["entity"] == "203.0.113.5"
     assert payload["port"] == 80
     assert flow["kind"] == "flow"
     assert flow["event_id"] == "flow-1"
@@ -52,7 +52,7 @@ def test_correlate_events_links_repeated_anomalies():
 
 def test_correlate_events_detects_suspicious_scan_behavior():
     events = [
-        {"timestamp": index, "device_id": "scanner", "metadata": {"dst_ip": "10.0.0.10", "dst_port": 8000 + index}}
+        {"timestamp": index, "device_id": "scanner", "metadata": {"dst_ip": "203.0.113.10", "dst_port": 8000 + index}}
         for index in range(6)
     ]
 
@@ -68,7 +68,7 @@ def test_correlate_events_detects_lateral_movement_indicator():
             "model": "local_behavior_baseline",
             "device_id": "worker-1",
             "score": 0.55,
-            "observation": {"peer": "10.0.0.10", "port": 445},
+            "observation": {"peer": "203.0.113.10", "port": 445},
             "findings": [{"type": "new_peer"}],
         },
         {
@@ -76,7 +76,7 @@ def test_correlate_events_detects_lateral_movement_indicator():
             "model": "local_behavior_baseline",
             "device_id": "worker-1",
             "score": 0.55,
-            "observation": {"peer": "10.0.0.11", "port": 445},
+            "observation": {"peer": "203.0.113.11", "port": 445},
             "findings": [{"type": "new_peer"}],
         },
     ]
@@ -93,14 +93,14 @@ def test_correlate_events_detects_payload_behavior_chain():
             "model": "local_behavior_baseline",
             "device_id": "worker-1",
             "score": 0.55,
-            "observation": {"peer": "10.0.0.10", "port": 443},
+            "observation": {"peer": "203.0.113.10", "port": 443},
             "findings": [{"type": "new_peer"}],
         },
         {
             "timestamp": 2,
             "model": "local_payload_classifier",
             "risk_score": 0.85,
-            "network": {"src_ip": "worker-1", "dst_ip": "10.0.0.10", "dst_port": 443},
+            "network": {"src_ip": "worker-1", "dst_ip": "203.0.113.10", "dst_port": 443},
             "findings": [{"type": "credential_marker"}],
         },
     ]

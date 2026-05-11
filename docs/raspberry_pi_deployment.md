@@ -52,7 +52,7 @@ Environment overrides:
 
 ```bash
 PORTMAP_SCAN_INTERVAL=30 \
-PORTMAP_MASTER_HOST=192.168.1.20 \
+PORTMAP_MASTER_HOST=<LAN_IP> \
 portmap-worker --config core_engine/default_configs/worker_orchestrated.json --profile raspberry_pi --continuous
 ```
 
@@ -103,10 +103,10 @@ For a dedicated Raspberry Pi worker, create `~/.portmap-ai/data/worker.json`:
 {
   "node_role": "worker",
   "node_id": "pi-worker-001",
-  "master_ip": "192.168.1.20",
+  "master_ip": "<LAN_IP>",
   "port": 9000,
   "scan_interval": 15,
-  "orchestrator_url": "http://192.168.1.20:9100",
+  "orchestrator_url": "http://<LAN_IP>:9100",
   "orchestrator_token": "${secret:PORTMAP_ORCHESTRATOR_TOKEN}"
 }
 ```

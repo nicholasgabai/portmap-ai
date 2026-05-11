@@ -10,7 +10,7 @@ def test_classify_payload_observation_flags_cleartext_credentials_without_raw_st
     result = classify_payload_observation(
         {
             "protocol": "HTTP",
-            "metadata": {"src_ip": "10.0.0.5", "dst_ip": "10.0.0.10", "dst_port": 80},
+            "metadata": {"src_ip": "203.0.113.5", "dst_ip": "203.0.113.10", "dst_port": 80},
             "payload_text": "POST /login HTTP/1.1\r\nHost: local\r\n\r\npassword=secret",
         }
     )
@@ -87,7 +87,7 @@ def test_detect_exfiltration_aggregates_public_destination_volume():
     classifications = [
         {"network": {"dst_ip": "8.8.8.8"}, "payload": {"length": 700000}},
         {"network": {"dst_ip": "8.8.8.8"}, "payload": {"length": 400000}},
-        {"network": {"dst_ip": "10.0.0.10"}, "payload": {"length": 9000000}},
+        {"network": {"dst_ip": "203.0.113.10"}, "payload": {"length": 9000000}},
     ]
 
     findings = detect_exfiltration(classifications)

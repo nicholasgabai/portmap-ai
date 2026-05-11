@@ -21,8 +21,8 @@ Create a dry-run distributed scan plan:
 portmap cluster plan \
   --target 127.0.0.1 \
   --ports 80,443 \
-  --worker worker-a@10.0.0.2 \
-  --worker worker-b@10.0.0.3 \
+  --worker worker-a@<LAN_IP> \
+  --worker worker-b@<LAN_IP> \
   --output json
 ```
 
@@ -30,7 +30,7 @@ Pass worker records as JSON:
 
 ```bash
 portmap cluster plan \
-  --target 10.0.0.0/30 \
+  --target <LAN_CIDR> \
   --ports 22,80,443 \
   --workers-json '{"workers":[{"node_id":"worker-a","status":"ready","max_concurrency":2}]}' \
   --output json

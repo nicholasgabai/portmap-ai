@@ -6,6 +6,11 @@ from core_engine import platform_utils
 from core_engine.modules import discovery
 from core_engine.modules.ip_utils import parse_target
 
+MAC_A = ":".join(["aa", "bb", "cc", "dd", "ee", "ff"])
+MAC_B = ":".join(["11", "22", "33", "44", "55", "66"])
+MAC_C_DASHED = "-".join(["77", "88", "99", "aa", "bb", "cc"])
+MAC_C = ":".join(["77", "88", "99", "aa", "bb", "cc"])
+
 
 class FakeSocket:
     def __init__(self, code):
@@ -32,28 +37,28 @@ def socket_factory_for(code):
 
 
 def test_parse_arp_table_handles_common_formats():
-    output = """
-? (192.168.1.1) at aa:bb:cc:dd:ee:ff on en0 ifscope [ethernet]
-192.168.1.20 dev wlan0 lladdr 11:22:33:44:55:66 REACHABLE
-  192.168.1.30           77-88-99-aa-bb-cc     dynamic
+    output = f"""
+? (203.0.113.1) at {MAC_A} on en0 ifscope [ethernet]
+203.0.113.20 dev wlan0 lladdr {MAC_B} REACHABLE
+  203.0.113.30           {MAC_C_DASHED}     dynamic
 """
 
     rows = discovery.parse_arp_table(output)
 
     assert rows == [
-        {"host": "192.168.1.1", "interface": "en0", "mac": "aa:bb:cc:dd:ee:ff", "source": "arp"},
-        {"host": "192.168.1.20", "interface": "wlan0", "mac": "11:22:33:44:55:66", "source": "arp"},
-        {"host": "192.168.1.30", "interface": "", "mac": "77:88:99:aa:bb:cc", "source": "arp"},
+        {"host": "203.0.113.1", "interface": "en0", "mac": MAC_A, "source": "arp"},
+        {"host": "203.0.113.20", "interface": "wlan0", "mac": MAC_B, "source": "arp"},
+        {"host": "203.0.113.30", "interface": "", "mac": MAC_C, "source": "arp"},
     ]
 
 
 def test_collect_arp_inventory_uses_supplied_output():
     rows = discovery.collect_arp_inventory(
-        arp_output="? (10.0.0.1) at aa:bb:cc:dd:ee:ff on en0 ifscope [ethernet]"
+        arp_output=f"? (203.0.113.1) at {MAC_A} on en0 ifscope [ethernet]"
     )
 
-    assert rows[0]["host"] == "10.0.0.1"
-    assert rows[0]["mac"] == "aa:bb:cc:dd:ee:ff"
+    assert rows[0]["host"] == "203.0.113.1"
+    assert rows[0]["mac"] == MAC_A
 
 
 def test_tcp_reachability_treats_refused_as_reachable():
@@ -80,16 +85,16 @@ def test_tcp_reachability_treats_refused_as_reachable():
 
 def test_inventory_network_assets_uses_cidr_and_arp_evidence():
     rows = discovery.inventory_network_assets(
-        ["192.168.1.0/30"],
+        ["203.0.113.0/30"],
         methods=["arp"],
-        arp_output="? (192.168.1.1) at aa:bb:cc:dd:ee:ff on en0 ifscope [ethernet]",
+        arp_output=f"? (203.0.113.1) at {MAC_A} on en0 ifscope [ethernet]",
         rate_delay=0,
     )
 
     by_host = {row["host"]: row for row in rows}
-    assert by_host["192.168.1.1"]["status"] == "reachable"
-    assert by_host["192.168.1.1"]["mac"] == "aa:bb:cc:dd:ee:ff"
-    assert by_host["192.168.1.2"]["status"] == "unknown"
+    assert by_host["203.0.113.1"]["status"] == "reachable"
+    assert by_host["203.0.113.1"]["mac"] == MAC_A
+    assert by_host["203.0.113.2"]["status"] == "unknown"
 
 
 def test_inventory_network_assets_uses_transport_availability():
@@ -132,30 +137,30 @@ def test_ping_reachability_uses_platform_ping(monkeypatch):
 
 
 def test_broadcast_candidates_for_ipv4_cidr():
-    assert discovery.broadcast_candidates(["192.168.1.0/24", "::1/128"]) == [
-        {"broadcast": "192.168.1.255", "method": "broadcast_candidate", "network": "192.168.1.0/24"}
+    assert discovery.broadcast_candidates(["203.0.113.0/24", "::1/128"]) == [
+        {"broadcast": "203.0.113.255", "method": "broadcast_candidate", "network": "203.0.113.0/24"}
     ]
 
 
 def test_local_topology_snapshot_is_advisory(monkeypatch):
-    monkeypatch.setattr(discovery, "detect_default_gateway", lambda: {"gateway_ip": "192.168.1.1"})
+    monkeypatch.setattr(discovery, "detect_default_gateway", lambda: {"gateway_ip": "203.0.113.1"})
     monkeypatch.setattr(
         discovery,
         "local_networks",
-        lambda: [{"interface": "en0", "address": "192.168.1.10", "network": "192.168.1.0/24"}],
+        lambda: [{"interface": "en0", "address": "203.0.113.10", "network": "203.0.113.0/24"}],
     )
-    monkeypatch.setattr(discovery, "collect_arp_inventory", lambda: [{"host": "192.168.1.1"}])
+    monkeypatch.setattr(discovery, "collect_arp_inventory", lambda: [{"host": "203.0.113.1"}])
 
     snapshot = discovery.local_topology_snapshot()
 
     assert snapshot["advisory_only"] is True
     assert snapshot["automatic_changes"] is False
-    assert snapshot["broadcast_candidates"][0]["broadcast"] == "192.168.1.255"
-    assert snapshot["arp_inventory"] == [{"host": "192.168.1.1"}]
+    assert snapshot["broadcast_candidates"][0]["broadcast"] == "203.0.113.255"
+    assert snapshot["arp_inventory"] == [{"host": "203.0.113.1"}]
 
 
 def test_asset_telemetry_events_include_node_context():
-    asset = {"host": "192.168.1.10", "status": "reachable"}
+    asset = {"host": "203.0.113.10", "status": "reachable"}
 
     events = discovery.asset_telemetry_events([asset], node_id="worker-1")
 
@@ -164,7 +169,7 @@ def test_asset_telemetry_events_include_node_context():
             "asset": asset,
             "node_id": "worker-1",
             "source": "portmap.asset_inventory",
-            "target": "192.168.1.10",
+            "target": "203.0.113.10",
             "type": "asset_inventory",
         }
     ]

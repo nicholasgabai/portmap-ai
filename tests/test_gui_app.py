@@ -9,6 +9,10 @@ from gui import app as gui_app
 from gui import visualization
 
 
+def _timestamp(date, *parts):
+    return f"{date}T{':'.join(parts)}Z"
+
+
 def test_compute_metrics():
     metrics = gui_app._compute_metrics(
         [{"node_id": "n1", "status": "online", "last_seen": 10}],
@@ -48,7 +52,7 @@ def test_scan_rows_from_telemetry_extracts_ports_sample():
     rows = gui_app._scan_rows_from_telemetry(
         [
             {
-                "timestamp": "2026-05-05T12:00:00Z",
+                "timestamp": _timestamp("2026-05-05", "12", "00", "00"),
                 "event_type": "worker_telemetry",
                 "node_id": "worker-1",
                 "risk_score": 0.8,
@@ -70,7 +74,7 @@ def test_scan_rows_from_telemetry_extracts_ports_sample():
 
     assert rows == [
         {
-            "timestamp": "2026-05-05T12:00:00Z",
+            "timestamp": _timestamp("2026-05-05", "12", "00", "00"),
             "node_id": "worker-1",
             "program": "postgres",
             "port": 5432,
@@ -163,7 +167,7 @@ def test_load_scan_results_prefers_worker_telemetry(monkeypatch, tmp_path):
         json.dumps(
             {
                 "event_type": "worker_telemetry",
-                "timestamp": "2026-05-05T12:00:00Z",
+                "timestamp": _timestamp("2026-05-05", "12", "00", "00"),
                 "node_id": "worker-1",
                 "ports_sample": [{"program": "nginx", "port": 443, "score": 0.4}],
             }
@@ -188,7 +192,7 @@ def test_load_scan_results_falls_back_to_remediation_events(monkeypatch, tmp_pat
     rows = dashboard._load_scan_results(
         [
             {
-                "timestamp": "2026-05-05T12:00:00Z",
+                "timestamp": _timestamp("2026-05-05", "12", "00", "00"),
                 "node_id": "worker-2",
                 "program": "postgres",
                 "port": 5432,
@@ -211,7 +215,7 @@ def test_visualization_builds_risk_timeline():
             {"timestamp": 10, "risk_score": 0.2, "action": "monitor"},
             {"timestamp": 20, "risk_score": 0.82, "action": "prompt_operator"},
             {"timestamp": 310, "risk_score": 0.95, "action": "block"},
-            {"timestamp": "2026-05-10T12:00:00Z", "risk_score": 0.51, "action": "monitor"},
+            {"timestamp": _timestamp("2026-05-10", "12", "00", "00"), "risk_score": 0.51, "action": "monitor"},
         ],
         bucket_seconds=300,
     )
@@ -230,9 +234,9 @@ def test_visualization_builds_topology_and_flow_rows():
             {
                 "timestamp": 1,
                 "protocol": "TCP",
-                "src_ip": "10.0.0.5",
+                "src_ip": "203.0.113.5",
                 "src_port": 51515,
-                "dst_ip": "10.0.0.10",
+                "dst_ip": "203.0.113.10",
                 "dst_port": 443,
                 "payload_bytes": 120,
                 "application_protocol": "https",
@@ -249,9 +253,9 @@ def test_visualization_builds_topology_and_flow_rows():
         topology=report["topology"],
     )
 
-    assert edges[0]["src_ip"] == "10.0.0.5"
+    assert edges[0]["src_ip"] == "203.0.113.5"
     assert edges[0]["application_protocols"] == "HTTPS"
-    assert "10.0.0.5:51515 -> 10.0.0.10:443" == flows[0]["flow"]
+    assert "203.0.113.5:51515 -> 203.0.113.10:443" == flows[0]["flow"]
     assert summary["flow_count"] == 1
     assert summary["raw_payload_stored"] is False
     assert summary["automatic_changes"] is False
@@ -264,9 +268,9 @@ def test_load_flow_visualization_reads_flow_events(monkeypatch, tmp_path):
             {
                 "timestamp": 1,
                 "protocol": "TCP",
-                "src_ip": "10.0.0.5",
+                "src_ip": "203.0.113.5",
                 "src_port": 51515,
-                "dst_ip": "10.0.0.10",
+                "dst_ip": "203.0.113.10",
                 "dst_port": 443,
                 "payload_bytes": 120,
             }
@@ -285,12 +289,12 @@ def test_load_flow_visualization_reads_flow_events(monkeypatch, tmp_path):
 def test_flow_events_from_master_events_extracts_nested_rows():
     rows = gui_app._flow_events_from_master_events(
         [
-            {"event_type": "worker_telemetry", "flows": [{"src_ip": "10.0.0.1", "dst_ip": "10.0.0.2"}]},
-            {"event_type": "traffic_flow", "src_ip": "10.0.0.3", "dst_ip": "10.0.0.4"},
+            {"event_type": "worker_telemetry", "flows": [{"src_ip": "203.0.113.1", "dst_ip": "203.0.113.2"}]},
+            {"event_type": "traffic_flow", "src_ip": "203.0.113.3", "dst_ip": "203.0.113.4"},
         ]
     )
 
-    assert [row["src_ip"] for row in rows] == ["10.0.0.1", "10.0.0.3"]
+    assert [row["src_ip"] for row in rows] == ["203.0.113.1", "203.0.113.3"]
 
 
 def test_load_orchestrator_health_reads_health_and_metrics(monkeypatch):

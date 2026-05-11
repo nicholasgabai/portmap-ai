@@ -8,7 +8,7 @@ def test_register_and_heartbeat(tmp_path):
     state_file = tmp_path / "state.json"
     state = OrchestratorState(state_file=state_file)
 
-    node = state.register_node("worker-1", "worker", "192.168.1.2", {"cap": "scan"})
+    node = state.register_node("worker-1", "worker", "203.0.113.2", {"cap": "scan"})
     assert node["node_id"] == "worker-1"
     assert state.get_node("worker-1") is not None
 
@@ -26,7 +26,7 @@ def test_state_scrubs_secrets_from_metadata(tmp_path):
     node = state.register_node(
         "worker-1",
         "worker",
-        "192.168.1.2",
+        "203.0.113.2",
         {"orchestrator_token": "secret-token", "safe": "value"},
     )
 
@@ -44,7 +44,7 @@ def test_state_scrubs_secrets_from_metadata(tmp_path):
 def test_state_persistence(tmp_path):
     state_file = tmp_path / "state.json"
     state = OrchestratorState(state_file=state_file)
-    state.register_node("master-1", "master", "10.0.0.5")
+    state.register_node("master-1", "master", "203.0.113.5")
 
     state_reloaded = OrchestratorState(state_file=state_file)
     nodes = state_reloaded.list_nodes()
@@ -54,7 +54,7 @@ def test_state_persistence(tmp_path):
 def test_stale_nodes_are_marked_offline(tmp_path):
     state_file = tmp_path / "state.json"
     state = OrchestratorState(state_file=state_file, stale_after_seconds=10)
-    node = state.register_node("worker-1", "worker", "192.168.1.2")
+    node = state.register_node("worker-1", "worker", "203.0.113.2")
 
     marked = state.mark_stale_nodes(now=int(node["last_seen"]) + 11)
 

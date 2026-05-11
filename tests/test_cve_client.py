@@ -5,12 +5,16 @@ from core_engine.vuln.cve_store import load_cve_cache, merge_cve_records, save_c
 from core_engine.vuln.cvss import advisory_risk_score, severity_from_score
 
 
+def _timestamp(date, *parts):
+    return f"{date}T{':'.join(parts)}.000"
+
+
 NVD_RECORD = {
     "cve": {
         "id": "CVE-2021-41773",
         "sourceIdentifier": "security@example.test",
-        "published": "2021-10-05T12:00:00.000",
-        "lastModified": "2021-10-06T12:00:00.000",
+        "published": _timestamp("2021-10-05", "12", "00", "00"),
+        "lastModified": _timestamp("2021-10-06", "12", "00", "00"),
         "descriptions": [
             {"lang": "en", "value": "Apache HTTP Server 2.4.49 path traversal vulnerability."}
         ],

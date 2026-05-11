@@ -9,7 +9,7 @@ def _incident(**overrides):
         "score": 0.9,
         "entity": "worker-1",
         "event_count": 3,
-        "peers": ["10.0.0.10"],
+        "peers": ["203.0.113.10"],
         "ports": [443],
         "findings": ["new_peer", "credential_marker"],
         "explanation": "payload and behavior anomalies appeared in the same correlation window",
@@ -43,7 +43,7 @@ def test_suspicious_scan_recommends_scan_source_review():
 
 
 def test_lateral_movement_recommends_segmentation_review():
-    recommendations = recommend_incident(_incident(type="lateral_movement_indicator", score=0.75, findings=["new_peer"], peers=["10.0.0.10", "10.0.0.11"]))
+    recommendations = recommend_incident(_incident(type="lateral_movement_indicator", score=0.75, findings=["new_peer"], peers=["203.0.113.10", "203.0.113.11"]))
 
     assert any(item["action"] == "review_segmentation" for item in recommendations)
 

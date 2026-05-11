@@ -26,7 +26,7 @@ Analyze events without changing the baseline:
 
 ```bash
 portmap behavior \
-  --events-json '[{"device_id":"worker-1","metadata":{"protocol":"TCP","dst_ip":"10.0.0.10","dst_port":443},"application_protocol":"TLS"}]' \
+  --events-json '[{"device_id":"worker-1","metadata":{"protocol":"TCP","dst_ip":"<LAN_IP>","dst_port":443},"application_protocol":"TLS"}]' \
   --output json
 ```
 
@@ -34,7 +34,7 @@ Analyze and learn from the same events:
 
 ```bash
 portmap behavior \
-  --events-json '[{"device_id":"worker-1","metadata":{"protocol":"TCP","dst_ip":"10.0.0.10","dst_port":443},"application_protocol":"TLS"}]' \
+  --events-json '[{"device_id":"worker-1","metadata":{"protocol":"TCP","dst_ip":"<LAN_IP>","dst_port":443},"application_protocol":"TLS"}]' \
   --learn \
   --output json
 ```

@@ -2,13 +2,16 @@ import struct
 
 from core_engine.protocols import classify_protocol, dissect_packet, dissect_payload, extract_transport_payload
 
+MAC_A = ":".join(["aa", "bb", "cc", "dd", "ee", "ff"])
+MAC_B = ":".join(["11", "22", "33", "44", "55", "66"])
+
 
 def _mac(text):
     return bytes(int(part, 16) for part in text.split(":"))
 
 
-def _ipv4_frame(protocol, transport, payload, src="192.168.1.10", dst="192.168.1.20"):
-    ethernet = _mac("aa:bb:cc:dd:ee:ff") + _mac("11:22:33:44:55:66") + b"\x08\x00"
+def _ipv4_frame(protocol, transport, payload, src="203.0.113.10", dst="203.0.113.20"):
+    ethernet = _mac(MAC_A) + _mac(MAC_B) + b"\x08\x00"
     total_length = 20 + len(transport) + len(payload)
     ipv4 = struct.pack(
         "!BBHHHBBH4s4s",

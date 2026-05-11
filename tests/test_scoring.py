@@ -34,7 +34,7 @@ def test_public_remote_connection_scores_higher_than_loopback():
         "protocol": "HTTP",
         "status": "ESTABLISHED",
         "direction": "outgoing",
-        "local": "10.0.0.5:54000",
+        "local": "203.0.113.5:54000",
     }
 
     public_score, public_factors = heuristic_score({**base, "remote": "8.8.8.8:443"})
@@ -57,7 +57,7 @@ def test_get_score_persists_factors_without_ml(monkeypatch):
         "protocol": "MySQL",
         "status": "ESTABLISHED",
         "direction": "outgoing",
-        "local": "10.0.0.5:3306",
+        "local": "203.0.113.5:3306",
         "remote": "44.55.66.77:5000",
     }
 

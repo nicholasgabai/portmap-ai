@@ -29,7 +29,7 @@ Scan an authorized CIDR range with explicit safe limits:
 
 ```bash
 portmap fast-scan \
-  --target 192.168.1.0/24 \
+  --target <LAN_CIDR> \
   --ports 22,80,443 \
   --concurrency 64 \
   --rate 128 \
@@ -39,7 +39,7 @@ portmap fast-scan \
 Use aggressive mode only on networks where you have explicit authorization:
 
 ```bash
-portmap fast-scan --target 10.0.0.0/20 --ports 1-1024 --aggressive --output json
+portmap fast-scan --target <LAN_CIDR> --ports 1-1024 --aggressive --output json
 ```
 
 ## Safe Defaults

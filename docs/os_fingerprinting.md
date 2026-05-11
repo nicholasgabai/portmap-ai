@@ -50,7 +50,7 @@ Add passive observations when available:
 
 ```bash
 portmap os \
-  --target 192.168.1.20 \
+  --target <LAN_IP> \
   --ports 22,445,3389 \
   --ttl 127 \
   --tcp-window 64240 \
@@ -70,7 +70,7 @@ portmap os \
 
 ```json
 {
-  "target": "192.168.1.20",
+  "target": "<LAN_IP>",
   "probable_os": "Windows",
   "confidence": 0.88,
   "certainty": "high",

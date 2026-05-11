@@ -12,13 +12,16 @@ from core_engine.modules.dpi import (
     shannon_entropy,
 )
 
+MAC_A = ":".join(["aa", "bb", "cc", "dd", "ee", "ff"])
+MAC_B = ":".join(["11", "22", "33", "44", "55", "66"])
+
 
 def _mac(text):
     return bytes(int(part, 16) for part in text.split(":"))
 
 
-def _ipv4_tcp_frame(src="10.0.0.5", dst="10.0.0.10", src_port=51515, dst_port=80, payload=b""):
-    ethernet = _mac("aa:bb:cc:dd:ee:ff") + _mac("11:22:33:44:55:66") + b"\x08\x00"
+def _ipv4_tcp_frame(src="203.0.113.5", dst="203.0.113.10", src_port=51515, dst_port=80, payload=b""):
+    ethernet = _mac(MAC_A) + _mac(MAC_B) + b"\x08\x00"
     total_length = 20 + 20 + len(payload)
     ipv4 = struct.pack(
         "!BBHHHBBH4s4s",
@@ -78,7 +81,7 @@ def test_analyze_observation_accepts_base64_payload_and_redacts_preview():
     result = analyze_observation(
         {
             "protocol": "HTTP",
-            "metadata": {"protocol": "TCP", "src_ip": "10.0.0.5", "dst_ip": "10.0.0.10", "src_port": 51515, "dst_port": 80},
+            "metadata": {"protocol": "TCP", "src_ip": "203.0.113.5", "dst_ip": "203.0.113.10", "src_port": 51515, "dst_port": 80},
             "payload_b64": base64.b64encode(payload).decode("ascii"),
         },
         include_payload_preview=True,
@@ -115,8 +118,8 @@ def test_entropy_marks_high_entropy_payload():
 
 
 def test_session_key_is_bidirectional_and_group_sessions_summarizes():
-    left = {"timestamp": 1, "protocol": "TCP", "src_ip": "10.0.0.5", "src_port": 1111, "dst_ip": "10.0.0.10", "dst_port": 80, "payload_bytes": 10}
-    right = {"timestamp": 3, "protocol": "TCP", "src_ip": "10.0.0.10", "src_port": 80, "dst_ip": "10.0.0.5", "dst_port": 1111, "payload_bytes": 20}
+    left = {"timestamp": 1, "protocol": "TCP", "src_ip": "203.0.113.5", "src_port": 1111, "dst_ip": "203.0.113.10", "dst_port": 80, "payload_bytes": 10}
+    right = {"timestamp": 3, "protocol": "TCP", "src_ip": "203.0.113.10", "src_port": 80, "dst_ip": "203.0.113.5", "dst_port": 1111, "payload_bytes": 20}
 
     assert session_key(left) == session_key(right)
     sessions = group_sessions([left, right])

@@ -24,7 +24,7 @@ Generate recommendations from a correlation report:
 
 ```bash
 portmap recommend \
-  --incidents-json '{"incidents":[{"incident_id":"inc-1","type":"chained_behavior_payload_risk","severity":"high","score":0.9,"entity":"worker-1","peers":["10.0.0.10"],"findings":["new_peer","credential_marker"],"event_count":2}]}' \
+  --incidents-json '{"incidents":[{"incident_id":"inc-1","type":"chained_behavior_payload_risk","severity":"high","score":0.9,"entity":"worker-1","peers":["<LAN_IP>"],"findings":["new_peer","credential_marker"],"event_count":2}]}' \
   --output json
 ```
 

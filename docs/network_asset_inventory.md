@@ -19,7 +19,7 @@ The inventory engine lives in `core_engine.modules.discovery` and focuses on:
 Inventory an authorized CIDR range:
 
 ```bash
-portmap discover --range 192.168.1.0/24 --output json
+portmap discover --range <LAN_CIDR> --output json
 ```
 
 Inventory the detected local networks with default safe limits:
@@ -32,7 +32,7 @@ Combine methods and customize transport checks:
 
 ```bash
 portmap discover \
-  --range 192.168.1.0/24 \
+  --range <LAN_CIDR> \
   --method arp \
   --method tcp \
   --tcp-ports 22,80,443,8080 \
@@ -42,7 +42,7 @@ portmap discover \
 Include topology context:
 
 ```bash
-portmap discover --range 192.168.1.0/24 --topology --output json
+portmap discover --range <LAN_CIDR> --topology --output json
 ```
 
 ## Safety Defaults
@@ -52,7 +52,7 @@ The default target expansion limit is 256 assets. Larger inventory jobs require 
 Default methods are ARP inventory plus TCP availability checks. `ping` is available as an opt-in method:
 
 ```bash
-portmap discover --range 10.0.0.0/24 --method ping --method tcp
+portmap discover --range <LAN_CIDR> --method ping --method tcp
 ```
 
 This phase follows the global PortMap-AI safety guarantees.
@@ -64,7 +64,7 @@ Each asset row is JSON serializable:
 ```json
 {
   "asset_type": "network_asset",
-  "host": "192.168.1.10",
+  "host": "<LAN_IP>",
   "ip_version": 4,
   "status": "reachable",
   "target_source": "cidr",
@@ -75,12 +75,12 @@ Each asset row is JSON serializable:
     {
       "method": "arp",
       "reachable": true,
-      "mac": "aa:bb:cc:dd:ee:ff",
+      "mac": "<MAC_ADDRESS>",
       "interface": "en0",
       "reason": "arp_table_entry"
     }
   ],
-  "mac": "aa:bb:cc:dd:ee:ff",
+  "mac": "<MAC_ADDRESS>",
   "interface": "en0",
   "open_ports": [443],
   "closed_ports": [22, 80]
@@ -101,11 +101,11 @@ Statuses are:
 {
   "type": "asset_inventory",
   "source": "portmap.asset_inventory",
-  "target": "192.168.1.10",
+  "target": "<LAN_IP>",
   "node_id": "worker-001",
   "asset": {
     "asset_type": "network_asset",
-    "host": "192.168.1.10"
+    "host": "<LAN_IP>"
   }
 }
 ```

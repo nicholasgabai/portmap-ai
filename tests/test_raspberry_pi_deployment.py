@@ -14,13 +14,13 @@ def test_raspberry_pi_profile_loads_low_resource_defaults(tmp_path, monkeypatch)
     }))
 
     monkeypatch.setenv("PORTMAP_SCAN_INTERVAL", "30")
-    monkeypatch.setenv("PORTMAP_MASTER_HOST", "192.168.1.20")
+    monkeypatch.setenv("PORTMAP_MASTER_HOST", "203.0.113.20")
 
     config, _ = load_node_config(str(config_path), include_settings=False)
 
     assert config["profile"] == "raspberry_pi"
     assert config["scan_interval"] == "30"
-    assert config["master_ip"] == "192.168.1.20"
+    assert config["master_ip"] == "203.0.113.20"
     assert config["timeout"] == "5"
     assert config["log_max_bytes"] == "1048576"
 

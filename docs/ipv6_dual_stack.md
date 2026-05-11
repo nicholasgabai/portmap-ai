@@ -14,7 +14,7 @@ Supported target forms:
 - IPv4 literal: `127.0.0.1`
 - IPv6 literal: `::1`
 - Bracketed IPv6 literal: `[::1]`
-- CIDR: `192.168.1.0/30` or `fd00::/126`
+- CIDR: `<LAN_CIDR>` or `fd00::/126`
 - Hostname: resolved through the OS resolver when enabled by the scanner
 
 Malformed targets are rejected before scanning. CIDR expansion is capped by a safe target limit.
@@ -54,7 +54,7 @@ portmap scan --target 127.0.0.1 --ports 22,80,443 --ip-version 4 --output json
 CIDR scans are supported but capped:
 
 ```bash
-portmap scan --target 192.168.1.0/30 --ports 80 --output json
+portmap scan --target <LAN_CIDR> --ports 80 --output json
 ```
 
 ## Result Shape

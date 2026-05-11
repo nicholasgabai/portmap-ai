@@ -15,7 +15,7 @@ def test_basic_scan_normalizes_psutil_connections(monkeypatch):
             type=socket.SOCK_STREAM,
         ),
         SimpleNamespace(
-            laddr=SimpleNamespace(ip="10.0.0.10", port=5353),
+            laddr=SimpleNamespace(ip="203.0.113.10", port=5353),
             raddr=SimpleNamespace(ip="224.0.0.251", port=5353),
             pid=None,
             status="NONE",

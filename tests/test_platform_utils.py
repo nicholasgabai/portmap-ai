@@ -22,7 +22,7 @@ def test_platform_info_flags(monkeypatch):
 def test_normalize_bind_host():
     assert platform_utils.normalize_bind_host(None) == "127.0.0.1"
     assert platform_utils.normalize_bind_host("0.0.0.0") == "127.0.0.1"
-    assert platform_utils.normalize_bind_host("192.168.1.10") == "192.168.1.10"
+    assert platform_utils.normalize_bind_host("203.0.113.10") == "203.0.113.10"
 
 
 def test_listener_pid_uses_psutil(monkeypatch):

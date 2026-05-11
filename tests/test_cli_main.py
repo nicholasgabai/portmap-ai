@@ -191,7 +191,7 @@ def test_flows_outputs_json(monkeypatch, capsys):
     result = cli_main.main([
         "flows",
         "--events-json",
-        '[{"timestamp":1,"protocol":"TCP","src_ip":"10.0.0.1","dst_ip":"10.0.0.2","src_port":1111,"dst_port":443}]',
+        '[{"timestamp":1,"protocol":"TCP","src_ip":"203.0.113.1","dst_ip":"203.0.113.2","src_port":1111,"dst_port":443}]',
         "--window",
         "30",
         "--output",
@@ -200,14 +200,14 @@ def test_flows_outputs_json(monkeypatch, capsys):
 
     assert result == 0
     assert seen == {
-        "events": [{"timestamp": 1, "protocol": "TCP", "src_ip": "10.0.0.1", "dst_ip": "10.0.0.2", "src_port": 1111, "dst_port": 443}],
+        "events": [{"timestamp": 1, "protocol": "TCP", "src_ip": "203.0.113.1", "dst_ip": "203.0.113.2", "src_port": 1111, "dst_port": 443}],
         "window_seconds": 30.0,
     }
     assert json.loads(capsys.readouterr().out) == {"flow_count": 1, "flows": [{"flow_id": "abc"}], "ok": True}
 
 
 def test_flows_rejects_non_list_events(capsys):
-    result = cli_main.main(["flows", "--events-json", '{"src_ip":"10.0.0.1"}'])
+    result = cli_main.main(["flows", "--events-json", '{"src_ip":"203.0.113.1"}'])
 
     assert result == 1
     assert "must decode to a list" in capsys.readouterr().err
@@ -236,7 +236,7 @@ def test_cluster_plan_outputs_json(monkeypatch, capsys):
         "--ports",
         "80,443",
         "--worker",
-        "worker-a@10.0.0.2",
+        "worker-a@203.0.113.2",
         "--workers-json",
         '{"workers":[{"node_id":"worker-b","status":"ready"}]}',
         "--target-chunk-size",
@@ -252,7 +252,7 @@ def test_cluster_plan_outputs_json(monkeypatch, capsys):
     assert seen["ports"] == [80, 443]
     assert seen["workers"] == [
         {"node_id": "worker-b", "status": "ready"},
-        {"node_id": "worker-a", "address": "10.0.0.2", "status": "available", "role": "worker"},
+        {"node_id": "worker-a", "address": "203.0.113.2", "status": "available", "role": "worker"},
     ]
     assert seen["target_chunk_size"] == 2
     assert seen["port_chunk_size"] == 1
@@ -647,7 +647,7 @@ def test_vuln_outputs_prioritized_json(capsys):
 
 def test_vuln_matches_raw_cves_when_no_match_report_is_supplied(capsys):
     services = json.dumps([
-        {"target": "10.0.0.5", "port": 22, "state": "open", "service": "SSH", "version": "OpenSSH_9.1"}
+        {"target": "203.0.113.5", "port": 22, "state": "open", "service": "SSH", "version": "OpenSSH_9.1"}
     ])
     cves = json.dumps([
         {
@@ -987,7 +987,7 @@ def test_network_outputs_posture_json(monkeypatch, capsys):
         lambda: {
             "advisory_only": True,
             "automatic_changes": False,
-            "gateway": {"gateway_ip": "192.168.1.1"},
+            "gateway": {"gateway_ip": "203.0.113.1"},
             "exposed_services": [],
             "recommendations": [],
         },
@@ -1024,7 +1024,7 @@ def test_discover_outputs_asset_inventory_json(monkeypatch, capsys):
             "max_targets": max_targets,
             "aggressive": aggressive,
         })
-        return [{"host": "192.168.1.10", "status": "reachable"}]
+        return [{"host": "203.0.113.10", "status": "reachable"}]
 
     monkeypatch.setattr(cli_main, "inventory_network_assets", fake_inventory_network_assets)
     monkeypatch.setattr(
@@ -1036,7 +1036,7 @@ def test_discover_outputs_asset_inventory_json(monkeypatch, capsys):
     result = cli_main.main([
         "discover",
         "--range",
-        "192.168.1.0/30",
+        "203.0.113.0/30",
         "--method",
         "arp",
         "--method",
@@ -1062,12 +1062,12 @@ def test_discover_outputs_asset_inventory_json(monkeypatch, capsys):
         "ip_version": "4",
         "max_targets": 32,
         "methods": ["arp", "tcp"],
-        "ranges": ["192.168.1.0/30"],
+        "ranges": ["203.0.113.0/30"],
         "tcp_ports": [22, 443],
         "timeout": 0.2,
     }
     payload = json.loads(capsys.readouterr().out)
-    assert payload["assets"] == [{"host": "192.168.1.10", "status": "reachable"}]
+    assert payload["assets"] == [{"host": "203.0.113.10", "status": "reachable"}]
     assert payload["telemetry"][0]["node_id"] == "worker-1"
 
 

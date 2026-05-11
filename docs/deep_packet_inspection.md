@@ -22,7 +22,7 @@ Analyze a passive observation:
 
 ```bash
 portmap dpi \
-  --observation-json '{"protocol":"HTTP","metadata":{"protocol":"TCP","src_ip":"10.0.0.5","src_port":51515,"dst_ip":"10.0.0.10","dst_port":80},"payload_text":"GET / HTTP/1.1\r\nHost: local\r\n\r\n"}' \
+  --observation-json '{"protocol":"HTTP","metadata":{"protocol":"TCP","src_ip":"<LAN_IP>","src_port":51515,"dst_ip":"<LAN_IP>","dst_port":80},"payload_text":"GET / HTTP/1.1\r\nHost: local\r\n\r\n"}' \
   --output json
 ```
 

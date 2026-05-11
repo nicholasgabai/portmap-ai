@@ -16,7 +16,7 @@ def test_load_os_fingerprints_from_json_file(tmp_path):
 def test_fingerprint_observation_identifies_windows_from_rdp_and_ttl():
     result = os_fingerprint.fingerprint_observation(
         {
-            "target": "192.168.1.20",
+            "target": "203.0.113.20",
             "ttl": 127,
             "tcp_window": 64240,
             "tcp_options": ["mss", "sack", "wscale"],
@@ -33,7 +33,7 @@ def test_fingerprint_observation_identifies_windows_from_rdp_and_ttl():
 def test_fingerprint_observation_identifies_linux_from_ssh_banner():
     result = os_fingerprint.fingerprint_observation(
         {
-            "target": "10.0.0.5",
+            "target": "203.0.113.5",
             "ttl": 63,
             "tcp_window": 29200,
             "tcp_options": "mss,sack,timestamp,wscale",

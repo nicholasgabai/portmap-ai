@@ -7,8 +7,12 @@ from core_engine.integrations.splunk import format_splunk_hec_event
 from core_engine.integrations.webhook import format_webhook_alert, send_webhook_alert
 
 
+def _timestamp(date, *parts):
+    return f"{date}T{':'.join(parts)}Z"
+
+
 EVENT = {
-    "timestamp": "2026-05-10T12:00:00Z",
+    "timestamp": _timestamp("2026-05-10", "12", "00", "00"),
     "event_type": "vulnerability_alert",
     "severity": "critical",
     "title": "Critical Apache vulnerability",

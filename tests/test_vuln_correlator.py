@@ -57,7 +57,7 @@ def test_correlate_vulnerabilities_can_match_raw_cves_to_services():
         "cpes": ["cpe:2.3:a:openbsd:openssh:9.1:*:*:*:*:*:*:*"],
     }
     service = {
-        "target": "10.0.0.5",
+        "target": "203.0.113.5",
         "port": 22,
         "state": "open",
         "service": "SSH",

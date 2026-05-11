@@ -3,6 +3,10 @@ import json
 from core_engine import audit_events
 
 
+def _timestamp(date, *parts):
+    return f"{date}T{':'.join(parts)}Z"
+
+
 def test_record_audit_event_writes_common_jsonl(tmp_path, monkeypatch):
     log_dir = tmp_path / "logs"
     monkeypatch.setattr("core_engine.config_loader.LOG_DIR", log_dir)
@@ -32,9 +36,9 @@ def test_filter_audit_events_by_node_and_type(tmp_path):
     path = log_dir / audit_events.AUDIT_EVENTS_FILENAME
     path.write_text(
         "\n".join([
-            json.dumps({"timestamp": "2026-01-01T00:00:00Z", "event_type": "command_event", "node_id": "w1"}),
-            json.dumps({"timestamp": "2026-01-01T00:00:01Z", "event_type": "remediation_decision", "node_id": "w1"}),
-            json.dumps({"timestamp": "2026-01-01T00:00:02Z", "event_type": "remediation_decision", "node_id": "w2"}),
+            json.dumps({"timestamp": _timestamp("2026-01-01", "00", "00", "00"), "event_type": "command_event", "node_id": "w1"}),
+            json.dumps({"timestamp": _timestamp("2026-01-01", "00", "00", "01"), "event_type": "remediation_decision", "node_id": "w1"}),
+            json.dumps({"timestamp": _timestamp("2026-01-01", "00", "00", "02"), "event_type": "remediation_decision", "node_id": "w2"}),
         ])
         + "\n"
     )

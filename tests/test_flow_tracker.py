@@ -11,8 +11,8 @@ def test_event_to_flow_event_accepts_capture_metadata():
     event = {
         "timestamp": 1.5,
         "protocol": "TCP",
-        "src_ip": "10.0.0.5",
-        "dst_ip": "10.0.0.10",
+        "src_ip": "203.0.113.5",
+        "dst_ip": "203.0.113.10",
         "src_port": 51515,
         "dst_port": 443,
         "payload_bytes": 128,
@@ -22,7 +22,7 @@ def test_event_to_flow_event_accepts_capture_metadata():
 
     flow_event = event_to_flow_event(event)
 
-    assert flow_event.src_ip == "10.0.0.5"
+    assert flow_event.src_ip == "203.0.113.5"
     assert flow_event.dst_port == 443
     assert flow_event.transport == "TCP"
     assert flow_event.application_protocol == "TLS"
@@ -36,8 +36,8 @@ def test_event_to_flow_event_accepts_dpi_result_shape():
         "protocol": "HTTP",
         "headers": {
             "network": {
-                "src_ip": "10.0.0.5",
-                "dst_ip": "10.0.0.10",
+                "src_ip": "203.0.113.5",
+                "dst_ip": "203.0.113.10",
                 "src_port": 51515,
                 "dst_port": 80,
                 "transport": "TCP",
@@ -57,16 +57,16 @@ def test_event_to_flow_event_accepts_dpi_result_shape():
 def test_flow_key_is_bidirectional():
     left = {
         "protocol": "TCP",
-        "src_ip": "10.0.0.5",
+        "src_ip": "203.0.113.5",
         "src_port": 51515,
-        "dst_ip": "10.0.0.10",
+        "dst_ip": "203.0.113.10",
         "dst_port": 443,
     }
     right = {
         "protocol": "TCP",
-        "src_ip": "10.0.0.10",
+        "src_ip": "203.0.113.10",
         "src_port": 443,
-        "dst_ip": "10.0.0.5",
+        "dst_ip": "203.0.113.5",
         "dst_port": 51515,
     }
 
@@ -78,9 +78,9 @@ def test_reconstruct_flows_tracks_directional_counters_and_protocols():
         {
             "timestamp": 1,
             "protocol": "TCP",
-            "src_ip": "10.0.0.5",
+            "src_ip": "203.0.113.5",
             "src_port": 51515,
-            "dst_ip": "10.0.0.10",
+            "dst_ip": "203.0.113.10",
             "dst_port": 443,
             "payload_bytes": 100,
             "dissection": {"protocol": "TLS"},
@@ -88,9 +88,9 @@ def test_reconstruct_flows_tracks_directional_counters_and_protocols():
         {
             "timestamp": 2,
             "protocol": "TCP",
-            "src_ip": "10.0.0.10",
+            "src_ip": "203.0.113.10",
             "src_port": 443,
-            "dst_ip": "10.0.0.5",
+            "dst_ip": "203.0.113.5",
             "dst_port": 51515,
             "payload_bytes": 200,
             "dpi": {"protocol": "TLS", "findings": [{"type": "truncated_tls_record"}]},
@@ -113,8 +113,8 @@ def test_reconstruct_flows_tracks_directional_counters_and_protocols():
 
 def test_reconstruct_flows_splits_idle_windows():
     events = [
-        {"timestamp": 1, "protocol": "TCP", "src_ip": "10.0.0.1", "src_port": 1111, "dst_ip": "10.0.0.2", "dst_port": 80},
-        {"timestamp": 10, "protocol": "TCP", "src_ip": "10.0.0.1", "src_port": 1111, "dst_ip": "10.0.0.2", "dst_port": 80},
+        {"timestamp": 1, "protocol": "TCP", "src_ip": "203.0.113.1", "src_port": 1111, "dst_ip": "203.0.113.2", "dst_port": 80},
+        {"timestamp": 10, "protocol": "TCP", "src_ip": "203.0.113.1", "src_port": 1111, "dst_ip": "203.0.113.2", "dst_port": 80},
     ]
 
     flows = reconstruct_flows(events, window_seconds=5)
@@ -128,7 +128,7 @@ def test_build_flow_report_includes_topology_and_omits_raw_payloads():
         {
             "timestamp": 1,
             "protocol": "UDP",
-            "src_ip": "10.0.0.20",
+            "src_ip": "203.0.113.20",
             "src_port": 5353,
             "dst_ip": "224.0.0.251",
             "dst_port": 5353,
@@ -140,23 +140,23 @@ def test_build_flow_report_includes_topology_and_omits_raw_payloads():
     assert report["ok"] is True
     assert report["raw_payload_stored"] is False
     assert report["flow_count"] == 1
-    assert report["topology"]["nodes"][0]["ip"] == "10.0.0.20"
+    assert report["topology"]["nodes"][0]["ip"] == "203.0.113.20"
     assert report["topology"]["edges"][0]["application_protocols"] == ["DNS"]
 
 
 def test_topology_from_flows_aggregates_shared_edges():
     flows = [
         {
-            "initiator": {"ip": "10.0.0.1", "port": 1111},
-            "responder": {"ip": "10.0.0.2", "port": 80},
+            "initiator": {"ip": "203.0.113.1", "port": 1111},
+            "responder": {"ip": "203.0.113.2", "port": 80},
             "packet_count": 2,
             "payload_bytes": 30,
             "transports": ["TCP"],
             "application_protocols": ["HTTP"],
         },
         {
-            "initiator": {"ip": "10.0.0.1", "port": 2222},
-            "responder": {"ip": "10.0.0.2", "port": 443},
+            "initiator": {"ip": "203.0.113.1", "port": 2222},
+            "responder": {"ip": "203.0.113.2", "port": 443},
             "packet_count": 3,
             "payload_bytes": 70,
             "transports": ["TCP"],

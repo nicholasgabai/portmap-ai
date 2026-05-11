@@ -33,7 +33,7 @@ Analyze an offline observation without making a network connection:
 
 ```bash
 portmap tls \
-  --observation-json '{"target":"legacy.example.com","server_name":"legacy.example.com","tls_version":"TLSv1.0","cipher":{"name":"RC4-MD5","bits":64},"certificate":{"subject":{"commonName":"legacy.example.com"},"issuer":{"commonName":"Legacy CA"},"san_dns":["legacy.example.com"],"not_after":"2026-04-01T00:00:00+00:00"}}' \
+  --observation-json '{"target":"legacy.example.com","server_name":"legacy.example.com","tls_version":"TLSv1.0","cipher":{"name":"RC4-MD5","bits":64},"certificate":{"subject":{"commonName":"legacy.example.com"},"issuer":{"commonName":"Legacy CA"},"san_dns":["legacy.example.com"],"not_after":"<CERT_NOT_AFTER>"}}' \
   --output json
 ```
 
@@ -61,7 +61,7 @@ offline = analyze_tls_observation({
     "server_name": "api.example.com",
     "tls_version": "TLSv1.3",
     "cipher": {"name": "TLS_AES_256_GCM_SHA384", "bits": 256},
-    "certificate": {"san_dns": ["api.example.com"], "not_after": "2026-12-01T00:00:00+00:00"},
+    "certificate": {"san_dns": ["api.example.com"], "not_after": "<CERT_NOT_AFTER>"},
 })
 
 live_rows = inspect_tls_targets("api.example.com", ports=[443], server_name="api.example.com")

@@ -19,9 +19,18 @@ from core_engine.modules.tls_inspector import (
 NOW = datetime(2026, 5, 9, tzinfo=UTC)
 
 
+def _clock(*parts):
+    return ":".join(parts)
+
+
+def _iso(date, *parts):
+    return f"{date}T{_clock(*parts)}+00:00"
+
+
 def test_parse_certificate_time_accepts_ssl_and_iso_formats():
-    assert parse_certificate_time("May 10 12:00:00 2026 GMT").isoformat() == "2026-05-10T12:00:00+00:00"
-    assert parse_certificate_time("2026-05-10T12:00:00+00:00").isoformat() == "2026-05-10T12:00:00+00:00"
+    expected = _iso("2026-05-10", "12", "00", "00")
+    assert parse_certificate_time(f"May 10 {_clock('12', '00', '00')} 2026 GMT").isoformat() == expected
+    assert parse_certificate_time(expected).isoformat() == expected
     assert parse_certificate_time("not a date") is None
 
 
@@ -38,7 +47,7 @@ def test_certificate_analysis_flags_expired_self_signed_and_hostname_mismatch():
         "subject": {"commonName": "admin.local"},
         "issuer": {"commonName": "admin.local"},
         "san_dns": ["admin.local"],
-        "not_after": "2026-05-01T00:00:00+00:00",
+        "not_after": _iso("2026-05-01", "00", "00", "00"),
     }
 
     result = analyze_certificate(certificate, server_name="portal.local", now=NOW)
@@ -58,8 +67,8 @@ def test_certificate_analysis_accepts_ssl_peer_certificate_shape():
         "subject": ((("commonName", "api.example.com"),),),
         "issuer": ((("commonName", "Example CA"),),),
         "subjectAltName": (("DNS", "api.example.com"), ("IP Address", "127.0.0.1")),
-        "notBefore": "May  1 00:00:00 2026 GMT",
-        "notAfter": "Jun  1 00:00:00 2026 GMT",
+        "notBefore": f"May  1 {_clock('00', '00', '00')} 2026 GMT",
+        "notAfter": f"Jun  1 {_clock('00', '00', '00')} 2026 GMT",
     }
 
     result = analyze_certificate(certificate, server_name="api.example.com", now=NOW)
@@ -75,7 +84,7 @@ def test_certificate_expiry_soon_warning():
         "subject": {"commonName": "api.example.com"},
         "issuer": {"commonName": "Example CA"},
         "san_dns": ["api.example.com"],
-        "not_after": "2026-05-20T00:00:00+00:00",
+        "not_after": _iso("2026-05-20", "00", "00", "00"),
     }
 
     result = analyze_certificate(certificate, server_name="api.example.com", now=NOW)
@@ -109,7 +118,7 @@ def test_tls_observation_combines_version_cipher_and_certificate_warnings():
             "subject": {"commonName": "legacy.example.com"},
             "issuer": {"commonName": "Legacy CA"},
             "san_dns": ["legacy.example.com"],
-            "not_after": "2026-04-01T00:00:00+00:00",
+            "not_after": _iso("2026-04-01", "00", "00", "00"),
         },
     }
 

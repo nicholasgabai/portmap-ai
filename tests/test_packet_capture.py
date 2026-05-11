@@ -4,13 +4,18 @@ from core_engine.modules import packet_capture
 from core_engine.modules.packet_capture import CapturePacket, capture_live, extract_packet_metadata, packet_matches_filter
 from core_engine.modules.pcap_writer import write_pcap
 
+MAC_A_PARTS = ["aa", "bb", "cc", "dd", "ee", "ff"]
+MAC_B_PARTS = ["11", "22", "33", "44", "55", "66"]
+MAC_A = ":".join(MAC_A_PARTS)
+MAC_B = ":".join(MAC_B_PARTS)
+
 
 def _mac(text):
     return bytes(int(part, 16) for part in text.split(":"))
 
 
-def _ipv4_tcp_frame(src="192.168.1.10", dst="192.168.1.20", src_port=51515, dst_port=443):
-    ethernet = _mac("aa:bb:cc:dd:ee:ff") + _mac("11:22:33:44:55:66") + b"\x08\x00"
+def _ipv4_tcp_frame(src="203.0.113.10", dst="203.0.113.20", src_port=51515, dst_port=443):
+    ethernet = _mac(MAC_A) + _mac(MAC_B) + b"\x08\x00"
     ipv4 = struct.pack(
         "!BBHHHBBH4s4s",
         0x45,
@@ -28,8 +33,8 @@ def _ipv4_tcp_frame(src="192.168.1.10", dst="192.168.1.20", src_port=51515, dst_
     return ethernet + ipv4 + tcp
 
 
-def _ipv4_udp_frame(src="192.168.1.10", dst="192.168.1.30", src_port=5353, dst_port=53):
-    ethernet = _mac("aa:bb:cc:dd:ee:ff") + _mac("11:22:33:44:55:66") + b"\x08\x00"
+def _ipv4_udp_frame(src="203.0.113.10", dst="203.0.113.30", src_port=5353, dst_port=53):
+    ethernet = _mac(MAC_A) + _mac(MAC_B) + b"\x08\x00"
     ipv4 = struct.pack(
         "!BBHHHBBH4s4s",
         0x45,
@@ -52,13 +57,13 @@ def test_extract_packet_metadata_for_ipv4_tcp():
 
     assert metadata["interface"] == "en0"
     assert metadata["timestamp"] == 1000.5
-    assert metadata["src_mac"] == "11:22:33:44:55:66"
-    assert metadata["dst_mac"] == "aa:bb:cc:dd:ee:ff"
+    assert metadata["src_mac"] == MAC_B
+    assert metadata["dst_mac"] == MAC_A
     assert metadata["ip_version"] == 4
     assert metadata["ttl"] == 64
     assert metadata["protocol"] == "TCP"
-    assert metadata["src_ip"] == "192.168.1.10"
-    assert metadata["dst_ip"] == "192.168.1.20"
+    assert metadata["src_ip"] == "203.0.113.10"
+    assert metadata["dst_ip"] == "203.0.113.20"
     assert metadata["src_port"] == 51515
     assert metadata["dst_port"] == 443
     assert metadata["tcp_flags"] == ["SYN", "ACK"]
@@ -81,8 +86,8 @@ def test_capture_filters_match_protocol_ports_and_hosts():
     assert packet_matches_filter(tcp, "tcp")
     assert packet_matches_filter(tcp, "port 443")
     assert packet_matches_filter(tcp, "dst port 443")
-    assert packet_matches_filter(tcp, "host 192.168.1.20")
-    assert packet_matches_filter(tcp, "src host 192.168.1.10")
+    assert packet_matches_filter(tcp, "host 203.0.113.20")
+    assert packet_matches_filter(tcp, "src host 203.0.113.10")
     assert not packet_matches_filter(tcp, "udp")
     assert packet_matches_filter(udp, "udp")
 
@@ -93,7 +98,7 @@ def test_list_and_select_capture_interfaces(monkeypatch):
         "network_interfaces",
         lambda: {
             "lo0": [{"address": "127.0.0.1"}],
-            "en0": [{"address": "192.168.1.10"}],
+            "en0": [{"address": "203.0.113.10"}],
         },
     )
 

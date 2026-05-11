@@ -1,7 +1,7 @@
 {
     "mode": "worker",
     "worker_id": "worker-XYZ",
-    "master_ip": "192.168.1.XYZ",
+    "master_ip": "<LAN_IP>",
     "port": 9000,
     "scan_interval": 10,
     "features": [
