@@ -45,6 +45,7 @@ Start here:
 - `docs/examples/` - sanitized JSON examples for testing visibility workflows without local infrastructure data.
 - `docs/os_fingerprinting.md` - probabilistic OS-family inference from passive and service evidence.
 - `docs/packet_capture.md` - safe packet metadata capture, PCAP output, filters, and permission handling.
+- `docs/policy_review_engine.md` - advisory policy evaluation and local operator review queue workflows.
 - `docs/protocol_dissectors.md` - passive protocol parsing for captured packet metadata.
 - `docs/service_enumeration.md` - service/version detection, banner probes, fingerprints, and CLI usage.
 - `docs/udp_scanning.md` - active UDP probe scanner behavior, safety defaults, and CLI usage.
