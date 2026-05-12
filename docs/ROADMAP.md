@@ -8,6 +8,7 @@ Phases 0-43 are implemented locally in the working tree and documented as comple
 
 ## Near-Term Work
 
+- Follow the Phase 44-53 local infrastructure visibility plan in `docs/PHASE_44_53_PLAN.md`.
 - Keep real-device validation notes private unless scrubbed for public documentation.
 - Collect external Windows runtime validation before marking Windows support verified.
 - Refresh screenshots, terminal examples, and quick-start paths after real-device testing.
@@ -29,5 +30,6 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 
 - `PORTMAP_AI_HANDOFF.md`
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
+- `docs/PHASE_44_53_PLAN.md`
 - `docs/master_roadmap.md`
 - `docs/real_device_validation.md`
