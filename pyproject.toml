@@ -92,6 +92,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/high_speed_scan_engine.md",
   "docs/ipv6_dual_stack.md",
   "docs/logging_audit.md",
+  "docs/local_api.md",
   "docs/local_storage.md",
   "docs/local_visibility_operator_tooling.md",
   "docs/master_roadmap.md",

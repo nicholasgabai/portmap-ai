@@ -67,6 +67,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/high_speed_scan_engine.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ipv6_dual_stack.md" in data_files["share/portmap-ai/docs"]
     assert "docs/logging_audit.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/local_api.md" in data_files["share/portmap-ai/docs"]
     assert "docs/local_storage.md" in data_files["share/portmap-ai/docs"]
     assert "docs/local_visibility_operator_tooling.md" in data_files["share/portmap-ai/docs"]
     assert "docs/node_coordination.md" in data_files["share/portmap-ai/docs"]

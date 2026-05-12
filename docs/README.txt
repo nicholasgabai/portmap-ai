@@ -32,6 +32,7 @@ Start here:
 - `docs/enterprise_cloud_orchestration.md` - organization/workspace management, licensing, sync manifests, and review workflows.
 - `docs/enterprise_security.md` - local enterprise auth, RBAC, audit, and agent identity primitives.
 - `docs/event_pipeline.md` - local-only normalized event model, in-memory queue, and event bus.
+- `docs/local_api.md` - local read-only API primitives for health, events, assets, snapshots, nodes, and topology.
 - `docs/local_storage.md` - local SQLite storage for events, snapshots, assets, services, topology relationships, and findings.
 - `docs/runtime_scheduler.md` - lightweight local scheduler primitives for health checks, event flushing, snapshot refreshes, and policy review refreshes.
 - `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
