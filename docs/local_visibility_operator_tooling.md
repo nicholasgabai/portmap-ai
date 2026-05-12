@@ -57,6 +57,31 @@ portmap visibility \
 
 The files under `docs/examples/` use RFC5737 TEST-NET addresses and placeholders only. They are intended for command testing, screenshots, and training material without exposing local infrastructure details.
 
+Generate an operator-approved baseline snapshot from sanitized evidence:
+
+```bash
+portmap visibility \
+  --assets-json docs/examples/assets_sample.json \
+  --services-json docs/examples/services_sample.json \
+  --flows-json docs/examples/flows_sample.json \
+  --policy-json docs/examples/policy_sample.json \
+  --include-snapshot \
+  --snapshot-label <BASELINE_LABEL> \
+  --snapshot-output <SNAPSHOT_PATH> \
+  --output json
+```
+
+Compare two operator-provided visibility snapshots:
+
+```bash
+portmap visibility \
+  --baseline-json <BASELINE_SNAPSHOT_PATH> \
+  --current-json <CURRENT_SNAPSHOT_PATH> \
+  --output table
+```
+
+Snapshot comparison is local and advisory-only. It detects asset, service, and topology deltas between two supplied snapshots and returns safe anomaly records plus dry-run review drafts for high-impact changes.
+
 ## Result Shape
 
 The JSON report includes:
@@ -66,6 +91,27 @@ The JSON report includes:
 - `findings`: categorized finding rows with severity, target, evidence, and recommended action
 - `response_workflows`: dry-run, approval-required review drafts
 - `policy`: the effective local policy
+- `automatic_changes: false`
+- `administrator_controlled: true`
+- `raw_payload_stored: false`
+
+When `--include-snapshot` or `--snapshot-output` is used, the report also includes a `snapshot` object with:
+
+- stable `asset_id` values derived from local evidence without exposing raw hardware identifiers in the ID
+- `identity.confidence` and `identity.confidence_label`
+- per-asset service ports, service names, and peer relationships
+- lightweight topology nodes and edges
+- `automatic_changes: false`
+- `administrator_controlled: true`
+- `raw_payload_stored: false`
+
+When `--baseline-json` and `--current-json` are used together, output switches to a baseline comparison report with:
+
+- `deltas`
+- `findings`
+- `response_workflows`
+- `summary.by_type`
+- `summary.by_severity`
 - `automatic_changes: false`
 - `administrator_controlled: true`
 - `raw_payload_stored: false`
@@ -122,6 +168,7 @@ This phase follows the global PortMap-AI safety guarantees:
 - destructive actions are not generated or executed
 - no raw payload bytes are required or retained
 - resource usage remains proportional to already-collected evidence
+- historical snapshots are generated or compared only when the operator explicitly supplies the relevant flags or files
 
 The sanitized examples preserve these fields so operators can verify safety behavior:
 

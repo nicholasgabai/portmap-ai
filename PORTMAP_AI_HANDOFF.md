@@ -677,6 +677,17 @@ portmap-ai/
 ✅ Added tests that load example JSON, validate expected shapes, run the visibility CLI against file paths, generate advisory findings, and check examples for private/local identifiers.
 ✅ This phase follows the global PortMap-AI safety guarantees and does not add automatic remediation, router changes, raw payload persistence, or environment-specific samples.
 
+**Phase 43 — Historical Visibility Correlation and Baseline Deltas (Complete Baseline)**
+✅ Added `core_engine.visibility_history` for stable local visibility snapshots, persistent asset identity IDs, identity confidence scoring, service summaries, and lightweight topology relationships.
+✅ Visibility snapshots correlate multi-host asset, service, and flow evidence into per-asset service ports, service names, peer relationships, and topology edges.
+✅ Added service-change, asset-change, and topology-relationship delta detection between operator-provided baseline/current snapshots.
+✅ Safe anomaly delta reports include findings, severity counts, recommended review actions, and dry-run response workflow drafts for high-impact changes.
+✅ `portmap visibility` can now include generated snapshots, write snapshots to an explicit operator-provided path, and compare baseline/current snapshot JSON files.
+✅ Snapshot and comparison output remains local/offline, opt-in, administrator-controlled, and includes `automatic_changes: false`, `administrator_controlled: true`, and `raw_payload_stored: false`.
+✅ Updated `docs/local_visibility_operator_tooling.md`, `docs/CLI_REFERENCE.md`, roadmap/history docs, and handoff notes.
+✅ Added focused visibility-history and CLI tests.
+✅ This phase follows the global PortMap-AI safety guarantees and does not add active scanning, automatic remediation, router changes, or raw payload persistence.
+
 ---
 
 ## 🧠 Technical Highlights
@@ -695,6 +706,7 @@ portmap-ai/
 | `core_engine/agent_service.py` | Daemon agent loop | ✅ Pulls orchestrator commands, executes remediation |
 | `core_engine/enrollment.py` | Future SaaS enrollment schemas | ✅ Local-only validation/redaction helpers |
 | `core_engine/visibility.py` | Offline local visibility summaries, categorized findings, and review drafts | ✅ Working |
+| `core_engine/visibility_history.py` | Stable asset snapshots, topology mapping, and baseline delta reporting | ✅ Working |
 
 ---
 
@@ -708,7 +720,7 @@ portmap-ai/
 | Phase 3 | Configuration Hardening | Config validation fails clearly before runtime startup |
 | Phase 4 | Platform Abstraction | Host/process/network inspection centralized for cross-platform support |
 | Phase 5 | Stack Stability | Restart, disconnect, shutdown, and port-conflict resilience |
-| Phase 6-42 | Safety, Deployment, Release, UDP, IPv6, Inventory, Services, OS, Async Scan, Capture, Dissection, DPI, TLS, Flows, Behavior, Payload AI, Correlation, Recommendations, CVE, Vulnerability Correlation, Enterprise Security, Alerting/SIEM, Visualization/GUI, Cluster Scanning, Enterprise Cloud Orchestration, Local Visibility, Sanitized Examples | Logging, remediation safety, TUI, Docker, Raspberry Pi, packaging, auth, SaaS prep, docs, RC, UDP scanner, dual-stack scanner, network asset inventory, service enumeration, OS fingerprinting, high-speed async scanning, packet capture core, protocol dissectors, deep packet inspection, TLS intelligence, traffic flow reconstruction, AI behavioral learning, AI payload classification, threat correlation, AI recommendations, CVE intelligence, vulnerability correlation, enterprise security primitives, alerting and SIEM integrations, visualization and GUI platform, distributed cluster scan planning, organization/workspace management, licensing/usage metrics, optional cloud sync manifests, administrator advisory workflows, local visibility summaries, and sanitized example datasets |
+| Phase 6-43 | Safety, Deployment, Release, UDP, IPv6, Inventory, Services, OS, Async Scan, Capture, Dissection, DPI, TLS, Flows, Behavior, Payload AI, Correlation, Recommendations, CVE, Vulnerability Correlation, Enterprise Security, Alerting/SIEM, Visualization/GUI, Cluster Scanning, Enterprise Cloud Orchestration, Local Visibility, Sanitized Examples, Historical Visibility | Logging, remediation safety, TUI, Docker, Raspberry Pi, packaging, auth, SaaS prep, docs, RC, UDP scanner, dual-stack scanner, network asset inventory, service enumeration, OS fingerprinting, high-speed async scanning, packet capture core, protocol dissectors, deep packet inspection, TLS intelligence, traffic flow reconstruction, AI behavioral learning, AI payload classification, threat correlation, AI recommendations, CVE intelligence, vulnerability correlation, enterprise security primitives, alerting and SIEM integrations, visualization and GUI platform, distributed cluster scan planning, organization/workspace management, licensing/usage metrics, optional cloud sync manifests, administrator advisory workflows, local visibility summaries, sanitized example datasets, and historical visibility deltas |
 
 ---
 
@@ -830,9 +842,9 @@ from ai_agent.scoring import get_score
 from core_engine.modules.scanner import basic_scan
 ```
 **Behavior:** Sends JSON scan payloads to master node, validates startup/reload config, re-registers after orchestrator state loss, uses shared platform helpers for local address resolution, and scores connections through the replaceable AI provider interface.
-**Next:** Phase 42 sanitized visibility examples are complete. Do not commit until the user asks.
+**Next:** Phase 43 historical visibility correlation and baseline deltas are complete. Do not commit until the user asks.
 
 ---
 
 ### ✅ Handoff Purpose
-This summary provides **Codex** or any development assistant with a structural and contextual snapshot of PortMap-AI as of the **Phase 42 sanitized-visibility-examples baseline**.
+This summary provides **Codex** or any development assistant with a structural and contextual snapshot of PortMap-AI as of the **Phase 43 historical-visibility-correlation baseline**.

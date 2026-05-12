@@ -1,10 +1,10 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 42 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
+This roadmap summarizes the current direction after the Phase 43 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
 
 ## Current Baseline
 
-Phases 0-42 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
+Phases 0-43 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
 
 ## Near-Term Work
 

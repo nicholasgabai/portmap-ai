@@ -15,6 +15,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 36-40 | Enterprise security, alert integrations, visualization, cluster planning, organization/workspace/licensing/sync/advisory workflows | Complete baseline |
 | 41 | Local infrastructure visibility summaries, expanded service fingerprints, categorized findings, and operator review drafts | Complete baseline |
 | 42 | Sanitized visibility example datasets and file-based visibility CLI inputs | Complete baseline |
+| 43 | Multi-host asset correlation, visibility snapshots, service-change detection, topology deltas, and safe baseline comparison | Complete baseline |
 
 ## Baseline Meaning
 

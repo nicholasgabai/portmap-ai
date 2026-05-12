@@ -311,6 +311,78 @@ def test_visibility_outputs_json(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["summary"]["finding_count"] == 1
 
 
+def test_visibility_can_include_and_write_snapshot(tmp_path, capsys):
+    snapshot_path = tmp_path / "visibility_snapshot.json"
+
+    result = cli_main.main([
+        "visibility",
+        "--assets-json",
+        '{"assets":[{"host":"192.0.2.10","status":"reachable","ip_version":4}]}',
+        "--services-json",
+        '[{"target":"192.0.2.10","port":10022,"state":"open","service":"SSH"}]',
+        "--flows-json",
+        '{"flows":[{"flow_id":"flow-1","initiator":{"ip":"192.0.2.10","port":51515},"responder":{"ip":"203.0.113.50","port":8443},"payload_bytes":512,"application_protocols":["HTTPS"]}]}',
+        "--include-snapshot",
+        "--snapshot-label",
+        "sample",
+        "--snapshot-output",
+        str(snapshot_path),
+        "--output",
+        "json",
+    ])
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["snapshot"]["label"] == "sample"
+    assert payload["snapshot_output"] == str(snapshot_path)
+    saved = json.loads(snapshot_path.read_text())
+    assert saved["asset_count"] == 2
+    assert saved["automatic_changes"] is False
+
+
+def test_visibility_compares_snapshot_files(tmp_path, capsys):
+    baseline_path = tmp_path / "baseline.json"
+    current_path = tmp_path / "current.json"
+    baseline_path.write_text(json.dumps({
+        "snapshot_id": "baseline",
+        "assets": [{"asset_id": "asset-a", "host": "192.0.2.10", "status": "reachable"}],
+        "services": [{"target": "192.0.2.10", "port": 10022, "state": "open", "service": "SSH", "version": "", "confidence": 0.55}],
+        "topology": {"edges": []},
+    }))
+    current_path.write_text(json.dumps({
+        "snapshot_id": "current",
+        "assets": [{"asset_id": "asset-a", "host": "192.0.2.10", "status": "reachable"}],
+        "services": [
+            {"target": "192.0.2.10", "port": 10022, "state": "open", "service": "SSH", "version": "", "confidence": 0.55},
+            {"target": "192.0.2.10", "port": 8443, "state": "open", "service": "HTTPS", "version": "", "confidence": 0.92},
+        ],
+        "topology": {"edges": [{"src": "192.0.2.10", "dst": "203.0.113.50", "flow_count": 1, "application_protocols": ["HTTPS"]}]},
+    }))
+
+    result = cli_main.main([
+        "visibility",
+        "--baseline-json",
+        str(baseline_path),
+        "--current-json",
+        str(current_path),
+        "--output",
+        "json",
+    ])
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["baseline_snapshot_id"] == "baseline"
+    assert payload["current_snapshot_id"] == "current"
+    assert {delta["type"] for delta in payload["deltas"]} == {"service_added", "topology_relationship_added"}
+
+
+def test_visibility_requires_both_snapshot_inputs(capsys):
+    result = cli_main.main(["visibility", "--baseline-json", '{"snapshot_id":"baseline"}'])
+
+    assert result == 1
+    assert "must be provided together" in capsys.readouterr().err
+
+
 def test_visibility_rejects_bad_flow_json(capsys):
     result = cli_main.main(["visibility", "--flows-json", '"not-a-flow-list"'])
 

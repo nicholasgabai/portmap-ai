@@ -43,6 +43,7 @@ from core_engine.network_control import assess_network_posture, summarize_postur
 from core_engine.runtime_setup import initialize_runtime, packaging_diagnostics
 from core_engine.rbac import authorize, role_report
 from core_engine.visibility import build_visibility_report
+from core_engine.visibility_history import build_visibility_snapshot, compare_visibility_snapshots
 from core_engine.vuln.cve_client import analyze_service_cves, fetch_nvd_cves, load_cves_from_json
 from core_engine.vuln.cve_store import load_cve_cache, merge_cve_records, save_cve_cache
 from core_engine.vuln.vuln_correlator import correlate_vulnerabilities
@@ -444,6 +445,9 @@ def _render_cluster_plan_table(payload: dict[str, Any]) -> None:
 
 
 def _render_visibility_table(payload: dict[str, Any]) -> None:
+    if "deltas" in payload:
+        _render_visibility_delta_table(payload)
+        return
     summary = payload.get("summary") or {}
     table = Table(title="PortMap-AI Visibility Summary")
     table.add_column("Assets", justify="right")
@@ -478,6 +482,39 @@ def _render_visibility_table(payload: dict[str, Any]) -> None:
             str(item.get("recommended_action") or "-"),
         )
     console.print(finding_table)
+
+
+def _render_visibility_delta_table(payload: dict[str, Any]) -> None:
+    summary = payload.get("summary") or {}
+    table = Table(title="PortMap-AI Visibility Baseline Deltas")
+    table.add_column("Baseline")
+    table.add_column("Current")
+    table.add_column("Deltas", justify="right")
+    table.add_column("Review Drafts", justify="right")
+    table.add_row(
+        str(payload.get("baseline_snapshot_id") or "-"),
+        str(payload.get("current_snapshot_id") or "-"),
+        str(summary.get("delta_count", 0)),
+        str(summary.get("response_workflow_count", 0)),
+    )
+    console.print(table)
+
+    deltas = payload.get("deltas") or []
+    if not deltas:
+        return
+    delta_table = Table(title="Safe Anomaly Deltas")
+    delta_table.add_column("Severity")
+    delta_table.add_column("Type")
+    delta_table.add_column("Target")
+    delta_table.add_column("Action")
+    for item in deltas:
+        delta_table.add_row(
+            str(item.get("severity") or "-"),
+            str(item.get("type") or "-"),
+            str(item.get("target") or "-"),
+            str(item.get("recommended_action") or "-"),
+        )
+    console.print(delta_table)
 
 
 def _endpoint_text(endpoint: dict[str, Any]) -> str:
@@ -1132,6 +1169,22 @@ def cmd_cluster_plan(args: argparse.Namespace) -> int:
 
 def cmd_visibility(args: argparse.Namespace) -> int:
     try:
+        if args.baseline_json or args.current_json:
+            if not args.baseline_json or not args.current_json:
+                raise ValueError("--baseline-json and --current-json must be provided together")
+            baseline = _json_object(args.baseline_json, label="--baseline-json", allow_file=True)
+            current = _json_object(args.current_json, label="--current-json", allow_file=True)
+            payload = compare_visibility_snapshots(
+                baseline,
+                current,
+                require_approval=not args.no_approval,
+            )
+            if args.output == "json":
+                _print_json(payload)
+            else:
+                _render_visibility_table(payload)
+            return 0
+
         assets = _extract_json_rows(args.assets_json, list_keys=("assets", "records"), allow_file=True) if args.assets_json else []
         services = _extract_json_rows(args.services_json, list_keys=("services", "results"), allow_file=True) if args.services_json else []
         flows_payload: list[dict[str, Any]] | dict[str, Any] = []
@@ -1150,7 +1203,23 @@ def cmd_visibility(args: argparse.Namespace) -> int:
             flows=flows_payload,
             policy=policy,
         )
-    except (json.JSONDecodeError, ValueError) as exc:
+        if args.include_snapshot or args.snapshot_output:
+            snapshot = build_visibility_snapshot(
+                assets=assets,
+                services=services,
+                flows=flows_payload,
+                label=args.snapshot_label or "",
+                observed_at=args.observed_at,
+            )
+            payload["snapshot"] = snapshot
+            if args.snapshot_output:
+                output_path = Path(args.snapshot_output)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, "w", encoding="utf-8") as handle:
+                    json.dump(snapshot, handle, indent=2, sort_keys=True)
+                    handle.write("\n")
+                payload["snapshot_output"] = str(output_path)
+    except (json.JSONDecodeError, OSError, ValueError) as exc:
         print(f"Visibility summary error: {exc}", file=sys.stderr)
         return 1
 
@@ -1607,6 +1676,13 @@ def build_parser() -> argparse.ArgumentParser:
     visibility.add_argument("--services-json", help="Service row/list, services JSON report, or JSON file path")
     visibility.add_argument("--flows-json", help="Flow row/list, flow report JSON, or JSON file path")
     visibility.add_argument("--policy-json", help="Optional visibility policy JSON object or JSON file path")
+    visibility.add_argument("--include-snapshot", action="store_true", help="Include a stable visibility snapshot in the report")
+    visibility.add_argument("--snapshot-output", help="Optional path to write the generated visibility snapshot JSON")
+    visibility.add_argument("--snapshot-label", help="Optional label for a generated snapshot")
+    visibility.add_argument("--observed-at", help="Optional timestamp or label for the generated snapshot observation time")
+    visibility.add_argument("--baseline-json", help="Baseline visibility snapshot JSON object or file path for comparison")
+    visibility.add_argument("--current-json", help="Current visibility snapshot JSON object or file path for comparison")
+    visibility.add_argument("--no-approval", action="store_true", help="Mark comparison review drafts as not requiring approval")
     visibility.add_argument("--output", choices=["table", "json"], default="json", help="Output format")
     visibility.set_defaults(func=cmd_visibility)
 
