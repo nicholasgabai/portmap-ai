@@ -93,6 +93,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/stack_stability.md" in data_files["share/portmap-ai/docs"]
     assert "docs/threat_correlation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/tui_dashboard.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/topology_timeline_views.md" in data_files["share/portmap-ai/docs"]
     assert "docs/tls_intelligence.md" in data_files["share/portmap-ai/docs"]
     assert "docs/traffic_flow_reconstruction.md" in data_files["share/portmap-ai/docs"]
     assert "docs/udp_scanning.md" in data_files["share/portmap-ai/docs"]

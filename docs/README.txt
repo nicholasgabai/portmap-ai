@@ -54,6 +54,7 @@ Start here:
 - `docs/high_speed_scan_engine.md` - async TCP scan scheduler, safe limits, and CLI usage.
 - `docs/threat_correlation.md` - local event correlation, incident scoring, and supporting evidence.
 - `docs/tls_intelligence.md` - TLS version, cipher, certificate, and hostname posture checks.
+- `docs/topology_timeline_views.md` - normalized topology graph and historical timeline view models.
 - `docs/traffic_flow_reconstruction.md` - passive flow grouping, directional counters, and topology summaries.
 - `docs/vulnerability_correlation.md` - advisory service/CVE exposure correlation and prioritization.
 - `docs/beginner_guide.md` - conceptual guide for local network/firewall terminology.

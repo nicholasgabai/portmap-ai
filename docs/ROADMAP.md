@@ -1,10 +1,10 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 49 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
+This roadmap summarizes the current direction after the Phase 50 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
 
 ## Current Baseline
 
-Phases 0-49 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
+Phases 0-50 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
 
 ## Near-Term Work
 
@@ -15,6 +15,7 @@ Phases 0-49 are implemented locally in the working tree and documented as comple
 - Use the local node coordination primitives in `docs/node_coordination.md` for node identity, capabilities, heartbeats, lifecycle state, and summaries.
 - Use the local read-only API primitives in `docs/local_api.md` for future dashboard and operator tooling work.
 - Use the local dashboard foundation in `docs/dashboard_foundation.md` for static HTML status-panel previews.
+- Use topology and timeline view models in `docs/topology_timeline_views.md` for local dashboard and operator reporting layers.
 - Keep real-device validation notes private unless scrubbed for public documentation.
 - Collect external Windows runtime validation before marking Windows support verified.
 - Refresh screenshots, terminal examples, and quick-start paths after real-device testing.
@@ -43,5 +44,6 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/local_storage.md`
 - `docs/node_coordination.md`
 - `docs/runtime_scheduler.md`
+- `docs/topology_timeline_views.md`
 - `docs/master_roadmap.md`
 - `docs/real_device_validation.md`
