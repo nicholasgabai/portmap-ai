@@ -32,6 +32,7 @@ Start here:
 - `docs/enterprise_cloud_orchestration.md` - organization/workspace management, licensing, sync manifests, and review workflows.
 - `docs/enterprise_security.md` - local enterprise auth, RBAC, audit, and agent identity primitives.
 - `docs/event_pipeline.md` - local-only normalized event model, in-memory queue, and event bus.
+- `docs/local_storage.md` - local SQLite storage for events, snapshots, assets, services, topology relationships, and findings.
 - `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
 - `docs/saas_architecture.md` - future SaaS control-plane, tenant, enrollment, and communication design.
 - `docs/network_control_layer.md` - advisory gateway and exposed-service posture assessment.
