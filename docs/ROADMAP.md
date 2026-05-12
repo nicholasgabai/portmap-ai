@@ -1,16 +1,17 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 45 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
+This roadmap summarizes the current direction after the Phase 46 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
 
 ## Current Baseline
 
-Phases 0-45 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
+Phases 0-46 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
 
 ## Near-Term Work
 
 - Follow the Phase 44-53 local infrastructure visibility plan in `docs/PHASE_44_53_PLAN.md`.
 - Use the local event pipeline in `docs/event_pipeline.md` as the event-history foundation for future storage, dashboard, and correlation work.
 - Use the local SQLite storage layer in `docs/local_storage.md` for durable events, snapshots, assets, services, topology relationships, and findings.
+- Use the local runtime scheduler primitives in `docs/runtime_scheduler.md` for future recurring health, event, snapshot, and operator-review workflows.
 - Keep real-device validation notes private unless scrubbed for public documentation.
 - Collect external Windows runtime validation before marking Windows support verified.
 - Refresh screenshots, terminal examples, and quick-start paths after real-device testing.
@@ -35,5 +36,6 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_44_53_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_storage.md`
+- `docs/runtime_scheduler.md`
 - `docs/master_roadmap.md`
 - `docs/real_device_validation.md`
