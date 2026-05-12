@@ -59,6 +59,9 @@ dependencies = {file = ["requirements.txt"]}
 "share/portmap-ai/scripts" = [
   "scripts/install_systemd_user.sh",
 ]
+"share/portmap-ai/gui/web" = [
+  "gui/web/README.md",
+]
 "share/portmap-ai" = [
   "CHANGELOG.md",
   "PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md",
@@ -81,6 +84,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/beginner_guide.md",
   "docs/configuration.md",
   "docs/cve_intelligence.md",
+  "docs/dashboard_foundation.md",
   "docs/deployment_options.md",
   "docs/deep_packet_inspection.md",
   "docs/docker_deployment.md",

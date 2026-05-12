@@ -17,6 +17,7 @@ Start here:
 - `docs/architecture.md` - current local-first architecture and component boundaries.
 - `test_instructions.md` - focused local verification checklist.
 - `docs/deployment_options.md` - default local install path, always-on service path, and optional Docker path.
+- `docs/dashboard_foundation.md` - lightweight local web dashboard rendering foundation for API-backed status panels.
 - `docs/packaging.md` - install, setup, diagnostics, and build artifact guidance.
 - `docs/release_candidate.md` - version 0.1.0 release-candidate checklist and known limitations.
 - `docs/raspberry_pi_deployment.md` - Linux/ARM service setup and low-resource guidance.
@@ -68,4 +69,4 @@ Current baseline:
 - Run the Textual dashboard with `portmap tui`, `scripts/run_dashboard.sh`, or allow the stack launcher to launch it.
 - Review `CHANGELOG.md` and `docs/release_candidate.md` before cutting version `0.1.0`.
 
-The dashboard is a terminal UI, not a browser UI. Browser-based product work belongs to a later roadmap phase.
+The primary dashboard remains the Textual terminal UI. Phase 49 adds a reusable local static HTML rendering foundation for future browser-based operator views.

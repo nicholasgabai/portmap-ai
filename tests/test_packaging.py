@@ -40,6 +40,8 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "deploy/systemd/portmap-ai-worker.service" in data_files["share/portmap-ai/systemd"]
     assert "share/portmap-ai/scripts" in data_files
     assert "scripts/install_systemd_user.sh" in data_files["share/portmap-ai/scripts"]
+    assert "share/portmap-ai/gui/web" in data_files
+    assert "gui/web/README.md" in data_files["share/portmap-ai/gui/web"]
     assert "share/portmap-ai" in data_files
     assert "CHANGELOG.md" in data_files["share/portmap-ai"]
     assert "PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md" in data_files["share/portmap-ai"]
@@ -57,6 +59,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/ai_payload_classification.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ai_recommendation_engine.md" in data_files["share/portmap-ai/docs"]
     assert "docs/cve_intelligence.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/dashboard_foundation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/deep_packet_inspection.md" in data_files["share/portmap-ai/docs"]
     assert "docs/deployment_options.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_cluster_scanning.md" in data_files["share/portmap-ai/docs"]
