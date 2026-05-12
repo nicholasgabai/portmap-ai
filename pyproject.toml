@@ -96,6 +96,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/local_visibility_operator_tooling.md",
   "docs/master_roadmap.md",
   "docs/network_control_layer.md",
+  "docs/node_coordination.md",
   "docs/network_asset_inventory.md",
   "docs/os_fingerprinting.md",
   "docs/packaging.md",

@@ -37,6 +37,7 @@ Start here:
 - `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
 - `docs/saas_architecture.md` - future SaaS control-plane, tenant, enrollment, and communication design.
 - `docs/network_control_layer.md` - advisory gateway and exposed-service posture assessment.
+- `docs/node_coordination.md` - local node identity, capability records, heartbeat metadata, lifecycle states, and summaries.
 - `docs/network_asset_inventory.md` - authorized asset inventory, ARP evidence, reachability checks, and topology context.
 - `docs/local_visibility_operator_tooling.md` - local visibility summaries, historical snapshots, baseline deltas, categorized findings, and operator review drafts.
 - `docs/examples/` - sanitized JSON examples for testing visibility workflows without local infrastructure data.
