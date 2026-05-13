@@ -7,6 +7,7 @@ Start here:
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md` - enterprise expansion roadmap from UDP scanning through enterprise orchestration work.
 - `docs/ROADMAP.md` - concise current roadmap and post-Phase 40 direction.
 - `docs/PHASE_44_53_PLAN.md` - next implementation plan for local event history, storage, coordination, API, dashboard, policy review, aggregation, and correlation.
+- `docs/PHASE_44_53_INTEGRATION_PLAN.md` - consolidation plan for wiring Phase 44-53 modules together in future work.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
 - `docs/DEPLOYMENT.md` - deployment paths and validation expectations.
 - `docs/SECURITY_MODEL.md` - centralized safety, trust, telemetry, and remediation boundaries.
