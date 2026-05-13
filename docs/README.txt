@@ -26,6 +26,7 @@ Start here:
 - `docs/ai_behavioral_learning.md` - local behavior baselines, anomaly scoring, and learning controls.
 - `docs/ai_payload_classification.md` - payload labels, suspicious markers, beaconing, and exfiltration indicators.
 - `docs/ai_recommendation_engine.md` - advisory recommendations and dry-run remediation drafts.
+- `docs/behavior_correlation.md` - local baseline comparison for advisory drift, topology, service, and finding deltas.
 - `docs/cve_intelligence.md` - advisory CVE normalization, cache updates, and service/version matching.
 - `docs/deep_packet_inspection.md` - passive DPI metadata, findings, redaction, and session summaries.
 - `docs/distributed_cluster_scanning.md` - distributed scan job planning, worker registry, and task scheduling.

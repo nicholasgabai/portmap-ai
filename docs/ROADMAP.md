@@ -1,10 +1,10 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 52 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
+This roadmap summarizes the current direction after the Phase 53 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
 
 ## Current Baseline
 
-Phases 0-52 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
+Phases 0-53 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
 
 ## Near-Term Work
 
@@ -18,6 +18,7 @@ Phases 0-52 are implemented locally in the working tree and documented as comple
 - Use topology and timeline view models in `docs/topology_timeline_views.md` for local dashboard and operator reporting layers.
 - Use the local policy review engine in `docs/policy_review_engine.md` for advisory review records and operator state transitions.
 - Use distributed visibility aggregation in `docs/distributed_visibility_aggregation.md` to merge authorized local node summaries while preserving source attribution and reported conflicts.
+- Use behavior correlation baselines in `docs/behavior_correlation.md` to compare stored local telemetry windows and produce advisory delta findings.
 - Keep real-device validation notes private unless scrubbed for public documentation.
 - Collect external Windows runtime validation before marking Windows support verified.
 - Refresh screenshots, terminal examples, and quick-start paths after real-device testing.
@@ -39,6 +40,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 
 - `PORTMAP_AI_HANDOFF.md`
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
+- `docs/behavior_correlation.md`
 - `docs/dashboard_foundation.md`
 - `docs/distributed_visibility_aggregation.md`
 - `docs/PHASE_44_53_PLAN.md`
