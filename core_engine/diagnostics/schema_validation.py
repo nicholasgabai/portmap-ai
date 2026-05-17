@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any
 
 
+SCHEMA_VALIDATION_RECORD_VERSION = 2
 SUPPORTED_FIELD_TYPES = {"bytes", "dict", "float", "hex", "int", "list", "str", "bool"}
 VALID_CLASSIFICATIONS = {"valid", "invalid", "malformed", "unsupported", "mutation_limited"}
+CLASSIFICATION_SEVERITY = {
+    "valid": "info",
+    "invalid": "medium",
+    "malformed": "high",
+    "unsupported": "high",
+    "mutation_limited": "low",
+}
 SAFETY_FLAGS = {
     "local_only": True,
     "operator_controlled": True,
@@ -41,11 +50,18 @@ def validate_fixture(
 ) -> dict[str, Any]:
     schema_errors = _schema_errors(schema)
     if schema_errors:
-        return _result("unsupported", schema, [], schema_errors, [])
+        return _result("unsupported", schema, [], schema_errors, [], _bounds(max_fields, max_string_length, max_bytes_length))
     if not isinstance(fixture, dict):
-        return _result("malformed", schema, [], ["fixture must be an object"], [])
+        return _result("malformed", schema, [], ["fixture must be an object"], [], _bounds(max_fields, max_string_length, max_bytes_length))
     if len(fixture) > max_fields:
-        return _result("malformed", schema, [], [f"fixture exceeds max field count {max_fields}"], [])
+        return _result(
+            "malformed",
+            schema,
+            [],
+            [f"fixture exceeds max field count {max_fields}"],
+            [],
+            _bounds(max_fields, max_string_length, max_bytes_length),
+        )
 
     field_defs = schema.get("fields") or {}
     errors: list[str] = []
@@ -86,7 +102,7 @@ def validate_fixture(
         )
 
     classification = "valid" if not errors else "invalid"
-    return _result(classification, schema, field_results, errors, warnings)
+    return _result(classification, schema, field_results, errors, warnings, _bounds(max_fields, max_string_length, max_bytes_length))
 
 
 def classify_exception(error: BaseException) -> dict[str, Any]:
@@ -103,6 +119,116 @@ def classify_exception(error: BaseException) -> dict[str, Any]:
         "error_type": type(error).__name__,
         "message": str(error),
         **SAFETY_FLAGS,
+    }
+
+
+def summarize_validation_result(result: dict[str, Any]) -> dict[str, Any]:
+    field_results = [row for row in result.get("field_results") or [] if isinstance(row, dict)]
+    status_counts: dict[str, int] = {}
+    for row in field_results:
+        status = str(row.get("status") or "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+    classification = str(result.get("classification") or "invalid")
+    return {
+        "schema_id": str(result.get("schema_id") or ""),
+        "classification": classification,
+        "severity": CLASSIFICATION_SEVERITY.get(classification, "medium"),
+        "field_count": len(field_results),
+        "status_counts": dict(sorted(status_counts.items())),
+        "error_count": len(result.get("errors") or []),
+        "warning_count": len(result.get("warnings") or []),
+        "recommended_review": classification != "valid",
+        **SAFETY_FLAGS,
+    }
+
+
+def build_validation_event(
+    result: dict[str, Any],
+    *,
+    source: str = "diagnostics.schema_validation",
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    summary = summarize_validation_result(result)
+    severity = summary["severity"]
+    event_type = "system_notice" if severity in {"info", "low"} else "policy_review_required"
+    message = _operator_summary(summary)
+    return {
+        "event_id": _stable_id("evt", result.get("result_id"), event_type, message),
+        "event_type": event_type,
+        "severity": severity,
+        "source": source,
+        "timestamp": timestamp or _now(),
+        "message": message,
+        "asset_ref": None,
+        "service_ref": None,
+        "flow_ref": None,
+        "snapshot_ref": None,
+        "finding_ref": _stable_id("finding", result.get("result_id"), summary["classification"]),
+        "metadata": {
+            "diagnostic_type": "schema_validation",
+            "schema_id": summary["schema_id"],
+            "classification": summary["classification"],
+            "summary": summary,
+        },
+        "raw_payload_stored": False,
+        "automatic_changes": False,
+        "administrator_controlled": True,
+    }
+
+
+def build_validation_finding(result: dict[str, Any], *, source_ref: str | None = None) -> dict[str, Any]:
+    summary = summarize_validation_result(result)
+    finding_id = _stable_id("finding", result.get("result_id"), summary["classification"], summary["schema_id"])
+    return {
+        "finding_id": finding_id,
+        "finding_type": "schema_validation_result",
+        "category": "diagnostic_validation",
+        "severity": summary["severity"],
+        "title": "Schema Validation Result",
+        "summary": _operator_summary(summary),
+        "evidence_refs": [summary["schema_id"]],
+        "recommended_review": summary["recommended_review"],
+        "source_refs": [source_ref or f"schema:{summary['schema_id']}"],
+        "automatic_changes": False,
+        "administrator_controlled": True,
+        "raw_payload_stored": False,
+        "local_only": True,
+    }
+
+
+def build_validation_timeline_entry(
+    result: dict[str, Any],
+    *,
+    timestamp: str | None = None,
+    source_ref: str | None = None,
+) -> dict[str, Any]:
+    summary = summarize_validation_result(result)
+    text = _operator_summary(summary)
+    return {
+        "timeline_id": _stable_id("timeline", result.get("result_id"), text),
+        "timestamp": timestamp or _now(),
+        "category": "diagnostic_validation",
+        "severity": summary["severity"],
+        "title": "Schema Validation",
+        "summary": text,
+        "asset_ref": None,
+        "service_ref": None,
+        "snapshot_ref": None,
+        "source_refs": [source_ref or f"schema:{summary['schema_id']}"],
+        "recommended_review": summary["recommended_review"],
+        "raw_payload_stored": False,
+        "automatic_changes": False,
+        "administrator_controlled": True,
+    }
+
+
+def build_validation_correlation_record(result: dict[str, Any], *, source_ref: str | None = None) -> dict[str, Any]:
+    finding = build_validation_finding(result, source_ref=source_ref)
+    return {
+        **finding,
+        "correlation_key": f"schema_validation:{finding['category']}:{finding['severity']}",
+        "score": 0.0,
+        "confidence": 1.0 if result.get("ok") else 0.75,
     }
 
 
@@ -205,6 +331,7 @@ def _field_result(field_name: str, status: str, field_schema: dict[str, Any], va
         "field": field_name,
         "status": status,
         "expected_type": str(field_schema.get("type") or "unknown"),
+        "required": bool(field_schema.get("required", False)),
         "observed_type": type(value).__name__ if value is not None else "missing",
         "length": _safe_length(value),
     }
@@ -216,18 +343,44 @@ def _result(
     field_results: list[dict[str, Any]],
     errors: list[str],
     warnings: list[str],
+    resource_bounds: dict[str, int],
 ) -> dict[str, Any]:
     if classification not in VALID_CLASSIFICATIONS:
         classification = "invalid"
-    return {
+    payload = {
         "ok": classification == "valid",
         "status": classification,
         "classification": classification,
+        "record_version": SCHEMA_VALIDATION_RECORD_VERSION,
+        "diagnostic_type": "schema_validation",
         "schema_id": _schema_id(schema),
         "field_results": field_results,
         "errors": errors,
         "warnings": warnings,
+        "resource_bounds": resource_bounds,
         **SAFETY_FLAGS,
+    }
+    payload["summary"] = summarize_validation_result(payload)
+    payload["integration_hooks"] = _integration_hooks(payload)
+    payload["result_id"] = _stable_id("schema-result", payload["schema_id"], classification, payload["summary"])
+    return payload
+
+
+def _bounds(max_fields: int, max_string_length: int, max_bytes_length: int) -> dict[str, int]:
+    return {
+        "max_fields": max_fields,
+        "max_string_length": max_string_length,
+        "max_bytes_length": max_bytes_length,
+    }
+
+
+def _integration_hooks(result: dict[str, Any]) -> dict[str, bool]:
+    return {
+        "event_pipeline_ready": True,
+        "policy_review_ready": result.get("classification") != "valid",
+        "timeline_ready": True,
+        "correlation_ready": True,
+        "storage_ready": True,
     }
 
 
@@ -239,6 +392,25 @@ def _schema_id(schema: Any) -> str:
         version = str(schema.get("version") or "")
     digest = sha256(f"{name}:{version}".encode("utf-8")).hexdigest()[:12]
     return f"{name}-{digest}"
+
+
+def _stable_id(prefix: str, *parts: Any) -> str:
+    material = "|".join(str(part) for part in parts)
+    return f"{prefix}-" + sha256(material.encode("utf-8")).hexdigest()[:16]
+
+
+def _operator_summary(summary: dict[str, Any]) -> str:
+    classification = str(summary.get("classification") or "unknown")
+    schema_id = str(summary.get("schema_id") or "schema")
+    error_count = int(summary.get("error_count") or 0)
+    warning_count = int(summary.get("warning_count") or 0)
+    if classification == "valid":
+        return f"Schema {schema_id} validated successfully."
+    return f"Schema {schema_id} classified as {classification} with {error_count} errors and {warning_count} warnings."
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat()
 
 
 def _safe_length(value: Any) -> int | None:

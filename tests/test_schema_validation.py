@@ -3,8 +3,14 @@ import re
 
 from core_engine.diagnostics import (
     SchemaValidationError,
+    build_validation_correlation_record,
+    build_validation_event,
+    build_validation_finding,
+    build_validation_timeline_entry,
     classify_exception,
     mutate_fixture,
+    summarize_mutation_result,
+    summarize_validation_result,
     validate_fixture,
     validate_schema_definition,
 )
@@ -75,6 +81,11 @@ def test_valid_fixture_returns_field_summaries_without_raw_payload_storage():
     assert result["automatic_changes"] is False
     assert result["administrator_controlled"] is True
     assert result["local_only"] is True
+    assert result["diagnostic_type"] == "schema_validation"
+    assert result["record_version"] >= 2
+    assert result["summary"]["classification"] == "valid"
+    assert result["resource_bounds"]["max_fields"] == 64
+    assert result["integration_hooks"]["event_pipeline_ready"] is True
     json.dumps(result)
 
 
@@ -118,6 +129,8 @@ def test_fixture_mutation_generates_bounded_variants_and_validation_results():
     assert any(variant["mutation_type"] == "missing_required_field" for variant in result["variants"])
     assert all("validation" in variant for variant in result["variants"])
     assert all(variant["automatic_changes"] is False for variant in result["variants"])
+    assert result["summary"]["mutation_count"] == 5
+    assert result["integration_hooks"]["event_pipeline_ready"] is True
     json.dumps(result)
 
 
@@ -138,6 +151,35 @@ def test_fixture_mutation_limit_and_oversized_fixture_handling():
     assert "mutation limit reached" in limited["warnings"]
     assert oversized["status"] == "mutation_limited"
     assert oversized["ok"] is False
+
+
+def test_validation_operational_integration_records():
+    result = validate_fixture(_schema(), {"sequence": 120, "payload_hex": "not-hex"})
+    summary = summarize_validation_result(result)
+    event = build_validation_event(result, timestamp="sample-time")
+    finding = build_validation_finding(result, source_ref="sample-source")
+    timeline = build_validation_timeline_entry(result, timestamp="sample-time", source_ref="sample-source")
+    correlation = build_validation_correlation_record(result, source_ref="sample-source")
+
+    assert summary["recommended_review"] is True
+    assert event["event_type"] == "policy_review_required"
+    assert event["metadata"]["diagnostic_type"] == "schema_validation"
+    assert finding["category"] == "diagnostic_validation"
+    assert finding["recommended_review"] is True
+    assert timeline["category"] == "diagnostic_validation"
+    assert timeline["recommended_review"] is True
+    assert correlation["correlation_key"].startswith("schema_validation:")
+    assert correlation["raw_payload_stored"] is False
+
+
+def test_mutation_summary_is_event_and_policy_ready():
+    result = mutate_fixture(_schema(), _fixture(), max_mutations=6)
+    summary = summarize_mutation_result(result)
+
+    assert summary["mutation_count"] == 6
+    assert summary["mutation_type_counts"]
+    assert summary["validation_classification_counts"]
+    assert result["integration_hooks"]["policy_review_ready"] == summary["recommended_review"]
 
 
 def test_no_private_identifiers_in_examples_or_output():

@@ -77,6 +77,28 @@ def mutate_fixture(
     return _mutation_result(status, variants[:max_mutations], [], warnings)
 
 
+def summarize_mutation_result(result: dict[str, Any]) -> dict[str, Any]:
+    variants = [row for row in result.get("variants") or [] if isinstance(row, dict)]
+    mutation_type_counts: dict[str, int] = {}
+    validation_classification_counts: dict[str, int] = {}
+    for variant in variants:
+        mutation_type = str(variant.get("mutation_type") or "unknown")
+        mutation_type_counts[mutation_type] = mutation_type_counts.get(mutation_type, 0) + 1
+        validation = variant.get("validation") if isinstance(variant.get("validation"), dict) else {}
+        classification = str(validation.get("classification") or "unknown")
+        validation_classification_counts[classification] = validation_classification_counts.get(classification, 0) + 1
+    return {
+        "classification": str(result.get("classification") or "unknown"),
+        "mutation_count": len(variants),
+        "mutation_type_counts": dict(sorted(mutation_type_counts.items())),
+        "validation_classification_counts": dict(sorted(validation_classification_counts.items())),
+        "error_count": len(result.get("errors") or []),
+        "warning_count": len(result.get("warnings") or []),
+        "recommended_review": bool(result.get("errors")) or any(key != "valid" for key in validation_classification_counts),
+        **SAFETY_FLAGS,
+    }
+
+
 def _variant(schema: dict[str, Any], fixture: dict[str, Any], field_name: str, mutation_type: str, value: Any) -> dict[str, Any]:
     mutated = deepcopy(fixture)
     if mutation_type == "missing_required_field":
@@ -114,16 +136,27 @@ def _mutation_result(
     classification = "mutation_limited" if status == "mutation_limited" else status
     if status == "ok":
         classification = "valid"
-    return {
+    payload = {
         "ok": status == "ok",
         "status": status,
         "classification": classification,
+        "diagnostic_type": "fixture_mutation",
         "mutation_count": len(variants),
         "variants": variants,
         "errors": errors,
         "warnings": warnings,
         **SAFETY_FLAGS,
+        "integration_hooks": {
+            "event_pipeline_ready": True,
+            "policy_review_ready": status != "ok",
+            "timeline_ready": True,
+            "correlation_ready": True,
+            "storage_ready": True,
+        },
     }
+    payload["summary"] = summarize_mutation_result(payload)
+    payload["integration_hooks"]["policy_review_ready"] = payload["summary"]["recommended_review"]
+    return payload
 
 
 def _short_value(field_type: str, min_length: int) -> Any:

@@ -2,6 +2,8 @@
 
 Phase 54 adds local mock-service fixture validation helpers for PortMap-AI. The schema validation engine checks sanitized message-like or packet-like fixture dictionaries against bounded schema definitions. The fixture mutation engine creates controlled local variants for tests and operator review.
 
+The current baseline also emits integration-ready summaries for the event pipeline, policy review engine, topology/timeline views, and correlation framework. These records are passive dictionaries; this phase does not wire them into runtime services automatically.
+
 This phase is local-only and test-fixture based. It does not contact live targets, transmit data, capture interfaces, install services, modify configuration, change routers, or perform automatic response actions.
 
 ## Schema Shape
@@ -68,10 +70,15 @@ Result records include:
 - `ok`
 - `status`
 - `classification`
+- `diagnostic_type`
+- `record_version`
 - `schema_id`
 - `field_results`
 - `errors`
 - `warnings`
+- `summary`
+- `resource_bounds`
+- `integration_hooks`
 - `raw_payload_stored: false`
 - `automatic_changes: false`
 - `administrator_controlled: true`
@@ -105,6 +112,49 @@ Mutation types include:
 
 Mutation output is JSON-safe. Byte values are summarized by type, length, and bounded hex summary instead of storing raw payload bytes.
 
+Mutation results also include:
+
+- `summary`
+- `mutation_type_counts`
+- `validation_classification_counts`
+- `integration_hooks`
+
+These summaries let future runtime, event, policy, dashboard, and correlation integrations consume mutation outcomes without inspecting fixture payloads directly.
+
+## Integration Records
+
+Phase 54 provides helper functions that convert validation output into platform-compatible records:
+
+- `summarize_validation_result()`
+- `build_validation_event()`
+- `build_validation_finding()`
+- `build_validation_timeline_entry()`
+- `build_validation_correlation_record()`
+- `summarize_mutation_result()`
+
+Example:
+
+```python
+from core_engine.diagnostics import (
+    build_validation_event,
+    build_validation_finding,
+    validate_fixture,
+)
+
+result = validate_fixture(schema, fixture)
+event = build_validation_event(result)
+finding = build_validation_finding(result)
+```
+
+Generated records preserve the standard safety fields:
+
+- `raw_payload_stored: false`
+- `automatic_changes: false`
+- `administrator_controlled: true`
+- `local_only: true` where applicable
+
+The generated records are not automatically published, stored, reviewed, or correlated. Later phases can explicitly wire these records into the event bus, storage repositories, policy review queue, timeline views, and correlation workflows.
+
 ## Intended Use
 
 Use this phase for:
@@ -114,6 +164,8 @@ Use this phase for:
 - Fixture quality checks.
 - Operator review of schema mismatch summaries.
 - Controlled mutation of sanitized test fixtures.
+- Creating event-ready and policy-ready diagnostic summaries.
+- Preparing timeline and correlation records for later explicit integration.
 
 Do not use this phase for:
 
