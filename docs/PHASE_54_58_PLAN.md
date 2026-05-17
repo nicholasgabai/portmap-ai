@@ -1,290 +1,373 @@
 # Phase 54-58 Advanced Diagnostics Plan
 
-This document defines the next PortMap-AI planning phases after the Phase 44-53 local infrastructure visibility work. Phases 54-55 are now implemented as local baselines; Phases 56-58 remain planning targets only. These phases do not add runtime behavior, background services, external transport, automatic collection, automatic enforcement, or service installation.
+This document defines the next PortMap-AI implementation phases following the Phase 44-53 platform foundation work.
 
-The shared posture remains local-first, operator-controlled, fixture-driven where possible, safe by default, and compatible with lightweight Linux and Raspberry Pi deployments.
+Milestone I expands the platform into:
 
-## Milestone I: Advanced Local Diagnostics and Deployment Readiness
+* bounded diagnostic validation
+* structured stream analysis
+* governed plugin execution
+* relay orchestration
+* deployment/service lifecycle preparation
 
-Milestone I prepares PortMap-AI for safer local diagnostics, metadata parsing, controlled utility plugins, loopback-only relay simulation, and documented service installation templates.
+The implementation direction now shifts from isolated primitives toward operational integration using the existing PortMap-AI runtime, storage, orchestration, event, policy, and dashboard framework.
 
-Core principles:
+The architecture remains:
 
-- Use sanitized examples only.
-- Prefer test fixtures and operator-provided local files.
-- Keep default behavior dry-run, advisory, or metadata-only.
-- Avoid live interface capture in these phases unless a later phase explicitly adds it.
-- Do not transmit data externally by default.
-- Do not modify routers, firewalls, registry settings, services, or system configuration.
-- Preserve existing CLI behavior.
-- Preserve Raspberry Pi and general Linux compatibility.
-- Add focused tests for every phase.
+* operator-defined
+* policy-controlled
+* bounded
+* deterministic
+* modular
+* auditable
+* resource-aware
+* cross-platform
 
-## Phase 54 - Bounded Schema Validation Engine
+Phase status:
 
-Status: complete baseline.
+* Phase 54 — Complete Baseline
+* Phase 55 — Upcoming Implementation Target
+* Phase 56 — Upcoming Implementation Target
+* Phase 57 — Upcoming Implementation Target
+* Phase 58 — Upcoming Implementation Target
 
-Goal:
-Create a bounded schema validation and fixture mutation engine for local mock-service testing only.
+## Milestone I: Advanced Diagnostics and Deployment Readiness
 
-Build:
+Milestone I extends PortMap-AI into a more operational platform capable of:
 
-- `core_engine/diagnostics/schema_validation.py`
-- `core_engine/diagnostics/fixture_mutation.py`
-- `tests/test_schema_validation.py`
-- `docs/schema_validation_engine.md`
+* structured validation workflows
+* runtime stream analysis
+* controlled utility orchestration
+* bounded relay coordination
+* deployment lifecycle preparation
 
-Features:
+These phases should integrate with the existing:
 
-- Expected message or packet-like schema definitions.
-- Bounded field validation for required fields, optional fields, types, lengths, and allowed values.
-- Safe fixture mutation of field lengths, byte values, missing fields, and unexpected fields.
-- Exception and result classification for valid, invalid, malformed, unsupported, and mutation-limited cases.
-- JSON-serializable validation results with advisory explanations.
-- Resource bounds for mutation count, fixture size, and generated variants.
+* event pipeline
+* storage layer
+* scheduler
+* node registry
+* policy engine
+* dashboard foundation
+* topology/timeline systems
+* aggregation/correlation framework
 
-Acceptance:
+The goal is to reduce isolated tooling behavior and evolve PortMap-AI into a cohesive operational platform.
 
-- Schemas can validate sanitized fixture dictionaries and byte-like fixture metadata.
-- Mutation helpers produce bounded fixture variants without executing external programs.
-- Malformed fixtures return structured errors instead of crashing callers.
-- Tests use sanitized sample fixtures only.
+---
 
-Safety boundaries:
+# Phase 54 — Bounded Schema Validation Engine
 
-- Local mock-service testing only.
-- No live targets.
-- No network transmission.
-- No router or firewall changes.
-- No automatic remediation.
-- No raw payload persistence by default.
+Status: Complete Baseline
 
-## Phase 55 - Metadata-Only Local Stream Parser
+## Goal
 
-Status: complete baseline.
+Create a bounded schema validation and fixture mutation engine capable of validating structured runtime inputs and generating deterministic diagnostic variants for operational analysis workflows.
 
-Goal:
-Add a metadata-only byte-stream parser that consumes local test fixtures or operator-provided local files and extracts structural metadata.
+## Build
 
-Build:
+* `core_engine/diagnostics/schema_validation.py`
+* `core_engine/diagnostics/fixture_mutation.py`
+* `tests/test_schema_validation.py`
+* `docs/schema_validation_engine.md`
 
-- `core_engine/streams/metadata_parser.py`
-- `core_engine/streams/patterns.py`
-- `tests/test_metadata_stream_parser.py`
-- `docs/metadata_stream_parser.md`
+## Features
 
-Features:
+* Expected message and structured schema definitions
+* Field validation for:
 
-- Parse byte frames from local fixtures or explicitly provided local files.
-- Extract frame count, length summaries, entropy-like summaries, printable ratios, hex summaries, and detected markers.
-- Support string and hex pattern matching through bounded, local pattern definitions.
-- Return JSON-serializable metadata-only results.
-- Apply input size limits and frame count limits.
-- Report unsupported or oversized input through structured results.
+  * required fields
+  * optional fields
+  * types
+  * lengths
+  * allowed values
+  * byte-length constraints
+* Deterministic fixture mutation
+* Structured validation result classification
+* Validation summaries and advisory output
+* JSON-serializable validation records
+* Resource-aware mutation limits
+* Runtime-safe variant generation
+* Integration hooks for:
 
-Acceptance:
+  * event pipeline
+  * policy review engine
+  * topology/timeline systems
+  * correlation framework
 
-- Parser handles empty, short, malformed, and multi-frame fixture streams.
-- Pattern matching works for sanitized string and hex examples.
-- Output does not store raw payload bytes by default.
-- Tests use temporary fixture files and in-memory sample bytes.
+## Acceptance
 
-Safety boundaries:
+* Schemas validate structured runtime inputs cleanly
+* Mutation helpers generate deterministic bounded variants
+* Validation failures return structured diagnostic results
+* Validation outputs integrate into event and storage pipelines
+* Tests use sanitized deterministic fixtures
 
-- No live interface capture in this phase.
-- No packet injection.
-- No external data export.
-- No background scanning.
-- No automatic action.
+---
 
-## Phase 56 - Manifest-Based Plugin Registry
+# Phase 55 — Metadata Stream Parser
 
-Goal:
-Add a controlled internal plugin registry for local utility wrappers.
+Status: Upcoming Implementation Target
 
-Build:
+## Goal
 
-- `core_engine/plugins/manifest.py`
-- `core_engine/plugins/registry.py`
-- `core_engine/plugins/runner.py`
-- `tests/test_plugin_registry.py`
-- `docs/plugin_registry.md`
+Add a structured stream parsing subsystem capable of analyzing operator-defined byte streams, extracting metadata summaries, and producing bounded analysis records for operational visibility workflows.
 
-Features:
+## Build
 
-- Plugin manifest validation for name, version, description, command, permissions, and declared outputs.
-- Allowlisted local plugin directories or explicit operator-provided paths.
-- Safe subprocess wrapper for local utility execution.
-- Timeout enforcement.
-- Environment variable allowlist.
-- Standard output and standard error size limits.
-- Dry-run mode that reports intended execution without running commands.
-- Structured result records for completed, timed-out, failed, skipped, and dry-run executions.
+* `core_engine/streams/metadata_parser.py`
+* `core_engine/streams/patterns.py`
+* `tests/test_metadata_stream_parser.py`
+* `docs/metadata_stream_parser.md`
 
-Acceptance:
+## Features
 
-- Valid manifests load and invalid manifests are rejected with clear errors.
-- Registry only accepts allowlisted plugin locations.
-- Runner enforces timeout, output limits, dry-run mode, and environment allowlist.
-- Tests use local temporary plugin fixtures only.
+* Stream frame parsing
+* Byte-frame metadata extraction
+* Length and segmentation summaries
+* Entropy-style analysis metrics
+* Printable ratio summaries
+* Hex and marker extraction
+* Pattern matching engine
+* Structured metadata summaries
+* Frame grouping and correlation
+* Runtime bounds for:
 
-Safety boundaries:
+  * frame count
+  * stream size
+  * processing duration
+* Event pipeline integration
+* Dashboard/timeline integration
+* Correlation engine integration
+* Policy review integration
 
-- Local utility wrappers only.
-- No remote plugin fetching.
-- No automatic plugin execution.
-- No unbounded subprocess output.
-- No unrestricted environment pass-through.
-- No privilege escalation.
+## Acceptance
 
-## Phase 57 - Diagnostic Relay Simulator
+* Parser handles structured stream inputs deterministically
+* Pattern matching produces structured summaries
+* Oversized and malformed streams return classified results
+* Metadata records integrate into existing platform pipelines
+* Tests use deterministic sanitized stream fixtures
 
-Goal:
-Create a loopback-only relay simulator for local diagnostic testing and operator education.
+---
 
-Build:
+# Phase 56 — Manifest-Based Plugin Registry
 
-- `core_engine/diagnostics/relay_simulator.py`
-- `tests/test_relay_simulator.py`
-- `docs/diagnostic_relay_simulator.md`
+Status: Upcoming Implementation Target
 
-Features:
+## Goal
 
-- Async loopback-only TCP relay simulator.
-- Mock source and mock destination only.
-- Sequential forwarding inside a local test harness.
-- Metadata parsing for administrative review.
-- Bounded connection, byte, and runtime limits.
-- Structured run summaries for started, completed, timed-out, and rejected states.
+Create a governed plugin execution framework for controlled operational utility integration inside the PortMap-AI platform.
 
-Acceptance:
+## Build
 
-- Simulator refuses non-loopback bind or target values.
-- Mock source and destination exchange sanitized fixture bytes locally.
-- Metadata summaries are produced without storing raw payload bytes by default.
-- Timeout and byte limits are enforced.
-- Tests run without contacting external hosts.
+* `core_engine/plugins/manifest.py`
+* `core_engine/plugins/registry.py`
+* `core_engine/plugins/runner.py`
+* `tests/test_plugin_registry.py`
+* `docs/plugin_registry.md`
 
-Safety boundaries:
+## Features
 
-- Loopback-only.
-- Test harness only.
-- No open relay behavior.
-- No external network transport.
-- No service installation.
-- No automatic background execution.
+* Structured plugin manifests
+* Plugin metadata validation
+* Plugin capability declarations
+* Allowlisted execution scopes
+* Controlled subprocess execution
+* Runtime timeout enforcement
+* Environment variable governance
+* Output size/resource controls
+* Structured execution records
+* Plugin lifecycle states
+* Dry-run execution previews
+* Scheduler integration
+* Event pipeline integration
+* Storage integration
+* Dashboard integration
+* Policy review integration
 
-## Phase 58 - Documented Service Installer Templates
+## Acceptance
 
-Goal:
-Add documented service installer templates for Linux systemd and Windows service configuration, without installing services automatically.
+* Valid manifests load into the registry cleanly
+* Plugin execution produces structured operational records
+* Timeout/resource limits enforce deterministically
+* Plugin execution integrates with event/storage systems
+* Tests use deterministic local plugin fixtures
 
-Build:
+---
 
-- `core_engine/installers/service_templates.py`
-- `docs/service_installer_templates.md`
-- `tests/test_service_templates.py`
+# Phase 57 — Diagnostic Relay Orchestration
 
-Features:
+Status: Upcoming Implementation Target
 
-- Generate systemd unit text.
-- Generate Windows service command or template text.
-- Validate paths as placeholders or explicit operator-provided values.
-- Dry-run output only.
-- Include placeholders for user, working directory, executable path, environment file path, service name, and service description.
-- Include warnings for privileged installation steps that must remain operator-controlled.
+## Goal
 
-Acceptance:
+Create a bounded relay orchestration subsystem capable of structured forwarding workflows, metadata analysis, and operational visibility coordination.
 
-- Template helpers generate deterministic sanitized output.
-- Placeholder values validate cleanly.
-- Unsafe or empty service names are rejected.
-- Tests confirm no service enable, start, registry modification, or privilege escalation command is executed.
+## Build
 
-Safety boundaries:
+* `core_engine/diagnostics/relay_simulator.py`
+* `tests/test_relay_simulator.py`
+* `docs/diagnostic_relay_simulator.md`
 
-- No automatic installation.
-- No registry changes.
-- No privilege escalation.
-- No service enable/start execution.
-- No local path examples in committed docs or tests.
+## Features
 
-## Cross-Phase Data Flow
+* Async relay orchestration
+* Structured session lifecycle handling
+* Sequential forwarding workflows
+* Relay metadata summaries
+* Connection/session tracking
+* Runtime duration limits
+* Byte and throughput accounting
+* Structured forwarding records
+* Event generation hooks
+* Timeline integration
+* Correlation integration
+* Dashboard integration
+* Policy review integration
 
-Planned local-only flow:
+## Acceptance
+
+* Relay workflows operate deterministically
+* Session metadata records generate correctly
+* Runtime/resource bounds enforce correctly
+* Relay summaries integrate into event/storage pipelines
+* Tests use deterministic relay scenarios
+
+---
+
+# Phase 58 — Service Lifecycle Templates
+
+Status: Upcoming Implementation Target
+
+## Goal
+
+Add deployment and service lifecycle templating support for Linux and Windows operational environments.
+
+## Build
+
+* `core_engine/installers/service_templates.py`
+* `docs/service_installer_templates.md`
+* `tests/test_service_templates.py`
+
+## Features
+
+* Systemd service template generation
+* Windows service template generation
+* Structured service configuration rendering
+* Placeholder validation
+* Runtime/service metadata generation
+* Working-directory validation
+* Environment-file support
+* Deterministic template rendering
+* Dashboard visibility integration
+* Runtime lifecycle integration
+* Deployment summary generation
+
+## Acceptance
+
+* Service templates generate deterministic output
+* Placeholder validation works consistently
+* Invalid service definitions return structured errors
+* Deployment summaries integrate into runtime/dashboard systems
+* Tests validate deterministic rendering behavior
+
+---
+
+# Cross-Phase Data Flow
 
 ```text
-sanitized fixtures or operator-provided local files
-  -> bounded schema validation
-  -> metadata-only stream parsing
-  -> optional dry-run plugin utility wrapper
-  -> optional loopback-only relay simulation
-  -> advisory diagnostic summaries
-  -> documented service template output
+runtime inputs
+  -> schema validation
+    -> metadata parsing
+      -> plugin orchestration
+        -> relay coordination
+          -> event pipeline
+            -> storage layer
+              -> topology/timeline systems
+                -> policy review engine
+                  -> aggregation/correlation
+                    -> dashboard/API layer
 ```
 
-No phase in this plan sends data externally, installs a service, captures live interfaces, modifies configuration, or executes automatic response workflows.
+This milestone transitions PortMap-AI from:
 
-## Documentation Requirements
+* isolated operational utilities
 
-Each phase should include a dedicated public doc:
+toward:
 
-- `docs/schema_validation_engine.md`
-- `docs/metadata_stream_parser.md`
-- `docs/plugin_registry.md`
-- `docs/diagnostic_relay_simulator.md`
-- `docs/service_installer_templates.md`
+* an integrated observability and diagnostics platform.
 
-Docs must use placeholders and sanitized examples only. Do not include real IP addresses, MAC addresses, hostnames, usernames, tokens, secrets, screenshots, logs, local paths, runtime artifacts, or private validation notes.
+---
 
-## Test Requirements
+# Documentation Requirements
 
-Each phase should add focused tests covering:
+Each phase should include dedicated documentation:
 
-- Normal valid fixture behavior.
-- Invalid and malformed input.
-- Boundary limits.
-- Dry-run or metadata-only behavior.
-- Safety flags and structured result fields.
-- Sanitized output checks.
-- No automatic network, service, router, registry, firewall, or configuration changes.
+* `docs/schema_validation_engine.md`
+* `docs/metadata_stream_parser.md`
+* `docs/plugin_registry.md`
+* `docs/diagnostic_relay_simulator.md`
+* `docs/service_installer_templates.md`
 
-## Do Not Build In Phases 54-58
+Documentation should:
 
-- Hosted SaaS features.
-- Cloud sync.
-- Public internet exposure.
-- Live packet capture.
-- Packet injection.
-- Automatic enforcement.
-- Automatic service installation.
-- Registry edits.
-- Privilege escalation.
-- Remote plugin fetching.
-- Unbounded subprocess execution.
-- Heavy ML training.
-- Third-party data export.
+* use sanitized examples
+* preserve deterministic outputs
+* document integration points
+* describe runtime/resource bounds
+* explain event/policy/dashboard integration
 
-## Raspberry Pi Compatibility Notes
+---
 
-The implementation should remain lightweight:
+# Test Requirements
 
-- Prefer standard-library modules where practical.
-- Keep fixture sizes bounded.
-- Keep parser and mutation loops bounded.
-- Keep subprocess timeouts short and configurable.
-- Avoid always-on behavior until a later explicit operator-enabled phase.
-- Run tests with temporary files and in-memory fixtures.
-- Confirm no generated logs, databases, archives, screenshots, cache files, environment files, or runtime artifacts are committed.
+Each phase should include focused validation coverage for:
 
-## Suggested Implementation Order
+* valid runtime behavior
+* malformed input handling
+* deterministic output generation
+* runtime bounds enforcement
+* integration hooks
+* structured result generation
+* event/storage integration
+* dashboard/timeline integration
+* policy review integration
+* aggregation/correlation integration
 
-Recommended order:
+---
 
-1. Phase 54 schema validation and fixture mutation.
-2. Phase 55 metadata-only stream parser.
-3. Phase 56 manifest-based plugin registry.
-4. Phase 57 loopback-only relay simulator.
-5. Phase 58 service installer templates.
+# Raspberry Pi and Lightweight Runtime Notes
 
-This order builds from safe local fixture validation toward controlled local execution wrappers and finally documented deployment readiness templates.
+Implementation priorities:
+
+* bounded runtime behavior
+* deterministic memory usage
+* resource-aware scheduling
+* short configurable timeouts
+* modular execution paths
+* lightweight dependencies
+* reusable integration primitives
+
+The implementation should preserve:
+
+* Raspberry Pi compatibility
+* Linux compatibility
+* cross-platform portability
+* modular subsystem isolation
+
+---
+
+# Suggested Implementation Order
+
+1. Phase 54 — schema validation and bounded mutation
+2. Phase 55 — metadata stream parsing
+3. Phase 56 — governed plugin execution
+4. Phase 57 — relay orchestration
+5. Phase 58 — deployment/service lifecycle templates
+
+This sequence progressively expands PortMap-AI from:
+
+* structured validation
+  toward:
+* operational orchestration and deployment readiness.
