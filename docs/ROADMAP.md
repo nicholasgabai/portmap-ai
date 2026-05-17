@@ -10,6 +10,7 @@ Phases 0-53 are implemented locally in the working tree and documented as comple
 
 - Follow the Phase 44-53 local infrastructure visibility plan in `docs/PHASE_44_53_PLAN.md`.
 - Use the Phase 44-53 integration plan in `docs/PHASE_44_53_INTEGRATION_PLAN.md` to guide consolidation before adding new runtime behavior.
+- Use the Phase 54-58 advanced diagnostics plan in `docs/PHASE_54_58_PLAN.md` for future fixture-based diagnostics, metadata parsing, plugin governance, relay simulation, and service template work.
 - Use the local event pipeline in `docs/event_pipeline.md` as the event-history foundation for future storage, dashboard, and correlation work.
 - Use the local SQLite storage layer in `docs/local_storage.md` for durable events, snapshots, assets, services, topology relationships, and findings.
 - Use the local runtime scheduler primitives in `docs/runtime_scheduler.md` for future recurring health, event, snapshot, and operator-review workflows.
@@ -46,6 +47,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/distributed_visibility_aggregation.md`
 - `docs/PHASE_44_53_INTEGRATION_PLAN.md`
 - `docs/PHASE_44_53_PLAN.md`
+- `docs/PHASE_54_58_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_api.md`
 - `docs/local_storage.md`
