@@ -44,6 +44,7 @@ Start here:
 - `docs/plugin_registry.md` - governed local plugin manifest registry with dry-run-first controlled execution records.
 - `docs/runtime_scheduler.md` - lightweight local scheduler primitives for health checks, event flushing, snapshot refreshes, and policy review refreshes.
 - `docs/schema_validation_engine.md` - bounded local schema validation and fixture mutation for mock-service diagnostics.
+- `docs/service_installer_templates.md` - dry-run Linux and Windows service lifecycle template generation for operator review.
 - `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
 - `docs/saas_architecture.md` - future SaaS control-plane, tenant, enrollment, and communication design.
 - `docs/network_control_layer.md` - advisory gateway and exposed-service posture assessment.

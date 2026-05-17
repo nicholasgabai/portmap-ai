@@ -29,7 +29,7 @@ Phase status:
 * Phase 55 — Upcoming Implementation Target
 * Phase 56 — Complete Baseline
 * Phase 57 — Complete Baseline
-* Phase 58 — Upcoming Implementation Target
+* Phase 58 — Complete Baseline
 
 ## Milestone I: Advanced Diagnostics and Deployment Readiness
 
@@ -238,7 +238,7 @@ Create a bounded relay orchestration subsystem capable of structured forwarding 
 
 # Phase 58 — Service Lifecycle Templates
 
-Status: Upcoming Implementation Target
+Status: Complete Baseline
 
 ## Goal
 

@@ -99,6 +99,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/schema_validation_engine.md" in data_files["share/portmap-ai/docs"]
     assert "docs/security_authentication.md" in data_files["share/portmap-ai/docs"]
     assert "docs/service_enumeration.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/service_installer_templates.md" in data_files["share/portmap-ai/docs"]
     assert "docs/stack_stability.md" in data_files["share/portmap-ai/docs"]
     assert "docs/threat_correlation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/tui_dashboard.md" in data_files["share/portmap-ai/docs"]
