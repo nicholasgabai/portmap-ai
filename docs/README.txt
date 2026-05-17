@@ -31,6 +31,7 @@ Start here:
 - `docs/behavior_correlation.md` - local baseline comparison for advisory drift, topology, service, and finding deltas.
 - `docs/cve_intelligence.md` - advisory CVE normalization, cache updates, and service/version matching.
 - `docs/deep_packet_inspection.md` - passive DPI metadata, findings, redaction, and session summaries.
+- `docs/diagnostic_relay_simulator.md` - bounded local relay orchestration simulator for diagnostic session metadata and platform records.
 - `docs/distributed_cluster_scanning.md` - distributed scan job planning, worker registry, and task scheduling.
 - `docs/distributed_visibility_aggregation.md` - local coordinator aggregation for node visibility summaries with source attribution.
 - `docs/docker_deployment.md` - Docker Compose deployment for orchestrator, master, and worker.
