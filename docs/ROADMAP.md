@@ -1,10 +1,10 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 55 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
+This roadmap summarizes the current direction after the Phase 56 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
 
 ## Current Baseline
 
-Phases 0-55 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
+Phases 0-56 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
 
 ## Near-Term Work
 
@@ -23,6 +23,7 @@ Phases 0-55 are implemented locally in the working tree and documented as comple
 - Use behavior correlation baselines in `docs/behavior_correlation.md` to compare stored local telemetry windows and produce advisory delta findings.
 - Use the bounded schema validation engine in `docs/schema_validation_engine.md` for local mock-service fixture checks and controlled mutation testing.
 - Use the metadata-only stream parser in `docs/metadata_stream_parser.md` for bounded local fixture and file metadata summaries.
+- Use the manifest-based plugin registry in `docs/plugin_registry.md` for governed local utility manifests, dry-run previews, and structured execution records.
 - Keep real-device validation notes private unless scrubbed for public documentation.
 - Collect external Windows runtime validation before marking Windows support verified.
 - Refresh screenshots, terminal examples, and quick-start paths after real-device testing.
@@ -56,6 +57,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/metadata_stream_parser.md`
 - `docs/node_coordination.md`
 - `docs/policy_review_engine.md`
+- `docs/plugin_registry.md`
 - `docs/runtime_scheduler.md`
 - `docs/schema_validation_engine.md`
 - `docs/topology_timeline_views.md`

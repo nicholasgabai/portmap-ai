@@ -27,7 +27,7 @@ Phase status:
 
 * Phase 54 — Complete Baseline
 * Phase 55 — Upcoming Implementation Target
-* Phase 56 — Upcoming Implementation Target
+* Phase 56 — Complete Baseline
 * Phase 57 — Upcoming Implementation Target
 * Phase 58 — Upcoming Implementation Target
 
@@ -153,7 +153,7 @@ Add a structured stream parsing subsystem capable of analyzing operator-defined 
 
 # Phase 56 — Manifest-Based Plugin Registry
 
-Status: Upcoming Implementation Target
+Status: Complete Baseline
 
 ## Goal
 
