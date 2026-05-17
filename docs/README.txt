@@ -39,6 +39,7 @@ Start here:
 - `docs/event_pipeline.md` - local-only normalized event model, in-memory queue, and event bus.
 - `docs/local_api.md` - local read-only API primitives for health, events, assets, snapshots, nodes, and topology.
 - `docs/local_storage.md` - local SQLite storage for events, snapshots, assets, services, topology relationships, and findings.
+- `docs/metadata_stream_parser.md` - metadata-only local byte-stream parser for fixtures and explicit local files.
 - `docs/runtime_scheduler.md` - lightweight local scheduler primitives for health checks, event flushing, snapshot refreshes, and policy review refreshes.
 - `docs/schema_validation_engine.md` - bounded local schema validation and fixture mutation for mock-service diagnostics.
 - `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
