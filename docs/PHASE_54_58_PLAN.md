@@ -1,6 +1,6 @@
 # Phase 54-58 Advanced Diagnostics Plan
 
-This document defines the next PortMap-AI planning phases after the Phase 44-53 local infrastructure visibility work. These phases are planning targets only. They are not implemented yet and do not add runtime behavior, background services, external transport, automatic collection, automatic enforcement, or service installation.
+This document defines the next PortMap-AI planning phases after the Phase 44-53 local infrastructure visibility work. Phase 54 is now implemented as a local baseline; Phases 55-58 remain planning targets only. These phases do not add runtime behavior, background services, external transport, automatic collection, automatic enforcement, or service installation.
 
 The shared posture remains local-first, operator-controlled, fixture-driven where possible, safe by default, and compatible with lightweight Linux and Raspberry Pi deployments.
 
@@ -21,6 +21,8 @@ Core principles:
 - Add focused tests for every phase.
 
 ## Phase 54 - Bounded Schema Validation Engine
+
+Status: complete baseline.
 
 Goal:
 Create a bounded schema validation and fixture mutation engine for local mock-service testing only.

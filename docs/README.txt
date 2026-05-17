@@ -40,6 +40,7 @@ Start here:
 - `docs/local_api.md` - local read-only API primitives for health, events, assets, snapshots, nodes, and topology.
 - `docs/local_storage.md` - local SQLite storage for events, snapshots, assets, services, topology relationships, and findings.
 - `docs/runtime_scheduler.md` - lightweight local scheduler primitives for health checks, event flushing, snapshot refreshes, and policy review refreshes.
+- `docs/schema_validation_engine.md` - bounded local schema validation and fixture mutation for mock-service diagnostics.
 - `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
 - `docs/saas_architecture.md` - future SaaS control-plane, tenant, enrollment, and communication design.
 - `docs/network_control_layer.md` - advisory gateway and exposed-service posture assessment.

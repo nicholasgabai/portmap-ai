@@ -21,6 +21,7 @@ Phases 0-53 are implemented locally in the working tree and documented as comple
 - Use the local policy review engine in `docs/policy_review_engine.md` for advisory review records and operator state transitions.
 - Use distributed visibility aggregation in `docs/distributed_visibility_aggregation.md` to merge authorized local node summaries while preserving source attribution and reported conflicts.
 - Use behavior correlation baselines in `docs/behavior_correlation.md` to compare stored local telemetry windows and produce advisory delta findings.
+- Use the bounded schema validation engine in `docs/schema_validation_engine.md` for local mock-service fixture checks and controlled mutation testing.
 - Keep real-device validation notes private unless scrubbed for public documentation.
 - Collect external Windows runtime validation before marking Windows support verified.
 - Refresh screenshots, terminal examples, and quick-start paths after real-device testing.
@@ -54,6 +55,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/node_coordination.md`
 - `docs/policy_review_engine.md`
 - `docs/runtime_scheduler.md`
+- `docs/schema_validation_engine.md`
 - `docs/topology_timeline_views.md`
 - `docs/master_roadmap.md`
 - `docs/real_device_validation.md`
