@@ -1,7 +1,19 @@
 import json
 import re
 
-from core_engine.streams import detect_patterns, normalize_patterns, parse_stream_bytes, parse_stream_file
+from core_engine.streams import (
+    build_stream_correlation_record,
+    build_stream_event,
+    build_stream_finding,
+    build_stream_storage_record,
+    build_stream_timeline_entry,
+    build_stream_topology_summary,
+    detect_patterns,
+    normalize_patterns,
+    parse_stream_bytes,
+    parse_stream_file,
+    summarize_stream_result,
+)
 
 
 PRIVATE_PATTERNS = [
@@ -27,6 +39,10 @@ def test_parse_empty_stream_returns_empty_metadata():
     assert result["ok"] is True
     assert result["frame_count"] == 0
     assert result["length_summary"]["max"] == 0
+    assert result["diagnostic_type"] == "stream_metadata"
+    assert result["record_version"] >= 2
+    assert result["summary"]["frame_count"] == 0
+    assert result["integration_hooks"]["storage_ready"] is True
     assert result["raw_payload_stored"] is False
     assert result["metadata_only"] is True
 
@@ -95,6 +111,7 @@ def test_invalid_pattern_returns_unsupported_parse_result():
     assert result["ok"] is False
     assert result["status"] == "unsupported"
     assert result["frames"] == []
+    assert result["integration_hooks"]["policy_review_ready"] is True
 
 
 def test_parse_local_file_uses_summary_without_path(tmp_path):
@@ -108,6 +125,42 @@ def test_parse_local_file_uses_summary_without_path(tmp_path):
     assert result["file_summary"]["name"] == "sample_stream.bin"
     assert result["file_summary"]["path_stored"] is False
     assert str(tmp_path) not in repr(result)
+
+
+def test_stream_operational_integration_records():
+    result = parse_stream_bytes(b"HELLO ABC sample", patterns=_patterns())
+    summary = summarize_stream_result(result)
+    event = build_stream_event(result, timestamp="sample-time")
+    finding = build_stream_finding(result, source_ref="sample-source")
+    timeline = build_stream_timeline_entry(result, timestamp="sample-time", source_ref="sample-source")
+    storage = build_stream_storage_record(result)
+    topology = build_stream_topology_summary(result, source_ref="sample-source")
+    correlation = build_stream_correlation_record(result, source_ref="sample-source")
+
+    assert summary["classification"] == "ok"
+    assert summary["detected_marker_count"] == 2
+    assert event["event_type"] == "system_notice"
+    assert event["metadata"]["diagnostic_type"] == "stream_metadata"
+    assert finding["category"] == "stream_metadata"
+    assert finding["recommended_review"] is False
+    assert timeline["category"] == "stream_metadata"
+    assert storage["record_type"] == "stream_metadata"
+    assert "frames" not in storage["payload"]
+    assert topology["node_count"] == 3
+    assert topology["edge_count"] == 2
+    assert correlation["correlation_key"].startswith("stream_metadata:")
+    assert correlation["raw_payload_stored"] is False
+
+
+def test_stream_operational_records_for_malformed_input_request_review():
+    result = parse_stream_bytes(b"\x04ABC", length_prefix_bytes=1)
+    event = build_stream_event(result, timestamp="sample-time")
+    finding = build_stream_finding(result)
+
+    assert result["summary"]["recommended_review"] is True
+    assert event["event_type"] == "policy_review_required"
+    assert finding["recommended_review"] is True
+    assert finding["severity"] == "medium"
 
 
 def test_no_private_identifiers_in_examples_or_output(tmp_path):

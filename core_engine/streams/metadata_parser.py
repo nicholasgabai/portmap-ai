@@ -1,11 +1,22 @@
 from __future__ import annotations
 
 from collections import Counter
+from datetime import UTC, datetime
+from hashlib import sha256
 from math import log2
 from pathlib import Path
 from typing import Any, Iterable
 
 from core_engine.streams.patterns import SAFETY_FLAGS, detect_patterns, normalize_patterns
+
+
+STREAM_METADATA_RECORD_VERSION = 2
+STATUS_SEVERITY = {
+    "ok": "info",
+    "malformed": "medium",
+    "unsupported": "high",
+    "input_limited": "low",
+}
 
 
 def parse_stream_bytes(
@@ -78,7 +89,188 @@ def parse_stream_file(
         "size": len(raw),
         "path_stored": False,
     }
+    result["summary"] = summarize_stream_result(result)
+    result["integration_hooks"] = _integration_hooks(result)
+    result["result_id"] = _stable_id("stream-result", result["source"], result["classification"], result["summary"])
     return result
+
+
+def summarize_stream_result(result: dict[str, Any]) -> dict[str, Any]:
+    frames = [row for row in result.get("frames") or [] if isinstance(row, dict)]
+    status = str(result.get("classification") or result.get("status") or "unsupported")
+    detected_markers = sorted(str(marker) for marker in result.get("detected_markers") or [])
+    return {
+        "classification": status,
+        "severity": STATUS_SEVERITY.get(status, "medium"),
+        "source": str(result.get("source") or "unknown"),
+        "input_length": int(result.get("input_length") or 0),
+        "frame_count": len(frames),
+        "max_frame_length": max((int(frame.get("length") or 0) for frame in frames), default=0),
+        "average_entropy": float((result.get("entropy_summary") or {}).get("average") or 0.0),
+        "average_printable_ratio": float((result.get("printable_ratio_summary") or {}).get("average") or 0.0),
+        "detected_marker_count": len(detected_markers),
+        "detected_markers": detected_markers,
+        "error_count": len(result.get("errors") or []),
+        "recommended_review": status != "ok",
+        **SAFETY_FLAGS,
+    }
+
+
+def build_stream_event(
+    result: dict[str, Any],
+    *,
+    source: str = "streams.metadata_parser",
+    timestamp: str | None = None,
+) -> dict[str, Any]:
+    summary = summarize_stream_result(result)
+    severity = summary["severity"]
+    event_type = "system_notice" if severity in {"info", "low"} else "policy_review_required"
+    message = _operator_summary(summary)
+    return {
+        "event_id": _stable_id("evt", result.get("result_id"), event_type, message),
+        "event_type": event_type,
+        "severity": severity,
+        "source": source,
+        "timestamp": timestamp or _now(),
+        "message": message,
+        "asset_ref": None,
+        "service_ref": None,
+        "flow_ref": None,
+        "snapshot_ref": None,
+        "finding_ref": _stable_id("finding", result.get("result_id"), summary["classification"]),
+        "metadata": {
+            "diagnostic_type": "stream_metadata",
+            "classification": summary["classification"],
+            "summary": summary,
+        },
+        "raw_payload_stored": False,
+        "automatic_changes": False,
+        "administrator_controlled": True,
+    }
+
+
+def build_stream_finding(result: dict[str, Any], *, source_ref: str | None = None) -> dict[str, Any]:
+    summary = summarize_stream_result(result)
+    return {
+        "finding_id": _stable_id("finding", result.get("result_id"), summary["classification"], summary["source"]),
+        "finding_type": "stream_metadata_result",
+        "category": "stream_metadata",
+        "severity": summary["severity"],
+        "title": "Stream Metadata Result",
+        "summary": _operator_summary(summary),
+        "evidence_refs": [f"stream:{summary['source']}", f"frames:{summary['frame_count']}"],
+        "recommended_review": summary["recommended_review"],
+        "source_refs": [source_ref or f"stream:{summary['source']}"],
+        "automatic_changes": False,
+        "administrator_controlled": True,
+        "raw_payload_stored": False,
+        "local_only": True,
+    }
+
+
+def build_stream_timeline_entry(
+    result: dict[str, Any],
+    *,
+    timestamp: str | None = None,
+    source_ref: str | None = None,
+) -> dict[str, Any]:
+    summary = summarize_stream_result(result)
+    text = _operator_summary(summary)
+    return {
+        "timeline_id": _stable_id("timeline", result.get("result_id"), text),
+        "timestamp": timestamp or _now(),
+        "category": "stream_metadata",
+        "severity": summary["severity"],
+        "title": "Stream Metadata",
+        "summary": text,
+        "asset_ref": None,
+        "service_ref": None,
+        "snapshot_ref": None,
+        "source_refs": [source_ref or f"stream:{summary['source']}"],
+        "recommended_review": summary["recommended_review"],
+        "raw_payload_stored": False,
+        "automatic_changes": False,
+        "administrator_controlled": True,
+    }
+
+
+def build_stream_storage_record(result: dict[str, Any], *, record_type: str = "stream_metadata") -> dict[str, Any]:
+    summary = summarize_stream_result(result)
+    return {
+        "record_id": _stable_id("storage", result.get("result_id"), record_type, summary),
+        "record_type": record_type,
+        "summary": summary,
+        "payload": {
+            "status": result.get("status"),
+            "classification": result.get("classification"),
+            "source": result.get("source"),
+            "input_length": result.get("input_length"),
+            "frame_count": result.get("frame_count"),
+            "length_summary": result.get("length_summary"),
+            "entropy_summary": result.get("entropy_summary"),
+            "printable_ratio_summary": result.get("printable_ratio_summary"),
+            "detected_markers": result.get("detected_markers"),
+            "errors": list(result.get("errors") or []),
+        },
+        "raw_payload_stored": False,
+        "automatic_changes": False,
+        "administrator_controlled": True,
+        "local_only": True,
+    }
+
+
+def build_stream_topology_summary(result: dict[str, Any], *, source_ref: str | None = None) -> dict[str, Any]:
+    summary = summarize_stream_result(result)
+    node_id = _stable_id("stream-node", summary["source"], summary["frame_count"])
+    base_ref = source_ref or f"stream:{summary['source']}"
+    marker_nodes = [
+        {
+            "node_id": _stable_id("marker-node", marker),
+            "label": marker,
+            "category": "detected_marker",
+            "source_refs": [base_ref],
+        }
+        for marker in summary["detected_markers"]
+    ]
+    edges = [
+        {
+            "edge_id": _stable_id("stream-edge", node_id, marker["node_id"]),
+            "source": node_id,
+            "target": marker["node_id"],
+            "relationship_type": "marker_observed",
+            "confidence": 1.0,
+            "source_refs": [base_ref],
+        }
+        for marker in marker_nodes
+    ]
+    return {
+        "nodes": [
+            {
+                "node_id": node_id,
+                "label": "Local Stream",
+                "category": "stream_metadata",
+                "source_refs": [base_ref],
+            },
+            *marker_nodes,
+        ],
+        "edges": edges,
+        "node_count": 1 + len(marker_nodes),
+        "edge_count": len(edges),
+        "raw_payload_stored": False,
+        "automatic_changes": False,
+        "administrator_controlled": True,
+        "local_only": True,
+    }
+
+
+def build_stream_correlation_record(result: dict[str, Any], *, source_ref: str | None = None) -> dict[str, Any]:
+    finding = build_stream_finding(result, source_ref=source_ref)
+    return {
+        **finding,
+        "correlation_key": f"stream_metadata:{finding['category']}:{finding['severity']}",
+        "score": 0.0,
+        "confidence": 1.0 if result.get("ok") else 0.7,
+    }
 
 
 def _split_frames(
@@ -160,10 +352,12 @@ def _result(
     entropies = [frame["entropy"] for frame in frames]
     printable = [frame["printable_ratio"] for frame in frames]
     detected = sorted({marker["name"] for frame in frames for marker in frame.get("detected_markers", [])})
-    return {
+    payload = {
         "ok": status == "ok",
         "status": status,
         "classification": status,
+        "record_version": STREAM_METADATA_RECORD_VERSION,
+        "diagnostic_type": "stream_metadata",
         "source": source,
         "input_length": input_length,
         "frame_count": len(frames),
@@ -175,6 +369,10 @@ def _result(
         "errors": errors,
         **SAFETY_FLAGS,
     }
+    payload["summary"] = summarize_stream_result(payload)
+    payload["integration_hooks"] = _integration_hooks(payload)
+    payload["result_id"] = _stable_id("stream-result", source, status, input_length, payload["summary"])
+    return payload
 
 
 def _numeric_summary(values: list[int] | list[float]) -> dict[str, float | int]:
@@ -208,3 +406,33 @@ def _has_more_frames(raw: bytes, frames: list[tuple[int, int, bytes]]) -> bool:
         return False
     last_offset = frames[-1][1] + len(frames[-1][2])
     return last_offset < len(raw)
+
+
+def _integration_hooks(result: dict[str, Any]) -> dict[str, bool]:
+    return {
+        "event_pipeline_ready": True,
+        "storage_ready": True,
+        "policy_review_ready": result.get("classification") != "ok",
+        "timeline_ready": True,
+        "topology_ready": True,
+        "correlation_ready": True,
+    }
+
+
+def _operator_summary(summary: dict[str, Any]) -> str:
+    classification = str(summary.get("classification") or "unknown")
+    source = str(summary.get("source") or "stream")
+    frame_count = int(summary.get("frame_count") or 0)
+    marker_count = int(summary.get("detected_marker_count") or 0)
+    if classification == "ok":
+        return f"Stream metadata parsed from {source} with {frame_count} frames and {marker_count} markers."
+    return f"Stream metadata from {source} classified as {classification} with {frame_count} frames and {marker_count} markers."
+
+
+def _stable_id(prefix: str, *parts: Any) -> str:
+    material = "|".join(str(part) for part in parts)
+    return f"{prefix}-" + sha256(material.encode("utf-8")).hexdigest()[:16]
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat()
