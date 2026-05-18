@@ -209,6 +209,8 @@ Acceptance:
 
 ## Phase 64 — Operational Export Bundle
 
+Status: Complete Baseline
+
 Goal:
 Create export bundles for snapshots, findings, topology, review records, and runtime summaries.
 

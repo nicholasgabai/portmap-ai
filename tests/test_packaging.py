@@ -84,6 +84,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/network_control_layer.md" in data_files["share/portmap-ai/docs"]
     assert "docs/network_asset_inventory.md" in data_files["share/portmap-ai/docs"]
     assert "docs/operator_review_queue_integration.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/operational_export_bundle.md" in data_files["share/portmap-ai/docs"]
     assert "docs/os_fingerprinting.md" in data_files["share/portmap-ai/docs"]
     assert "docs/packaging.md" in data_files["share/portmap-ai/docs"]
     assert "docs/packet_capture.md" in data_files["share/portmap-ai/docs"]

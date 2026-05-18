@@ -111,6 +111,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/node_coordination.md",
   "docs/network_asset_inventory.md",
   "docs/operator_review_queue_integration.md",
+  "docs/operational_export_bundle.md",
   "docs/os_fingerprinting.md",
   "docs/packaging.md",
   "docs/packet_capture.md",
