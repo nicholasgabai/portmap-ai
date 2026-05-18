@@ -32,16 +32,17 @@ Current stable posture:
 
 ## Next Milestone Direction
 
-Recommended next milestone: Integrated Local Operations.
+Recommended next milestone: Milestone J - Runtime Pipeline and Persistent Topology Integration.
 
 Near-term implementation should focus on wiring existing primitives together without adding unsafe automation:
 
-- Add diagnostic record adapters that normalize visibility, correlation, schema, stream, plugin, relay, and service-template outputs into shared event/storage/policy/timeline/dashboard records.
-- Persist selected local history through storage-backed repositories.
-- Connect advisory findings to the policy review queue without executing actions.
-- Add local API repository providers for events, assets, snapshots, diagnostics, nodes, topology, and review summaries.
-- Add dashboard panels that read from API-compatible local summaries.
-- Add explicit scheduler jobs for event flushing, health summaries, snapshot refreshes, and review refreshes.
+- Use `docs/PHASE_59_64_PLAN.md` as the active implementation plan.
+- Persist topology state and topology snapshot history.
+- Compare baseline/current snapshots for asset, service, topology, and finding drift.
+- Wire visibility, events, storage, policy review, topology, and correlation into one explicit operator workflow.
+- Persist operator review drafts, approval states, finding status, and review history.
+- Connect dashboard models to local API, storage, and runtime provider data.
+- Export operator-controlled evidence bundles for snapshots, findings, topology, reviews, and runtime summaries.
 - Validate the integrated local-only path on Raspberry Pi/Linux using sanitized records.
 
 ## Medium-Term Work
@@ -61,6 +62,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
 - `docs/PHASE_HISTORY.md`
 - `docs/MILESTONE_INTEGRATION.md`
+- `docs/PHASE_59_64_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`

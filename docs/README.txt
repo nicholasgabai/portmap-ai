@@ -8,6 +8,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
 - `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-58 platform modules.
+- `docs/PHASE_59_64_PLAN.md` - next milestone plan for runtime pipeline and persistent topology integration.
 - `docs/DEPLOYMENT.md` - deployment paths and validation expectations.
 - `docs/SECURITY_MODEL.md` - centralized safety, trust, telemetry, and remediation boundaries.
 - `docs/CLI_REFERENCE.md` - command-family reference for the installed `portmap` CLI.
