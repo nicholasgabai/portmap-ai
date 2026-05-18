@@ -79,6 +79,8 @@ Acceptance:
 
 ## Phase 60 — Snapshot Diff and Drift Detection
 
+Status: Complete Baseline
+
 Goal:
 Compare baseline/current snapshots and report asset, service, topology, and finding drift in structured outputs.
 

@@ -44,6 +44,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 
 - `docs/local_visibility_operator_tooling.md` - local visibility summaries, historical snapshots, baseline deltas, categorized findings, and operator review drafts.
 - `docs/examples/` - sanitized JSON examples for testing visibility workflows without local infrastructure data.
+- `docs/snapshot_drift_detection.md` - baseline/current topology snapshot diffing and advisory drift records.
 - `docs/network_asset_inventory.md` - authorized asset inventory, ARP evidence, reachability checks, and topology context.
 - `docs/network_control_layer.md` - advisory gateway and exposed-service posture assessment.
 - `docs/distributed_visibility_aggregation.md` - local coordinator aggregation for node visibility summaries with source attribution.
