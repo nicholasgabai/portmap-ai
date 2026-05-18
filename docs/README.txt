@@ -1,84 +1,106 @@
 # PortMap-AI Documentation Index
 
-PortMap-AI is currently a functional local distributed network observability stack with an orchestrator API, master node, worker node, Textual terminal dashboard, remediation audit trail, and local stack launcher.
+PortMap-AI is currently a functional local distributed network observability stack with an orchestrator API, master node, worker node, Textual terminal dashboard, remediation audit trail, local visibility tooling, diagnostic primitives, and local stack launcher.
 
-Start here:
+## Start Here
+
 - `PORTMAP_AI_HANDOFF.md` - current system state, verified baseline, and operating notes.
-- `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md` - enterprise expansion roadmap from UDP scanning through enterprise orchestration work.
-- `docs/ROADMAP.md` - concise current roadmap and post-Phase 40 direction.
-- `docs/PHASE_44_53_PLAN.md` - next implementation plan for local event history, storage, coordination, API, dashboard, policy review, aggregation, and correlation.
-- `docs/PHASE_44_53_INTEGRATION_PLAN.md` - consolidation plan for wiring Phase 44-53 modules together in future work.
-- `docs/PHASE_54_58_PLAN.md` - planning roadmap for advanced local diagnostics, metadata parsing, plugin governance, relay simulation, and service templates.
-- `docs/PHASE_54_58_INTEGRATION_PLAN.md` - consolidation plan for wiring Phase 54-58 diagnostics and service-template modules into platform layers.
+- `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-58 platform modules.
 - `docs/DEPLOYMENT.md` - deployment paths and validation expectations.
 - `docs/SECURITY_MODEL.md` - centralized safety, trust, telemetry, and remediation boundaries.
 - `docs/CLI_REFERENCE.md` - command-family reference for the installed `portmap` CLI.
-- `docs/real_device_validation.md` - Linux/Raspberry Pi, macOS, and pending Windows validation checklist.
-- `docs/master_roadmap.md` - phased roadmap from reproducible setup through release candidate.
+- `CHANGELOG.md` - release-candidate change history and verification notes.
+- `docs/real_device_validation.md` - private/scrub-required Linux, Raspberry Pi, macOS, and Windows validation checklist.
+- `docs/archive/` - historical milestone planning documents retained for reference.
+
+## Setup And Operations
+
 - `docs/quick_start.md` - setup, stack launch, dashboard, tests, and log export.
 - `docs/architecture.md` - current local-first architecture and component boundaries.
-- `test_instructions.md` - focused local verification checklist.
 - `docs/deployment_options.md` - default local install path, always-on service path, and optional Docker path.
-- `docs/dashboard_foundation.md` - lightweight local web dashboard rendering foundation for API-backed status panels.
 - `docs/packaging.md` - install, setup, diagnostics, and build artifact guidance.
 - `docs/release_candidate.md` - version 0.1.0 release-candidate checklist and known limitations.
 - `docs/raspberry_pi_deployment.md` - Linux/ARM service setup and low-resource guidance.
+- `docs/docker_deployment.md` - Docker Compose deployment for orchestrator, master, and worker.
 - `docs/configuration.md` - configuration layering, environment placeholders, and runtime settings.
-- `docs/alerting_siem_integrations.md` - alert and SIEM payload formatting plus explicit delivery helpers.
+- `test_instructions.md` - focused local verification checklist.
+
+## Local Platform Foundation
+
+- `docs/event_pipeline.md` - local-only normalized event model, in-memory queue, and event bus.
+- `docs/local_storage.md` - local SQLite storage for events, snapshots, assets, services, topology relationships, and findings.
+- `docs/runtime_scheduler.md` - lightweight scheduler primitives for health checks, event flushing, snapshot refreshes, and policy review refreshes.
+- `docs/node_coordination.md` - local node identity, capability records, heartbeat metadata, lifecycle states, and summaries.
+- `docs/local_api.md` - local read-only API primitives for health, events, assets, snapshots, nodes, and topology.
+- `docs/dashboard_foundation.md` - lightweight local web dashboard rendering foundation for API-backed status panels.
+- `docs/topology_timeline_views.md` - normalized topology graph and historical timeline view models.
+- `docs/policy_review_engine.md` - advisory policy evaluation and local operator review queue workflows.
+
+## Visibility And Correlation
+
+- `docs/local_visibility_operator_tooling.md` - local visibility summaries, historical snapshots, baseline deltas, categorized findings, and operator review drafts.
+- `docs/examples/` - sanitized JSON examples for testing visibility workflows without local infrastructure data.
+- `docs/network_asset_inventory.md` - authorized asset inventory, ARP evidence, reachability checks, and topology context.
+- `docs/network_control_layer.md` - advisory gateway and exposed-service posture assessment.
+- `docs/distributed_visibility_aggregation.md` - local coordinator aggregation for node visibility summaries with source attribution.
+- `docs/behavior_correlation.md` - local baseline comparison for advisory drift, topology, service, and finding deltas.
+- `docs/threat_correlation.md` - local event correlation, incident scoring, and supporting evidence.
+- `docs/traffic_flow_reconstruction.md` - passive flow grouping, directional counters, and topology summaries.
+
+## Diagnostics And Service Readiness
+
+- `docs/schema_validation_engine.md` - bounded local schema validation and fixture mutation for mock-service diagnostics.
+- `docs/metadata_stream_parser.md` - metadata-only local byte-stream parser for fixtures and explicit local files.
+- `docs/plugin_registry.md` - governed local plugin manifest registry with dry-run-first controlled execution records.
+- `docs/diagnostic_relay_simulator.md` - bounded local relay orchestration simulator for diagnostic session metadata and platform records.
+- `docs/service_installer_templates.md` - dry-run Linux and Windows service lifecycle template generation for operator review.
+
+## Network And Protocol Capabilities
+
+- `docs/service_enumeration.md` - service/version detection, banner probes, fingerprints, and CLI usage.
+- `docs/os_fingerprinting.md` - probabilistic OS-family inference from passive and service evidence.
+- `docs/packet_capture.md` - safe packet metadata capture, PCAP output, filters, and permission handling.
+- `docs/protocol_dissectors.md` - passive protocol parsing for captured packet metadata.
+- `docs/deep_packet_inspection.md` - passive DPI metadata, findings, redaction, and session summaries.
+- `docs/tls_intelligence.md` - TLS version, cipher, certificate, and hostname posture checks.
+- `docs/udp_scanning.md` - active UDP probe scanner behavior, safety defaults, and CLI usage.
+- `docs/ipv6_dual_stack.md` - IPv4/IPv6 target parsing, CIDR validation, and active dual-stack TCP scan usage.
+- `docs/high_speed_scan_engine.md` - async TCP scan scheduler, safe limits, and CLI usage.
+- `docs/distributed_cluster_scanning.md` - distributed scan job planning, worker registry, and task scheduling.
+
+## Advisory Intelligence And Enterprise Primitives
+
+- `docs/ai_layer.md` - local AI provider interface and scoring fallbacks.
 - `docs/ai_behavioral_learning.md` - local behavior baselines, anomaly scoring, and learning controls.
 - `docs/ai_payload_classification.md` - payload labels, suspicious markers, beaconing, and exfiltration indicators.
 - `docs/ai_recommendation_engine.md` - advisory recommendations and dry-run remediation drafts.
-- `docs/behavior_correlation.md` - local baseline comparison for advisory drift, topology, service, and finding deltas.
 - `docs/cve_intelligence.md` - advisory CVE normalization, cache updates, and service/version matching.
-- `docs/deep_packet_inspection.md` - passive DPI metadata, findings, redaction, and session summaries.
-- `docs/diagnostic_relay_simulator.md` - bounded local relay orchestration simulator for diagnostic session metadata and platform records.
-- `docs/distributed_cluster_scanning.md` - distributed scan job planning, worker registry, and task scheduling.
-- `docs/distributed_visibility_aggregation.md` - local coordinator aggregation for node visibility summaries with source attribution.
-- `docs/docker_deployment.md` - Docker Compose deployment for orchestrator, master, and worker.
-- `docs/enterprise_cloud_orchestration.md` - organization/workspace management, licensing, sync manifests, and review workflows.
-- `docs/enterprise_security.md` - local enterprise auth, RBAC, audit, and agent identity primitives.
-- `docs/event_pipeline.md` - local-only normalized event model, in-memory queue, and event bus.
-- `docs/local_api.md` - local read-only API primitives for health, events, assets, snapshots, nodes, and topology.
-- `docs/local_storage.md` - local SQLite storage for events, snapshots, assets, services, topology relationships, and findings.
-- `docs/metadata_stream_parser.md` - metadata-only local byte-stream parser for fixtures and explicit local files.
-- `docs/plugin_registry.md` - governed local plugin manifest registry with dry-run-first controlled execution records.
-- `docs/runtime_scheduler.md` - lightweight local scheduler primitives for health checks, event flushing, snapshot refreshes, and policy review refreshes.
-- `docs/schema_validation_engine.md` - bounded local schema validation and fixture mutation for mock-service diagnostics.
-- `docs/service_installer_templates.md` - dry-run Linux and Windows service lifecycle template generation for operator review.
-- `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
-- `docs/saas_architecture.md` - future SaaS control-plane, tenant, enrollment, and communication design.
-- `docs/network_control_layer.md` - advisory gateway and exposed-service posture assessment.
-- `docs/node_coordination.md` - local node identity, capability records, heartbeat metadata, lifecycle states, and summaries.
-- `docs/network_asset_inventory.md` - authorized asset inventory, ARP evidence, reachability checks, and topology context.
-- `docs/local_visibility_operator_tooling.md` - local visibility summaries, historical snapshots, baseline deltas, categorized findings, and operator review drafts.
-- `docs/examples/` - sanitized JSON examples for testing visibility workflows without local infrastructure data.
-- `docs/os_fingerprinting.md` - probabilistic OS-family inference from passive and service evidence.
-- `docs/packet_capture.md` - safe packet metadata capture, PCAP output, filters, and permission handling.
-- `docs/policy_review_engine.md` - advisory policy evaluation and local operator review queue workflows.
-- `docs/protocol_dissectors.md` - passive protocol parsing for captured packet metadata.
-- `docs/service_enumeration.md` - service/version detection, banner probes, fingerprints, and CLI usage.
-- `docs/udp_scanning.md` - active UDP probe scanner behavior, safety defaults, and CLI usage.
-- `docs/ipv6_dual_stack.md` - IPv4/IPv6 target parsing, CIDR validation, and active dual-stack TCP scan usage.
-- `docs/security_authentication.md` - bearer-token auth, secret interpolation, and state scrubbing.
-- `docs/firewall_plugins.md` - firewall plugin model and safety notes.
-- `docs/high_speed_scan_engine.md` - async TCP scan scheduler, safe limits, and CLI usage.
-- `docs/threat_correlation.md` - local event correlation, incident scoring, and supporting evidence.
-- `docs/tls_intelligence.md` - TLS version, cipher, certificate, and hostname posture checks.
-- `docs/topology_timeline_views.md` - normalized topology graph and historical timeline view models.
-- `docs/traffic_flow_reconstruction.md` - passive flow grouping, directional counters, and topology summaries.
 - `docs/vulnerability_correlation.md` - advisory service/CVE exposure correlation and prioritization.
-- `docs/beginner_guide.md` - conceptual guide for local network/firewall terminology.
+- `docs/enterprise_security.md` - local enterprise auth, RBAC, audit, and agent identity primitives.
+- `docs/enterprise_cloud_orchestration.md` - organization/workspace management, licensing, sync manifests, and review workflows.
+- `docs/saas_architecture.md` - future SaaS control-plane, tenant, enrollment, and communication design.
+- `docs/alerting_siem_integrations.md` - alert and SIEM payload formatting plus explicit delivery helpers.
+
+## Security And UI
+
+- `docs/security_authentication.md` - bearer-token auth, secret interpolation, and state scrubbing.
+- `docs/remediation_safety.md` - remediation safety gates and dry-run enforcement posture.
+- `docs/firewall_plugins.md` - firewall plugin model and safety notes.
+- `docs/logging_audit.md` - structured logging, audit events, filtering, and export.
 - `docs/tui_dashboard.md` - Textual dashboard panels, controls, and data sources.
 - `docs/visualization_gui_platform.md` - dashboard risk timeline, topology edges, and flow visualization.
+- `docs/beginner_guide.md` - conceptual guide for local network/firewall terminology.
+- `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
 
-Current baseline:
+## Current Baseline Commands
+
 - Use the repo-local `portmap-ai-env` created by `scripts/setup_environment.sh`.
 - Install development dependencies with `pip install -r requirements-dev.txt`.
 - Install the package locally with `pip install -e .`.
 - Run the full suite with `python -m pytest`.
 - Run the local stack with `portmap stack` or `scripts/run_stack.py`.
 - Run the Textual dashboard with `portmap tui`, `scripts/run_dashboard.sh`, or allow the stack launcher to launch it.
-- Review `CHANGELOG.md` and `docs/release_candidate.md` before cutting version `0.1.0`.
 
-The primary dashboard remains the Textual terminal UI. Phase 49 adds a reusable local static HTML rendering foundation for future browser-based operator views.
+The primary dashboard remains the Textual terminal UI. The static HTML dashboard foundation is reusable groundwork for future browser-based operator views.

@@ -48,9 +48,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "SECURITY.md" in data_files["share/portmap-ai"]
     assert "docs/CLI_REFERENCE.md" in data_files["share/portmap-ai/docs"]
     assert "docs/DEPLOYMENT.md" in data_files["share/portmap-ai/docs"]
-    assert "docs/PHASE_44_53_INTEGRATION_PLAN.md" in data_files["share/portmap-ai/docs"]
-    assert "docs/PHASE_54_58_INTEGRATION_PLAN.md" in data_files["share/portmap-ai/docs"]
-    assert "docs/PHASE_54_58_PLAN.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/MILESTONE_INTEGRATION.md" in data_files["share/portmap-ai/docs"]
     assert "docs/PHASE_HISTORY.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ROADMAP.md" in data_files["share/portmap-ai/docs"]
     assert "docs/SECURITY_MODEL.md" in data_files["share/portmap-ai/docs"]
@@ -115,6 +113,11 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/examples/services_sample.json" in data_files["share/portmap-ai/docs/examples"]
     assert "docs/examples/flows_sample.json" in data_files["share/portmap-ai/docs/examples"]
     assert "docs/examples/policy_sample.json" in data_files["share/portmap-ai/docs/examples"]
+    assert "share/portmap-ai/docs/archive" in data_files
+    assert "docs/archive/PHASE_44_53_INTEGRATION_PLAN.md" in data_files["share/portmap-ai/docs/archive"]
+    assert "docs/archive/PHASE_44_53_PLAN.md" in data_files["share/portmap-ai/docs/archive"]
+    assert "docs/archive/PHASE_54_58_INTEGRATION_PLAN.md" in data_files["share/portmap-ai/docs/archive"]
+    assert "docs/archive/PHASE_54_58_PLAN.md" in data_files["share/portmap-ai/docs/archive"]
     assert "tests/node_configs/orchestrator.json" in data_files["share/portmap-ai/node_configs"]
 
 

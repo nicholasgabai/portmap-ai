@@ -71,9 +71,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/README.txt",
   "docs/CLI_REFERENCE.md",
   "docs/DEPLOYMENT.md",
-  "docs/PHASE_44_53_INTEGRATION_PLAN.md",
-  "docs/PHASE_54_58_INTEGRATION_PLAN.md",
-  "docs/PHASE_54_58_PLAN.md",
+  "docs/MILESTONE_INTEGRATION.md",
   "docs/PHASE_HISTORY.md",
   "docs/ROADMAP.md",
   "docs/SECURITY_MODEL.md",
@@ -138,6 +136,12 @@ dependencies = {file = ["requirements.txt"]}
   "docs/udp_scanning.md",
   "docs/visualization_gui_platform.md",
   "docs/vulnerability_correlation.md",
+]
+"share/portmap-ai/docs/archive" = [
+  "docs/archive/PHASE_44_53_INTEGRATION_PLAN.md",
+  "docs/archive/PHASE_44_53_PLAN.md",
+  "docs/archive/PHASE_54_58_INTEGRATION_PLAN.md",
+  "docs/archive/PHASE_54_58_PLAN.md",
 ]
 "share/portmap-ai/docs/examples" = [
   "docs/examples/assets_sample.json",

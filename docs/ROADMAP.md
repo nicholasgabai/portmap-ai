@@ -1,43 +1,54 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 58 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, and `docs/PHASE_HISTORY.md` summarizes completed phase groups.
+This roadmap summarizes the current direction after the Phase 58 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, and `docs/MILESTONE_INTEGRATION.md` is the active integration guide.
 
-## Current Baseline
+## Completed Milestones
 
-Phases 0-58 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand depth, integrations, and production hardening.
+| Range | Milestone | Status |
+| --- | --- | --- |
+| 0-18 | Local stack, CLI, packaging, configuration, platform abstraction, safety, deployment, and release-candidate foundation | Complete baseline |
+| 19-40 | Scanner expansion, packet metadata, protocol intelligence, AI advisory layers, enterprise primitives, visualization, cluster planning, and local enterprise cloud scaffolding | Complete baseline |
+| 41-43 | Local visibility tooling, sanitized example datasets, visibility snapshots, and baseline delta reporting | Complete baseline |
+| 44-46 | Local intelligence platform: event model, storage, and scheduler primitives | Complete baseline |
+| 47-48 | Coordinated node platform: node identity and local read-only API primitives | Complete baseline |
+| 49-50 | Operator dashboard foundation: static dashboard rendering, topology graphs, and timelines | Complete baseline |
+| 51-53 | Policy and correlation engine: review queue, distributed aggregation, and behavior correlation | Complete baseline |
+| 54-58 | Advanced diagnostics and deployment readiness: schema validation, stream metadata, plugin governance, relay orchestration, and service templates | Complete baseline |
 
-## Near-Term Work
+## Current Implementation State
 
-- Follow the Phase 44-53 local infrastructure visibility plan in `docs/PHASE_44_53_PLAN.md`.
-- Use the Phase 44-53 integration plan in `docs/PHASE_44_53_INTEGRATION_PLAN.md` to guide consolidation before adding new runtime behavior.
-- Use the Phase 54-58 advanced diagnostics plan in `docs/PHASE_54_58_PLAN.md` for future fixture-based diagnostics, metadata parsing, plugin governance, relay simulation, and service template work.
-- Use the Phase 54-58 integration plan in `docs/PHASE_54_58_INTEGRATION_PLAN.md` to connect diagnostics and service-template records into platform layers without adding new runtime behavior.
-- Use the local event pipeline in `docs/event_pipeline.md` as the event-history foundation for future storage, dashboard, and correlation work.
-- Use the local SQLite storage layer in `docs/local_storage.md` for durable events, snapshots, assets, services, topology relationships, and findings.
-- Use the local runtime scheduler primitives in `docs/runtime_scheduler.md` for future recurring health, event, snapshot, and operator-review workflows.
-- Use the local node coordination primitives in `docs/node_coordination.md` for node identity, capabilities, heartbeats, lifecycle state, and summaries.
-- Use the local read-only API primitives in `docs/local_api.md` for future dashboard and operator tooling work.
-- Use the local dashboard foundation in `docs/dashboard_foundation.md` for static HTML status-panel previews.
-- Use topology and timeline view models in `docs/topology_timeline_views.md` for local dashboard and operator reporting layers.
-- Use the local policy review engine in `docs/policy_review_engine.md` for advisory review records and operator state transitions.
-- Use distributed visibility aggregation in `docs/distributed_visibility_aggregation.md` to merge authorized local node summaries while preserving source attribution and reported conflicts.
-- Use behavior correlation baselines in `docs/behavior_correlation.md` to compare stored local telemetry windows and produce advisory delta findings.
-- Use the bounded schema validation engine in `docs/schema_validation_engine.md` for local mock-service fixture checks and controlled mutation testing.
-- Use the metadata-only stream parser in `docs/metadata_stream_parser.md` for bounded local fixture and file metadata summaries.
-- Use the manifest-based plugin registry in `docs/plugin_registry.md` for governed local utility manifests, dry-run previews, and structured execution records.
-- Use the diagnostic relay simulator in `docs/diagnostic_relay_simulator.md` for bounded local relay orchestration metadata and platform integration records.
-- Use service lifecycle templates in `docs/service_installer_templates.md` for dry-run systemd and Windows service template generation.
-- Keep real-device validation notes private unless scrubbed for public documentation.
-- Collect external Windows runtime validation before marking Windows support verified.
-- Refresh screenshots, terminal examples, and quick-start paths after real-device testing.
-- Prepare GitHub publication materials and release notes.
-- Keep Docker Compose as an optional advanced deployment path.
+Phases 0-58 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+
+Current stable posture:
+
+- Local-first operation remains the default.
+- Workflows remain opt-in and operator-controlled.
+- Advisory behavior remains read-only by default.
+- Runtime and diagnostic modules emit structured records but are not automatically wired together.
+- The Textual terminal dashboard remains the primary operator UI.
+- Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
+- Docker remains optional and advanced.
+- Private real-device validation notes stay out of public commits unless scrubbed.
+
+## Next Milestone Direction
+
+Recommended next milestone: Integrated Local Operations.
+
+Near-term implementation should focus on wiring existing primitives together without adding unsafe automation:
+
+- Add diagnostic record adapters that normalize visibility, correlation, schema, stream, plugin, relay, and service-template outputs into shared event/storage/policy/timeline/dashboard records.
+- Persist selected local history through storage-backed repositories.
+- Connect advisory findings to the policy review queue without executing actions.
+- Add local API repository providers for events, assets, snapshots, diagnostics, nodes, topology, and review summaries.
+- Add dashboard panels that read from API-compatible local summaries.
+- Add explicit scheduler jobs for event flushing, health summaries, snapshot refreshes, and review refreshes.
+- Validate the integrated local-only path on Raspberry Pi/Linux using sanitized records.
 
 ## Medium-Term Work
 
 - Harden service-management packaging for long-running agents.
 - Expand dashboard usability while preserving the terminal-first product direction.
-- Add more operator-friendly import/export flows for telemetry and advisory packets.
+- Add operator-friendly import/export flows for telemetry and advisory packets.
 - Improve enterprise workflow documentation around organizations, roles, quotas, and sync manifests.
 
 ## Long-Term Vision
@@ -48,24 +59,21 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 
 - `PORTMAP_AI_HANDOFF.md`
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
-- `docs/behavior_correlation.md`
-- `docs/dashboard_foundation.md`
-- `docs/diagnostic_relay_simulator.md`
-- `docs/distributed_visibility_aggregation.md`
-- `docs/PHASE_44_53_INTEGRATION_PLAN.md`
-- `docs/PHASE_44_53_PLAN.md`
-- `docs/PHASE_54_58_INTEGRATION_PLAN.md`
-- `docs/PHASE_54_58_PLAN.md`
+- `docs/PHASE_HISTORY.md`
+- `docs/MILESTONE_INTEGRATION.md`
 - `docs/event_pipeline.md`
-- `docs/local_api.md`
 - `docs/local_storage.md`
-- `docs/metadata_stream_parser.md`
-- `docs/node_coordination.md`
-- `docs/policy_review_engine.md`
-- `docs/plugin_registry.md`
 - `docs/runtime_scheduler.md`
-- `docs/schema_validation_engine.md`
-- `docs/service_installer_templates.md`
+- `docs/node_coordination.md`
+- `docs/local_api.md`
+- `docs/dashboard_foundation.md`
 - `docs/topology_timeline_views.md`
-- `docs/master_roadmap.md`
-- `docs/real_device_validation.md`
+- `docs/policy_review_engine.md`
+- `docs/distributed_visibility_aggregation.md`
+- `docs/behavior_correlation.md`
+- `docs/schema_validation_engine.md`
+- `docs/metadata_stream_parser.md`
+- `docs/plugin_registry.md`
+- `docs/diagnostic_relay_simulator.md`
+- `docs/service_installer_templates.md`
+- `docs/archive/`
