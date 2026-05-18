@@ -19,6 +19,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 44-48 | Event model, local storage, runtime scheduler primitives, node identity, and local read-only API | Complete baseline |
 | 49-53 | Dashboard foundation, topology/timeline models, policy review, distributed aggregation, and behavior correlation baselines | Complete baseline |
 | 54-58 | Schema validation, stream metadata parsing, plugin registry, relay orchestration, and service lifecycle templates | Complete baseline |
+| 59-64 | Persistent topology state, snapshot drift detection, runtime pipeline wiring, review persistence, dashboard providers, and operational export bundles | Complete baseline |
 
 ## Baseline Meaning
 
@@ -33,4 +34,5 @@ The latest recorded full-suite result in the handoff is updated after each compl
 - `PORTMAP_AI_HANDOFF.md`
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
 - `docs/MILESTONE_INTEGRATION.md`
+- `docs/MILESTONE_J_INTEGRATION.md`
 - `docs/ROADMAP.md`

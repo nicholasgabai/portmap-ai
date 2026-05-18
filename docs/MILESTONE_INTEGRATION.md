@@ -1,8 +1,8 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-58 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference.
+This document is the consolidated integration guide for the completed Phase 44-64 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, and `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary.
 
-This is documentation planning only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
+This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
@@ -15,6 +15,7 @@ The integration posture remains local-first, operator-controlled, read-only by d
 | Operator Dashboard | 49-50 | Static dashboard foundation, topology and timeline models | Complete baseline |
 | Policy and Correlation Engine | 51-53 | Policy review, distributed aggregation, baseline correlation | Complete baseline |
 | Advanced Diagnostics and Deployment Readiness | 54-58 | Schema validation, stream metadata, plugin governance, relay orchestration, service templates | Complete baseline |
+| Runtime Pipeline and Persistent Topology Integration | 59-64 | Persistent topology, snapshot drift, runtime workflow wiring, review persistence, dashboard providers, operational export bundles | Complete baseline |
 
 ## Module Map
 
@@ -35,6 +36,10 @@ The integration posture remains local-first, operator-controlled, read-only by d
 | Plugin Governance | `core_engine.plugins` | Validate plugin manifests, register allowlisted utilities, and produce dry-run-first execution records. |
 | Relay Orchestration | `core_engine.diagnostics.relay_simulator` | Simulate bounded local relay sessions and produce session metadata records. |
 | Service Templates | `core_engine.installers.service_templates` | Generate dry-run Linux and Windows service lifecycle template text for operator review. |
+| Milestone J Runtime Pipeline | `core_engine.runtime.pipeline`, `core_engine.runtime.workflows` | Coordinate explicit dry-run local workflows across visibility, topology, drift, policy review, correlation, and optional local storage writes. |
+| Persistent Review Store | `core_engine.policy.review_store`, `core_engine.policy.history` | Persist review drafts, state transitions, finding status records, and review imports/exports through existing storage. |
+| Dashboard Providers | `gui.web.providers`, `gui.web.views` | Build dashboard models from storage, runtime state, topology, review, diagnostic, and API-compatible provider data. |
+| Operational Export | `core_engine.export` | Build deterministic local evidence bundles with redaction, placeholder validation, digests, and explicit local archive output. |
 
 ## Consolidated Data Flow
 
@@ -75,6 +80,18 @@ sanitized fixtures and operator definitions
   -> relay orchestration metadata
   -> service lifecycle template records
   -> event, storage, policy, timeline, topology, correlation, dashboard layers
+```
+
+Milestone J target flow:
+
+```text
+local evidence and snapshots
+  -> persistent topology state
+  -> snapshot drift detection
+  -> explicit runtime pipeline
+  -> persistent review history
+  -> dashboard provider summaries
+  -> operational export bundle
 ```
 
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.
@@ -199,6 +216,12 @@ Default binding should remain localhost-only whenever a runtime API is explicitl
 - Manifest-based plugin registry and dry-run-first runner.
 - Bounded relay orchestration simulator.
 - Dry-run service lifecycle template generation.
+- Persistent topology state and snapshot history.
+- Snapshot drift reports with event, storage, policy, timeline, and correlation-ready records.
+- Explicit runtime pipeline workflow with dry-run defaults and optional local writes.
+- Persistent review store and finding status history.
+- Storage-backed dashboard data providers.
+- Operational export bundle generation with redaction and deterministic JSON output.
 
 ## What Is Not Wired Together Yet
 
@@ -207,7 +230,7 @@ Default binding should remain localhost-only whenever a runtime API is explicitl
 - Node registry to existing orchestrator runtime behavior.
 - Local API to default persisted SQLite repositories.
 - Dashboard to a running local API.
-- Snapshot storage to automatic topology/timeline materialization.
+- Snapshot storage to automatic topology/timeline materialization outside explicit workflow calls.
 - Aggregation output to automatic baseline creation.
 - Correlation findings to automatic policy review creation.
 - Policy approvals to remediation, plugin execution, or configuration changes.
@@ -221,7 +244,7 @@ These remain future explicit implementation tasks with focused tests.
 
 Use sanitized fixtures and placeholder metadata only.
 
-- Import all Phase 44-58 modules in the local virtual environment.
+- Import all Phase 44-64 modules in the local virtual environment.
 - Run the full Python test suite on the target device.
 - Initialize a temporary SQLite database and run storage repository checks.
 - Publish and consume a sample event through the local event bus.
@@ -236,6 +259,11 @@ Use sanitized fixtures and placeholder metadata only.
 - Run a plugin dry-run preview and confirm no subprocess launches.
 - Simulate a short relay session with mock payloads.
 - Generate systemd and Windows service template text using placeholders.
+- Build a persistent topology snapshot and compare two sanitized snapshots.
+- Run the runtime pipeline in dry-run mode.
+- Persist review records and review state transitions to a temporary database.
+- Build dashboard provider output from stored local records.
+- Generate an operational export bundle and optional local archive in a temporary directory.
 - Confirm no service files are written by the template module.
 - Confirm no service enable/start command is executed by PortMap-AI.
 - Confirm no external network calls are required.
