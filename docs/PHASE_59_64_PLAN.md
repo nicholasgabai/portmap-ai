@@ -45,6 +45,8 @@ Milestone J should wire these into coherent workflows without bypassing safety b
 
 ## Phase 59 — Persistent Topology State
 
+Status: Complete Baseline
+
 Goal:
 Build persistent topology storage, topology snapshot records, import/export helpers, and topology history summaries.
 

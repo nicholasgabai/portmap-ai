@@ -36,6 +36,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/node_coordination.md` - local node identity, capability records, heartbeat metadata, lifecycle states, and summaries.
 - `docs/local_api.md` - local read-only API primitives for health, events, assets, snapshots, nodes, and topology.
 - `docs/dashboard_foundation.md` - lightweight local web dashboard rendering foundation for API-backed status panels.
+- `docs/persistent_topology_state.md` - persistent topology snapshot records, history summaries, and local import/export helpers.
 - `docs/topology_timeline_views.md` - normalized topology graph and historical timeline view models.
 - `docs/policy_review_engine.md` - advisory policy evaluation and local operator review queue workflows.
 

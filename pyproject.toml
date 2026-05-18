@@ -112,6 +112,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/os_fingerprinting.md",
   "docs/packaging.md",
   "docs/packet_capture.md",
+  "docs/persistent_topology_state.md",
   "docs/policy_review_engine.md",
   "docs/plugin_registry.md",
   "docs/platform_abstraction.md",
