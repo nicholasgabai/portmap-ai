@@ -13,6 +13,8 @@ API_PATHS = {
     "snapshots": "/snapshots",
     "nodes": "/nodes",
     "topology": "/topology",
+    "operator_reviews": "/operator_reviews",
+    "diagnostics": "/diagnostics",
 }
 
 
@@ -26,7 +28,11 @@ def build_dashboard_model(source: dict[str, Any] | Any | None = None) -> dict[st
     nodes = _items(data.get("nodes"))
     topology_items = _items(data.get("topology"))
     topology_nodes, topology_edges = _topology_counts(topology_items)
+    topology_payload = _payload(data.get("topology"))
+    topology_nodes = int((topology_payload.get("summary") or {}).get("node_count") or topology_nodes)
+    topology_edges = int((topology_payload.get("summary") or {}).get("edge_count") or topology_edges)
     operator_review_count = _operator_review_count(events, data)
+    diagnostics = _items(data.get("diagnostics"))
 
     return {
         "title": "PortMap-AI Local Dashboard",
@@ -40,6 +46,7 @@ def build_dashboard_model(source: dict[str, Any] | Any | None = None) -> dict[st
             "topology_node_count": topology_nodes,
             "topology_edge_count": topology_edges,
             "operator_review_count": operator_review_count,
+            "diagnostic_count": _count(data.get("diagnostics"), diagnostics),
         },
         "panels": {
             "health": health,
@@ -48,6 +55,8 @@ def build_dashboard_model(source: dict[str, Any] | Any | None = None) -> dict[st
             "snapshots": snapshots,
             "nodes": nodes,
             "topology": topology_items,
+            "operator_reviews": _items(data.get("operator_reviews")),
+            "diagnostics": diagnostics,
         },
         "raw_payload_stored": False,
         "automatic_changes": False,

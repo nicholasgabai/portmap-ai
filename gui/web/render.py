@@ -42,6 +42,7 @@ def render_dashboard_html(model: dict[str, Any]) -> str:
             "Nodes / edges",
         ),
         render_metric_panel("Operator Review", metrics.get("operator_review_count", 0), "Advisory items"),
+        render_metric_panel("Diagnostics", metrics.get("diagnostic_count", 0), "Local diagnostic records"),
     ]
     return "\n".join(
         [
