@@ -111,6 +111,8 @@ Acceptance:
 
 ## Phase 61 — Runtime Pipeline Wiring
 
+Status: Complete Baseline
+
 Goal:
 Connect visibility, events, storage, policy review, topology, and correlation modules into a single explicit operator workflow.
 
