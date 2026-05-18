@@ -15,8 +15,10 @@ from core_engine.policy.models import (
     create_policy,
 )
 from core_engine.policy.review_queue import ReviewQueue
+from core_engine.policy.review_store import PersistentReviewStore
 
 __all__ = [
+    "PersistentReviewStore",
     "Policy",
     "PolicyError",
     "REVIEW_STATES",

@@ -144,6 +144,8 @@ Acceptance:
 
 ## Phase 62 — Operator Review Queue Integration
 
+Status: Complete Baseline
+
 Goal:
 Persist review drafts, approval states, finding status, and review history.
 

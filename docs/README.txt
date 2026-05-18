@@ -40,6 +40,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/topology_timeline_views.md` - normalized topology graph and historical timeline view models.
 - `docs/policy_review_engine.md` - advisory policy evaluation and local operator review queue workflows.
+- `docs/operator_review_queue_integration.md` - persistent local review drafts, state history, finding status tracking, and review import/export helpers.
 
 ## Visibility And Correlation
 
