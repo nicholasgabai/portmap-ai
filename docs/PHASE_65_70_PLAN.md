@@ -42,6 +42,8 @@ Milestone K should improve operational cohesion without bypassing safety boundar
 
 ## Phase 65 - Runtime Session Manager
 
+Status: Complete Baseline
+
 Goal:
 Add a local runtime session manager that tracks explicit operator-started PortMap-AI runtime sessions across scheduler, pipeline, storage, dashboard provider, health, and export subsystems.
 

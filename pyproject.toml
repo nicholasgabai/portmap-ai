@@ -128,6 +128,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/release_candidate.md",
   "docs/remediation_safety.md",
   "docs/runtime_pipeline.md",
+  "docs/runtime_session_manager.md",
   "docs/runtime_scheduler.md",
   "docs/saas_architecture.md",
   "docs/scanner_risk_engine.md",

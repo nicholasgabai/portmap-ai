@@ -26,6 +26,7 @@ Current stable posture:
 - Workflows remain opt-in and operator-controlled.
 - Advisory behavior remains read-only by default.
 - Runtime, topology, review, dashboard-provider, and export modules now have explicit local wiring paths.
+- Runtime sessions now provide local session summaries for future CLI, API, dashboard, and service-preview workflows.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -37,7 +38,6 @@ Recommended next milestone: Milestone K - Unified Runtime Operations.
 
 Near-term implementation should focus on making PortMap-AI operate as a cohesive long-running local platform without adding unsafe automation:
 
-- Add runtime session management for explicit local operating sessions.
 - Add unified configuration profiles for local and edge-device operation.
 - Add local runtime state recovery helpers.
 - Add integrated runtime CLI commands for status, run, recover, reviews, and export.
@@ -75,6 +75,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/persistent_topology_state.md`
 - `docs/snapshot_drift_detection.md`
 - `docs/operational_export_bundle.md`
+- `docs/runtime_session_manager.md`
 - `docs/runtime_pipeline.md`
 - `docs/topology_timeline_views.md`
 - `docs/policy_review_engine.md`
