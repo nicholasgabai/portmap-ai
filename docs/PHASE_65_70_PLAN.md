@@ -111,6 +111,8 @@ Acceptance:
 
 ## Phase 67 - Runtime State Recovery
 
+Status: Complete Baseline
+
 Goal:
 Add local runtime state recovery helpers that can inspect previous session records, storage state, review records, and export summaries so an operator can resume or review interrupted local workflows.
 

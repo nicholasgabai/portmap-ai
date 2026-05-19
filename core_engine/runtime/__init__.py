@@ -10,6 +10,16 @@ from core_engine.runtime.profile_loader import (
     load_runtime_profile_file,
     save_runtime_profile_file,
 )
+from core_engine.runtime.checkpoints import (
+    RuntimeCheckpointError,
+    build_runtime_checkpoint,
+    load_runtime_checkpoint,
+    runtime_checkpoint_from_json,
+    runtime_checkpoint_to_json,
+    summarize_runtime_checkpoints,
+    validate_runtime_checkpoint,
+    write_runtime_checkpoint,
+)
 from core_engine.runtime.profiles import (
     RuntimeProfile,
     RuntimeProfileError,
@@ -18,6 +28,15 @@ from core_engine.runtime.profiles import (
     merge_runtime_profiles,
     summarize_runtime_profile,
     validate_runtime_profile,
+)
+from core_engine.runtime.recovery import (
+    build_recovery_checkpoint_from_repository,
+    build_recovery_recommendations,
+    build_runtime_recovery_summary,
+    detect_export_ready_records,
+    detect_failed_steps,
+    detect_incomplete_workflows,
+    detect_pending_reviews,
 )
 from core_engine.runtime.runtime_state import RuntimeState
 from core_engine.runtime.scheduler import LocalRuntimeScheduler
@@ -35,6 +54,7 @@ __all__ = [
     "LocalRuntimeScheduler",
     "RuntimeJob",
     "RuntimeJobError",
+    "RuntimeCheckpointError",
     "RuntimeProfile",
     "RuntimeProfileError",
     "RuntimeSession",
@@ -43,6 +63,10 @@ __all__ = [
     "RuntimeState",
     "create_runtime_job",
     "create_runtime_session",
+    "build_recovery_checkpoint_from_repository",
+    "build_recovery_recommendations",
+    "build_runtime_checkpoint",
+    "build_runtime_recovery_summary",
     "default_runtime_profile",
     "edge_device_runtime_profile",
     "export_runtime_profile",
@@ -50,12 +74,22 @@ __all__ = [
     "import_runtime_profile",
     "load_runtime_profile",
     "load_runtime_profile_file",
+    "load_runtime_checkpoint",
     "merge_runtime_profiles",
+    "detect_export_ready_records",
+    "detect_failed_steps",
+    "detect_incomplete_workflows",
+    "detect_pending_reviews",
+    "runtime_checkpoint_from_json",
+    "runtime_checkpoint_to_json",
     "run_runtime_pipeline",
     "run_visibility_runtime_workflow",
     "save_runtime_profile_file",
+    "summarize_runtime_checkpoints",
     "summarize_runtime_profile",
     "summarize_runtime_session",
     "summarize_runtime_pipeline",
+    "validate_runtime_checkpoint",
     "validate_runtime_profile",
+    "write_runtime_checkpoint",
 ]
