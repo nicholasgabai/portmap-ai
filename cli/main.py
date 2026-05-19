@@ -48,6 +48,7 @@ from core_engine.vuln.cve_client import analyze_service_cves, fetch_nvd_cves, lo
 from core_engine.vuln.cve_store import load_cve_cache, merge_cve_records, save_cve_cache
 from core_engine.vuln.vuln_correlator import correlate_vulnerabilities
 from core_engine import stack_launcher
+from cli.runtime import add_runtime_subparser
 from saas.cloud_sync import export_sync_manifest, import_sync_manifest, resolve_sync_conflicts
 from saas.licensing import check_quota, feature_enabled, usage_summary
 from saas.orgs import build_org_directory, effective_user_access
@@ -1468,6 +1469,8 @@ def build_parser() -> argparse.ArgumentParser:
     logs.add_argument("--filter-event-type", help="Print JSONL audit events by event_type instead of creating an archive")
     logs.add_argument("--tail", type=int, default=None, help="Limit filtered audit output to the last N events")
     logs.set_defaults(func=cmd_logs)
+
+    add_runtime_subparser(subparsers)
 
     config = subparsers.add_parser("config", help="Configuration utilities")
     config_subparsers = config.add_subparsers(dest="config_command", required=True)

@@ -145,6 +145,8 @@ Acceptance:
 
 ## Phase 68 - Integrated Runtime CLI
 
+Status: Complete Baseline
+
 Goal:
 Add CLI commands that expose the unified runtime operations path without changing existing command behavior.
 
