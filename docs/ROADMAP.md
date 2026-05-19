@@ -33,16 +33,16 @@ Current stable posture:
 
 ## Next Milestone Direction
 
-Recommended next milestone: Operational UX and Runtime Hardening.
+Recommended next milestone: Milestone K - Unified Runtime Operations.
 
-Near-term implementation should focus on operator-facing commands and local runtime hardening without adding unsafe automation:
+Near-term implementation should focus on making PortMap-AI operate as a cohesive long-running local platform without adding unsafe automation:
 
-- Add CLI commands for running the explicit runtime pipeline.
-- Add CLI commands for generating operational export bundles.
-- Add review queue commands for listing and updating review state.
-- Add storage-backed local API startup documentation and smoke tests.
-- Add dashboard preview generation from stored local evidence.
-- Add opt-in scheduler wiring for event flushing and local summary refreshes.
+- Add runtime session management for explicit local operating sessions.
+- Add unified configuration profiles for local and edge-device operation.
+- Add local runtime state recovery helpers.
+- Add integrated runtime CLI commands for status, run, recover, reviews, and export.
+- Add lightweight runtime health monitoring.
+- Add service-mode readiness previews without automatic installation or startup.
 - Validate the integrated local-only path on Raspberry Pi/Linux using sanitized records.
 
 ## Medium-Term Work
@@ -64,6 +64,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_INTEGRATION.md`
 - `docs/MILESTONE_J_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
+- `docs/PHASE_65_70_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`
