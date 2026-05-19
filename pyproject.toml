@@ -144,6 +144,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/topology_timeline_views.md",
   "docs/traffic_flow_reconstruction.md",
   "docs/udp_scanning.md",
+  "docs/unified_configuration_profiles.md",
   "docs/visualization_gui_platform.md",
   "docs/vulnerability_correlation.md",
 ]
