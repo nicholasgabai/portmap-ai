@@ -33,6 +33,7 @@ Current stable posture:
 - The integrated runtime CLI now exposes status, run, recover, reviews, and export commands.
 - Runtime health monitoring now summarizes storage, scheduler, event queue, review, dashboard, export, and session readiness.
 - Service-mode readiness now provides dry-run preflight checks, command previews, and manual operator checklist records without installing or starting services.
+- Distributed node state sync now normalizes trusted master and worker runtime summaries into deterministic cluster state records.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -91,6 +92,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/policy_review_engine.md`
 - `docs/operator_review_queue_integration.md`
 - `docs/distributed_visibility_aggregation.md`
+- `docs/distributed_node_state_sync.md`
 - `docs/behavior_correlation.md`
 - `docs/schema_validation_engine.md`
 - `docs/metadata_stream_parser.md`

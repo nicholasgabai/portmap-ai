@@ -72,6 +72,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/diagnostic_relay_simulator.md" in data_files["share/portmap-ai/docs"]
     assert "docs/deployment_options.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_cluster_scanning.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/distributed_node_state_sync.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_visibility_aggregation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/docker_deployment.md" in data_files["share/portmap-ai/docs"]
     assert "docs/enterprise_cloud_orchestration.md" in data_files["share/portmap-ai/docs"]

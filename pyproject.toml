@@ -98,6 +98,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/diagnostic_relay_simulator.md",
   "docs/docker_deployment.md",
   "docs/distributed_cluster_scanning.md",
+  "docs/distributed_node_state_sync.md",
   "docs/distributed_visibility_aggregation.md",
   "docs/enterprise_cloud_orchestration.md",
   "docs/enterprise_security.md",
