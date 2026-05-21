@@ -17,6 +17,14 @@ from core_engine.topology.drift import (
     drift_to_finding,
     summarize_drift,
 )
+from core_engine.topology.federated import (
+    build_federated_correlation_records,
+    build_federated_dashboard_summary,
+    build_federated_timeline_entries,
+    build_federated_topology,
+    normalize_node_topology_snapshots,
+    summarize_federated_topology,
+)
 from core_engine.topology.graph import build_topology_graph, summarize_topology
 from core_engine.topology.import_export import (
     build_topology_export_bundle,
@@ -25,6 +33,13 @@ from core_engine.topology.import_export import (
     import_topology_snapshot,
     load_topology_snapshot,
     write_topology_snapshot,
+)
+from core_engine.topology.node_merge import (
+    build_federated_conflict,
+    merge_federated_assets,
+    merge_federated_findings,
+    merge_federated_services,
+    merge_federated_topology_edges,
 )
 from core_engine.topology.snapshots import (
     build_topology_snapshot,
@@ -42,6 +57,11 @@ __all__ = [
     "build_drift_report",
     "build_drift_storage_record",
     "build_drift_timeline_entries",
+    "build_federated_conflict",
+    "build_federated_correlation_records",
+    "build_federated_dashboard_summary",
+    "build_federated_timeline_entries",
+    "build_federated_topology",
     "build_timeline_entries",
     "build_topology_export_bundle",
     "build_topology_graph",
@@ -58,7 +78,13 @@ __all__ = [
     "import_topology_snapshot",
     "list_persisted_topology_snapshots",
     "load_topology_snapshot",
+    "merge_federated_assets",
+    "merge_federated_findings",
+    "merge_federated_services",
+    "merge_federated_topology_edges",
+    "normalize_node_topology_snapshots",
     "persist_topology_snapshot",
+    "summarize_federated_topology",
     "summarize_topology_history",
     "summarize_topology_snapshot",
     "summarize_drift",

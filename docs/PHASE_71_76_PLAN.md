@@ -80,6 +80,8 @@ Acceptance:
 
 ## Phase 72 - Federated Topology Aggregation
 
+Status: Complete Baseline
+
 Goal:
 Merge topology snapshots and visibility summaries across trusted local nodes into a federated topology model with source attribution and conflict reporting.
 

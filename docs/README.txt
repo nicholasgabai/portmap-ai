@@ -48,6 +48,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/runtime_health_monitor.md` - local runtime health checks for storage, scheduler, event queue, reviews, dashboard providers, exports, and sessions.
 - `docs/service_mode_readiness.md` - dry-run service-mode preflight checks, command previews, and manual operator checklist.
 - `docs/distributed_node_state_sync.md` - trusted-node runtime state normalization, stale/missing detection, and cluster state summaries.
+- `docs/federated_topology_aggregation.md` - trusted-node topology snapshot merging with source attribution and conflict summaries.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.

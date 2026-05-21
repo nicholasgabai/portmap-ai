@@ -77,6 +77,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/docker_deployment.md" in data_files["share/portmap-ai/docs"]
     assert "docs/enterprise_cloud_orchestration.md" in data_files["share/portmap-ai/docs"]
     assert "docs/enterprise_security.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/federated_topology_aggregation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/event_pipeline.md" in data_files["share/portmap-ai/docs"]
     assert "docs/high_speed_scan_engine.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ipv6_dual_stack.md" in data_files["share/portmap-ai/docs"]
