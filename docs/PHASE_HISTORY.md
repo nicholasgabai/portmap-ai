@@ -36,4 +36,5 @@ The latest recorded full-suite result in the handoff is updated after each compl
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
 - `docs/MILESTONE_INTEGRATION.md`
 - `docs/MILESTONE_J_INTEGRATION.md`
+- `docs/MILESTONE_K_INTEGRATION.md`
 - `docs/ROADMAP.md`

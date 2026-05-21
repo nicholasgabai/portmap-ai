@@ -1,6 +1,6 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-64 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, and `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary.
+This document is the consolidated integration guide for the completed Phase 44-70 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, and `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
@@ -16,6 +16,7 @@ The integration posture remains local-first, operator-controlled, read-only by d
 | Policy and Correlation Engine | 51-53 | Policy review, distributed aggregation, baseline correlation | Complete baseline |
 | Advanced Diagnostics and Deployment Readiness | 54-58 | Schema validation, stream metadata, plugin governance, relay orchestration, service templates | Complete baseline |
 | Runtime Pipeline and Persistent Topology Integration | 59-64 | Persistent topology, snapshot drift, runtime workflow wiring, review persistence, dashboard providers, operational export bundles | Complete baseline |
+| Unified Runtime Operations | 65-70 | Runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 
 ## Module Map
 
@@ -40,6 +41,12 @@ The integration posture remains local-first, operator-controlled, read-only by d
 | Persistent Review Store | `core_engine.policy.review_store`, `core_engine.policy.history` | Persist review drafts, state transitions, finding status records, and review imports/exports through existing storage. |
 | Dashboard Providers | `gui.web.providers`, `gui.web.views` | Build dashboard models from storage, runtime state, topology, review, diagnostic, and API-compatible provider data. |
 | Operational Export | `core_engine.export` | Build deterministic local evidence bundles with redaction, placeholder validation, digests, and explicit local archive output. |
+| Runtime Sessions | `core_engine.runtime.session`, `core_engine.runtime.session_state` | Track explicit operator-started runtime sessions and expose CLI, API, dashboard, recovery, health, and service-preview summaries. |
+| Runtime Profiles | `core_engine.runtime.profiles`, `core_engine.runtime.profile_loader` | Compose default, edge-device, and operator-provided runtime settings across scheduler, storage, API, dashboard, and export layers. |
+| Runtime Recovery | `core_engine.runtime.checkpoints`, `core_engine.runtime.recovery` | Summarize prior sessions, incomplete workflows, pending reviews, failed steps, and export-ready records without automatic restart. |
+| Runtime CLI | `cli.runtime`, `cli.main` | Expose explicit `portmap runtime` status, run, recover, reviews, and export commands with dry-run defaults. |
+| Runtime Health | `core_engine.runtime.health` | Summarize storage, event queue, scheduler, review, dashboard, export, session, and resource-budget health. |
+| Service Readiness | `core_engine.runtime.service_mode` | Generate dry-run service-mode preflight summaries, service command previews, and manual operator checklist records. |
 
 ## Consolidated Data Flow
 
@@ -94,6 +101,18 @@ local evidence and snapshots
   -> operational export bundle
 ```
 
+Milestone K target flow:
+
+```text
+runtime profile
+  -> runtime session manager
+  -> scheduler, event queue, storage, topology, review, dashboard, and export summaries
+  -> runtime recovery and health summaries
+  -> runtime CLI output
+  -> service-mode readiness preview
+  -> manual operator review
+```
+
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.
 
 ## Events Into Storage
@@ -132,6 +151,9 @@ Phase 54-58 modules already expose structured records for platform integration:
 - Plugin governance can emit manifest and execution records for events, storage, policy, timeline, and correlation.
 - Relay orchestration can emit event, finding, storage, topology, dashboard, timeline, and correlation records.
 - Service lifecycle templates can emit event, finding, storage, dashboard, timeline, and correlation records.
+- Runtime sessions can summarize event, storage, scheduler, topology, review, export, health, and service-preview status.
+- Runtime health can emit local health events suitable for storage and dashboard display.
+- Service-mode readiness can reuse service templates and runtime health summaries for manual operator review.
 
 Target connection:
 
@@ -222,6 +244,12 @@ Default binding should remain localhost-only whenever a runtime API is explicitl
 - Persistent review store and finding status history.
 - Storage-backed dashboard data providers.
 - Operational export bundle generation with redaction and deterministic JSON output.
+- Runtime session records and deterministic summaries.
+- Unified runtime profiles for default, edge-device, and operator-merged settings.
+- Runtime recovery checkpoints and advisory recovery summaries.
+- Integrated runtime CLI commands for status, run, recover, reviews, and export.
+- Runtime health summaries across storage, scheduler, event queue, review, dashboard, export, and sessions.
+- Service-mode readiness previews with dry-run command previews and manual operator checklist records.
 
 ## What Is Not Wired Together Yet
 
@@ -237,6 +265,9 @@ Default binding should remain localhost-only whenever a runtime API is explicitl
 - Plugin execution through scheduler jobs.
 - Relay orchestration as a listener or background service.
 - Service template output to file writes or service installation.
+- Runtime session records to an always-on daemon supervisor.
+- Service-mode readiness previews to automatic service installation, enablement, or startup.
+- Runtime health events to automatic background persistence unless explicitly invoked.
 
 These remain future explicit implementation tasks with focused tests.
 
@@ -264,6 +295,12 @@ Use sanitized fixtures and placeholder metadata only.
 - Persist review records and review state transitions to a temporary database.
 - Build dashboard provider output from stored local records.
 - Generate an operational export bundle and optional local archive in a temporary directory.
+- Create and stop a dry-run runtime session.
+- Load and validate default, edge-device, and sanitized operator runtime profiles.
+- Run runtime recovery against temporary checkpoint records.
+- Run runtime CLI commands in dry-run mode.
+- Build runtime health summaries from temporary local records.
+- Generate service-mode readiness previews with sanitized placeholders.
 - Confirm no service files are written by the template module.
 - Confirm no service enable/start command is executed by PortMap-AI.
 - Confirm no external network calls are required.
@@ -275,27 +312,27 @@ Use sanitized fixtures and placeholder metadata only.
 
 ## Next Milestone Direction
 
-Recommended next milestone: Integrated Local Operations.
+Recommended next milestone: Service Operations Hardening and Operator Experience.
 
 Suggested implementation phases:
 
-1. Diagnostic record adapters.
-   Add reusable adapters that convert visibility, correlation, schema, stream, plugin, relay, and service-template results into event, storage, policy, timeline, topology, dashboard, and correlation records through a single local interface.
+1. Operator-facing runtime status views.
+   Build dashboard and CLI views backed by runtime session, profile, recovery, health, review, export, and service-readiness summaries.
 
-2. Storage-backed local history.
-   Persist selected event, visibility, diagnostic, and review summaries locally and add query helpers for recent records.
+2. Manual service setup workflow.
+   Turn service-mode readiness previews into documented operator checklists and local evidence records without automatic installation or startup.
 
-3. Policy review wiring.
-   Connect advisory findings and diagnostic issues to the local review queue without executing actions.
+3. Storage-backed runtime history.
+   Persist selected runtime session, health, recovery, and service-readiness summaries through existing local repositories.
 
-4. Local API repository providers.
-   Serve events, assets, snapshots, diagnostics, nodes, topology, and review summaries from storage-backed providers.
+4. Local API runtime providers.
+   Serve runtime session, profile, health, recovery, review, export, and service-readiness summaries from local providers.
 
-5. Dashboard integration panels.
-   Render local dashboard panels for visibility, diagnostics, node health, reviews, and baseline deltas without introducing a heavy frontend build system.
+5. Dashboard runtime panels.
+   Render runtime health, recovery, session, review, export, and service readiness panels without introducing a heavy frontend build system.
 
 6. Opt-in scheduler wiring.
-   Add operator-enabled jobs for event flushing, local health summaries, snapshot refreshes, and policy review refreshes.
+   Add operator-enabled jobs for event flushing, local health summaries, snapshot refreshes, policy review refreshes, and runtime checkpoint updates.
 
 7. Integrated Raspberry Pi smoke path.
    Validate the end-to-end local-only path on lightweight Linux hardware using sanitized records.

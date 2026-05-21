@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 70 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, and `docs/MILESTONE_INTEGRATION.md` is the active integration guide.
+This roadmap summarizes the current direction after the Phase 70 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, and `docs/MILESTONE_K_INTEGRATION.md` summarizes Phase 65-70 runtime operations integration.
 
 ## Completed Milestones
 
@@ -66,6 +66,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_HISTORY.md`
 - `docs/MILESTONE_INTEGRATION.md`
 - `docs/MILESTONE_J_INTEGRATION.md`
+- `docs/MILESTONE_K_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/event_pipeline.md`
