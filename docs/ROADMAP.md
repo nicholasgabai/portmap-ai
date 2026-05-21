@@ -35,6 +35,7 @@ Current stable posture:
 - Service-mode readiness now provides dry-run preflight checks, command previews, and manual operator checklist records without installing or starting services.
 - Distributed node state sync now normalizes trusted master and worker runtime summaries into deterministic cluster state records.
 - Federated topology aggregation now merges trusted node topology snapshots with source attribution and explicit conflict records.
+- Cluster runtime health now rolls up trusted node health summaries, resource warnings, availability classifications, local health events, and dashboard-ready panels.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -95,6 +96,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/distributed_visibility_aggregation.md`
 - `docs/distributed_node_state_sync.md`
 - `docs/federated_topology_aggregation.md`
+- `docs/cluster_runtime_health.md`
 - `docs/behavior_correlation.md`
 - `docs/schema_validation_engine.md`
 - `docs/metadata_stream_parser.md`
