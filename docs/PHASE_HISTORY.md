@@ -20,6 +20,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 49-53 | Dashboard foundation, topology/timeline models, policy review, distributed aggregation, and behavior correlation baselines | Complete baseline |
 | 54-58 | Schema validation, stream metadata parsing, plugin registry, relay orchestration, and service lifecycle templates | Complete baseline |
 | 59-64 | Persistent topology state, snapshot drift detection, runtime pipeline wiring, review persistence, dashboard providers, and operational export bundles | Complete baseline |
+| 65-70 | Runtime sessions, unified configuration profiles, state recovery, runtime CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 
 ## Baseline Meaning
 

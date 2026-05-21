@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 64 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, and `docs/MILESTONE_INTEGRATION.md` is the active integration guide.
+This roadmap summarizes the current direction after the Phase 70 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, and `docs/MILESTONE_INTEGRATION.md` is the active integration guide.
 
 ## Completed Milestones
 
@@ -15,10 +15,11 @@ This roadmap summarizes the current direction after the Phase 64 baseline. `PORT
 | 51-53 | Policy and correlation engine: review queue, distributed aggregation, and behavior correlation | Complete baseline |
 | 54-58 | Advanced diagnostics and deployment readiness: schema validation, stream metadata, plugin governance, relay orchestration, and service templates | Complete baseline |
 | 59-64 | Runtime pipeline and persistent topology integration: topology state, snapshot drift, runtime workflows, review persistence, dashboard providers, and operational export bundles | Complete baseline |
+| 65-70 | Unified runtime operations: runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-64 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-70 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -31,6 +32,7 @@ Current stable posture:
 - Runtime recovery helpers now summarize checkpoints, incomplete workflows, pending reviews, failed steps, and export readiness.
 - The integrated runtime CLI now exposes status, run, recover, reviews, and export commands.
 - Runtime health monitoring now summarizes storage, scheduler, event queue, review, dashboard, export, and session readiness.
+- Service-mode readiness now provides dry-run preflight checks, command previews, and manual operator checklist records without installing or starting services.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -38,12 +40,13 @@ Current stable posture:
 
 ## Next Milestone Direction
 
-Recommended next milestone: Milestone K - Unified Runtime Operations.
+Recommended next milestone: Milestone L - Service Operations Hardening and Operator Experience.
 
-Near-term implementation should focus on making PortMap-AI operate as a cohesive long-running local platform without adding unsafe automation:
+Near-term implementation should focus on hardening the completed unified runtime operations baseline without adding unsafe automation:
 
-- Add service-mode readiness previews without automatic installation or startup.
 - Validate the integrated local-only path on Raspberry Pi/Linux using sanitized records.
+- Add operator-facing status views that consume the runtime session, health, and service-readiness summaries.
+- Expand documented manual service setup flows while preserving dry-run-first behavior.
 
 ## Medium-Term Work
 
@@ -80,6 +83,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/runtime_state_recovery.md`
 - `docs/runtime_cli.md`
 - `docs/runtime_health_monitor.md`
+- `docs/service_mode_readiness.md`
 - `docs/runtime_pipeline.md`
 - `docs/topology_timeline_views.md`
 - `docs/policy_review_engine.md`

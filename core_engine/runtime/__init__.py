@@ -53,6 +53,15 @@ from core_engine.runtime.recovery import (
 )
 from core_engine.runtime.runtime_state import RuntimeState
 from core_engine.runtime.scheduler import LocalRuntimeScheduler
+from core_engine.runtime.service_mode import (
+    build_manual_operator_checklist,
+    build_service_command_previews,
+    build_service_mode_definition,
+    build_service_mode_preflight,
+    build_service_mode_readiness,
+    build_service_template_compatibility,
+    summarize_service_mode_readiness,
+)
 from core_engine.runtime.session import RuntimeSessionManager
 from core_engine.runtime.session_state import (
     RuntimeSession,
@@ -82,6 +91,12 @@ __all__ = [
     "build_runtime_health_event",
     "build_runtime_health_summary",
     "build_runtime_recovery_summary",
+    "build_manual_operator_checklist",
+    "build_service_command_previews",
+    "build_service_mode_definition",
+    "build_service_mode_preflight",
+    "build_service_mode_readiness",
+    "build_service_template_compatibility",
     "dashboard_provider_health_check",
     "default_runtime_profile",
     "edge_device_runtime_profile",
@@ -111,6 +126,7 @@ __all__ = [
     "summarize_runtime_profile",
     "summarize_runtime_session",
     "summarize_runtime_pipeline",
+    "summarize_service_mode_readiness",
     "scheduler_health_check",
     "storage_health_check",
     "validate_runtime_checkpoint",

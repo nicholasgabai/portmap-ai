@@ -214,6 +214,8 @@ Acceptance:
 
 ## Phase 70 - Service Mode Readiness
 
+Status: Complete Baseline
+
 Goal:
 Prepare PortMap-AI for documented service mode by adding local preflight checks, service command previews, and configuration summaries without installing, enabling, or starting services automatically.
 

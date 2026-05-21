@@ -138,6 +138,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/schema_validation_engine.md",
   "docs/security_authentication.md",
   "docs/service_enumeration.md",
+  "docs/service_mode_readiness.md",
   "docs/service_installer_templates.md",
   "docs/snapshot_drift_detection.md",
   "docs/stack_stability.md",
