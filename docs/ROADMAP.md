@@ -40,13 +40,13 @@ Current stable posture:
 
 ## Next Milestone Direction
 
-Recommended next milestone: Milestone L - Service Operations Hardening and Operator Experience.
+Recommended next milestone: Milestone L - Distributed Runtime Intelligence.
 
-Near-term implementation should focus on hardening the completed unified runtime operations baseline without adding unsafe automation:
+Near-term implementation should focus on extending the completed unified runtime baseline into trusted multi-node runtime intelligence without adding unsafe automation:
 
-- Validate the integrated local-only path on Raspberry Pi/Linux using sanitized records.
-- Add operator-facing status views that consume the runtime session, health, and service-readiness summaries.
-- Expand documented manual service setup flows while preserving dry-run-first behavior.
+- Synchronize sanitized master and worker runtime state summaries.
+- Merge topology, health, review, and export summaries across trusted local nodes with source attribution.
+- Prepare operator visibility models for local trusted-node views without public exposure or remote control.
 
 ## Medium-Term Work
 
@@ -69,6 +69,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_K_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
+- `docs/PHASE_71_76_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`
