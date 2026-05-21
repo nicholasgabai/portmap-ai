@@ -36,6 +36,7 @@ Current stable posture:
 - Distributed node state sync now normalizes trusted master and worker runtime summaries into deterministic cluster state records.
 - Federated topology aggregation now merges trusted node topology snapshots with source attribution and explicit conflict records.
 - Cluster runtime health now rolls up trusted node health summaries, resource warnings, availability classifications, local health events, and dashboard-ready panels.
+- Distributed review queue aggregation now preserves node ownership, reports duplicate reviews and repeated categories, summarizes finding status, and prepares export-ready review records.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -97,6 +98,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/distributed_node_state_sync.md`
 - `docs/federated_topology_aggregation.md`
 - `docs/cluster_runtime_health.md`
+- `docs/distributed_review_queue.md`
 - `docs/behavior_correlation.md`
 - `docs/schema_validation_engine.md`
 - `docs/metadata_stream_parser.md`
