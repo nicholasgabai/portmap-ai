@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 70 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, and `docs/MILESTONE_K_INTEGRATION.md` summarizes Phase 65-70 runtime operations integration.
+This roadmap summarizes the current direction after the Phase 76 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, and `docs/MILESTONE_L_INTEGRATION.md` summarizes Phase 71-76 distributed runtime intelligence integration.
 
 ## Completed Milestones
 
@@ -16,10 +16,11 @@ This roadmap summarizes the current direction after the Phase 70 baseline. `PORT
 | 54-58 | Advanced diagnostics and deployment readiness: schema validation, stream metadata, plugin governance, relay orchestration, and service templates | Complete baseline |
 | 59-64 | Runtime pipeline and persistent topology integration: topology state, snapshot drift, runtime workflows, review persistence, dashboard providers, and operational export bundles | Complete baseline |
 | 65-70 | Unified runtime operations: runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
+| 71-76 | Distributed runtime intelligence: node state sync, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-70 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-76 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -46,13 +47,13 @@ Current stable posture:
 
 ## Next Milestone Direction
 
-Recommended next milestone: Milestone L - Distributed Runtime Intelligence.
+Recommended next milestone: distributed operations hardening and operator experience.
 
-Near-term implementation should focus on extending the completed unified runtime baseline into trusted multi-node runtime intelligence without adding unsafe automation:
+Near-term implementation should focus on hardening the trusted-node runtime intelligence baseline without adding unsafe automation:
 
-- Synchronize sanitized master and worker runtime state summaries.
-- Merge topology, health, review, and export summaries across trusted local nodes with source attribution.
-- Prepare operator visibility models for local trusted-node views without public exposure or remote control.
+- Persist selected distributed summaries through existing storage repositories.
+- Add local API providers for trusted-node runtime, health, review, export, and visibility summaries.
+- Expand operator-facing panels while preserving the Textual terminal dashboard as the primary UI.
 
 ## Medium-Term Work
 
@@ -73,6 +74,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_INTEGRATION.md`
 - `docs/MILESTONE_J_INTEGRATION.md`
 - `docs/MILESTONE_K_INTEGRATION.md`
+- `docs/MILESTONE_L_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`

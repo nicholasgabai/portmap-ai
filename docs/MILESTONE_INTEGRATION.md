@@ -1,6 +1,6 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-70 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, and `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary.
+This document is the consolidated integration guide for the completed Phase 44-76 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, and `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
@@ -17,6 +17,7 @@ The integration posture remains local-first, operator-controlled, read-only by d
 | Advanced Diagnostics and Deployment Readiness | 54-58 | Schema validation, stream metadata, plugin governance, relay orchestration, service templates | Complete baseline |
 | Runtime Pipeline and Persistent Topology Integration | 59-64 | Persistent topology, snapshot drift, runtime workflow wiring, review persistence, dashboard providers, operational export bundles | Complete baseline |
 | Unified Runtime Operations | 65-70 | Runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
+| Distributed Runtime Intelligence | 71-76 | Distributed node state, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
 
 ## Module Map
 
@@ -47,6 +48,12 @@ The integration posture remains local-first, operator-controlled, read-only by d
 | Runtime CLI | `cli.runtime`, `cli.main` | Expose explicit `portmap runtime` status, run, recover, reviews, and export commands with dry-run defaults. |
 | Runtime Health | `core_engine.runtime.health` | Summarize storage, event queue, scheduler, review, dashboard, export, session, and resource-budget health. |
 | Service Readiness | `core_engine.runtime.service_mode` | Generate dry-run service-mode preflight summaries, service command previews, and manual operator checklist records. |
+| Distributed Runtime State | `core_engine.runtime.distributed_state`, `core_engine.runtime.node_sync` | Normalize trusted master and worker runtime summaries with stale, missing, duplicate, and conflict reporting. |
+| Federated Topology | `core_engine.topology.federated`, `core_engine.topology.node_merge` | Merge trusted node topology snapshots with source attribution, confidence scoring, conflicts, timeline records, and correlation records. |
+| Cluster Runtime Health | `core_engine.runtime.cluster_health` | Roll up trusted node health into cluster availability, component readiness, resource warnings, local events, and dashboard panels. |
+| Distributed Reviews | `core_engine.policy.distributed_review` | Aggregate trusted node reviews, finding status records, duplicates, repeated categories, and export-ready review summaries. |
+| Coordinated Exports | `core_engine.export.node_manifest`, `core_engine.export.coordinated_bundle` | Build per-node evidence manifests and coordinated export plans with redaction validation and cross-node digests. |
+| Operator Visibility | `core_engine.runtime.operator_visibility`, `gui.web.distributed_views` | Build read-only trusted-node API-compatible visibility panels without public exposure or remote control. |
 
 ## Consolidated Data Flow
 
@@ -113,6 +120,18 @@ runtime profile
   -> manual operator review
 ```
 
+Milestone L target flow:
+
+```text
+trusted local node summaries
+  -> distributed node state sync
+  -> federated topology aggregation
+  -> cluster runtime health
+  -> distributed review aggregation
+  -> coordinated export bundle plans
+  -> read-only local operator visibility models
+```
+
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.
 
 ## Events Into Storage
@@ -154,6 +173,12 @@ Phase 54-58 modules already expose structured records for platform integration:
 - Runtime sessions can summarize event, storage, scheduler, topology, review, export, health, and service-preview status.
 - Runtime health can emit local health events suitable for storage and dashboard display.
 - Service-mode readiness can reuse service templates and runtime health summaries for manual operator review.
+- Distributed node state can preserve runtime session, profile, health, and checkpoint references from trusted nodes.
+- Federated topology can turn trusted node snapshots into source-attributed topology, timeline, and correlation-ready records.
+- Cluster runtime health can summarize trusted node health records into dashboard panels and local health events.
+- Distributed reviews can aggregate node-owned review drafts and finding status records without propagating approvals.
+- Coordinated export plans can combine per-node evidence manifests while preserving redaction and digest checks.
+- Operator visibility can expose read-only API-compatible distributed panels without starting a web server.
 
 Target connection:
 
@@ -250,6 +275,12 @@ Default binding should remain localhost-only whenever a runtime API is explicitl
 - Integrated runtime CLI commands for status, run, recover, reviews, and export.
 - Runtime health summaries across storage, scheduler, event queue, review, dashboard, export, and sessions.
 - Service-mode readiness previews with dry-run command previews and manual operator checklist records.
+- Distributed node state sync for trusted master and worker runtime summaries.
+- Federated topology aggregation across trusted node snapshots.
+- Cluster runtime health rollups across trusted nodes.
+- Distributed review queue aggregation with duplicate and repeated-category reporting.
+- Coordinated export bundle planning with per-node manifests and cross-node digests.
+- Operator visibility preparation for read-only trusted-node panels.
 
 ## What Is Not Wired Together Yet
 
