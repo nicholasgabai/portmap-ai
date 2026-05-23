@@ -116,13 +116,15 @@ Acceptance:
 
 ## Phase 79 - Live Cluster State Synchronization
 
+Status: Complete Baseline
+
 Goal:
 Use trusted signed summary envelopes to update local cluster state windows and produce live synchronization summaries for approved nodes.
 
 Build:
 
-- `core_engine/runtime/live_sync.py`
-- `core_engine/runtime/sync_windows.py`
+- `core_engine/federation/synchronization.py`
+- `core_engine/federation/cluster_state.py`
 - `tests/test_live_cluster_state_sync.py`
 - `docs/live_cluster_state_synchronization.md`
 
