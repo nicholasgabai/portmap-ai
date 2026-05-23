@@ -38,6 +38,7 @@ Current stable posture:
 - Cluster runtime health now rolls up trusted node health summaries, resource warnings, availability classifications, local health events, and dashboard-ready panels.
 - Distributed review queue aggregation now preserves node ownership, reports duplicate reviews and repeated categories, summarizes finding status, and prepares export-ready review records.
 - Coordinated export bundle planning now combines trusted-node evidence manifests with cross-node digest summaries, missing-node records, redaction validation, and local archive plans.
+- Remote operator visibility prep now provides read-only trusted-node panels for cluster runtime, federated topology, reviews, exports, and service readiness without remote control.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -101,6 +102,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/cluster_runtime_health.md`
 - `docs/distributed_review_queue.md`
 - `docs/coordinated_export_bundles.md`
+- `docs/remote_operator_visibility_prep.md`
 - `docs/behavior_correlation.md`
 - `docs/schema_validation_engine.md`
 - `docs/metadata_stream_parser.md`
