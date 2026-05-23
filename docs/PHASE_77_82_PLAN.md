@@ -49,15 +49,17 @@ Milestone M should add transport and exchange models for operator-approved trust
 
 ## Phase 77 - Trusted Node Transport Models
 
+Status: Complete Baseline
+
 Goal:
 Define trusted-node transport session records, endpoint descriptors, trust boundaries, and operator-approved exchange plans without opening network listeners or contacting nodes.
 
 Build:
 
-- `core_engine/runtime/trusted_transport.py`
-- `core_engine/runtime/transport_sessions.py`
+- `core_engine/federation/transport.py`
+- `core_engine/federation/trust.py`
 - `tests/test_trusted_node_transport.py`
-- `docs/trusted_node_transport_models.md`
+- `docs/trusted_node_transport.md`
 
 Features:
 
@@ -300,7 +302,7 @@ Use sanitized records and temporary local test locations only.
 
 Each phase should add focused documentation:
 
-- `docs/trusted_node_transport_models.md`
+- `docs/trusted_node_transport.md`
 - `docs/signed_runtime_summary_exchange.md`
 - `docs/live_cluster_state_synchronization.md`
 - `docs/distributed_event_propagation.md`
