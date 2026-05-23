@@ -122,6 +122,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/service_enumeration.md" in data_files["share/portmap-ai/docs"]
     assert "docs/service_mode_readiness.md" in data_files["share/portmap-ai/docs"]
     assert "docs/service_installer_templates.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/signed_runtime_summary_exchange.md" in data_files["share/portmap-ai/docs"]
     assert "docs/snapshot_drift_detection.md" in data_files["share/portmap-ai/docs"]
     assert "docs/stack_stability.md" in data_files["share/portmap-ai/docs"]
     assert "docs/threat_correlation.md" in data_files["share/portmap-ai/docs"]

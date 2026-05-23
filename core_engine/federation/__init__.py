@@ -1,9 +1,32 @@
 """Trusted federation record helpers.
 
-Phase 77 introduces local record models only. The package does not open
-network listeners, contact peers, or perform cryptographic signing.
+The package builds local federation records only. It does not open network
+listeners, contact peers, execute remote commands, or store private signing
+material.
 """
 
+from core_engine.federation.exchange import (
+    EXCHANGE_STATUSES,
+    SUMMARY_EXCHANGE_SCOPES,
+    SignedExchangeError,
+    build_exchange_summary,
+    build_signed_runtime_summary_envelope,
+    deterministic_exchange_json,
+    validate_signed_runtime_summary_envelope,
+    verify_signed_runtime_summary_envelope,
+)
+from core_engine.federation.signing import (
+    SIGNING_STATUSES,
+    VERIFICATION_STATUSES,
+    FederationSigningError,
+    build_payload_digest_record,
+    build_signature_metadata,
+    build_signing_status_record,
+    build_verification_status_record,
+    canonical_json,
+    deterministic_digest,
+    validate_signature_metadata,
+)
 from core_engine.federation.transport import (
     DEFAULT_TRANSPORT_MODE,
     TRUSTED_TRANSPORT_MODES,
@@ -35,18 +58,33 @@ from core_engine.federation.trust import (
 __all__ = [
     "DEFAULT_REPLAY_WINDOW_SECONDS",
     "DEFAULT_TRANSPORT_MODE",
+    "EXCHANGE_STATUSES",
+    "FederationSigningError",
+    "SIGNING_STATUSES",
+    "SUMMARY_EXCHANGE_SCOPES",
     "TRUSTED_TRANSPORT_MODES",
     "TRUSTED_TRANSPORT_STATUSES",
     "TRUST_SCOPE_LABELS",
     "TRUST_STATUSES",
+    "SignedExchangeError",
     "TrustedNodeTrustError",
     "TrustedTransportError",
+    "VERIFICATION_STATUSES",
     "build_approved_peer_record",
+    "build_exchange_summary",
     "build_handshake_summary",
     "build_local_node_trust_profile",
+    "build_payload_digest_record",
     "build_replay_window_metadata",
+    "build_signature_metadata",
+    "build_signed_runtime_summary_envelope",
+    "build_signing_status_record",
     "build_transport_session_summary",
+    "build_verification_status_record",
+    "canonical_json",
     "create_trusted_transport_session",
+    "deterministic_digest",
+    "deterministic_exchange_json",
     "deterministic_transport_json",
     "deterministic_trust_json",
     "is_peer_approved",
@@ -55,5 +93,8 @@ __all__ = [
     "trusted_transport_session_to_dict",
     "validate_approved_peer_record",
     "validate_local_node_trust_profile",
+    "validate_signature_metadata",
+    "validate_signed_runtime_summary_envelope",
     "validate_trusted_transport_session",
+    "verify_signed_runtime_summary_envelope",
 ]

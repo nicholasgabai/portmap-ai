@@ -83,13 +83,15 @@ Acceptance:
 
 ## Phase 78 - Signed Runtime Summary Exchange
 
+Status: Complete Baseline
+
 Goal:
 Create signed runtime summary exchange envelopes for trusted node state, health, topology, review, export, and service-readiness summaries.
 
 Build:
 
-- `core_engine/runtime/signed_exchange.py`
-- `core_engine/runtime/exchange_validation.py`
+- `core_engine/federation/signing.py`
+- `core_engine/federation/exchange.py`
 - `tests/test_signed_runtime_summary_exchange.py`
 - `docs/signed_runtime_summary_exchange.md`
 
