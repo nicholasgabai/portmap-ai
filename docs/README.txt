@@ -51,6 +51,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/federated_topology_aggregation.md` - trusted-node topology snapshot merging with source attribution and conflict summaries.
 - `docs/cluster_runtime_health.md` - trusted-node health rollups, resource warnings, local events, and dashboard-ready cluster health panels.
 - `docs/distributed_review_queue.md` - trusted-node review aggregation, duplicate detection, finding status rollups, and export-ready review summaries.
+- `docs/coordinated_export_bundles.md` - multi-node evidence manifests, cross-node digests, missing-node records, and local archive plans.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.

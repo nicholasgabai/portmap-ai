@@ -90,6 +90,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/beginner_guide.md",
   "docs/behavior_correlation.md",
   "docs/configuration.md",
+  "docs/coordinated_export_bundles.md",
   "docs/cve_intelligence.md",
   "docs/cluster_runtime_health.md",
   "docs/dashboard_data_providers.md",

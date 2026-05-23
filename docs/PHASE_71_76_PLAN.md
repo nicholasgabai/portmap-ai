@@ -177,6 +177,8 @@ Acceptance:
 
 ## Phase 75 - Coordinated Export Bundles
 
+Status: Complete Baseline
+
 Goal:
 Create coordinated export bundle plans that combine selected evidence from trusted local nodes while preserving source attribution and redaction requirements.
 
