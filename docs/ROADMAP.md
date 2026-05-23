@@ -47,13 +47,13 @@ Current stable posture:
 
 ## Next Milestone Direction
 
-Recommended next milestone: distributed operations hardening and operator experience.
+Recommended next milestone: Milestone M - Trusted Runtime Transport and Live Federation.
 
-Near-term implementation should focus on hardening the trusted-node runtime intelligence baseline without adding unsafe automation:
+Near-term implementation should focus on moving from distributed-ready records into live trusted federation without adding unsafe automation:
 
-- Persist selected distributed summaries through existing storage repositories.
-- Add local API providers for trusted-node runtime, health, review, export, and visibility summaries.
-- Expand operator-facing panels while preserving the Textual terminal dashboard as the primary UI.
+- Model operator-approved trusted node transport sessions.
+- Exchange signed runtime summaries with replay-safe metadata and source attribution.
+- Add synchronization windows, distributed event summaries, federation diagnostics, and dashboard/API-ready federation views.
 
 ## Medium-Term Work
 
@@ -78,6 +78,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`
+- `docs/PHASE_77_82_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`

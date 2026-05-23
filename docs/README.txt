@@ -14,6 +14,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_59_64_PLAN.md` - completed milestone plan for runtime pipeline and persistent topology integration.
 - `docs/PHASE_65_70_PLAN.md` - completed milestone plan for unified runtime operations.
 - `docs/PHASE_71_76_PLAN.md` - completed milestone plan for distributed runtime intelligence.
+- `docs/PHASE_77_82_PLAN.md` - next milestone plan for trusted runtime transport and live federation.
 - `docs/DEPLOYMENT.md` - deployment paths and validation expectations.
 - `docs/SECURITY_MODEL.md` - centralized safety, trust, telemetry, and remediation boundaries.
 - `docs/CLI_REFERENCE.md` - command-family reference for the installed `portmap` CLI.
