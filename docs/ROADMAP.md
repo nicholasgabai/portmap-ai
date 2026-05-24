@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 76 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, and `docs/MILESTONE_L_INTEGRATION.md` summarizes Phase 71-76 distributed runtime intelligence integration.
+This roadmap summarizes the current direction after the Phase 82 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, and `docs/MILESTONE_M_INTEGRATION.md` summarizes Phase 77-82 trusted runtime federation integration.
 
 ## Completed Milestones
 
@@ -17,10 +17,11 @@ This roadmap summarizes the current direction after the Phase 76 baseline. `PORT
 | 59-64 | Runtime pipeline and persistent topology integration: topology state, snapshot drift, runtime workflows, review persistence, dashboard providers, and operational export bundles | Complete baseline |
 | 65-70 | Unified runtime operations: runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 | 71-76 | Distributed runtime intelligence: node state sync, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
+| 77-82 | Trusted runtime transport and live federation: trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, federation diagnostics, and dashboard/API readiness | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-76 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-82 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -40,6 +41,12 @@ Current stable posture:
 - Distributed review queue aggregation now preserves node ownership, reports duplicate reviews and repeated categories, summarizes finding status, and prepares export-ready review records.
 - Coordinated export bundle planning now combines trusted-node evidence manifests with cross-node digest summaries, missing-node records, redaction validation, and local archive plans.
 - Remote operator visibility prep now provides read-only trusted-node panels for cluster runtime, federated topology, reviews, exports, and service readiness without remote control.
+- Trusted node transport models now define local trust profiles, approved peers, transport sessions, handshake summaries, expiration windows, trust scopes, and replay-window metadata without opening network listeners.
+- Signed runtime summary exchange now provides canonical JSON, deterministic digests, signature metadata, verification records, trusted peer validation hooks, and replay-window validation hooks.
+- Live cluster state synchronization now classifies signed updates, tracks per-node last-seen state, reports conflicts and drift, and emits merged cluster state summaries.
+- Distributed event propagation now wraps local events in trusted envelopes, preserves source attribution, applies replay checks, and rolls up accepted, rejected, stale, duplicate, malformed, and untrusted records.
+- Federation diagnostics now summarize trusted peer, transport, signing, synchronization, event propagation, replay-window, distributed runtime, readiness, recommendation, and local health event records.
+- Federation dashboard/API readiness now exposes read-only panels and API-compatible dictionaries for trusted peers, transports, signed exchanges, sync windows, events, diagnostics, readiness scores, and counters.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -47,13 +54,14 @@ Current stable posture:
 
 ## Next Milestone Direction
 
-Recommended next milestone: Milestone M - Trusted Runtime Transport and Live Federation.
+Recommended next milestone direction: federation operational hardening and local operator experience.
 
-Near-term implementation should focus on moving from distributed-ready records into live trusted federation without adding unsafe automation:
+Near-term implementation should focus on turning trusted federation records into operator-controlled local workflows without adding unsafe automation:
 
-- Model operator-approved trusted node transport sessions.
-- Exchange signed runtime summaries with replay-safe metadata and source attribution.
-- Add synchronization windows, distributed event summaries, federation diagnostics, and dashboard/API-ready federation views.
+- Persist selected federation session, exchange, sync, event, diagnostic, and dashboard summary records through existing local storage paths.
+- Add local API providers for federation status dictionaries without public exposure.
+- Expand dashboard sections for stale, rejected, replayed, and duplicate federation records.
+- Keep any live transport execution behind explicit operator review and safety checks.
 
 ## Medium-Term Work
 
@@ -75,6 +83,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_J_INTEGRATION.md`
 - `docs/MILESTONE_K_INTEGRATION.md`
 - `docs/MILESTONE_L_INTEGRATION.md`
+- `docs/MILESTONE_M_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`
@@ -106,6 +115,12 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/distributed_review_queue.md`
 - `docs/coordinated_export_bundles.md`
 - `docs/remote_operator_visibility_prep.md`
+- `docs/trusted_node_transport.md`
+- `docs/signed_runtime_summary_exchange.md`
+- `docs/live_cluster_state_synchronization.md`
+- `docs/distributed_event_propagation.md`
+- `docs/federation_diagnostics.md`
+- `docs/federation_dashboard_api_readiness.md`
 - `docs/behavior_correlation.md`
 - `docs/schema_validation_engine.md`
 - `docs/metadata_stream_parser.md`

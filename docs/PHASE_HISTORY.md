@@ -22,6 +22,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 59-64 | Persistent topology state, snapshot drift detection, runtime pipeline wiring, review persistence, dashboard providers, and operational export bundles | Complete baseline |
 | 65-70 | Runtime sessions, unified configuration profiles, state recovery, runtime CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 | 71-76 | Distributed node state sync, federated topology aggregation, cluster health, distributed review aggregation, coordinated export bundles, and operator visibility prep | Complete baseline |
+| 77-82 | Trusted node transport models, signed runtime summary exchange, live cluster state synchronization, distributed event propagation, federation diagnostics, and federation dashboard/API readiness | Complete baseline |
 
 ## Baseline Meaning
 
@@ -39,4 +40,5 @@ The latest recorded full-suite result in the handoff is updated after each compl
 - `docs/MILESTONE_J_INTEGRATION.md`
 - `docs/MILESTONE_K_INTEGRATION.md`
 - `docs/MILESTONE_L_INTEGRATION.md`
+- `docs/MILESTONE_M_INTEGRATION.md`
 - `docs/ROADMAP.md`

@@ -1,6 +1,6 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-76 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, and `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary.
+This document is the consolidated integration guide for the completed Phase 44-82 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, and `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
@@ -18,6 +18,7 @@ The integration posture remains local-first, operator-controlled, read-only by d
 | Runtime Pipeline and Persistent Topology Integration | 59-64 | Persistent topology, snapshot drift, runtime workflow wiring, review persistence, dashboard providers, operational export bundles | Complete baseline |
 | Unified Runtime Operations | 65-70 | Runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 | Distributed Runtime Intelligence | 71-76 | Distributed node state, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
+| Trusted Runtime Transport and Live Federation | 77-82 | Trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, diagnostics, and dashboard/API readiness | Complete baseline |
 
 ## Module Map
 
@@ -54,6 +55,11 @@ The integration posture remains local-first, operator-controlled, read-only by d
 | Distributed Reviews | `core_engine.policy.distributed_review` | Aggregate trusted node reviews, finding status records, duplicates, repeated categories, and export-ready review summaries. |
 | Coordinated Exports | `core_engine.export.node_manifest`, `core_engine.export.coordinated_bundle` | Build per-node evidence manifests and coordinated export plans with redaction validation and cross-node digests. |
 | Operator Visibility | `core_engine.runtime.operator_visibility`, `gui.web.distributed_views` | Build read-only trusted-node API-compatible visibility panels without public exposure or remote control. |
+| Federation Trust and Transport | `core_engine.federation.trust`, `core_engine.federation.transport` | Model approved peers, trusted transport sessions, handshake summaries, expiration, trust scopes, and replay-window metadata without opening listeners. |
+| Federation Signed Exchange | `core_engine.federation.signing`, `core_engine.federation.exchange` | Build canonical JSON, deterministic digests, signature metadata, signed summary envelopes, verification records, and exchange summaries. |
+| Federation Live Sync | `core_engine.federation.synchronization`, `core_engine.federation.cluster_state` | Apply signed summaries to synchronization windows, classify updates, track per-node last-seen state, and produce merged cluster state summaries. |
+| Federation Event Propagation | `core_engine.federation.event_window`, `core_engine.federation.event_propagation` | Build trusted event envelopes, replay-window summaries, propagation classifications, event batch summaries, and cluster event rollups. |
+| Federation Diagnostics and Views | `core_engine.federation.health`, `core_engine.federation.diagnostics`, `core_engine.federation.operator_views`, `gui.web.federation_views` | Summarize federation health, readiness, recommendations, counters, dashboard panels, and local API-compatible dictionaries. |
 
 ## Consolidated Data Flow
 
@@ -132,6 +138,19 @@ trusted local node summaries
   -> read-only local operator visibility models
 ```
 
+Milestone M target flow:
+
+```text
+operator-approved trusted node descriptors
+  -> trusted transport session records
+  -> signed runtime summary envelopes
+  -> synchronization windows
+  -> live cluster state update classifications
+  -> distributed event propagation summaries
+  -> federation diagnostics
+  -> local dashboard/API federation views
+```
+
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.
 
 ## Events Into Storage
@@ -179,6 +198,11 @@ Phase 54-58 modules already expose structured records for platform integration:
 - Distributed reviews can aggregate node-owned review drafts and finding status records without propagating approvals.
 - Coordinated export plans can combine per-node evidence manifests while preserving redaction and digest checks.
 - Operator visibility can expose read-only API-compatible distributed panels without starting a web server.
+- Federation transport records can describe trusted sessions, handshake summaries, expiration windows, and replay metadata without starting listeners or contacting peers.
+- Signed summary exchange can wrap runtime, health, topology, review, export, service-readiness, and event records in deterministic digest and verification metadata.
+- Live cluster synchronization can classify signed summaries and produce accepted, rejected, stale, replayed, untrusted, malformed, conflict, and drift records.
+- Distributed event propagation can build local event storage-ready records while preserving duplicate, stale, malformed, rejected, and untrusted propagation states.
+- Federation diagnostics and dashboard views can expose readiness, recommendations, stale counters, rejected counters, duplicate counters, and read-only local API-compatible panels.
 
 Target connection:
 
@@ -281,6 +305,12 @@ Default binding should remain localhost-only whenever a runtime API is explicitl
 - Distributed review queue aggregation with duplicate and repeated-category reporting.
 - Coordinated export bundle planning with per-node manifests and cross-node digests.
 - Operator visibility preparation for read-only trusted-node panels.
+- Trusted node transport models with local trust profiles and replay-window metadata.
+- Signed runtime summary exchange envelopes with deterministic digests and verification status records.
+- Live cluster state synchronization windows with update classifications and merged cluster summaries.
+- Distributed event propagation summaries with event digest, sequence, and replay metadata.
+- Federation diagnostics with readiness scoring, recommendation records, and local health events.
+- Federation dashboard/API readiness views for trusted peers, transports, signed exchanges, sync windows, events, diagnostics, readiness, and counters.
 
 ## What Is Not Wired Together Yet
 
@@ -299,6 +329,11 @@ Default binding should remain localhost-only whenever a runtime API is explicitl
 - Runtime session records to an always-on daemon supervisor.
 - Service-mode readiness previews to automatic service installation, enablement, or startup.
 - Runtime health events to automatic background persistence unless explicitly invoked.
+- Trusted transport models to live network listeners.
+- Signed summary exchange to automatic peer delivery.
+- Federation synchronization to background polling.
+- Distributed event propagation to remote execution or remediation.
+- Federation dashboard/API views to a public web server.
 
 These remain future explicit implementation tasks with focused tests.
 
@@ -332,6 +367,11 @@ Use sanitized fixtures and placeholder metadata only.
 - Run runtime CLI commands in dry-run mode.
 - Build runtime health summaries from temporary local records.
 - Generate service-mode readiness previews with sanitized placeholders.
+- Build trusted transport session records with placeholder nodes.
+- Validate signed runtime summary envelopes with replay-safe metadata.
+- Apply signed summaries to a small synchronization window.
+- Build distributed event propagation summaries from sanitized local events.
+- Build federation diagnostics and dashboard/API federation views.
 - Confirm no service files are written by the template module.
 - Confirm no service enable/start command is executed by PortMap-AI.
 - Confirm no external network calls are required.
@@ -343,30 +383,30 @@ Use sanitized fixtures and placeholder metadata only.
 
 ## Next Milestone Direction
 
-Recommended next milestone: Service Operations Hardening and Operator Experience.
+Recommended next direction: federation operational hardening and local operator experience.
 
 Suggested implementation phases:
 
-1. Operator-facing runtime status views.
-   Build dashboard and CLI views backed by runtime session, profile, recovery, health, review, export, and service-readiness summaries.
+1. Storage-backed federation history.
+   Persist selected trusted transport, signed exchange, synchronization, event propagation, diagnostic, and dashboard summary records through existing local repositories.
 
-2. Manual service setup workflow.
-   Turn service-mode readiness previews into documented operator checklists and local evidence records without automatic installation or startup.
+2. Local API federation providers.
+   Serve federation session, exchange, sync, event, diagnostic, readiness, and counter summaries through local read-only provider dictionaries.
 
-3. Storage-backed runtime history.
-   Persist selected runtime session, health, recovery, and service-readiness summaries through existing local repositories.
+3. Dashboard federation panels.
+   Render stale, rejected, replayed, duplicate, trusted peer, transport, signed exchange, sync, event, diagnostic, and readiness panels without introducing public exposure.
 
-4. Local API runtime providers.
-   Serve runtime session, profile, health, recovery, review, export, and service-readiness summaries from local providers.
+4. Manual trusted-node import workflow.
+   Provide operator-reviewed import paths for trusted node summaries and signed federation envelopes using sanitized local evidence records.
 
-5. Dashboard runtime panels.
-   Render runtime health, recovery, session, review, export, and service readiness panels without introducing a heavy frontend build system.
+5. Operator-controlled transport execution review.
+   Define preflight checks and manual approval records before any future live transport behavior is added.
 
 6. Opt-in scheduler wiring.
-   Add operator-enabled jobs for event flushing, local health summaries, snapshot refreshes, policy review refreshes, and runtime checkpoint updates.
+   Add operator-enabled jobs for local federation health summaries, sync checkpoints, event flushes, and dashboard refreshes.
 
 7. Integrated Raspberry Pi smoke path.
-   Validate the end-to-end local-only path on lightweight Linux hardware using sanitized records.
+   Validate the end-to-end trusted federation record path on lightweight Linux hardware using sanitized records.
 
 ## Safety Requirements
 
@@ -380,6 +420,6 @@ Suggested implementation phases:
 - No service enable/start execution.
 - No router or firewall modification.
 - No cloud sync or external transport.
-- No live relay listener in this consolidation plan.
+- No live relay or federation listener in this consolidation plan.
 - No raw payload persistence.
 - No real IP addresses, MAC addresses, hostnames, usernames, tokens, screenshots, local paths, logs, or private validation data in public docs, tests, or examples.
