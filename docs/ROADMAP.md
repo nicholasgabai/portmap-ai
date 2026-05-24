@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 86 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_M_INTEGRATION.md` summarizes Phase 77-82 trusted runtime federation integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 86 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_N_INTEGRATION.md` summarizes Phase 83-86 active federation runtime integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -18,10 +18,7 @@ This roadmap summarizes the current direction after the Phase 86 baseline. `PORT
 | 65-70 | Unified runtime operations: runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 | 71-76 | Distributed runtime intelligence: node state sync, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
 | 77-82 | Trusted runtime transport and live federation: trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, federation diagnostics, and dashboard/API readiness | Complete baseline |
-| 83 | Active federation runtime manager: runtime manager records, peer enrollment summaries, planned signed exchange/sync/event loops, counters, and dashboard/API-ready state | Complete baseline |
-| 84 | Trusted peer lifecycle: peer registry records, lifecycle transitions, trust scope updates, stale/expired/revoked summaries, and dashboard/API-ready dictionaries | Complete baseline |
-| 85 | Runtime exchange scheduler: signed-summary, cluster-state sync, and event propagation job records with per-peer intervals, backoff, failure counters, and dashboard/API summaries | Complete baseline |
-| 86 | Active federation validation: peer, signed exchange, sync window, event propagation, replay-window, scheduler, and runtime readiness validation records | Complete baseline |
+| 83-86 | Active federation runtime: runtime manager records, trusted peer lifecycle, runtime exchange scheduler, and active federation validation | Complete baseline |
 
 ## Current Implementation State
 
@@ -96,6 +93,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_K_INTEGRATION.md`
 - `docs/MILESTONE_L_INTEGRATION.md`
 - `docs/MILESTONE_M_INTEGRATION.md`
+- `docs/MILESTONE_N_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`

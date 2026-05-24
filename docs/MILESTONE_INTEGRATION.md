@@ -1,6 +1,6 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-86 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, and `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary.
+This document is the consolidated integration guide for the completed Phase 44-86 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, and `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
@@ -21,10 +21,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Unified Runtime Operations | 65-70 | Runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 | Distributed Runtime Intelligence | 71-76 | Distributed node state, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
 | Trusted Runtime Transport and Live Federation | 77-82 | Trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, diagnostics, and dashboard/API readiness | Complete baseline |
-| Active Federation Runtime Manager | 83 | Runtime manager records, runtime state summaries, peer enrollment summaries, loop planning records, counters, and dashboard/API-ready state | Complete baseline |
-| Trusted Peer Lifecycle | 84 | Peer lifecycle records, registry summaries, transition validation, trust scope updates, stale/expired/revoked peer reporting, and dashboard/API-ready dictionaries | Complete baseline |
-| Runtime Exchange Scheduler | 85 | Federation exchange job records, per-peer schedules, interval/backoff metadata, enable/disable state, failure counters, and dashboard/API-ready summaries | Complete baseline |
-| Active Federation Validation | 86 | Trusted peer, signed exchange, sync, event propagation, replay-window, scheduler, and runtime readiness validation with scores and recommendations | Complete baseline |
+| Active Federation Runtime | 83-86 | Runtime manager records, trusted peer lifecycle, runtime exchange scheduler, active federation validation, readiness scores, recommendations, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Module Map
 
