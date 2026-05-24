@@ -65,6 +65,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/federation_dashboard_api_readiness.md` - read-only federation dashboard and local API view models for trusted peers, transport sessions, signed exchanges, sync windows, events, diagnostics, readiness, and counters.
 - `docs/federation_runtime_manager.md` - active federation runtime manager records, trusted peer enrollment summaries, planned exchange loops, counters, and dashboard/API-ready runtime state.
 - `docs/trusted_peer_lifecycle.md` - trusted peer lifecycle states, registry summaries, transport session linkage, stale/expired/revoked peer reporting, and dashboard/API-ready dictionaries.
+- `docs/runtime_exchange_scheduler.md` - federation exchange job records, per-peer schedules, interval/backoff metadata, failure counters, and dashboard/API-ready scheduler summaries.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.

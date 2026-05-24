@@ -25,6 +25,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 77-82 | Trusted node transport models, signed runtime summary exchange, live cluster state synchronization, distributed event propagation, federation diagnostics, and federation dashboard/API readiness | Complete baseline |
 | 83 | Federation runtime manager records, runtime state summaries, trusted peer enrollment summaries, exchange loop planning records, per-peer counters, and dashboard/API-ready runtime state dictionaries | Complete baseline |
 | 84 | Trusted peer lifecycle records, peer registry summaries, lifecycle transitions, trust scope updates, stale/expired/revoked peer reporting, and dashboard/API-ready registry dictionaries | Complete baseline |
+| 85 | Runtime exchange scheduler records, signed-summary exchange jobs, cluster-state sync jobs, event propagation jobs, per-peer schedules, backoff metadata, failure counters, and dashboard/API-ready scheduler summaries | Complete baseline |
 
 ## Baseline Meaning
 
