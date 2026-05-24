@@ -182,12 +182,15 @@ Acceptance:
 
 ## Phase 81 - Federation Diagnostics
 
+Status: Complete Baseline
+
 Goal:
 Add local federation diagnostics for trusted transport sessions, signed exchange validation, sync windows, distributed events, and resource-conscious operation.
 
 Build:
 
-- `core_engine/runtime/federation_diagnostics.py`
+- `core_engine/federation/diagnostics.py`
+- `core_engine/federation/health.py`
 - `tests/test_federation_diagnostics.py`
 - `docs/federation_diagnostics.md`
 
