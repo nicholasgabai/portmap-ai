@@ -18,6 +18,7 @@ TRUST_SCOPE_LABELS = frozenset(
         "topology-summary",
         "review-summary",
         "export-summary",
+        "event-summary",
         "operator-visibility",
         "service-readiness",
     }
@@ -27,6 +28,7 @@ DEFAULT_TRUST_SCOPES = (
     "runtime-summary",
     "health-summary",
     "operator-visibility",
+    "event-summary",
 )
 DEFAULT_TRANSPORT_MODES = (
     "local-file",

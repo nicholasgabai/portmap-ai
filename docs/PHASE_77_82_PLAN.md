@@ -149,13 +149,15 @@ Acceptance:
 
 ## Phase 80 - Distributed Event Propagation
 
+Status: Complete Baseline
+
 Goal:
 Create trusted distributed event propagation records and summaries for live federation without automatic enforcement or remote execution.
 
 Build:
 
-- `core_engine/events/distributed.py`
-- `core_engine/events/propagation.py`
+- `core_engine/federation/event_propagation.py`
+- `core_engine/federation/event_window.py`
 - `tests/test_distributed_event_propagation.py`
 - `docs/distributed_event_propagation.md`
 
