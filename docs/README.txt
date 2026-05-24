@@ -8,7 +8,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-83 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-84 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -64,6 +64,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/federation_diagnostics.md` - federation health checks, readiness scoring, diagnostic recommendations, and dashboard/API-ready federation health records.
 - `docs/federation_dashboard_api_readiness.md` - read-only federation dashboard and local API view models for trusted peers, transport sessions, signed exchanges, sync windows, events, diagnostics, readiness, and counters.
 - `docs/federation_runtime_manager.md` - active federation runtime manager records, trusted peer enrollment summaries, planned exchange loops, counters, and dashboard/API-ready runtime state.
+- `docs/trusted_peer_lifecycle.md` - trusted peer lifecycle states, registry summaries, transport session linkage, stale/expired/revoked peer reporting, and dashboard/API-ready dictionaries.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.

@@ -1,6 +1,6 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-83 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, and `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary.
+This document is the consolidated integration guide for the completed Phase 44-84 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, and `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
@@ -22,6 +22,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Distributed Runtime Intelligence | 71-76 | Distributed node state, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
 | Trusted Runtime Transport and Live Federation | 77-82 | Trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, diagnostics, and dashboard/API readiness | Complete baseline |
 | Active Federation Runtime Manager | 83 | Runtime manager records, runtime state summaries, peer enrollment summaries, loop planning records, counters, and dashboard/API-ready state | Complete baseline |
+| Trusted Peer Lifecycle | 84 | Peer lifecycle records, registry summaries, transition validation, trust scope updates, stale/expired/revoked peer reporting, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Module Map
 
@@ -64,6 +65,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Federation Event Propagation | `core_engine.federation.event_window`, `core_engine.federation.event_propagation` | Build trusted event envelopes, replay-window summaries, propagation classifications, event batch summaries, and cluster event rollups. |
 | Federation Diagnostics and Views | `core_engine.federation.health`, `core_engine.federation.diagnostics`, `core_engine.federation.operator_views`, `gui.web.federation_views` | Summarize federation health, readiness, recommendations, counters, dashboard panels, and local API-compatible dictionaries. |
 | Federation Runtime Manager | `core_engine.federation.runtime_manager`, `core_engine.federation.runtime_state` | Build active federation runtime manager records, runtime state summaries, trusted peer enrollment summaries, planned exchange loops, per-peer counters, and dashboard/API-ready runtime state. |
+| Trusted Peer Lifecycle | `core_engine.federation.peer_lifecycle`, `core_engine.federation.peer_registry` | Manage trusted peer lifecycle states, trust scope updates, transport session linkage, stale/expired/revoked peer summaries, and dashboard/API-ready registry records. |
 
 ## Consolidated Data Flow
 
@@ -154,6 +156,7 @@ operator-approved trusted node descriptors
   -> federation diagnostics
   -> local dashboard/API federation views
   -> active federation runtime manager records
+  -> trusted peer lifecycle registry summaries
 ```
 
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.
@@ -209,6 +212,7 @@ Phase 54-58 modules already expose structured records for platform integration:
 - Distributed event propagation can build local event storage-ready records while preserving duplicate, stale, malformed, rejected, and untrusted propagation states.
 - Federation diagnostics and dashboard views can expose readiness, recommendations, stale counters, rejected counters, duplicate counters, and read-only local API-compatible panels.
 - Federation runtime manager records can summarize active, inactive, paused, and error runtime states with planned loops and counters without starting listeners or daemons.
+- Trusted peer lifecycle records can validate enroll, approve, pause, resume, revoke, expire, and trust scope update transitions while linking transport sessions and reporting stale, expired, and revoked peers.
 
 Target connection:
 
@@ -380,6 +384,7 @@ Use sanitized fixtures and placeholder metadata only.
 - Apply signed summaries to a small synchronization window.
 - Build distributed event propagation summaries from sanitized local events.
 - Build federation diagnostics and dashboard/API federation views.
+- Build trusted peer lifecycle registries and peer state review summaries.
 - Confirm no service files are written by the template module.
 - Confirm no service enable/start command is executed by PortMap-AI.
 - Confirm no external network calls are required.

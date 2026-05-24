@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Milestone M and Phase 83, covering Phases 0-83.
+PortMap-AI has completed baseline implementation through Milestone M and Phase 84, covering Phases 0-84.
 
 Implemented foundation includes:
 
@@ -26,6 +26,7 @@ Implemented foundation includes:
 - Federation diagnostics with readiness scoring, trusted peer health, transport health, signed exchange health, synchronization counters, event propagation counters, replay-window checks, recommendations, and local health events.
 - Federation dashboard/API readiness with read-only panels and local API-compatible dictionaries for trusted peers, transports, signed exchanges, sync windows, distributed events, diagnostics, readiness scores, and counters.
 - Active federation runtime manager records with trusted peer enrollment summaries, active/inactive/paused/error runtime states, signed exchange loop plans, synchronization loop plans, event propagation loop plans, per-peer counters, and dashboard/API-ready runtime state.
+- Trusted peer lifecycle records with enrollment, approval, pause, resume, revoke, expire, trust scope update, transport session linkage, stale/expired/revoked peer summaries, and dashboard/API-ready registry dictionaries.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -41,7 +42,7 @@ Phases:
 | Phase | Name | Focus |
 | --- | --- | --- |
 | 83 | Federation Runtime Manager | Complete baseline: coordinate active federation session records, runtime lifecycle state, component state, and operator-approved exchange window plans without live execution. |
-| 84 | Trusted Peer Lifecycle | Manage peer approval, renewal, expiration, deactivation, trust scope updates, and local audit records. |
+| 84 | Trusted Peer Lifecycle | Complete baseline: manage peer enrollment, approval, pause, resume, revoke, expiration, trust scope updates, session linkage, stale/expired/revoked summaries, and local registry dictionaries. |
 | 85 | Runtime Exchange Scheduler | Schedule signed summary exchange, synchronization, event propagation, retry windows, and bounded backoff. |
 | 86 | Federation State Store | Persist federation sessions, envelopes, sync windows, propagation batches, diagnostics, and counters through existing storage paths. |
 | 87 | Federation CLI Commands | Add operator commands for federation status, peers, exchange, sync, diagnostics, export, and dry-run previews. |
