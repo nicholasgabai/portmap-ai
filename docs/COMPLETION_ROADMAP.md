@@ -53,18 +53,18 @@ Phases:
 ### Milestone O - Live Network Telemetry
 
 Goal:
-Ingest live network and system telemetry into the existing runtime pipeline.
+Transition PortMap-AI from coordinated runtime/federation intelligence into real live network telemetry ingestion, passive flow reconstruction, protocol metadata extraction, and dynamic topology correlation.
 
 Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 89 | Interface Telemetry Collector | Collect interface counters, link state, packet counters, and local interface metadata under explicit operator control. |
-| 90 | Socket and Process Telemetry Integration | Ingest local socket, listener, process, and service metadata without raw payload capture by default. |
-| 91 | Flow Reconstruction Engine | Build live flow records, directional counters, timing windows, and topology references from allowed telemetry. |
-| 92 | Protocol Metadata Extraction | Extract protocol metadata from allowed live telemetry sources with redaction and bounded parsing. |
-| 93 | Live Telemetry Storage Pipeline | Store live telemetry events, summaries, topology updates, findings, and timeline records through existing repositories. |
-| 94 | Telemetry Dashboard/TUI Integration | Surface live telemetry state in the Textual TUI, dashboard providers, local API dictionaries, and review queues. |
+| 87 | Passive Interface Discovery | Plan passive interface targeting, metadata summaries, dry-run capture sessions, passive-mode enforcement, and resource budgets without packet capture. |
+| 88 | Live Packet Ingestion | Build bounded packet metadata windows, transport summaries, packet rates, IPv4/IPv6 support, and replay-safe dry-run telemetry summaries. |
+| 89 | Flow Reconstruction | Reconstruct bidirectional flows, timeouts, service associations, flow digests, topology edges, and local-only flow summaries. |
+| 90 | Protocol Metadata Extraction | Extract HTTP, TLS, and DNS metadata, service fingerprints, confidence scores, safe truncation, and protocol anomaly summaries without credential or content persistence. |
+| 91 | Dynamic Topology Correlation | Correlate live node relationships, flow edges, topology drift, node roles, temporal summaries, cluster rollups, and federation-aware topology summaries. |
+| 92 | Real-Time Telemetry Dashboard Integration | Build live telemetry, packet/flow rate, topology, interface, protocol, resource, operator visibility, and federation-aware dashboard/API models. |
 
 ### Milestone P - Gateway and Router-Adjacent Modes
 

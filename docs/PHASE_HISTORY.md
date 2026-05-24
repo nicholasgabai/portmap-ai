@@ -35,7 +35,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering Milestones N-T.
+The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering Milestones N-T. Milestone O implementation planning is tracked in `docs/PHASE_87_92_PLAN.md`.
 
 ## References
 

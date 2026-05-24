@@ -98,6 +98,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`
 - `docs/PHASE_77_82_PLAN.md`
+- `docs/PHASE_87_92_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`
