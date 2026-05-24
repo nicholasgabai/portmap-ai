@@ -70,6 +70,7 @@ dependencies = {file = ["requirements.txt"]}
 "share/portmap-ai/docs" = [
   "docs/README.txt",
   "docs/CLI_REFERENCE.md",
+  "docs/COMPLETION_ROADMAP.md",
   "docs/DEPLOYMENT.md",
   "docs/MILESTONE_INTEGRATION.md",
   "docs/MILESTONE_J_INTEGRATION.md",

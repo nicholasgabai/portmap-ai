@@ -32,10 +32,15 @@ This document is a concise phase index. The full phase-by-phase implementation n
 
 The latest recorded full-suite result in the handoff is updated after each completed phase. New runtime validation should be recorded privately unless it is scrubbed for public documentation.
 
+## Future Roadmap
+
+The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering Milestones N-T.
+
 ## References
 
 - `PORTMAP_AI_HANDOFF.md`
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
+- `docs/COMPLETION_ROADMAP.md`
 - `docs/MILESTONE_INTEGRATION.md`
 - `docs/MILESTONE_J_INTEGRATION.md`
 - `docs/MILESTONE_K_INTEGRATION.md`

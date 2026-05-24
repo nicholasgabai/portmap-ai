@@ -6,6 +6,8 @@ This is documentation summary only. It does not add runtime behavior, start serv
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
+The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering active federation runtime, live telemetry, gateway/router-adjacent modes, production security, installer packaging, AI security intelligence, and future commercial readiness.
+
 ## Completed Milestones
 
 | Milestone | Phases | Focus | Current State |
@@ -383,30 +385,30 @@ Use sanitized fixtures and placeholder metadata only.
 
 ## Next Milestone Direction
 
-Recommended next direction: federation operational hardening and local operator experience.
+Recommended next direction: follow the completion roadmap in `docs/COMPLETION_ROADMAP.md`.
 
 Suggested implementation phases:
 
-1. Storage-backed federation history.
-   Persist selected trusted transport, signed exchange, synchronization, event propagation, diagnostic, and dashboard summary records through existing local repositories.
+1. Active federation runtime.
+   Turn trusted transport and signed exchange models into operator-approved runtime exchange loops between approved nodes.
 
-2. Local API federation providers.
-   Serve federation session, exchange, sync, event, diagnostic, readiness, and counter summaries through local read-only provider dictionaries.
+2. Live network telemetry.
+   Ingest approved interface, socket, process, flow, and protocol metadata into the existing runtime pipeline.
 
-3. Dashboard federation panels.
-   Render stale, rejected, replayed, duplicate, trusted peer, transport, signed exchange, sync, event, diagnostic, and readiness panels without introducing public exposure.
+3. Gateway and router-adjacent modes.
+   Support router logs, SPAN/mirror-port metadata, Raspberry Pi edge profiles, DNS/flow visibility, and gateway-mode validation.
 
-4. Manual trusted-node import workflow.
-   Provide operator-reviewed import paths for trusted node summaries and signed federation envelopes using sanitized local evidence records.
+4. Production security and access control.
+   Harden local auth, RBAC, TLS, secure node enrollment, audit chains, retention, and redaction policies.
 
-5. Operator-controlled transport execution review.
-   Define preflight checks and manual approval records before any future live transport behavior is added.
+5. Installer, service, and release packaging.
+   Deliver Linux, macOS, and Windows installer/service workflows with upgrade, rollback, and release validation.
 
-6. Opt-in scheduler wiring.
-   Add operator-enabled jobs for local federation health summaries, sync checkpoints, event flushes, and dashboard refreshes.
+6. AI security intelligence and commercial readiness.
+   Add telemetry-backed behavior intelligence, explainable review summaries, fleet architecture, tenant modeling, licensing hooks, and enterprise API blueprints.
 
 7. Integrated Raspberry Pi smoke path.
-   Validate the end-to-end trusted federation record path on lightweight Linux hardware using sanitized records.
+   Validate the live local and federation path on lightweight Linux hardware using sanitized lab records.
 
 ## Safety Requirements
 

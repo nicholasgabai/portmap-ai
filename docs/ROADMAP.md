@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 82 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, and `docs/MILESTONE_M_INTEGRATION.md` summarizes Phase 77-82 trusted runtime federation integration.
+This roadmap summarizes the current direction after the Phase 82 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_M_INTEGRATION.md` summarizes Phase 77-82 trusted runtime federation integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -52,16 +52,19 @@ Current stable posture:
 - Docker remains optional and advanced.
 - Private real-device validation notes stay out of public commits unless scrubbed.
 
-## Next Milestone Direction
+## Completion Roadmap
 
-Recommended next milestone direction: federation operational hardening and local operator experience.
+The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
-Near-term implementation should focus on turning trusted federation records into operator-controlled local workflows without adding unsafe automation:
+Planned remaining milestones:
 
-- Persist selected federation session, exchange, sync, event, diagnostic, and dashboard summary records through existing local storage paths.
-- Add local API providers for federation status dictionaries without public exposure.
-- Expand dashboard sections for stale, rejected, replayed, and duplicate federation records.
-- Keep any live transport execution behind explicit operator review and safety checks.
+- Milestone N - Active Federation Runtime.
+- Milestone O - Live Network Telemetry.
+- Milestone P - Gateway and Router-Adjacent Modes.
+- Milestone Q - Production Security and Access Control.
+- Milestone R - Installer, Service, and Release Packaging.
+- Milestone S - AI Security Intelligence Layer.
+- Milestone T - Commercial SaaS and Fleet Management.
 
 ## Medium-Term Work
 
@@ -78,6 +81,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 
 - `PORTMAP_AI_HANDOFF.md`
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
+- `docs/COMPLETION_ROADMAP.md`
 - `docs/PHASE_HISTORY.md`
 - `docs/MILESTONE_INTEGRATION.md`
 - `docs/MILESTONE_J_INTEGRATION.md`
