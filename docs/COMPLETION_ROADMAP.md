@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Milestone O and Phase 89, covering Phases 0-89.
+PortMap-AI has completed baseline implementation through Milestone O and Phase 90, covering Phases 0-90.
 
 Implemented foundation includes:
 
@@ -32,6 +32,7 @@ Implemented foundation includes:
 - Passive interface discovery records with local interface summaries, normalized address-family metadata, loopback/broadcast/multicast capability fields, dry-run capture session plans, resource budgets, deterministic serialization, and dashboard/API-ready dictionaries.
 - Live packet ingestion records with bounded metadata windows, interface and node attribution, IPv4/IPv6 classification, TCP/UDP/ICMP summaries, packet size and rate summaries, replay-safe counters, malformed/unsupported packet classification, and dashboard/API-ready dictionaries.
 - Flow reconstruction records with bidirectional flow keys, timeout-aware session tracking, complete/partial/malformed classification, ephemeral/persistent labels, service association, deterministic flow digests, topology edge generation, and dashboard/API-ready dictionaries.
+- Protocol metadata extraction records with HTTP/TLS/DNS summaries, protocol fingerprints, service fingerprint summaries, encrypted-session metadata handling, confidence scoring, application hints, safe truncation, governance fields, protocol anomalies, and dashboard/API-ready dictionaries.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -65,7 +66,7 @@ Phases:
 | 87 | Passive Interface Discovery | Complete baseline: plan passive interface targeting, metadata summaries, dry-run capture sessions, passive-mode enforcement, and resource budgets without packet capture. |
 | 88 | Live Packet Ingestion | Complete baseline: build bounded packet metadata windows, transport summaries, packet rates, IPv4/IPv6 support, replay-safe counters, malformed/unsupported classification, and dry-run dashboard/API summaries. |
 | 89 | Flow Reconstruction | Complete baseline: reconstruct bidirectional flows, timeout-aware sessions, service associations, flow digests, topology edges, complete/partial/malformed classifications, and local-only dashboard/API summaries. |
-| 90 | Protocol Metadata Extraction | Extract HTTP, TLS, and DNS metadata, service fingerprints, confidence scores, safe truncation, and protocol anomaly summaries without credential or content persistence. |
+| 90 | Protocol Metadata Extraction | Complete baseline: extract HTTP, TLS, and DNS metadata summaries, service fingerprints, confidence scores, safe truncation, governance fields, and protocol anomaly summaries without credential or content persistence. |
 | 91 | Dynamic Topology Correlation | Correlate live node relationships, flow edges, topology drift, node roles, temporal summaries, cluster rollups, and federation-aware topology summaries. |
 | 92 | Real-Time Telemetry Dashboard Integration | Build live telemetry, packet/flow rate, topology, interface, protocol, resource, operator visibility, and federation-aware dashboard/API models. |
 

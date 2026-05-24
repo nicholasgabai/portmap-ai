@@ -156,6 +156,8 @@ Acceptance:
 
 ## Phase 90 - Protocol Metadata Extraction
 
+Status: Complete Baseline
+
 Goal:
 Extract safe protocol metadata and service fingerprints from allowed telemetry records without credential or content capture.
 

@@ -145,6 +145,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/policy_review_engine.md",
   "docs/plugin_registry.md",
   "docs/platform_abstraction.md",
+  "docs/protocol_metadata_extraction.md",
   "docs/protocol_dissectors.md",
   "docs/quick_start.md",
   "docs/raspberry_pi_deployment.md",

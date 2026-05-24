@@ -27,6 +27,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 87 | Passive interface discovery, normalized interface metadata, IPv4/IPv6 summaries, passive capture planning, operator-selected interface targeting, resource budgets, and dashboard/API-ready dictionaries | Complete baseline |
 | 88 | Live packet ingestion, bounded metadata windows, source/interface attribution, IPv4/IPv6 classification, TCP/UDP/ICMP summaries, packet size/rate summaries, replay-safe counters, and malformed/unsupported classification | Complete baseline |
 | 89 | Flow reconstruction, bidirectional flow keys, timeout-aware session tracking, complete/partial/malformed flow classification, service association, flow digests, topology edge generation, and dashboard/API-ready dictionaries | Complete baseline |
+| 90 | Protocol metadata extraction, HTTP/TLS/DNS metadata summaries, protocol fingerprints, service fingerprint summaries, encrypted-session metadata handling, confidence scoring, governance fields, anomaly summaries, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Baseline Meaning
 
