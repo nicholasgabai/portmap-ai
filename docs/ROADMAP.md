@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 85 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_M_INTEGRATION.md` summarizes Phase 77-82 trusted runtime federation integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 86 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_M_INTEGRATION.md` summarizes Phase 77-82 trusted runtime federation integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -21,10 +21,11 @@ This roadmap summarizes the current direction after the Phase 85 baseline. `PORT
 | 83 | Active federation runtime manager: runtime manager records, peer enrollment summaries, planned signed exchange/sync/event loops, counters, and dashboard/API-ready state | Complete baseline |
 | 84 | Trusted peer lifecycle: peer registry records, lifecycle transitions, trust scope updates, stale/expired/revoked summaries, and dashboard/API-ready dictionaries | Complete baseline |
 | 85 | Runtime exchange scheduler: signed-summary, cluster-state sync, and event propagation job records with per-peer intervals, backoff, failure counters, and dashboard/API summaries | Complete baseline |
+| 86 | Active federation validation: peer, signed exchange, sync window, event propagation, replay-window, scheduler, and runtime readiness validation records | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-85 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-86 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -53,6 +54,7 @@ Current stable posture:
 - Federation runtime manager records now summarize trusted peer runtime enrollment, active/inactive/paused/error states, planned signed exchange, synchronization, and event propagation loops, per-peer counters, timestamps, and dashboard/API-ready runtime state without starting listeners or daemons.
 - Trusted peer lifecycle records now manage enroll, approve, pause, resume, revoke, expire, and trust scope update states with transport session linkage, stale/expired/revoked summaries, and dashboard/API-ready registry dictionaries.
 - Runtime exchange scheduler records now convert federation loop plans into per-peer signed-summary exchange, cluster-state sync, and event propagation job records with interval/backoff metadata, enable/disable state, failure counters, and dashboard/API-ready summaries without executing jobs.
+- Active federation validation now scores trusted peers, signed exchanges, synchronization windows, event propagation, replay-window counters, exchange scheduler state, and runtime manager readiness with operator recommendations and dashboard/API dictionaries.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -134,6 +136,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/federation_runtime_manager.md`
 - `docs/trusted_peer_lifecycle.md`
 - `docs/runtime_exchange_scheduler.md`
+- `docs/active_federation_validation.md`
 - `docs/behavior_correlation.md`
 - `docs/schema_validation_engine.md`
 - `docs/metadata_stream_parser.md`

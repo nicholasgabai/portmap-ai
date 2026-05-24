@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Milestone M and Phase 85, covering Phases 0-85.
+PortMap-AI has completed baseline implementation through Milestone M and Phase 86, covering Phases 0-86.
 
 Implemented foundation includes:
 
@@ -28,6 +28,7 @@ Implemented foundation includes:
 - Active federation runtime manager records with trusted peer enrollment summaries, active/inactive/paused/error runtime states, signed exchange loop plans, synchronization loop plans, event propagation loop plans, per-peer counters, and dashboard/API-ready runtime state.
 - Trusted peer lifecycle records with enrollment, approval, pause, resume, revoke, expire, trust scope update, transport session linkage, stale/expired/revoked peer summaries, and dashboard/API-ready registry dictionaries.
 - Runtime exchange scheduler records with signed-summary exchange jobs, cluster-state synchronization jobs, event propagation jobs, per-peer schedule records, interval/backoff metadata, failure counters, and dashboard/API-ready scheduler summaries.
+- Active federation validation records with trusted peer, signed exchange, synchronization window, event propagation, replay-window, runtime scheduler, and federation runtime readiness checks, scores, recommendations, and dashboard/API-ready dictionaries.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -45,7 +46,7 @@ Phases:
 | 83 | Federation Runtime Manager | Complete baseline: coordinate active federation session records, runtime lifecycle state, component state, and operator-approved exchange window plans without live execution. |
 | 84 | Trusted Peer Lifecycle | Complete baseline: manage peer enrollment, approval, pause, resume, revoke, expiration, trust scope updates, session linkage, stale/expired/revoked summaries, and local registry dictionaries. |
 | 85 | Runtime Exchange Scheduler | Complete baseline: schedule signed summary exchange, synchronization, event propagation, retry windows, bounded backoff, per-peer job state, and dashboard/API-ready summaries without execution. |
-| 86 | Federation State Store | Persist federation sessions, envelopes, sync windows, propagation batches, diagnostics, and counters through existing storage paths. |
+| 86 | Active Federation Validation | Complete baseline: validate trusted peers, signed exchanges, synchronization windows, event propagation, replay windows, scheduler state, and runtime manager readiness without execution. |
 | 87 | Federation CLI Commands | Add operator commands for federation status, peers, exchange, sync, diagnostics, export, and dry-run previews. |
 | 88 | Active Federation Validation | Validate active exchange loops with sanitized local-node fixtures, failure isolation, replay protection, and no untrusted discovery. |
 
