@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Milestone M and Phase 86, covering Phases 0-86.
+PortMap-AI has completed baseline implementation through Milestone O and Phase 87, covering Phases 0-87.
 
 Implemented foundation includes:
 
@@ -29,6 +29,7 @@ Implemented foundation includes:
 - Trusted peer lifecycle records with enrollment, approval, pause, resume, revoke, expire, trust scope update, transport session linkage, stale/expired/revoked peer summaries, and dashboard/API-ready registry dictionaries.
 - Runtime exchange scheduler records with signed-summary exchange jobs, cluster-state synchronization jobs, event propagation jobs, per-peer schedule records, interval/backoff metadata, failure counters, and dashboard/API-ready scheduler summaries.
 - Active federation validation records with trusted peer, signed exchange, synchronization window, event propagation, replay-window, runtime scheduler, and federation runtime readiness checks, scores, recommendations, and dashboard/API-ready dictionaries.
+- Passive interface discovery records with local interface summaries, normalized address-family metadata, loopback/broadcast/multicast capability fields, dry-run capture session plans, resource budgets, deterministic serialization, and dashboard/API-ready dictionaries.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -59,7 +60,7 @@ Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 87 | Passive Interface Discovery | Plan passive interface targeting, metadata summaries, dry-run capture sessions, passive-mode enforcement, and resource budgets without packet capture. |
+| 87 | Passive Interface Discovery | Complete baseline: plan passive interface targeting, metadata summaries, dry-run capture sessions, passive-mode enforcement, and resource budgets without packet capture. |
 | 88 | Live Packet Ingestion | Build bounded packet metadata windows, transport summaries, packet rates, IPv4/IPv6 support, and replay-safe dry-run telemetry summaries. |
 | 89 | Flow Reconstruction | Reconstruct bidirectional flows, timeouts, service associations, flow digests, topology edges, and local-only flow summaries. |
 | 90 | Protocol Metadata Extraction | Extract HTTP, TLS, and DNS metadata, service fingerprints, confidence scores, safe truncation, and protocol anomaly summaries without credential or content persistence. |

@@ -24,6 +24,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 71-76 | Distributed node state sync, federated topology aggregation, cluster health, distributed review aggregation, coordinated export bundles, and operator visibility prep | Complete baseline |
 | 77-82 | Trusted node transport models, signed runtime summary exchange, live cluster state synchronization, distributed event propagation, federation diagnostics, and federation dashboard/API readiness | Complete baseline |
 | 83-86 | Active federation runtime manager records, trusted peer lifecycle, runtime exchange scheduler records, active federation validation, readiness scoring, recommendations, and dashboard/API-ready dictionaries | Complete baseline |
+| 87 | Passive interface discovery, normalized interface metadata, IPv4/IPv6 summaries, passive capture planning, operator-selected interface targeting, resource budgets, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Baseline Meaning
 

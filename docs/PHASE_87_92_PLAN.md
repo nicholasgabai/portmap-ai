@@ -57,6 +57,8 @@ Milestone O should add passive telemetry record models and operator-approved ing
 
 ## Phase 87 - Passive Interface Discovery
 
+Status: Complete Baseline
+
 Goal:
 Build local interface discovery and dry-run capture planning records without capturing packets.
 
