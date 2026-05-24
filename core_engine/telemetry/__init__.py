@@ -1,8 +1,8 @@
-"""Passive telemetry planning helpers.
+"""Passive telemetry planning and metadata ingestion helpers.
 
-The telemetry package builds local metadata and dry-run planning records only.
-Phase 87 does not capture packets, persist raw payloads, escalate privileges,
-or start live sniffing loops.
+The telemetry package builds local metadata, dry-run planning records, and
+bounded packet metadata windows only. It does not persist raw payloads, modify
+traffic, inject traffic, automatically block anything, or start hidden monitors.
 """
 
 from core_engine.telemetry.capture_sessions import (
@@ -33,12 +33,52 @@ from core_engine.telemetry.interfaces import (
     summarize_interface_address_families,
     summarize_interfaces,
 )
+from core_engine.telemetry.ingestion import (
+    PACKET_METADATA_RECORD_VERSION,
+    PAYLOAD_FIELD_NAMES,
+    SUPPORTED_TRANSPORTS,
+    PacketIngestionError,
+    classify_packet_address_family,
+    classify_packet_record,
+    classify_transport_protocol,
+    deterministic_packet_metadata_json,
+    normalize_packet_metadata,
+    normalize_packet_metadata_batch,
+    packet_metadata_digest,
+    summarize_packet_metadata_records,
+    summarize_packet_sizes,
+    validate_ip_address,
+)
+from core_engine.telemetry.packet_window import (
+    DEFAULT_MAX_WINDOW_BYTES,
+    DEFAULT_MAX_WINDOW_PACKETS,
+    EDGE_MAX_WINDOW_BYTES,
+    EDGE_MAX_WINDOW_PACKETS,
+    PACKET_WINDOW_RECORD_VERSION,
+    PacketWindowError,
+    build_packet_ingestion_api_response,
+    build_packet_ingestion_dashboard_record,
+    build_packet_ingestion_window,
+    classify_window_packet,
+    deterministic_packet_window_json,
+    summarize_packet_ingestion_window,
+)
 
 __all__ = [
     "CAPTURE_SESSION_MODES",
     "CAPTURE_SESSION_RECORD_VERSION",
+    "DEFAULT_MAX_WINDOW_BYTES",
+    "DEFAULT_MAX_WINDOW_PACKETS",
+    "EDGE_MAX_WINDOW_BYTES",
+    "EDGE_MAX_WINDOW_PACKETS",
     "INTERFACE_RECORD_VERSION",
+    "PACKET_METADATA_RECORD_VERSION",
+    "PACKET_WINDOW_RECORD_VERSION",
+    "PAYLOAD_FIELD_NAMES",
     "PassiveCaptureSessionError",
+    "PacketIngestionError",
+    "PacketWindowError",
+    "SUPPORTED_TRANSPORTS",
     "TELEMETRY_SAFETY_FLAGS",
     "TelemetryInterfaceError",
     "build_capture_plan_api_response",
@@ -47,16 +87,32 @@ __all__ = [
     "build_interface_api_response",
     "build_interface_dashboard_record",
     "build_interface_resource_budget_summary",
+    "build_packet_ingestion_api_response",
+    "build_packet_ingestion_dashboard_record",
+    "build_packet_ingestion_window",
     "build_passive_capture_session_plan",
     "classify_interface_capabilities",
+    "classify_packet_address_family",
+    "classify_packet_record",
+    "classify_transport_protocol",
+    "classify_window_packet",
     "deterministic_capture_plan_json",
     "deterministic_interface_json",
+    "deterministic_packet_metadata_json",
+    "deterministic_packet_window_json",
     "enumerate_local_interfaces",
     "normalize_address_family",
     "normalize_interface_address",
     "normalize_interface_metadata",
+    "normalize_packet_metadata",
+    "normalize_packet_metadata_batch",
+    "packet_metadata_digest",
     "summarize_capture_plan",
     "summarize_interface_address_families",
     "summarize_interfaces",
+    "summarize_packet_ingestion_window",
+    "summarize_packet_metadata_records",
+    "summarize_packet_sizes",
     "validate_capture_session_plan_inputs",
+    "validate_ip_address",
 ]

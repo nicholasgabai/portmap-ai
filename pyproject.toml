@@ -125,6 +125,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/ipv6_dual_stack.md",
   "docs/logging_audit.md",
   "docs/live_cluster_state_synchronization.md",
+  "docs/live_packet_ingestion.md",
   "docs/local_api.md",
   "docs/local_storage.md",
   "docs/local_visibility_operator_tooling.md",

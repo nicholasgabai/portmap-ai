@@ -8,7 +8,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-86 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-88 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -70,6 +70,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/runtime_exchange_scheduler.md` - federation exchange job records, per-peer schedules, interval/backoff metadata, failure counters, and dashboard/API-ready scheduler summaries.
 - `docs/active_federation_validation.md` - active federation validation records, readiness scores, validation recommendations, and dashboard/API-ready validation dictionaries.
 - `docs/passive_interface_discovery.md` - passive local interface summaries, address-family metadata, dry-run capture session plans, resource budgets, and dashboard/API-ready dictionaries.
+- `docs/live_packet_ingestion.md` - bounded metadata-only packet ingestion windows, source/interface attribution, transport summaries, replay-safe counters, and dashboard/API-ready dictionaries.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.
