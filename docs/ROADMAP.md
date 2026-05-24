@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 88 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_N_INTEGRATION.md` summarizes Phase 83-86 active federation runtime integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 89 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_N_INTEGRATION.md` summarizes Phase 83-86 active federation runtime integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -21,10 +21,11 @@ This roadmap summarizes the current direction after the Phase 88 baseline. `PORT
 | 83-86 | Active federation runtime: runtime manager records, trusted peer lifecycle, runtime exchange scheduler, and active federation validation | Complete baseline |
 | 87 | Passive interface discovery: local interface summaries, address-family metadata, dry-run capture plans, passive-mode enforcement, resource budgets, and dashboard/API dictionaries | Complete baseline |
 | 88 | Live packet ingestion: bounded packet metadata windows, source/interface attribution, IPv4/IPv6 classification, transport summaries, packet size/rate summaries, replay-safe counters, and dashboard/API dictionaries | Complete baseline |
+| 89 | Flow reconstruction: bidirectional flow records, timeout-aware session tracking, service association, flow digests, topology edge generation, partial/malformed handling, and dashboard/API dictionaries | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-88 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-89 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -56,6 +57,7 @@ Current stable posture:
 - Active federation validation now scores trusted peers, signed exchanges, synchronization windows, event propagation, replay-window counters, exchange scheduler state, and runtime manager readiness with operator recommendations and dashboard/API dictionaries.
 - Passive interface discovery now normalizes local interface metadata, address-family summaries, loopback/broadcast/multicast capability fields, dry-run capture session plans, resource budgets, and dashboard/API-ready dictionaries without capturing packets.
 - Live packet ingestion now normalizes operator-provided packet metadata into bounded dry-run windows with source/interface attribution, IPv4/IPv6 and TCP/UDP/ICMP summaries, packet size and rate summaries, replay-safe counters, malformed/unsupported classification, and no raw payload storage.
+- Flow reconstruction now groups packet metadata into bidirectional flow/session records, applies timeout handling, classifies complete, partial, and malformed flows, associates likely services, emits deterministic flow digests, and produces topology-ready observed-flow edges.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -142,6 +144,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/active_federation_validation.md`
 - `docs/passive_interface_discovery.md`
 - `docs/live_packet_ingestion.md`
+- `docs/flow_reconstruction.md`
 - `docs/behavior_correlation.md`
 - `docs/schema_validation_engine.md`
 - `docs/metadata_stream_parser.md`

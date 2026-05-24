@@ -123,6 +123,8 @@ Acceptance:
 
 ## Phase 89 - Flow Reconstruction
 
+Status: Complete Baseline
+
 Goal:
 Reconstruct bounded local flow summaries from packet metadata and generate topology-ready flow edges.
 

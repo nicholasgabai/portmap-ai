@@ -26,6 +26,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 83-86 | Active federation runtime manager records, trusted peer lifecycle, runtime exchange scheduler records, active federation validation, readiness scoring, recommendations, and dashboard/API-ready dictionaries | Complete baseline |
 | 87 | Passive interface discovery, normalized interface metadata, IPv4/IPv6 summaries, passive capture planning, operator-selected interface targeting, resource budgets, and dashboard/API-ready dictionaries | Complete baseline |
 | 88 | Live packet ingestion, bounded metadata windows, source/interface attribution, IPv4/IPv6 classification, TCP/UDP/ICMP summaries, packet size/rate summaries, replay-safe counters, and malformed/unsupported classification | Complete baseline |
+| 89 | Flow reconstruction, bidirectional flow keys, timeout-aware session tracking, complete/partial/malformed flow classification, service association, flow digests, topology edge generation, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Baseline Meaning
 
