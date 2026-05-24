@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 82 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_M_INTEGRATION.md` summarizes Phase 77-82 trusted runtime federation integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 83 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_M_INTEGRATION.md` summarizes Phase 77-82 trusted runtime federation integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -18,10 +18,11 @@ This roadmap summarizes the current direction after the Phase 82 baseline. `PORT
 | 65-70 | Unified runtime operations: runtime sessions, profiles, recovery, CLI, health monitoring, and service-mode readiness previews | Complete baseline |
 | 71-76 | Distributed runtime intelligence: node state sync, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
 | 77-82 | Trusted runtime transport and live federation: trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, federation diagnostics, and dashboard/API readiness | Complete baseline |
+| 83 | Active federation runtime manager: runtime manager records, peer enrollment summaries, planned signed exchange/sync/event loops, counters, and dashboard/API-ready state | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-82 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-83 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -47,6 +48,7 @@ Current stable posture:
 - Distributed event propagation now wraps local events in trusted envelopes, preserves source attribution, applies replay checks, and rolls up accepted, rejected, stale, duplicate, malformed, and untrusted records.
 - Federation diagnostics now summarize trusted peer, transport, signing, synchronization, event propagation, replay-window, distributed runtime, readiness, recommendation, and local health event records.
 - Federation dashboard/API readiness now exposes read-only panels and API-compatible dictionaries for trusted peers, transports, signed exchanges, sync windows, events, diagnostics, readiness scores, and counters.
+- Federation runtime manager records now summarize trusted peer runtime enrollment, active/inactive/paused/error states, planned signed exchange, synchronization, and event propagation loops, per-peer counters, timestamps, and dashboard/API-ready runtime state without starting listeners or daemons.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
