@@ -60,6 +60,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/live_cluster_state_synchronization.md` - synchronization windows, signed update classification, replay validation, and merged live cluster summaries.
 - `docs/distributed_event_propagation.md` - trusted event propagation envelopes, event replay windows, batch rollups, and dashboard/API-ready propagation summaries.
 - `docs/federation_diagnostics.md` - federation health checks, readiness scoring, diagnostic recommendations, and dashboard/API-ready federation health records.
+- `docs/federation_dashboard_api_readiness.md` - read-only federation dashboard and local API view models for trusted peers, transport sessions, signed exchanges, sync windows, events, diagnostics, readiness, and counters.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.

@@ -216,25 +216,31 @@ Acceptance:
 
 ## Phase 82 - Federation Dashboard/API Readiness
 
+Status: Complete Baseline
+
 Goal:
 Prepare dashboard and local API provider models for trusted runtime federation without adding public exposure or remote-control behavior.
 
 Build:
 
-- `gui/web/federation_providers.py`
+- `core_engine/federation/operator_views.py`
 - `gui/web/federation_views.py`
 - `tests/test_federation_dashboard_api_readiness.py`
 - `docs/federation_dashboard_api_readiness.md`
 
 Features:
 
-- Provider interface for federation API-compatible dictionaries.
-- Trusted transport status panels.
+- Federation dashboard/API-ready view models.
+- Trusted peer status panels.
+- Transport session panels.
 - Signed exchange validation panels.
 - Live cluster synchronization panels.
 - Distributed event propagation panels.
 - Federation diagnostic panels.
+- Readiness score panels.
+- Stale, rejected, and duplicate counter panels.
 - Empty-state and stale-node rendering models.
+- Local API-compatible dictionaries.
 - Explicit remote-control disabled fields.
 - Textual TUI compatibility notes.
 
