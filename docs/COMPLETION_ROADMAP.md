@@ -40,6 +40,8 @@ Current posture remains local-first, operator-controlled, advisory by default, r
 
 Milestone O integration is summarized in `docs/MILESTONE_O_INTEGRATION.md`, covering how passive interface discovery, packet metadata windows, flow reconstruction, protocol metadata, dynamic topology, and telemetry dashboard/API summaries connect to runtime, events, storage, topology, drift, federation, and operator visibility.
 
+Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
+
 ## Completion Milestone Roadmap
 
 ### Milestone N - Active Federation Runtime (Complete Baseline)
@@ -74,21 +76,21 @@ Phases:
 | 91 | Dynamic Topology Correlation | Complete baseline: correlate live node relationships, flow edges, protocol-aware topology summaries, topology drift, node roles, temporal summaries, bounded graph controls, replay-safe updates, cluster rollups, and federation-aware dashboard/API summaries. |
 | 92 | Real-Time Telemetry Dashboard Integration | Complete baseline: build live telemetry, packet/flow rate, topology, interface, protocol, resource, operator visibility, federation-aware, health, bounded update, empty-state, and stale-state dashboard/API models. |
 
-### Milestone P - Gateway and Router-Adjacent Modes
+### Milestone P - Gateway and Telemetry Enrichment
 
 Goal:
-Support router-adjacent deployment options for broader network visibility.
+Strengthen PortMap-AI's live telemetry intelligence before full gateway/router-adjacent deployment by adding richer flow telemetry, process/service attribution, DNS visibility, gateway/router log ingestion, SPAN/mirror-port readiness, and gateway validation workflows.
 
 Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 95 | Router Log Integration | Import router, firewall, and DNS log records from explicit local files or approved local sources. |
-| 96 | SPAN/Mirror-Port Ingestion | Support passive metadata ingestion from mirror-port interfaces with strict bounds and redaction. |
-| 97 | Raspberry Pi Gateway Profile | Define edge-device runtime settings, resource budgets, storage limits, and dashboard profiles for Pi deployments. |
-| 98 | Transparent Bridge Readiness | Prepare bridge-mode preflight checks, operator warnings, interface validation, and dry-run configuration previews. |
-| 99 | DNS/Flow Visibility Mode | Build DNS and flow visibility summaries, topology links, findings, and review records from approved inputs. |
-| 100 | Gateway Mode Validation | Validate router-adjacent modes in a network lab with sanitized evidence, explicit opt-in, and no automatic enforcement. |
+| 93 | Real Flow Telemetry Enrichment | Add enriched flow observations, rolling statistics, direction inference, local/remote endpoint classification, service-port hints, state transitions, confidence scoring, quality flags, and dashboard/API dictionaries. |
+| 94 | Process and Service Attribution | Add process-to-port and service attribution summaries from available OS data with permission-safe degraded states, metadata minimization, confidence levels, and dashboard/API dictionaries. |
+| 95 | DNS Visibility Mode | Add metadata-only DNS query/response records, domain-to-flow correlation, resolver classification, timing summaries, error summaries, anomaly hints, redaction/truncation options, and dashboard/API dictionaries. |
+| 96 | Gateway and Router Log Ingestion | Add sanitized router/firewall log models, syslog-style parser helpers, NAT and allow/deny summaries, timestamp normalization, severity summaries, and runtime/topology/export hooks. |
+| 97 | SPAN / Mirror-Port Readiness | Add dry-run readiness profiles, passive capture requirements, interface capability summaries, resource warnings, packet-loss risk summaries, operator checklists, and dashboard/API dictionaries. |
+| 98 | Gateway Mode Validation | Add sanitized gateway validation records spanning telemetry enrichment, DNS visibility, router logs, SPAN readiness, topology correlation, safety checklist, exports, and dashboard/API dictionaries. |
 
 ### Milestone Q - Production Security and Access Control
 

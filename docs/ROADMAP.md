@@ -59,6 +59,7 @@ Current stable posture:
 - Protocol metadata extraction now summarizes HTTP, TLS, and DNS metadata, builds protocol and service fingerprints, scores confidence, handles encrypted-session metadata without decryption, truncates safe fields, removes sensitive fields, and emits protocol anomaly summaries.
 - Dynamic topology correlation now maps live flow and protocol summaries into bounded topology graphs, infers node relationships and roles, correlates optional baseline drift, emits replay-safe update records, and produces cluster/federation-aware dashboard/API dictionaries.
 - Real-time telemetry dashboard integration now exposes read-only live telemetry panels, bounded update controls, empty and stale rendering models, health rollups, and local API dictionaries without rendering raw payloads or replacing the TUI.
+- Sanitized real-device validation after Milestone O confirmed stable extended local runtime behavior across orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates while preserving dry-run safety and no automatic enforcement.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -70,7 +71,7 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Milestone P - Gateway and Router-Adjacent Modes.
+- Milestone P - Gateway and Telemetry Enrichment.
 - Milestone Q - Production Security and Access Control.
 - Milestone R - Installer, Service, and Release Packaging.
 - Milestone S - AI Security Intelligence Layer.
@@ -105,6 +106,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_71_76_PLAN.md`
 - `docs/PHASE_77_82_PLAN.md`
 - `docs/PHASE_87_92_PLAN.md`
+- `docs/PHASE_93_98_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`

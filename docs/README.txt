@@ -8,7 +8,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-90 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-92 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -20,6 +20,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_71_76_PLAN.md` - completed milestone plan for distributed runtime intelligence.
 - `docs/PHASE_77_82_PLAN.md` - completed milestone plan for trusted runtime transport and live federation.
 - `docs/PHASE_87_92_PLAN.md` - implementation plan for passive live telemetry ingestion, flow reconstruction, protocol metadata, dynamic topology, and telemetry dashboard integration.
+- `docs/PHASE_93_98_PLAN.md` - revised milestone plan for gateway telemetry enrichment, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway validation.
 - `docs/DEPLOYMENT.md` - deployment paths and validation expectations.
 - `docs/SECURITY_MODEL.md` - centralized safety, trust, telemetry, and remediation boundaries.
 - `docs/CLI_REFERENCE.md` - command-family reference for the installed `portmap` CLI.
