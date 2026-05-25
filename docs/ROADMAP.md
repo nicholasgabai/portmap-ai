@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 92 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_N_INTEGRATION.md` summarizes Phase 83-86 active federation runtime integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 92 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_O_INTEGRATION.md` summarizes Phase 87-92 live telemetry integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -19,12 +19,7 @@ This roadmap summarizes the current direction after the Phase 92 baseline. `PORT
 | 71-76 | Distributed runtime intelligence: node state sync, federated topology, cluster health, distributed reviews, coordinated exports, and operator visibility prep | Complete baseline |
 | 77-82 | Trusted runtime transport and live federation: trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, federation diagnostics, and dashboard/API readiness | Complete baseline |
 | 83-86 | Active federation runtime: runtime manager records, trusted peer lifecycle, runtime exchange scheduler, and active federation validation | Complete baseline |
-| 87 | Passive interface discovery: local interface summaries, address-family metadata, dry-run capture plans, passive-mode enforcement, resource budgets, and dashboard/API dictionaries | Complete baseline |
-| 88 | Live packet ingestion: bounded packet metadata windows, source/interface attribution, IPv4/IPv6 classification, transport summaries, packet size/rate summaries, replay-safe counters, and dashboard/API dictionaries | Complete baseline |
-| 89 | Flow reconstruction: bidirectional flow records, timeout-aware session tracking, service association, flow digests, topology edge generation, partial/malformed handling, and dashboard/API dictionaries | Complete baseline |
-| 90 | Protocol metadata extraction: HTTP/TLS/DNS summaries, protocol fingerprints, service fingerprint summaries, encrypted-session metadata, confidence scoring, governance, anomalies, and dashboard/API dictionaries | Complete baseline |
-| 91 | Dynamic topology correlation: live node relationship inference, flow-to-topology edge correlation, protocol-aware topology summaries, drift correlation, temporal summaries, bounded graph controls, replay-safe updates, cluster/federation-aware summaries, and dashboard/API dictionaries | Complete baseline |
-| 92 | Real-time telemetry dashboard integration: live telemetry panels, packet and flow rates, topology rendering summaries, interface and protocol summaries, resource usage, federation rollups, telemetry health, bounded update controls, empty/stale states, and API dictionaries | Complete baseline |
+| 87-92 | Live network telemetry: passive interface discovery, bounded packet metadata windows, flow reconstruction, protocol metadata extraction, dynamic topology correlation, and real-time telemetry dashboard/API summaries | Complete baseline |
 
 ## Current Implementation State
 
@@ -75,8 +70,6 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Milestone N - Active Federation Runtime.
-- Milestone O - Live Network Telemetry.
 - Milestone P - Gateway and Router-Adjacent Modes.
 - Milestone Q - Production Security and Access Control.
 - Milestone R - Installer, Service, and Release Packaging.
@@ -106,6 +99,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_L_INTEGRATION.md`
 - `docs/MILESTONE_M_INTEGRATION.md`
 - `docs/MILESTONE_N_INTEGRATION.md`
+- `docs/MILESTONE_O_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`

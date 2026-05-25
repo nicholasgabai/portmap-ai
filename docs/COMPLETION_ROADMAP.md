@@ -38,9 +38,11 @@ Implemented foundation includes:
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
-## Remaining Milestone Roadmap
+Milestone O integration is summarized in `docs/MILESTONE_O_INTEGRATION.md`, covering how passive interface discovery, packet metadata windows, flow reconstruction, protocol metadata, dynamic topology, and telemetry dashboard/API summaries connect to runtime, events, storage, topology, drift, federation, and operator visibility.
 
-### Milestone N - Active Federation Runtime
+## Completion Milestone Roadmap
+
+### Milestone N - Active Federation Runtime (Complete Baseline)
 
 Goal:
 Turn trusted federation models into active runtime exchange loops between approved nodes.
@@ -56,7 +58,7 @@ Phases:
 | 87 | Federation CLI Commands | Add operator commands for federation status, peers, exchange, sync, diagnostics, export, and dry-run previews. |
 | 88 | Active Federation Validation | Validate active exchange loops with sanitized local-node fixtures, failure isolation, replay protection, and no untrusted discovery. |
 
-### Milestone O - Live Network Telemetry
+### Milestone O - Live Network Telemetry (Complete Baseline)
 
 Goal:
 Transition PortMap-AI from coordinated runtime/federation intelligence into real live network telemetry ingestion, passive flow reconstruction, protocol metadata extraction, and dynamic topology correlation.

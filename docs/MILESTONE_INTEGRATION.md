@@ -1,6 +1,6 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-92 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, and `docs/PHASE_87_92_PLAN.md` tracks Milestone O live telemetry phases.
+This document is the consolidated integration guide for the completed Phase 44-92 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, and `docs/PHASE_87_92_PLAN.md` remains the Milestone O implementation plan.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
@@ -167,6 +167,18 @@ operator-approved trusted node descriptors
   -> trusted peer lifecycle registry summaries
   -> runtime exchange scheduler job summaries
   -> active federation validation summaries
+```
+
+Milestone O target flow:
+
+```text
+operator-selected interface metadata
+  -> dry-run passive capture planning
+  -> bounded packet metadata windows
+  -> bidirectional flow reconstruction
+  -> safe protocol metadata and fingerprints
+  -> dynamic topology correlation and drift summaries
+  -> real-time telemetry dashboard/API summaries
 ```
 
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.

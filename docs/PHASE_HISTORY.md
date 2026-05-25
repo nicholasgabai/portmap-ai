@@ -24,12 +24,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 71-76 | Distributed node state sync, federated topology aggregation, cluster health, distributed review aggregation, coordinated export bundles, and operator visibility prep | Complete baseline |
 | 77-82 | Trusted node transport models, signed runtime summary exchange, live cluster state synchronization, distributed event propagation, federation diagnostics, and federation dashboard/API readiness | Complete baseline |
 | 83-86 | Active federation runtime manager records, trusted peer lifecycle, runtime exchange scheduler records, active federation validation, readiness scoring, recommendations, and dashboard/API-ready dictionaries | Complete baseline |
-| 87 | Passive interface discovery, normalized interface metadata, IPv4/IPv6 summaries, passive capture planning, operator-selected interface targeting, resource budgets, and dashboard/API-ready dictionaries | Complete baseline |
-| 88 | Live packet ingestion, bounded metadata windows, source/interface attribution, IPv4/IPv6 classification, TCP/UDP/ICMP summaries, packet size/rate summaries, replay-safe counters, and malformed/unsupported classification | Complete baseline |
-| 89 | Flow reconstruction, bidirectional flow keys, timeout-aware session tracking, complete/partial/malformed flow classification, service association, flow digests, topology edge generation, and dashboard/API-ready dictionaries | Complete baseline |
-| 90 | Protocol metadata extraction, HTTP/TLS/DNS metadata summaries, protocol fingerprints, service fingerprint summaries, encrypted-session metadata handling, confidence scoring, governance fields, anomaly summaries, and dashboard/API-ready dictionaries | Complete baseline |
-| 91 | Dynamic topology correlation, live node relationship inference, flow-to-topology edge correlation, protocol-aware topology summaries, drift correlation, temporal summaries, node role inference, bounded graph growth, replay-safe topology update records, cluster/federation-aware summaries, and dashboard/API-ready dictionaries | Complete baseline |
-| 92 | Real-time telemetry dashboard integration, live telemetry summary models, packet and flow rates, live topology rendering summaries, interface and protocol summaries, resource usage summaries, federation-aware rollups, telemetry health, bounded update controls, empty/stale state rendering, and dashboard/API-ready dictionaries | Complete baseline |
+| 87-92 | Live network telemetry: passive interface discovery, bounded packet metadata windows, flow reconstruction, protocol metadata extraction, dynamic topology correlation, real-time telemetry dashboard models, bounded update controls, empty/stale state rendering, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Baseline Meaning
 
@@ -54,4 +49,5 @@ The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.
 - `docs/MILESTONE_L_INTEGRATION.md`
 - `docs/MILESTONE_M_INTEGRATION.md`
 - `docs/MILESTONE_N_INTEGRATION.md`
+- `docs/MILESTONE_O_INTEGRATION.md`
 - `docs/ROADMAP.md`
