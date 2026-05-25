@@ -28,6 +28,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 88 | Live packet ingestion, bounded metadata windows, source/interface attribution, IPv4/IPv6 classification, TCP/UDP/ICMP summaries, packet size/rate summaries, replay-safe counters, and malformed/unsupported classification | Complete baseline |
 | 89 | Flow reconstruction, bidirectional flow keys, timeout-aware session tracking, complete/partial/malformed flow classification, service association, flow digests, topology edge generation, and dashboard/API-ready dictionaries | Complete baseline |
 | 90 | Protocol metadata extraction, HTTP/TLS/DNS metadata summaries, protocol fingerprints, service fingerprint summaries, encrypted-session metadata handling, confidence scoring, governance fields, anomaly summaries, and dashboard/API-ready dictionaries | Complete baseline |
+| 91 | Dynamic topology correlation, live node relationship inference, flow-to-topology edge correlation, protocol-aware topology summaries, drift correlation, temporal summaries, node role inference, bounded graph growth, replay-safe topology update records, cluster/federation-aware summaries, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Baseline Meaning
 

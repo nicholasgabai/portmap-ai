@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 90 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_N_INTEGRATION.md` summarizes Phase 83-86 active federation runtime integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 91 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_N_INTEGRATION.md` summarizes Phase 83-86 active federation runtime integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -23,10 +23,11 @@ This roadmap summarizes the current direction after the Phase 90 baseline. `PORT
 | 88 | Live packet ingestion: bounded packet metadata windows, source/interface attribution, IPv4/IPv6 classification, transport summaries, packet size/rate summaries, replay-safe counters, and dashboard/API dictionaries | Complete baseline |
 | 89 | Flow reconstruction: bidirectional flow records, timeout-aware session tracking, service association, flow digests, topology edge generation, partial/malformed handling, and dashboard/API dictionaries | Complete baseline |
 | 90 | Protocol metadata extraction: HTTP/TLS/DNS summaries, protocol fingerprints, service fingerprint summaries, encrypted-session metadata, confidence scoring, governance, anomalies, and dashboard/API dictionaries | Complete baseline |
+| 91 | Dynamic topology correlation: live node relationship inference, flow-to-topology edge correlation, protocol-aware topology summaries, drift correlation, temporal summaries, bounded graph controls, replay-safe updates, cluster/federation-aware summaries, and dashboard/API dictionaries | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-90 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-91 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -60,6 +61,7 @@ Current stable posture:
 - Live packet ingestion now normalizes operator-provided packet metadata into bounded dry-run windows with source/interface attribution, IPv4/IPv6 and TCP/UDP/ICMP summaries, packet size and rate summaries, replay-safe counters, malformed/unsupported classification, and no raw payload storage.
 - Flow reconstruction now groups packet metadata into bidirectional flow/session records, applies timeout handling, classifies complete, partial, and malformed flows, associates likely services, emits deterministic flow digests, and produces topology-ready observed-flow edges.
 - Protocol metadata extraction now summarizes HTTP, TLS, and DNS metadata, builds protocol and service fingerprints, scores confidence, handles encrypted-session metadata without decryption, truncates safe fields, removes sensitive fields, and emits protocol anomaly summaries.
+- Dynamic topology correlation now maps live flow and protocol summaries into bounded topology graphs, infers node relationships and roles, correlates optional baseline drift, emits replay-safe update records, and produces cluster/federation-aware dashboard/API dictionaries.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -148,6 +150,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/live_packet_ingestion.md`
 - `docs/flow_reconstruction.md`
 - `docs/protocol_metadata_extraction.md`
+- `docs/dynamic_topology_correlation.md`
 - `docs/behavior_correlation.md`
 - `docs/schema_validation_engine.md`
 - `docs/metadata_stream_parser.md`

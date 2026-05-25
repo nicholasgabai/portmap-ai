@@ -73,6 +73,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/live_packet_ingestion.md` - bounded metadata-only packet ingestion windows, source/interface attribution, transport summaries, replay-safe counters, and dashboard/API-ready dictionaries.
 - `docs/flow_reconstruction.md` - bidirectional metadata-only flow records, timeout-aware session tracking, service association, topology edge generation, and dashboard/API-ready dictionaries.
 - `docs/protocol_metadata_extraction.md` - safe HTTP/TLS/DNS metadata summaries, protocol fingerprints, confidence scoring, governance fields, anomaly summaries, and dashboard/API-ready dictionaries.
+- `docs/dynamic_topology_correlation.md` - live node relationship inference, flow-to-topology edge correlation, protocol-aware topology summaries, drift correlation, bounded graph controls, replay-safe updates, and dashboard/API-ready dictionaries.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.

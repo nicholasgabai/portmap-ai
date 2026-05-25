@@ -105,6 +105,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/deep_packet_inspection.md",
   "docs/diagnostic_relay_simulator.md",
   "docs/docker_deployment.md",
+  "docs/dynamic_topology_correlation.md",
   "docs/distributed_cluster_scanning.md",
   "docs/distributed_event_propagation.md",
   "docs/distributed_node_state_sync.md",

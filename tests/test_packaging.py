@@ -78,6 +78,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/dashboard_foundation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/deep_packet_inspection.md" in data_files["share/portmap-ai/docs"]
     assert "docs/diagnostic_relay_simulator.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/dynamic_topology_correlation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/deployment_options.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_cluster_scanning.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_event_propagation.md" in data_files["share/portmap-ai/docs"]

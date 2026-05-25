@@ -189,6 +189,8 @@ Acceptance:
 
 ## Phase 91 - Dynamic Topology Correlation
 
+Status: Complete Baseline
+
 Goal:
 Correlate live packet, flow, protocol, and federation-aware summaries into bounded dynamic topology records.
 
@@ -202,13 +204,18 @@ Build:
 Features:
 
 - Live node relationship inference.
+- Flow-to-topology edge correlation.
+- Protocol-aware topology summaries.
 - Topology drift correlation.
 - Active flow edge correlation.
 - Temporal topology summaries.
 - Node role inference.
+- Bounded graph growth controls.
+- Replay-safe topology update records.
 - Cluster topology rollups.
 - Live federation-aware topology summaries.
 - Operator-readable topology health summaries.
+- Dashboard/API-ready live topology dictionaries.
 
 Acceptance:
 
