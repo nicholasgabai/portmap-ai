@@ -61,6 +61,7 @@ Current stable posture:
 - Real-time telemetry dashboard integration now exposes read-only live telemetry panels, bounded update controls, empty and stale rendering models, health rollups, and local API dictionaries without rendering raw payloads or replacing the TUI.
 - Sanitized real-device validation after Milestone O confirmed stable extended local runtime behavior across orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates while preserving dry-run safety and no automatic enforcement.
 - Flow telemetry enrichment now adds metadata-only enriched flow observations, rolling packet and byte statistics, endpoint scope and direction inference, service-port hints, state transitions, confidence scoring, quality flags, and dashboard/API-ready summaries.
+- Process and service attribution now correlates enriched flow observations with minimized process metadata and listening socket ownership, reports unsupported or permission-denied states safely, and emits confidence-scored dashboard/API dictionaries without command-line or username exposure.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.

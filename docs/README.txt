@@ -22,6 +22,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_87_92_PLAN.md` - implementation plan for passive live telemetry ingestion, flow reconstruction, protocol metadata, dynamic topology, and telemetry dashboard integration.
 - `docs/PHASE_93_98_PLAN.md` - revised milestone plan for gateway telemetry enrichment, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway validation.
 - `docs/flow_telemetry_enrichment.md` - Phase 93 metadata-only flow enrichment records, rolling statistics, direction inference, state transitions, and dashboard/API summaries.
+- `docs/process_service_attribution.md` - Phase 94 process-to-port, service-name, listening socket ownership, degraded platform, and minimized operator display summaries.
 - `docs/DEPLOYMENT.md` - deployment paths and validation expectations.
 - `docs/SECURITY_MODEL.md` - centralized safety, trust, telemetry, and remediation boundaries.
 - `docs/CLI_REFERENCE.md` - command-family reference for the installed `portmap` CLI.
