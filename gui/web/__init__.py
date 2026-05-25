@@ -7,6 +7,13 @@ from gui.web.distributed_views import (
     distributed_operator_api_response,
     render_distributed_operator_sections,
 )
+from gui.web.live_telemetry_views import (
+    build_empty_live_telemetry_dashboard_view,
+    build_live_telemetry_dashboard_sections,
+    build_live_telemetry_dashboard_view,
+    live_telemetry_api_response,
+    render_live_telemetry_sections,
+)
 from gui.web.providers import (
     DashboardProvider,
     StaticDashboardProvider,
@@ -31,14 +38,19 @@ __all__ = [
     "build_dashboard_view",
     "build_distributed_operator_sections",
     "build_distributed_operator_view",
+    "build_empty_live_telemetry_dashboard_view",
+    "build_live_telemetry_dashboard_sections",
+    "build_live_telemetry_dashboard_view",
     "collection_response",
     "diagnostic_summary_response",
     "distributed_operator_api_response",
+    "live_telemetry_api_response",
     "render_dashboard_html",
     "render_metric_panel",
     "render_distributed_operator_sections",
     "render_dashboard_sections",
     "render_dashboard_view",
+    "render_live_telemetry_sections",
     "review_summary_response",
     "runtime_state_response",
     "render_status_card",

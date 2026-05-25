@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Milestone O and Phase 91, covering Phases 0-91.
+PortMap-AI has completed baseline implementation through Milestone O and Phase 92, covering Phases 0-92.
 
 Implemented foundation includes:
 
@@ -34,6 +34,7 @@ Implemented foundation includes:
 - Flow reconstruction records with bidirectional flow keys, timeout-aware session tracking, complete/partial/malformed classification, ephemeral/persistent labels, service association, deterministic flow digests, topology edge generation, and dashboard/API-ready dictionaries.
 - Protocol metadata extraction records with HTTP/TLS/DNS summaries, protocol fingerprints, service fingerprint summaries, encrypted-session metadata handling, confidence scoring, application hints, safe truncation, governance fields, protocol anomalies, and dashboard/API-ready dictionaries.
 - Dynamic topology correlation records with live node relationship inference, flow-to-topology edge correlation, protocol-aware summaries, drift correlation, temporal topology summaries, node role inference, bounded graph growth controls, replay-safe topology update records, cluster/federation-aware summaries, operator health summaries, and dashboard/API-ready dictionaries.
+- Real-time telemetry dashboard records with interface, packet rate, flow rate, live topology, protocol distribution, resource usage, federation rollup, telemetry health, bounded update interval, empty-state, stale-state, and local API dictionaries.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -69,7 +70,7 @@ Phases:
 | 89 | Flow Reconstruction | Complete baseline: reconstruct bidirectional flows, timeout-aware sessions, service associations, flow digests, topology edges, complete/partial/malformed classifications, and local-only dashboard/API summaries. |
 | 90 | Protocol Metadata Extraction | Complete baseline: extract HTTP, TLS, and DNS metadata summaries, service fingerprints, confidence scores, safe truncation, governance fields, and protocol anomaly summaries without credential or content persistence. |
 | 91 | Dynamic Topology Correlation | Complete baseline: correlate live node relationships, flow edges, protocol-aware topology summaries, topology drift, node roles, temporal summaries, bounded graph controls, replay-safe updates, cluster rollups, and federation-aware dashboard/API summaries. |
-| 92 | Real-Time Telemetry Dashboard Integration | Build live telemetry, packet/flow rate, topology, interface, protocol, resource, operator visibility, and federation-aware dashboard/API models. |
+| 92 | Real-Time Telemetry Dashboard Integration | Complete baseline: build live telemetry, packet/flow rate, topology, interface, protocol, resource, operator visibility, federation-aware, health, bounded update, empty-state, and stale-state dashboard/API models. |
 
 ### Milestone P - Gateway and Router-Adjacent Modes
 

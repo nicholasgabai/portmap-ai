@@ -227,6 +227,8 @@ Acceptance:
 
 ## Phase 92 - Real-Time Telemetry Dashboard Integration
 
+Status: Complete Baseline
+
 Goal:
 Expose live telemetry summaries through dashboard/API-ready models while preserving existing Textual TUI compatibility.
 
@@ -247,6 +249,10 @@ Features:
 - Resource usage telemetry.
 - Operator visibility rollups.
 - Federation-aware telemetry summaries.
+- Telemetry health status summaries.
+- Bounded update interval controls.
+- Empty-state and stale-state rendering models.
+- Dashboard/API-ready telemetry dictionaries.
 
 Acceptance:
 
