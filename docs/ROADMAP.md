@@ -64,6 +64,7 @@ Current stable posture:
 - Process and service attribution now correlates enriched flow observations with minimized process metadata and listening socket ownership, reports unsupported or permission-denied states safely, and emits confidence-scored dashboard/API dictionaries without command-line or username exposure.
 - DNS visibility mode now records metadata-only DNS queries and responses, correlates domains to enriched flows, classifies resolvers, summarizes timing and NXDOMAIN/error states, reports encrypted DNS limitations, and emits dashboard/API-ready dictionaries.
 - Gateway and router log ingestion now parses sanitized syslog-style fixtures into metadata-only allow, deny, NAT, malformed, runtime-event, topology-edge, export-ready, and dashboard/API summaries without starting listeners or modifying router settings.
+- SPAN and mirror-port readiness now builds dry-run profiles, interface capability checks, resource and traffic warnings, packet-loss risk summaries, operator checklists, telemetry scaling guidance, and dashboard/API dictionaries without changing interface, router, or switch settings.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.

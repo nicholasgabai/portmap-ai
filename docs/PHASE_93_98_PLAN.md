@@ -186,6 +186,8 @@ Acceptance:
 
 ## Phase 97 - SPAN / Mirror-Port Readiness
 
+Status: Complete Baseline
+
 Goal:
 Add dry-run readiness models for future passive SPAN and mirror-port telemetry without changing interface modes or starting capture loops.
 

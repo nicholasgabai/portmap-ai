@@ -25,6 +25,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/process_service_attribution.md` - Phase 94 process-to-port, service-name, listening socket ownership, degraded platform, and minimized operator display summaries.
 - `docs/dns_visibility_mode.md` - Phase 95 metadata-only DNS query/response visibility, domain-to-flow correlation, resolver classification, anomaly hints, and dashboard/API summaries.
 - `docs/gateway_router_log_ingestion.md` - Phase 96 sanitized router/firewall log parsing, NAT and allow/deny summaries, runtime/topology/export hooks, and dashboard/API records.
+- `docs/span_mirror_port_readiness.md` - Phase 97 dry-run SPAN/mirror-port readiness profiles, resource warnings, packet-loss risk summaries, operator checklists, and dashboard/API records.
 - `docs/DEPLOYMENT.md` - deployment paths and validation expectations.
 - `docs/SECURITY_MODEL.md` - centralized safety, trust, telemetry, and remediation boundaries.
 - `docs/CLI_REFERENCE.md` - command-family reference for the installed `portmap` CLI.

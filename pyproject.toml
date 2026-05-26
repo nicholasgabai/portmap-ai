@@ -123,6 +123,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/flow_telemetry_enrichment.md",
   "docs/flow_reconstruction.md",
   "docs/gateway_router_log_ingestion.md",
+  "docs/span_mirror_port_readiness.md",
   "docs/trusted_peer_lifecycle.md",
   "docs/runtime_exchange_scheduler.md",
   "docs/active_federation_validation.md",

@@ -1,14 +1,34 @@
 """Gateway and router-adjacent metadata helpers.
 
-The gateway package currently parses sanitized local router/firewall log
-fixtures only. It does not start listeners, change router settings, or enforce
-network policy.
+The gateway package parses sanitized local router/firewall log fixtures and
+builds dry-run readiness records for router-adjacent telemetry. It does not
+start listeners, change router or switch settings, change interface modes, or
+enforce network policy.
 """
 
 from core_engine.gateway.log_parsers import (
     map_gateway_log_fields,
     parse_gateway_log_line,
     parse_gateway_log_lines,
+)
+from core_engine.gateway.mirror_profiles import (
+    DEFAULT_EXPECTED_PACKET_RATE,
+    DEFAULT_EXPECTED_TRAFFIC_MBPS,
+    EDGE_PACKET_RATE_WARNING,
+    EDGE_TRAFFIC_WARNING_MBPS,
+    SPAN_READINESS_RECORD_VERSION,
+    SPAN_READINESS_SAFETY_FLAGS,
+    SpanMirrorProfileError,
+    build_expected_traffic_volume_summary,
+    build_interface_capability_summary,
+    build_packet_loss_risk_summary,
+    build_passive_capture_requirement_summary,
+    build_privilege_requirement_summary,
+    build_span_mirror_profile,
+    build_span_resource_budget_check,
+    build_telemetry_scaling_summary,
+    deterministic_mirror_profile_json,
+    normalize_span_mirror_profile,
 )
 from core_engine.gateway.router_logs import (
     GATEWAY_LOG_RECORD_VERSION,
@@ -28,15 +48,46 @@ from core_engine.gateway.router_logs import (
     normalize_gateway_timestamp,
     summarize_gateway_logs,
 )
+from core_engine.gateway.span_readiness import (
+    SpanReadinessError,
+    build_operator_readiness_checklist,
+    build_span_readiness_api_response,
+    build_span_readiness_dashboard_record,
+    build_span_readiness_report,
+    deterministic_span_readiness_json,
+    summarize_span_readiness,
+)
 
 __all__ = [
+    "DEFAULT_EXPECTED_PACKET_RATE",
+    "DEFAULT_EXPECTED_TRAFFIC_MBPS",
+    "EDGE_PACKET_RATE_WARNING",
+    "EDGE_TRAFFIC_WARNING_MBPS",
     "GATEWAY_LOG_RECORD_VERSION",
     "GATEWAY_LOG_SAFETY_FLAGS",
+    "SPAN_READINESS_RECORD_VERSION",
+    "SPAN_READINESS_SAFETY_FLAGS",
+    "SpanMirrorProfileError",
+    "SpanReadinessError",
+    "build_expected_traffic_volume_summary",
     "build_gateway_log_api_response",
     "build_gateway_log_dashboard_record",
     "build_gateway_log_export_summary",
     "build_gateway_log_ingestion_report",
+    "build_interface_capability_summary",
+    "build_operator_readiness_checklist",
+    "build_packet_loss_risk_summary",
+    "build_passive_capture_requirement_summary",
+    "build_privilege_requirement_summary",
+    "build_span_mirror_profile",
+    "build_span_readiness_api_response",
+    "build_span_readiness_dashboard_record",
+    "build_span_readiness_report",
+    "build_span_resource_budget_check",
+    "build_telemetry_scaling_summary",
     "deterministic_gateway_log_json",
+    "deterministic_mirror_profile_json",
+    "deterministic_span_readiness_json",
     "gateway_event_severity",
     "gateway_log_to_runtime_event",
     "gateway_log_to_topology_edge",
@@ -46,7 +97,9 @@ __all__ = [
     "normalize_gateway_endpoint",
     "normalize_gateway_log_record",
     "normalize_gateway_timestamp",
+    "normalize_span_mirror_profile",
     "parse_gateway_log_line",
     "parse_gateway_log_lines",
+    "summarize_span_readiness",
     "summarize_gateway_logs",
 ]
