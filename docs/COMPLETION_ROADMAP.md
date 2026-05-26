@@ -90,7 +90,7 @@ Phases:
 | 95 | DNS Visibility Mode | Complete baseline: add metadata-only DNS query/response records, domain-to-flow correlation, resolver classification, timing summaries, error summaries, anomaly hints, redaction/truncation options, and dashboard/API dictionaries. |
 | 96 | Gateway and Router Log Ingestion | Complete baseline: add sanitized router/firewall log models, syslog-style parser helpers, NAT and allow/deny summaries, timestamp normalization, severity summaries, and runtime/topology/export hooks. |
 | 97 | SPAN / Mirror-Port Readiness | Complete baseline: add dry-run readiness profiles, passive capture requirements, interface capability summaries, resource warnings, packet-loss risk summaries, operator checklists, telemetry scaling summaries, and dashboard/API dictionaries. |
-| 98 | Gateway Mode Validation | Add sanitized gateway validation records spanning telemetry enrichment, DNS visibility, router logs, SPAN readiness, topology correlation, safety checklist, exports, and dashboard/API dictionaries. |
+| 98 | Gateway Mode Validation | Complete baseline: add sanitized gateway validation records spanning telemetry enrichment, DNS visibility, router logs, SPAN readiness, topology correlation, safety checklist, exports, supported/degraded/unavailable/unsafe states, and dashboard/API dictionaries. |
 
 ### Milestone Q - Production Security and Access Control
 

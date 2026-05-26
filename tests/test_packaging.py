@@ -97,6 +97,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/federation_runtime_manager.md" in data_files["share/portmap-ai/docs"]
     assert "docs/flow_telemetry_enrichment.md" in data_files["share/portmap-ai/docs"]
     assert "docs/flow_reconstruction.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/gateway_mode_validation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/gateway_router_log_ingestion.md" in data_files["share/portmap-ai/docs"]
     assert "docs/span_mirror_port_readiness.md" in data_files["share/portmap-ai/docs"]
     assert "docs/trusted_peer_lifecycle.md" in data_files["share/portmap-ai/docs"]

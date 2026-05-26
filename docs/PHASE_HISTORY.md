@@ -30,6 +30,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 95 | DNS visibility mode with metadata-only query/response records, domain-to-flow correlation, resolver classification, timing summaries, NXDOMAIN/error summaries, encrypted DNS limitations, anomaly hints, safe domain redaction, and dashboard/API-ready dictionaries | Complete baseline |
 | 96 | Gateway and router log ingestion with sanitized syslog-style parser helpers, NAT and allow/deny summaries, source/destination normalization, severity summaries, malformed log handling, runtime/topology/export hooks, and dashboard/API-ready dictionaries | Complete baseline |
 | 97 | SPAN and mirror-port readiness with dry-run profiles, passive capture requirements, interface capability summaries, resource warnings, privilege notes, packet-loss risk summaries, operator checklists, telemetry scaling guidance, and dashboard/API-ready dictionaries | Complete baseline |
+| 98 | Gateway mode validation with telemetry, DNS, router log, SPAN readiness, topology, runtime health, and operator visibility validation records, safety checklists, export summaries, supported/degraded/unavailable/unsafe states, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Baseline Meaning
 
