@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 92 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_O_INTEGRATION.md` summarizes Phase 87-92 live telemetry integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 98 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_P_INTEGRATION.md` summarizes Phase 93-98 gateway telemetry enrichment integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -20,10 +20,11 @@ This roadmap summarizes the current direction after the Phase 92 baseline. `PORT
 | 77-82 | Trusted runtime transport and live federation: trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, federation diagnostics, and dashboard/API readiness | Complete baseline |
 | 83-86 | Active federation runtime: runtime manager records, trusted peer lifecycle, runtime exchange scheduler, and active federation validation | Complete baseline |
 | 87-92 | Live network telemetry: passive interface discovery, bounded packet metadata windows, flow reconstruction, protocol metadata extraction, dynamic topology correlation, and real-time telemetry dashboard/API summaries | Complete baseline |
+| 93-98 | Gateway and telemetry enrichment: enriched flow observations, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway mode validation | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-92 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-98 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -77,7 +78,6 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Milestone P - Gateway and Telemetry Enrichment.
 - Milestone Q - Production Security and Access Control.
 - Milestone R - Installer, Service, and Release Packaging.
 - Milestone S - AI Security Intelligence Layer.
@@ -107,6 +107,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_M_INTEGRATION.md`
 - `docs/MILESTONE_N_INTEGRATION.md`
 - `docs/MILESTONE_O_INTEGRATION.md`
+- `docs/MILESTONE_P_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`

@@ -8,13 +8,14 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-92 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-98 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
 - `docs/MILESTONE_M_INTEGRATION.md` - detailed integration summary for Phase 77-82 trusted runtime federation work.
 - `docs/MILESTONE_N_INTEGRATION.md` - detailed integration summary for Phase 83-86 active federation runtime work.
 - `docs/MILESTONE_O_INTEGRATION.md` - detailed integration summary for Phase 87-92 live network telemetry work.
+- `docs/MILESTONE_P_INTEGRATION.md` - detailed integration summary for Phase 93-98 gateway and telemetry enrichment work.
 - `docs/PHASE_59_64_PLAN.md` - completed milestone plan for runtime pipeline and persistent topology integration.
 - `docs/PHASE_65_70_PLAN.md` - completed milestone plan for unified runtime operations.
 - `docs/PHASE_71_76_PLAN.md` - completed milestone plan for distributed runtime intelligence.

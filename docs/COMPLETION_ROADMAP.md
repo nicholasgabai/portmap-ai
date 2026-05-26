@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Milestone O and Phase 92, covering Phases 0-92.
+PortMap-AI has completed baseline implementation through Milestone P and Phase 98, covering Phases 0-98.
 
 Implemented foundation includes:
 
@@ -35,10 +35,18 @@ Implemented foundation includes:
 - Protocol metadata extraction records with HTTP/TLS/DNS summaries, protocol fingerprints, service fingerprint summaries, encrypted-session metadata handling, confidence scoring, application hints, safe truncation, governance fields, protocol anomalies, and dashboard/API-ready dictionaries.
 - Dynamic topology correlation records with live node relationship inference, flow-to-topology edge correlation, protocol-aware summaries, drift correlation, temporal topology summaries, node role inference, bounded graph growth controls, replay-safe topology update records, cluster/federation-aware summaries, operator health summaries, and dashboard/API-ready dictionaries.
 - Real-time telemetry dashboard records with interface, packet rate, flow rate, live topology, protocol distribution, resource usage, federation rollup, telemetry health, bounded update interval, empty-state, stale-state, and local API dictionaries.
+- Flow telemetry enrichment records with rolling packet and byte statistics, first-seen and last-seen timestamps, direction inference, local/remote endpoint classification, service-port hint correlation, state transition summaries, confidence scoring, telemetry quality flags, and dashboard/API-ready dictionaries.
+- Process and service attribution records with process-to-port attribution summaries, service-name correlation, listening socket ownership summaries, confidence levels, unsupported-platform fallbacks, permission-denied degraded states, minimized process metadata, sanitized operator display records, and dashboard/API-ready dictionaries.
+- DNS visibility records with metadata-only query and response summaries, domain-to-flow correlation, resolver classification, timing summaries, NXDOMAIN/error summaries, encrypted DNS limitations, anomaly hints, safe domain truncation/redaction options, and dashboard/API-ready dictionaries.
+- Gateway and router log ingestion records with sanitized router/firewall log models, syslog-style parser helpers, NAT and allow/deny summaries, source/destination normalization, timestamp normalization, severity summaries, malformed log handling, runtime event hooks, topology hooks, export-ready summaries, and dashboard/API-ready dictionaries.
+- SPAN and mirror-port readiness records with dry-run profiles, passive capture requirements, interface capability summaries, expected traffic volume warnings, resource budget checks, privilege requirement summaries, packet-loss risk summaries, operator readiness checklists, telemetry scaling summaries, Raspberry Pi resource-awareness summaries, and dashboard/API-ready dictionaries.
+- Gateway mode validation records with telemetry enrichment, DNS visibility, router log, SPAN readiness, topology correlation, runtime health, and operator visibility validation summaries, safety checklists, export summaries, supported/degraded/unavailable/unsafe state models, and dashboard/API-ready dictionaries.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
 Milestone O integration is summarized in `docs/MILESTONE_O_INTEGRATION.md`, covering how passive interface discovery, packet metadata windows, flow reconstruction, protocol metadata, dynamic topology, and telemetry dashboard/API summaries connect to runtime, events, storage, topology, drift, federation, and operator visibility.
+
+Milestone P integration is summarized in `docs/MILESTONE_P_INTEGRATION.md`, covering how flow enrichment, process/service attribution, DNS visibility, gateway/router logs, SPAN readiness, and gateway validation connect to live telemetry ingestion, flow reconstruction, protocol metadata, topology correlation, runtime health, gateway readiness, export bundles, and dashboard/API views.
 
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
@@ -76,7 +84,7 @@ Phases:
 | 91 | Dynamic Topology Correlation | Complete baseline: correlate live node relationships, flow edges, protocol-aware topology summaries, topology drift, node roles, temporal summaries, bounded graph controls, replay-safe updates, cluster rollups, and federation-aware dashboard/API summaries. |
 | 92 | Real-Time Telemetry Dashboard Integration | Complete baseline: build live telemetry, packet/flow rate, topology, interface, protocol, resource, operator visibility, federation-aware, health, bounded update, empty-state, and stale-state dashboard/API models. |
 
-### Milestone P - Gateway and Telemetry Enrichment
+### Milestone P - Gateway and Telemetry Enrichment (Complete Baseline)
 
 Goal:
 Strengthen PortMap-AI's live telemetry intelligence before full gateway/router-adjacent deployment by adding richer flow telemetry, process/service attribution, DNS visibility, gateway/router log ingestion, SPAN/mirror-port readiness, and gateway validation workflows.
@@ -182,13 +190,13 @@ Raspberry Pi edge node mode:
 A resource-conscious Linux/ARM profile runs selected runtime, telemetry, federation, dashboard, and export workflows with bounded storage and CPU use.
 
 Router log integration mode:
-PortMap-AI imports router, firewall, DNS, or gateway logs from explicit operator-approved sources and converts them into events, flows, findings, topology updates, and review records.
+PortMap-AI imports sanitized router, firewall, DNS, or gateway logs from explicit operator-approved sources and converts metadata into events, findings, topology updates, and review-ready records.
 
 SPAN/mirror-port collector mode:
-PortMap-AI passively ingests metadata from a mirror-port interface under explicit opt-in, with redaction, bounds, and no payload storage by default.
+PortMap-AI prepares passive metadata ingestion from a mirror-port interface under explicit opt-in, with redaction, bounds, readiness checks, and no payload storage by default.
 
 Gateway profile mode:
-PortMap-AI runs adjacent to a gateway or router to summarize network flows, DNS activity, service exposure, topology, and policy review evidence without automatic enforcement.
+PortMap-AI runs adjacent to a gateway or router to summarize network flows, DNS activity, service exposure, topology, router logs, readiness, and policy review evidence without automatic enforcement.
 
 Transparent bridge readiness mode:
 PortMap-AI prepares and validates bridge-mode requirements through dry-run checks, warnings, and operator review before any future bridge configuration is applied.

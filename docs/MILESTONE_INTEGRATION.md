@@ -1,12 +1,12 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-92 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, and `docs/PHASE_87_92_PLAN.md` remains the Milestone O implementation plan.
+This document is the consolidated integration guide for the completed Phase 44-98 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, and `docs/PHASE_93_98_PLAN.md` remains the Milestone P implementation plan.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
-The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering gateway telemetry enrichment, gateway/router-adjacent readiness, production security, installer packaging, AI security intelligence, and future commercial readiness.
+The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production security, installer packaging, AI security intelligence, future commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer.
 
 ## Completed Milestones
 
@@ -23,6 +23,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Trusted Runtime Transport and Live Federation | 77-82 | Trusted transport models, signed summary exchange, live cluster synchronization, distributed event propagation, diagnostics, and dashboard/API readiness | Complete baseline |
 | Active Federation Runtime | 83-86 | Runtime manager records, trusted peer lifecycle, runtime exchange scheduler, active federation validation, readiness scores, recommendations, and dashboard/API-ready dictionaries | Complete baseline |
 | Live Network Telemetry | 87-92 | Passive interface discovery, dry-run capture planning, bounded packet metadata windows, transport summaries, replay-safe counters, bidirectional flow reconstruction, service association, topology edges, protocol metadata, fingerprints, confidence scoring, anomaly summaries, dynamic topology correlation, bounded graph controls, replay-safe updates, real-time telemetry dashboard models, and API-ready dictionaries | Complete baseline |
+| Gateway and Telemetry Enrichment | 93-98 | Flow telemetry enrichment, process/service attribution, DNS visibility, gateway/router log ingestion, SPAN/mirror-port readiness, gateway mode validation, export-ready summaries, supported/degraded/unavailable/unsafe states, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Module Map
 
@@ -74,6 +75,11 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Protocol Metadata Extraction | `core_engine.telemetry.protocol_metadata`, `core_engine.telemetry.fingerprints` | Summarize safe HTTP, TLS, and DNS metadata fields, remove sensitive fields, truncate long metadata, build protocol fingerprints, score confidence, report protocol anomalies, and emit dashboard/API-ready dictionaries. |
 | Dynamic Topology Correlation | `core_engine.telemetry.topology_correlation`, `core_engine.telemetry.live_topology` | Correlate metadata-only flow and protocol records into bounded live topology graphs, infer node relationships and roles, compare optional baseline drift, emit replay-safe update records, and produce cluster/federation-aware dashboard/API dictionaries. |
 | Real-Time Telemetry Views | `core_engine.telemetry.operator_views`, `gui.web.live_telemetry_views` | Compose interface, packet, flow, topology, protocol, resource, federation, update-control, empty-state, stale-state, and health summaries into read-only dashboard/API-ready live telemetry dictionaries. |
+| Flow Telemetry Enrichment | `core_engine.telemetry.flow_enrichment`, `core_engine.telemetry.flow_observations` | Add metadata-only rolling counters, endpoint scope, direction, service hints, state transitions, confidence scores, quality flags, and dashboard/API-ready summaries to reconstructed flows. |
+| Process and Service Attribution | `core_engine.telemetry.process_attribution`, `core_engine.telemetry.service_attribution` | Correlate minimized process/socket metadata to enriched flows and service names while preserving permission-safe and unsupported-platform degraded states. |
+| DNS Visibility | `core_engine.telemetry.dns_visibility`, `core_engine.telemetry.dns_correlation` | Build DNS query/response metadata, domain-to-flow correlations, resolver classifications, timing/error summaries, encrypted DNS limitations, anomaly hints, and safe redaction controls. |
+| Gateway Router Logs | `core_engine.gateway.router_logs`, `core_engine.gateway.log_parsers` | Parse sanitized router/firewall fixtures into metadata-only NAT, allow, deny, malformed, runtime-event, topology, export, dashboard, and API summaries. |
+| Gateway Readiness | `core_engine.gateway.mirror_profiles`, `core_engine.gateway.span_readiness`, `core_engine.gateway.validation`, `core_engine.gateway.operator_views` | Build SPAN/mirror-port readiness records and aggregate telemetry, DNS, router log, topology, runtime, and operator visibility records into gateway validation summaries. |
 
 ## Consolidated Data Flow
 
@@ -179,6 +185,19 @@ operator-selected interface metadata
   -> safe protocol metadata and fingerprints
   -> dynamic topology correlation and drift summaries
   -> real-time telemetry dashboard/API summaries
+```
+
+Milestone P target flow:
+
+```text
+bounded packet metadata and reconstructed flows
+  -> enriched flow observations
+  -> process/service attribution and DNS visibility
+  -> protocol and topology correlation
+  -> sanitized gateway/router log summaries
+  -> SPAN and mirror-port readiness summaries
+  -> gateway mode validation
+  -> export-ready and dashboard/API-ready operator records
 ```
 
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.
