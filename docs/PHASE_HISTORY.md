@@ -42,7 +42,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering Milestones Q-T. Milestone P implementation planning is tracked in `docs/PHASE_93_98_PLAN.md`, and Milestone P integration is summarized in `docs/MILESTONE_P_INTEGRATION.md`.
+The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering Milestones Q-T. Milestone P implementation planning is tracked in `docs/PHASE_93_98_PLAN.md`, Milestone P integration is summarized in `docs/MILESTONE_P_INTEGRATION.md`, and Milestone Q implementation planning is tracked in `docs/PHASE_99_104_PLAN.md`.
 
 ## References
 
@@ -57,4 +57,5 @@ The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.
 - `docs/MILESTONE_N_INTEGRATION.md`
 - `docs/MILESTONE_O_INTEGRATION.md`
 - `docs/MILESTONE_P_INTEGRATION.md`
+- `docs/PHASE_99_104_PLAN.md`
 - `docs/ROADMAP.md`

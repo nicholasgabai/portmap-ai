@@ -100,21 +100,35 @@ Phases:
 | 97 | SPAN / Mirror-Port Readiness | Complete baseline: add dry-run readiness profiles, passive capture requirements, interface capability summaries, resource warnings, packet-loss risk summaries, operator checklists, telemetry scaling summaries, and dashboard/API dictionaries. |
 | 98 | Gateway Mode Validation | Complete baseline: add sanitized gateway validation records spanning telemetry enrichment, DNS visibility, router logs, SPAN readiness, topology correlation, safety checklist, exports, supported/degraded/unavailable/unsafe states, and dashboard/API dictionaries. |
 
-### Milestone Q - Production Security and Access Control
+### Milestone Q - Cross-Platform Runtime Hardening
 
 Goal:
-Harden the platform for real operator and enterprise usage.
+Make PortMap-AI reliably testable and operable across macOS, Linux/Raspberry Pi, and Windows before deeper behavioral intelligence and commercial packaging.
 
 Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 101 | Local Auth and RBAC | Add local users, roles, permissions, API authorization, and CLI/TUI access controls. |
-| 102 | TLS and Local Certificate Management | Manage local certificates, trust stores, rotation records, and secure local API bindings. |
-| 103 | Secure Node Enrollment | Enroll trusted nodes with signed enrollment records, revocation, trust scope review, and audit history. |
-| 104 | Audit Chain Hardening | Strengthen audit event ordering, tamper-evident digests, exportable chains, and retention metadata. |
-| 105 | Data Retention and Redaction Policies | Define retention windows, redaction policies, private data handling, and operator-controlled purge workflows. |
-| 106 | Security Hardening Validation | Validate auth, TLS, enrollment, audit, retention, and redaction controls under local and distributed scenarios. |
+| 99 | Cross-Platform Runtime Detection | Add platform detection helpers, OS capability summaries, admin/root permission detection, and supported/degraded/unavailable state records. |
+| 100 | Windows Runtime Compatibility | Add Windows path handling, process/socket visibility fallbacks, Windows-safe runtime profile defaults, and Windows service-mode readiness preview only. |
+| 101 | Cross-Platform Packet Capture Readiness | Add macOS/Linux/Windows capture capability summaries, Npcap/WinPcap readiness detection, BPF/libpcap/scapy readiness summaries, and no automatic capture mode changes. |
+| 102 | Cross-Platform Firewall Provider Readiness | Add Windows Defender Firewall, macOS pf, and Linux nftables/ufw/iptables preview providers with dry-run output only and no rule changes. |
+| 103 | Cross-Platform Filesystem and Export Safety | Add safe log path summaries, safe export path summaries, artifact exclusion validation, and OS-specific path normalization. |
+| 104 | Cross-Platform Validation Summary | Add unified macOS/Linux/Raspberry Pi/Windows validation reports with CLI table/JSON output and dashboard/API-ready compatibility summaries. |
+
+### Future Production Security and Access Control Themes
+
+Goal:
+Harden the platform for real operator and enterprise usage after cross-platform runtime behavior is stable.
+
+Candidate future work:
+
+- Local users, roles, permissions, API authorization, and CLI/TUI access controls.
+- TLS and local certificate management for local API bindings.
+- Secure node enrollment with revocation and trust scope review.
+- Audit chain hardening with tamper-evident digests and exportable chains.
+- Data retention and redaction policy enforcement.
+- Security hardening validation under local and distributed scenarios.
 
 ### Milestone R - Installer, Service, and Release Packaging
 

@@ -6,7 +6,7 @@ This is documentation summary only. It does not add runtime behavior, start serv
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
-The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production security, installer packaging, AI security intelligence, future commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer.
+The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering cross-platform runtime hardening, installer packaging, AI security intelligence, future commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. The next implementation plan is `docs/PHASE_99_104_PLAN.md`.
 
 ## Completed Milestones
 
