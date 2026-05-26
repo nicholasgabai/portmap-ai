@@ -151,6 +151,8 @@ Acceptance:
 
 ## Phase 96 - Gateway and Router Log Ingestion
 
+Status: Complete Baseline
+
 Goal:
 Add local, operator-provided gateway/router log parsing helpers that normalize sanitized records for events, topology, exports, and future gateway workflows.
 
