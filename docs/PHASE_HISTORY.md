@@ -27,6 +27,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 87-92 | Live network telemetry: passive interface discovery, bounded packet metadata windows, flow reconstruction, protocol metadata extraction, dynamic topology correlation, real-time telemetry dashboard models, bounded update controls, empty/stale state rendering, and dashboard/API-ready dictionaries | Complete baseline |
 | 93 | Real flow telemetry enrichment with metadata-only flow observations, rolling packet and byte statistics, direction inference, service-port hints, state transitions, confidence scoring, quality flags, and dashboard/API-ready dictionaries | Complete baseline |
 | 94 | Process and service attribution with minimized process metadata, listening socket ownership summaries, permission-safe degraded states, confidence scoring, sanitized operator display records, and dashboard/API-ready dictionaries | Complete baseline |
+| 95 | DNS visibility mode with metadata-only query/response records, domain-to-flow correlation, resolver classification, timing summaries, NXDOMAIN/error summaries, encrypted DNS limitations, anomaly hints, safe domain redaction, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Baseline Meaning
 

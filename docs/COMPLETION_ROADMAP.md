@@ -87,7 +87,7 @@ Phases:
 | --- | --- | --- |
 | 93 | Real Flow Telemetry Enrichment | Complete baseline: add enriched flow observations, rolling statistics, direction inference, local/remote endpoint classification, service-port hints, state transitions, confidence scoring, quality flags, and dashboard/API dictionaries. |
 | 94 | Process and Service Attribution | Complete baseline: add process-to-port and service attribution summaries from available OS data with permission-safe degraded states, metadata minimization, confidence levels, and dashboard/API dictionaries. |
-| 95 | DNS Visibility Mode | Add metadata-only DNS query/response records, domain-to-flow correlation, resolver classification, timing summaries, error summaries, anomaly hints, redaction/truncation options, and dashboard/API dictionaries. |
+| 95 | DNS Visibility Mode | Complete baseline: add metadata-only DNS query/response records, domain-to-flow correlation, resolver classification, timing summaries, error summaries, anomaly hints, redaction/truncation options, and dashboard/API dictionaries. |
 | 96 | Gateway and Router Log Ingestion | Add sanitized router/firewall log models, syslog-style parser helpers, NAT and allow/deny summaries, timestamp normalization, severity summaries, and runtime/topology/export hooks. |
 | 97 | SPAN / Mirror-Port Readiness | Add dry-run readiness profiles, passive capture requirements, interface capability summaries, resource warnings, packet-loss risk summaries, operator checklists, and dashboard/API dictionaries. |
 | 98 | Gateway Mode Validation | Add sanitized gateway validation records spanning telemetry enrichment, DNS visibility, router logs, SPAN readiness, topology correlation, safety checklist, exports, and dashboard/API dictionaries. |

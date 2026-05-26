@@ -117,6 +117,8 @@ Acceptance:
 
 ## Phase 95 - DNS Visibility Mode
 
+Status: Complete Baseline
+
 Goal:
 Build metadata-only DNS visibility and DNS-to-flow correlation summaries for local telemetry and gateway-readiness workflows.
 
