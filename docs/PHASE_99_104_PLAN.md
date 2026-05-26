@@ -40,6 +40,8 @@ Milestone Q should harden cross-platform readiness without enabling automatic fi
 
 ## Phase 99 - Cross-Platform Runtime Detection
 
+Status: Complete Baseline
+
 Goal:
 Create deterministic platform detection and capability summaries for macOS, Linux/Raspberry Pi, and Windows runtime workflows.
 

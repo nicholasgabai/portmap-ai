@@ -1,0 +1,41 @@
+from core_engine.platform.capabilities import (
+    CAPABILITY_STATUSES,
+    PLATFORM_CAPABILITY_SAFETY_FLAGS,
+    build_capability_status_record,
+    build_firewall_provider_capability,
+    build_packet_capture_capability,
+    build_path_export_capability,
+    build_platform_capability_summary,
+    build_service_mode_capability,
+    deterministic_platform_capability_json,
+    summarize_platform_capabilities,
+)
+from core_engine.platform.runtime_detection import (
+    PLATFORM_FAMILIES,
+    PLATFORM_RUNTIME_SAFETY_FLAGS,
+    build_platform_runtime_record,
+    build_runtime_compatibility_report,
+    detect_admin_permission,
+    detect_platform_family,
+    deterministic_runtime_detection_json,
+)
+
+__all__ = [
+    "CAPABILITY_STATUSES",
+    "PLATFORM_CAPABILITY_SAFETY_FLAGS",
+    "PLATFORM_FAMILIES",
+    "PLATFORM_RUNTIME_SAFETY_FLAGS",
+    "build_capability_status_record",
+    "build_firewall_provider_capability",
+    "build_packet_capture_capability",
+    "build_path_export_capability",
+    "build_platform_capability_summary",
+    "build_platform_runtime_record",
+    "build_runtime_compatibility_report",
+    "build_service_mode_capability",
+    "detect_admin_permission",
+    "detect_platform_family",
+    "deterministic_platform_capability_json",
+    "deterministic_runtime_detection_json",
+    "summarize_platform_capabilities",
+]
