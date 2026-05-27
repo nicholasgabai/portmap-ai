@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 105, covering Phases 0-105.
+PortMap-AI has completed baseline implementation through Phase 106, covering Phases 0-106.
 
 Implemented foundation includes:
 
@@ -48,6 +48,7 @@ Implemented foundation includes:
 - Cross-platform filesystem and export safety records with safe log, cache, and export path summaries, OS-specific path normalization, artifact exclusion validation, private-file warnings, runtime artifact classification, public-doc safety checks, and dashboard/API-ready dictionaries.
 - Unified cross-platform validation records for macOS, Linux, Raspberry Pi/Linux ARM, and Windows with capture readiness, firewall readiness, filesystem/export safety, aggregate states, operator recommendations, and CLI/table/JSON/dashboard/API-ready output.
 - Historical flow baseline records for ports, protocols, services, process/service fingerprints, flow tuple digests, and DNS/domain observations with first-seen and last-seen windows, frequency counters, rolling average scores, stable/new/recurring/decaying behavior classification, advisory confidence scoring, bounded window retention, dashboard/API summaries, and export-ready digests.
+- Temporal anomaly window records with short, medium, and long summaries, burst detection, rare service timing, volume drift hints, port/protocol/service novelty labels, baseline-aware anomaly confidence scoring, operator-readable explanations, dashboard/API dictionaries, and export-ready digests.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -137,7 +138,7 @@ Phases:
 | Phase | Name | Focus |
 | --- | --- | --- |
 | 105 | Historical Flow Baselines | Complete baseline: rolling metadata-only baseline records for flows, services, ports, protocols, process/service fingerprints, and DNS/domain observations with first-seen and last-seen windows, frequency counters, stable versus new classification, bounded windows, confidence scoring, dashboard/API summaries, and export-ready digests. |
-| 106 | Temporal Anomaly Windows | Add time-window anomaly records with short, medium, and long summaries, burst detection, rare service timing detection, volume drift hints, and advisory anomaly labels. |
+| 106 | Temporal Anomaly Windows | Complete baseline: time-window anomaly records with short, medium, and long summaries, burst detection, rare service timing detection, volume drift hints, novelty labels, advisory confidence scoring, operator explanations, dashboard/API dictionaries, and export-ready digests. |
 | 107 | Service Behavior Fingerprints | Add recurring service fingerprint records for port, protocol, process, and service combinations, expected service behavior profiles, unusual service state detection, and fingerprint confidence summaries. |
 | 108 | DNS and Destination Behavior Learning | Add recurring DNS/domain summaries, destination reputation placeholder hooks without external calls, domain frequency and novelty scoring, resolver behavior summaries, and safe redaction/truncation support. |
 | 109 | Adaptive Risk Weighting | Add local adaptive scoring helpers, baseline-aware score adjustments, confidence-aware risk weights, and explanation records for operator review with no automatic enforcement. |

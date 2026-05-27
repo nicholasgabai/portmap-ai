@@ -88,6 +88,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Filesystem and Export Safety | `core_engine.platform.filesystem_safety`, `core_engine.platform.export_paths` | Classify safe paths, private files, runtime artifacts, export targets, and public documentation safety for cross-platform workflows. |
 | Cross-Platform Validation | `core_engine.platform.validation_summary`, `core_engine.platform.operator_views` | Aggregate platform, capture, firewall, filesystem, export, gateway, service, and runtime health records into CLI/table/JSON and dashboard/API-ready compatibility summaries. |
 | Historical Flow Baselines | `core_engine.telemetry.behavior_baselines`, `core_engine.telemetry.baseline_windows` | Build rolling metadata-only behavior baselines for ports, protocols, services, process/service fingerprints, flow tuple digests, and DNS/domain observations with bounded windows, stable/new classification, confidence scoring, dashboard/API summaries, and export-ready digests. |
+| Temporal Anomaly Windows | `core_engine.telemetry.temporal_anomalies`, `core_engine.telemetry.anomaly_windows` | Build short, medium, and long anomaly windows with burst, rare service timing, volume drift, novelty labels, advisory confidence scoring, operator explanations, dashboard/API dictionaries, and export-ready digests. |
 
 ## Consolidated Data Flow
 

@@ -190,6 +190,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/snapshot_drift_detection.md",
   "docs/stack_stability.md",
   "docs/threat_correlation.md",
+  "docs/temporal_anomaly_windows.md",
   "docs/trusted_node_transport.md",
   "docs/tui_dashboard.md",
   "docs/tls_intelligence.md",

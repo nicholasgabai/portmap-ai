@@ -71,13 +71,15 @@ Acceptance:
 
 ## Phase 106 - Temporal Anomaly Windows
 
+Status: Complete Baseline
+
 Goal:
 Add short, medium, and long time-window anomaly summaries for volume, burst, service timing, and rare behavior hints.
 
 Build:
 
-- `core_engine/behavior/anomaly_windows.py`
-- `core_engine/behavior/temporal_anomalies.py`
+- `core_engine/telemetry/anomaly_windows.py`
+- `core_engine/telemetry/temporal_anomalies.py`
 - `tests/test_temporal_anomaly_windows.py`
 - `docs/temporal_anomaly_windows.md`
 

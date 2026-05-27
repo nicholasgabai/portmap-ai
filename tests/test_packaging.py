@@ -162,6 +162,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/snapshot_drift_detection.md" in data_files["share/portmap-ai/docs"]
     assert "docs/stack_stability.md" in data_files["share/portmap-ai/docs"]
     assert "docs/threat_correlation.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/temporal_anomaly_windows.md" in data_files["share/portmap-ai/docs"]
     assert "docs/trusted_node_transport.md" in data_files["share/portmap-ai/docs"]
     assert "docs/tui_dashboard.md" in data_files["share/portmap-ai/docs"]
     assert "docs/topology_timeline_views.md" in data_files["share/portmap-ai/docs"]

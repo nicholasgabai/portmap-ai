@@ -26,6 +26,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_99_104_PLAN.md` - milestone plan for cross-platform runtime hardening across macOS, Linux/Raspberry Pi, and Windows.
 - `docs/PHASE_105_110_PLAN.md` - milestone plan for historical behavioral intelligence baselines, anomaly windows, service fingerprints, DNS learning, adaptive risk weighting, and operator summaries.
 - `docs/historical_flow_baselines.md` - Phase 105 rolling metadata-only behavior baselines, bounded windows, stable/new classification, confidence scoring, dashboard/API summaries, and export-ready digests.
+- `docs/temporal_anomaly_windows.md` - Phase 106 short/medium/long anomaly windows, burst detection, rare service timing, volume drift hints, novelty labels, explanations, and dashboard/API/export summaries.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
 - `docs/cross_platform_packet_capture_readiness.md` - Phase 101 passive packet capture backend readiness, permission, safety warning, and payload prohibition summaries.
@@ -101,6 +102,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/cross_platform_filesystem_export_safety.md` - safe filesystem, export path, artifact exclusion, runtime artifact, and public documentation safety records.
 - `docs/cross_platform_validation_summary.md` - unified cross-platform validation summaries with CLI/table/JSON and dashboard/API-ready compatibility output.
 - `docs/historical_flow_baselines.md` - historical flow baseline records for ports, protocols, services, process/service fingerprints, flow tuple digests, DNS/domain observations, bounded windows, classifications, and export-ready summaries.
+- `docs/temporal_anomaly_windows.md` - temporal anomaly window records for burst, rarity, drift, and novelty labels over local metadata-only behavior baselines.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.
