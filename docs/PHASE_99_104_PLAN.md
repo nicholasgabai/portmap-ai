@@ -106,13 +106,15 @@ Acceptance:
 
 ## Phase 101 - Cross-Platform Packet Capture Readiness
 
+Status: Complete Baseline
+
 Goal:
 Summarize packet-capture readiness across macOS, Linux/Raspberry Pi, and Windows without changing interface modes or escalating privileges.
 
 Build:
 
 - `core_engine/platform/capture_readiness.py`
-- `core_engine/platform/capture_providers.py`
+- `core_engine/platform/capture_backends.py`
 - `tests/test_cross_platform_packet_capture_readiness.py`
 - `docs/cross_platform_packet_capture_readiness.md`
 

@@ -10,6 +10,18 @@ from core_engine.platform.capabilities import (
     deterministic_platform_capability_json,
     summarize_platform_capabilities,
 )
+from core_engine.platform.capture_backends import (
+    CAPTURE_BACKEND_SAFETY_FLAGS,
+    build_capture_backend_record,
+    build_capture_backend_summary,
+    deterministic_capture_backend_json,
+)
+from core_engine.platform.capture_readiness import (
+    CAPTURE_READINESS_SAFETY_FLAGS,
+    build_capture_permission_requirement_summary,
+    build_cross_platform_capture_readiness_report,
+    deterministic_capture_readiness_json,
+)
 from core_engine.platform.runtime_detection import (
     PLATFORM_FAMILIES,
     PLATFORM_RUNTIME_SAFETY_FLAGS,
@@ -37,17 +49,23 @@ from core_engine.platform.windows_runtime import (
 
 __all__ = [
     "CAPABILITY_STATUSES",
+    "CAPTURE_BACKEND_SAFETY_FLAGS",
+    "CAPTURE_READINESS_SAFETY_FLAGS",
     "PLATFORM_CAPABILITY_SAFETY_FLAGS",
     "PLATFORM_FAMILIES",
     "PLATFORM_RUNTIME_SAFETY_FLAGS",
     "WINDOWS_PATH_SAFETY_FLAGS",
     "WINDOWS_RUNTIME_SAFETY_FLAGS",
     "build_capability_status_record",
+    "build_capture_backend_record",
+    "build_capture_backend_summary",
+    "build_capture_permission_requirement_summary",
     "build_firewall_provider_capability",
     "build_packet_capture_capability",
     "build_path_export_capability",
     "build_platform_capability_summary",
     "build_platform_runtime_record",
+    "build_cross_platform_capture_readiness_report",
     "build_runtime_compatibility_report",
     "build_service_mode_capability",
     "build_windows_path_summary",
@@ -58,6 +76,8 @@ __all__ = [
     "build_windows_service_mode_preview",
     "detect_admin_permission",
     "detect_platform_family",
+    "deterministic_capture_backend_json",
+    "deterministic_capture_readiness_json",
     "deterministic_platform_capability_json",
     "deterministic_runtime_detection_json",
     "deterministic_windows_path_json",
