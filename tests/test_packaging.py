@@ -138,6 +138,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/platform_abstraction.md" in data_files["share/portmap-ai/docs"]
     assert "docs/protocol_metadata_extraction.md" in data_files["share/portmap-ai/docs"]
     assert "docs/process_service_attribution.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/service_behavior_fingerprints.md" in data_files["share/portmap-ai/docs"]
     assert "docs/protocol_dissectors.md" in data_files["share/portmap-ai/docs"]
     assert "docs/raspberry_pi_deployment.md" in data_files["share/portmap-ai/docs"]
     assert "docs/real_device_validation.md" in data_files["share/portmap-ai/docs"]

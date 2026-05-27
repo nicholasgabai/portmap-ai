@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 from core_engine.telemetry.flows import summarize_flows
 from core_engine.telemetry.interfaces import TELEMETRY_SAFETY_FLAGS
+from core_engine.telemetry.service_fingerprints import build_service_fingerprint_operator_panel
 
 
 LIVE_TELEMETRY_VIEW_RECORD_VERSION = 1
@@ -36,6 +37,7 @@ def build_live_telemetry_operator_summary(
     live_topology: dict[str, Any] | None = None,
     behavior_baseline_report: dict[str, Any] | None = None,
     temporal_anomaly_report: dict[str, Any] | None = None,
+    service_fingerprint_report: dict[str, Any] | None = None,
     runtime_health: dict[str, Any] | None = None,
     federation_diagnostics: dict[str, Any] | None = None,
     operator_visibility: dict[str, Any] | None = None,
@@ -68,6 +70,8 @@ def build_live_telemetry_operator_summary(
         panels["behavior_baselines"] = build_behavior_baseline_operator_panel(behavior_baseline_report, generated_at=timestamp)
     if temporal_anomaly_report is not None:
         panels["temporal_anomalies"] = build_temporal_anomaly_operator_panel(temporal_anomaly_report, generated_at=timestamp)
+    if service_fingerprint_report is not None:
+        panels["service_fingerprints"] = build_service_fingerprint_operator_panel(service_fingerprint_report, generated_at=timestamp)
     update_controls = build_bounded_update_interval_controls(
         requested_update_interval_seconds=requested_update_interval_seconds,
         min_update_interval_seconds=min_update_interval_seconds,
@@ -84,6 +88,7 @@ def build_live_telemetry_operator_summary(
             live_topology,
             behavior_baseline_report,
             temporal_anomaly_report,
+            service_fingerprint_report,
             runtime_health,
             federation_diagnostics,
             operator_visibility,
@@ -469,6 +474,7 @@ def summarize_live_telemetry_panels(
     protocol_count = int(metrics.get("protocol_distribution", {}).get("record_count") or 0)
     behavior_count = int(metrics.get("behavior_baselines", {}).get("baseline_entry_count") or 0)
     anomaly_count = int(metrics.get("temporal_anomalies", {}).get("anomaly_count") or 0)
+    fingerprint_count = int(metrics.get("service_fingerprints", {}).get("profile_count") or 0)
     return {
         "record_type": "live_telemetry_dashboard_summary",
         "generated_at": generated_at or _now(),
@@ -481,8 +487,9 @@ def summarize_live_telemetry_panels(
         "protocol_record_count": protocol_count,
         "behavior_baseline_count": behavior_count,
         "temporal_anomaly_count": anomaly_count,
+        "service_fingerprint_count": fingerprint_count,
         "federation_aware": bool(metrics.get("federation_rollup", {}).get("federation_aware")),
-        "empty_state": not any((interface_count, packet_count, flow_count, topology_node_count, protocol_count, behavior_count, anomaly_count)),
+        "empty_state": not any((interface_count, packet_count, flow_count, topology_node_count, protocol_count, behavior_count, anomaly_count, fingerprint_count)),
         "stale": bool(stale_state.get("stale")),
         **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
     }

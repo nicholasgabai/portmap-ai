@@ -39,6 +39,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 104 | Unified cross-platform validation summaries for macOS, Linux, Raspberry Pi/Linux ARM, Windows, packet capture readiness, firewall readiness, filesystem/export safety, aggregate states, operator recommendations, and CLI/table/JSON/dashboard/API-ready output | Complete baseline |
 | 105 | Historical flow baselines with rolling metadata-only baseline records for ports, protocols, services, process/service fingerprints, flow tuple digests, and DNS/domain observations, bounded short/medium/long windows, stable/new/recurring/decaying classifications, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 | 106 | Temporal anomaly windows with short/medium/long anomaly records, burst detection summaries, rare service timing, volume drift hints, port/protocol/service novelty labels, baseline-aware advisory confidence scoring, operator-readable explanations, dashboard/API summaries, and export-ready digests | Complete baseline |
+| 107 | Service behavior fingerprints with recurring metadata-only process/service/protocol/port profiles, expected behavior summaries, unusual process-port and protocol-binding labels, dormant service return tracking, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 
 ## Baseline Meaning
 

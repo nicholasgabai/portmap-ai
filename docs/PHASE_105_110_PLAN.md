@@ -105,13 +105,15 @@ Acceptance:
 
 ## Phase 107 - Service Behavior Fingerprints
 
+Status: Complete Baseline
+
 Goal:
 Learn recurring service behavior fingerprints from metadata-only port, protocol, process, and service attribution summaries.
 
 Build:
 
-- `core_engine/behavior/service_fingerprints.py`
-- `core_engine/behavior/service_profiles.py`
+- `core_engine/telemetry/service_fingerprints.py`
+- `core_engine/telemetry/fingerprint_profiles.py`
 - `tests/test_service_behavior_fingerprints.py`
 - `docs/service_behavior_fingerprints.md`
 
@@ -119,9 +121,12 @@ Features:
 
 - Recurring service fingerprint records.
 - Port, protocol, process, and service-name combination summaries.
+- DNS association summaries with redacted domain labels.
+- Runtime platform, interface class, flow role, and direction fields.
 - Expected service behavior profiles.
 - Unusual service state detection.
 - Fingerprint confidence summaries.
+- Dormant and reappearing service tracking.
 - Unsupported-platform and permission-degraded attribution handling.
 - Privacy-preserving process metadata references.
 - Dashboard/API-ready service behavior dictionaries.
@@ -130,6 +135,7 @@ Acceptance:
 
 - Service fingerprints are deterministic for sanitized fixtures.
 - Process metadata remains minimized and does not expose command-line secrets.
+- Full DNS query contents are not retained.
 - Unsupported platform and permission-denied records degrade safely.
 - Unusual service states remain review recommendations only.
 - No automatic firewall or remediation action is created.
