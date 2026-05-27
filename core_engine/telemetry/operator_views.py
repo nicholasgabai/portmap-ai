@@ -34,6 +34,7 @@ def build_live_telemetry_operator_summary(
     flow_summary: dict[str, Any] | None = None,
     protocol_report: dict[str, Any] | None = None,
     live_topology: dict[str, Any] | None = None,
+    behavior_baseline_report: dict[str, Any] | None = None,
     runtime_health: dict[str, Any] | None = None,
     federation_diagnostics: dict[str, Any] | None = None,
     operator_visibility: dict[str, Any] | None = None,
@@ -62,6 +63,8 @@ def build_live_telemetry_operator_summary(
             generated_at=timestamp,
         ),
     }
+    if behavior_baseline_report is not None:
+        panels["behavior_baselines"] = build_behavior_baseline_operator_panel(behavior_baseline_report, generated_at=timestamp)
     update_controls = build_bounded_update_interval_controls(
         requested_update_interval_seconds=requested_update_interval_seconds,
         min_update_interval_seconds=min_update_interval_seconds,
@@ -76,6 +79,7 @@ def build_live_telemetry_operator_summary(
             effective_flow_summary,
             protocol_report,
             live_topology,
+            behavior_baseline_report,
             runtime_health,
             federation_diagnostics,
             operator_visibility,
@@ -252,6 +256,33 @@ def build_protocol_distribution_summary(protocol_report: dict[str, Any] | None, 
     }
 
 
+def build_behavior_baseline_operator_panel(behavior_baseline_report: dict[str, Any] | None, *, generated_at: str | None = None) -> dict[str, Any]:
+    timestamp = generated_at or _now()
+    if not behavior_baseline_report:
+        return _empty_panel("behavior_baselines", generated_at=timestamp)
+    dashboard = behavior_baseline_report.get("dashboard_status") if isinstance(behavior_baseline_report.get("dashboard_status"), dict) else {}
+    summary = behavior_baseline_report.get("summary") if isinstance(behavior_baseline_report.get("summary"), dict) else {}
+    metrics = dashboard.get("metrics") if isinstance(dashboard.get("metrics"), dict) else {}
+    return {
+        "record_type": "behavior_baseline_operator_panel",
+        "panel": "behavior_baselines",
+        "status": str(dashboard.get("status") or "ok"),
+        "generated_at": timestamp,
+        "metrics": {
+            "baseline_entry_count": int(metrics.get("baseline_entry_count") or summary.get("baseline_entry_count") or 0),
+            "stable_behavior_count": int(metrics.get("stable_behavior_count") or summary.get("stable_behavior_count") or 0),
+            "novel_behavior_count": int(metrics.get("novel_behavior_count") or summary.get("novel_behavior_count") or 0),
+            "decaying_inactive_count": int(metrics.get("decaying_inactive_count") or summary.get("decaying_inactive_count") or 0),
+            "average_confidence": float(metrics.get("average_confidence") or summary.get("average_confidence") or 0.0),
+        },
+        "by_category": dict(summary.get("by_category") or {}),
+        "by_behavior_state": dict(summary.get("by_behavior_state") or {}),
+        "rows": list(dashboard.get("rows") or []),
+        "recommended_review": bool(dashboard.get("recommended_review")),
+        **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
+    }
+
+
 def build_resource_usage_telemetry_summary(
     *,
     resource_usage: dict[str, Any] | None = None,
@@ -404,6 +435,7 @@ def summarize_live_telemetry_panels(
     interface_count = int(metrics.get("interfaces", {}).get("interface_count") or 0)
     topology_node_count = int(metrics.get("live_topology", {}).get("node_count") or 0)
     protocol_count = int(metrics.get("protocol_distribution", {}).get("record_count") or 0)
+    behavior_count = int(metrics.get("behavior_baselines", {}).get("baseline_entry_count") or 0)
     return {
         "record_type": "live_telemetry_dashboard_summary",
         "generated_at": generated_at or _now(),
@@ -414,8 +446,9 @@ def summarize_live_telemetry_panels(
         "topology_node_count": topology_node_count,
         "topology_edge_count": int(metrics.get("live_topology", {}).get("edge_count") or 0),
         "protocol_record_count": protocol_count,
+        "behavior_baseline_count": behavior_count,
         "federation_aware": bool(metrics.get("federation_rollup", {}).get("federation_aware")),
-        "empty_state": not any((interface_count, packet_count, flow_count, topology_node_count, protocol_count)),
+        "empty_state": not any((interface_count, packet_count, flow_count, topology_node_count, protocol_count, behavior_count)),
         "stale": bool(stale_state.get("stale")),
         **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
     }

@@ -114,6 +114,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/active_federation_validation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/event_pipeline.md" in data_files["share/portmap-ai/docs"]
     assert "docs/high_speed_scan_engine.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/historical_flow_baselines.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ipv6_dual_stack.md" in data_files["share/portmap-ai/docs"]
     assert "docs/logging_audit.md" in data_files["share/portmap-ai/docs"]
     assert "docs/live_cluster_state_synchronization.md" in data_files["share/portmap-ai/docs"]

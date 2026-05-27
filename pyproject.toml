@@ -140,6 +140,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/event_pipeline.md",
   "docs/firewall_plugins.md",
   "docs/high_speed_scan_engine.md",
+  "docs/historical_flow_baselines.md",
   "docs/ipv6_dual_stack.md",
   "docs/logging_audit.md",
   "docs/live_cluster_state_synchronization.md",

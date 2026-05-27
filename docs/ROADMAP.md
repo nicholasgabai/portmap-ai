@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 104 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_Q_INTEGRATION.md` summarizes Phase 99-104 cross-platform runtime hardening integration, `docs/PHASE_105_110_PLAN.md` defines the next behavioral intelligence foundation milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 105 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_Q_INTEGRATION.md` summarizes Phase 99-104 cross-platform runtime hardening integration, `docs/PHASE_105_110_PLAN.md` defines the current behavioral intelligence foundation milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -22,10 +22,11 @@ This roadmap summarizes the current direction after the Phase 104 baseline. `POR
 | 87-92 | Live network telemetry: passive interface discovery, bounded packet metadata windows, flow reconstruction, protocol metadata extraction, dynamic topology correlation, and real-time telemetry dashboard/API summaries | Complete baseline |
 | 93-98 | Gateway and telemetry enrichment: enriched flow observations, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway mode validation | Complete baseline |
 | 99-104 | Cross-platform runtime hardening: runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, and unified validation summaries | Complete baseline |
+| 105 | Behavioral intelligence foundation: historical flow baselines with rolling metadata-only baseline records, bounded windows, stable/new behavior classification, confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-104 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-105 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -74,6 +75,7 @@ Current stable posture:
 - Cross-platform firewall provider readiness now provides Windows Defender Firewall, macOS pf, Linux nftables/ufw/iptables, and Raspberry Pi dry-run provider previews with operator review flags and no rule changes.
 - Cross-platform filesystem and export safety now validates safe log, export, and cache path summaries, artifact exclusions, private-file warnings, runtime artifact classes, and public-doc safety checks.
 - Cross-platform validation summaries now roll up macOS, Linux, Raspberry Pi/Linux ARM, and Windows compatibility, packet capture readiness, firewall readiness, filesystem/export safety, aggregate states, operator recommendations, and CLI/table/JSON/dashboard/API output.
+- Historical flow baselines now track rolling metadata-only entries for ports, protocols, services, process/service fingerprints, flow tuple digests, and DNS/domain observations across bounded short, medium, and long windows with stable/new/recurring/decaying classifications, advisory confidence scoring, dashboard/API summaries, and export-ready digests.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.

@@ -37,6 +37,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 102 | Cross-platform firewall provider readiness with Windows Defender Firewall, macOS pf, Linux nftables/ufw/iptables, and Raspberry Pi dry-run previews, permission requirements, provider states, safety warnings, review flags, and dashboard/API-ready dictionaries | Complete baseline |
 | 103 | Cross-platform filesystem/export safety with safe log/export/cache path summaries, path normalization, artifact exclusion validation, private-file warnings, runtime artifact classification, public-doc checks, and dashboard/API-ready dictionaries | Complete baseline |
 | 104 | Unified cross-platform validation summaries for macOS, Linux, Raspberry Pi/Linux ARM, Windows, packet capture readiness, firewall readiness, filesystem/export safety, aggregate states, operator recommendations, and CLI/table/JSON/dashboard/API-ready output | Complete baseline |
+| 105 | Historical flow baselines with rolling metadata-only baseline records for ports, protocols, services, process/service fingerprints, flow tuple digests, and DNS/domain observations, bounded short/medium/long windows, stable/new/recurring/decaying classifications, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 
 ## Baseline Meaning
 

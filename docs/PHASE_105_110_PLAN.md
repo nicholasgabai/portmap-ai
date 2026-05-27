@@ -38,14 +38,15 @@ Milestone R should add behavior learning from sanitized metadata summaries witho
 
 ## Phase 105 - Historical Flow Baselines
 
+Status: Complete Baseline
+
 Goal:
 Build rolling historical baseline records for flow, service, port, and protocol metadata so PortMap-AI can identify stable and new behavior over local time windows.
 
 Build:
 
-- `core_engine/behavior/flow_baselines.py`
-- `core_engine/behavior/baseline_windows.py`
-- `core_engine/behavior/__init__.py`
+- `core_engine/telemetry/behavior_baselines.py`
+- `core_engine/telemetry/baseline_windows.py`
 - `tests/test_historical_flow_baselines.py`
 - `docs/historical_flow_baselines.md`
 
