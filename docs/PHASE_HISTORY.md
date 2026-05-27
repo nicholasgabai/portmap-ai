@@ -31,6 +31,12 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 96 | Gateway and router log ingestion with sanitized syslog-style parser helpers, NAT and allow/deny summaries, source/destination normalization, severity summaries, malformed log handling, runtime/topology/export hooks, and dashboard/API-ready dictionaries | Complete baseline |
 | 97 | SPAN and mirror-port readiness with dry-run profiles, passive capture requirements, interface capability summaries, resource warnings, privilege notes, packet-loss risk summaries, operator checklists, telemetry scaling guidance, and dashboard/API-ready dictionaries | Complete baseline |
 | 98 | Gateway mode validation with telemetry, DNS, router log, SPAN readiness, topology, runtime health, and operator visibility validation records, safety checklists, export summaries, supported/degraded/unavailable/unsafe states, and dashboard/API-ready dictionaries | Complete baseline |
+| 99 | Cross-platform runtime detection with macOS, Linux, Raspberry Pi/Linux ARM, Windows, and unknown platform records, architecture and Python summaries, permission detection, capability placeholders, and dashboard/API-ready compatibility dictionaries | Complete baseline |
+| 100 | Windows runtime compatibility with Windows-safe path normalization, log/export/cache path summaries, process/socket visibility fallbacks, service-mode previews, runtime profile defaults, degraded states, and dashboard/API-ready dictionaries | Complete baseline |
+| 101 | Cross-platform packet capture readiness with macOS BPF/libpcap, Linux libpcap/AF_PACKET/scapy, Raspberry Pi, and Windows Npcap/WinPcap readiness summaries, backend states, passive safety warnings, payload prohibition fields, and dashboard/API-ready dictionaries | Complete baseline |
+| 102 | Cross-platform firewall provider readiness with Windows Defender Firewall, macOS pf, Linux nftables/ufw/iptables, and Raspberry Pi dry-run previews, permission requirements, provider states, safety warnings, review flags, and dashboard/API-ready dictionaries | Complete baseline |
+| 103 | Cross-platform filesystem/export safety with safe log/export/cache path summaries, path normalization, artifact exclusion validation, private-file warnings, runtime artifact classification, public-doc checks, and dashboard/API-ready dictionaries | Complete baseline |
+| 104 | Unified cross-platform validation summaries for macOS, Linux, Raspberry Pi/Linux ARM, Windows, packet capture readiness, firewall readiness, filesystem/export safety, aggregate states, operator recommendations, and CLI/table/JSON/dashboard/API-ready output | Complete baseline |
 
 ## Baseline Meaning
 
@@ -42,7 +48,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering Milestones Q-T. Milestone P implementation planning is tracked in `docs/PHASE_93_98_PLAN.md`, Milestone P integration is summarized in `docs/MILESTONE_P_INTEGRATION.md`, and Milestone Q implementation planning is tracked in `docs/PHASE_99_104_PLAN.md`.
+The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering Milestones R-T. Milestone Q implementation planning is tracked in `docs/PHASE_99_104_PLAN.md`, and Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`.
 
 ## References
 
@@ -57,5 +63,6 @@ The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.
 - `docs/MILESTONE_N_INTEGRATION.md`
 - `docs/MILESTONE_O_INTEGRATION.md`
 - `docs/MILESTONE_P_INTEGRATION.md`
+- `docs/MILESTONE_Q_INTEGRATION.md`
 - `docs/PHASE_99_104_PLAN.md`
 - `docs/ROADMAP.md`

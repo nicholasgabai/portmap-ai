@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 98 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_P_INTEGRATION.md` summarizes Phase 93-98 gateway telemetry enrichment integration, `docs/PHASE_99_104_PLAN.md` defines the next cross-platform runtime hardening milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 104 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_Q_INTEGRATION.md` summarizes Phase 99-104 cross-platform runtime hardening integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -21,10 +21,11 @@ This roadmap summarizes the current direction after the Phase 98 baseline. `PORT
 | 83-86 | Active federation runtime: runtime manager records, trusted peer lifecycle, runtime exchange scheduler, and active federation validation | Complete baseline |
 | 87-92 | Live network telemetry: passive interface discovery, bounded packet metadata windows, flow reconstruction, protocol metadata extraction, dynamic topology correlation, and real-time telemetry dashboard/API summaries | Complete baseline |
 | 93-98 | Gateway and telemetry enrichment: enriched flow observations, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway mode validation | Complete baseline |
+| 99-104 | Cross-platform runtime hardening: runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, and unified validation summaries | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-98 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-104 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -67,6 +68,12 @@ Current stable posture:
 - Gateway and router log ingestion now parses sanitized syslog-style fixtures into metadata-only allow, deny, NAT, malformed, runtime-event, topology-edge, export-ready, and dashboard/API summaries without starting listeners or modifying router settings.
 - SPAN and mirror-port readiness now builds dry-run profiles, interface capability checks, resource and traffic warnings, packet-loss risk summaries, operator checklists, telemetry scaling guidance, and dashboard/API dictionaries without changing interface, router, or switch settings.
 - Gateway mode validation now aggregates telemetry enrichment, DNS visibility, router logs, SPAN readiness, topology correlation, runtime health, and operator visibility into supported, degraded, unavailable, and unsafe dry-run readiness states.
+- Cross-platform runtime detection now normalizes macOS, Linux, Raspberry Pi/Linux ARM, Windows, and unknown platform records with architecture, Python, permission, capability, and dashboard/API-ready compatibility summaries.
+- Windows runtime compatibility now provides Windows-safe path normalization, log/export/cache summaries, process/socket visibility fallbacks, service-mode previews, runtime profile defaults, degraded states, and dashboard/API dictionaries without service control, firewall changes, registry writes, or elevation.
+- Cross-platform packet capture readiness now reports macOS BPF/libpcap, Linux libpcap/AF_PACKET/scapy, Raspberry Pi, and Windows Npcap/WinPcap backend states with passive safety warnings and raw-payload prohibition fields without starting capture.
+- Cross-platform firewall provider readiness now provides Windows Defender Firewall, macOS pf, Linux nftables/ufw/iptables, and Raspberry Pi dry-run provider previews with operator review flags and no rule changes.
+- Cross-platform filesystem and export safety now validates safe log, export, and cache path summaries, artifact exclusions, private-file warnings, runtime artifact classes, and public-doc safety checks.
+- Cross-platform validation summaries now roll up macOS, Linux, Raspberry Pi/Linux ARM, and Windows compatibility, packet capture readiness, firewall readiness, filesystem/export safety, aggregate states, operator recommendations, and CLI/table/JSON/dashboard/API output.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -78,7 +85,6 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Milestone Q - Cross-Platform Runtime Hardening.
 - Milestone R - Installer, Service, and Release Packaging.
 - Milestone S - AI Security Intelligence Layer.
 - Milestone T - Commercial SaaS and Fleet Management.
@@ -108,6 +114,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_N_INTEGRATION.md`
 - `docs/MILESTONE_O_INTEGRATION.md`
 - `docs/MILESTONE_P_INTEGRATION.md`
+- `docs/MILESTONE_Q_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`

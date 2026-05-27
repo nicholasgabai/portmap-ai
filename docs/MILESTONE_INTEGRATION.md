@@ -1,12 +1,12 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-98 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, and `docs/PHASE_93_98_PLAN.md` remains the Milestone P implementation plan.
+This document is the consolidated integration guide for the completed Phase 44-104 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, `docs/MILESTONE_Q_INTEGRATION.md` provides the detailed Phase 99-104 integration summary, and `docs/PHASE_99_104_PLAN.md` remains the Milestone Q implementation plan.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
-The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering cross-platform runtime hardening, installer packaging, AI security intelligence, future commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. The next implementation plan is `docs/PHASE_99_104_PLAN.md`.
+The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering installer packaging, AI security intelligence, future commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer.
 
 ## Completed Milestones
 
@@ -24,6 +24,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Active Federation Runtime | 83-86 | Runtime manager records, trusted peer lifecycle, runtime exchange scheduler, active federation validation, readiness scores, recommendations, and dashboard/API-ready dictionaries | Complete baseline |
 | Live Network Telemetry | 87-92 | Passive interface discovery, dry-run capture planning, bounded packet metadata windows, transport summaries, replay-safe counters, bidirectional flow reconstruction, service association, topology edges, protocol metadata, fingerprints, confidence scoring, anomaly summaries, dynamic topology correlation, bounded graph controls, replay-safe updates, real-time telemetry dashboard models, and API-ready dictionaries | Complete baseline |
 | Gateway and Telemetry Enrichment | 93-98 | Flow telemetry enrichment, process/service attribution, DNS visibility, gateway/router log ingestion, SPAN/mirror-port readiness, gateway mode validation, export-ready summaries, supported/degraded/unavailable/unsafe states, and dashboard/API-ready dictionaries | Complete baseline |
+| Cross-Platform Runtime Hardening | 99-104 | Runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, unified validation summaries, CLI/table/JSON-ready output, and dashboard/API-ready compatibility dictionaries | Complete baseline |
 
 ## Module Map
 
@@ -80,6 +81,12 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | DNS Visibility | `core_engine.telemetry.dns_visibility`, `core_engine.telemetry.dns_correlation` | Build DNS query/response metadata, domain-to-flow correlations, resolver classifications, timing/error summaries, encrypted DNS limitations, anomaly hints, and safe redaction controls. |
 | Gateway Router Logs | `core_engine.gateway.router_logs`, `core_engine.gateway.log_parsers` | Parse sanitized router/firewall fixtures into metadata-only NAT, allow, deny, malformed, runtime-event, topology, export, dashboard, and API summaries. |
 | Gateway Readiness | `core_engine.gateway.mirror_profiles`, `core_engine.gateway.span_readiness`, `core_engine.gateway.validation`, `core_engine.gateway.operator_views` | Build SPAN/mirror-port readiness records and aggregate telemetry, DNS, router log, topology, runtime, and operator visibility records into gateway validation summaries. |
+| Cross-Platform Runtime Detection | `core_engine.platform.runtime_detection`, `core_engine.platform.capabilities` | Normalize platform family, architecture, Python version, permission state, and runtime, capture, firewall, service, path, and export capability placeholders. |
+| Windows Compatibility | `core_engine.platform.windows_runtime`, `core_engine.platform.windows_paths` | Build Windows-safe path, process/socket visibility, permission, service-preview, runtime profile, fallback, and dashboard/API summaries without changing host state. |
+| Cross-Platform Capture Readiness | `core_engine.platform.capture_readiness`, `core_engine.platform.capture_backends` | Summarize passive capture backend readiness, platform limitations, permission requirements, and raw-payload safety boundaries without starting capture. |
+| Cross-Platform Firewall Readiness | `core_engine.platform.firewall_readiness`, `core_engine.platform.firewall_providers` | Build dry-run firewall provider previews and operator review records for Windows, macOS, Linux, and Raspberry Pi without applying rules. |
+| Filesystem and Export Safety | `core_engine.platform.filesystem_safety`, `core_engine.platform.export_paths` | Classify safe paths, private files, runtime artifacts, export targets, and public documentation safety for cross-platform workflows. |
+| Cross-Platform Validation | `core_engine.platform.validation_summary`, `core_engine.platform.operator_views` | Aggregate platform, capture, firewall, filesystem, export, gateway, service, and runtime health records into CLI/table/JSON and dashboard/API-ready compatibility summaries. |
 
 ## Consolidated Data Flow
 
@@ -200,6 +207,17 @@ bounded packet metadata and reconstructed flows
   -> export-ready and dashboard/API-ready operator records
 ```
 
+Milestone Q target flow:
+
+```text
+runtime and platform detection records
+  -> Windows, macOS, Linux, Raspberry Pi, and unknown compatibility summaries
+  -> packet capture and firewall provider readiness previews
+  -> filesystem and export safety checks
+  -> unified cross-platform validation summary
+  -> CLI/table/JSON, dashboard, and API-ready operator records
+```
+
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.
 
 ## Events Into Storage
@@ -256,6 +274,7 @@ Phase 54-58 modules already expose structured records for platform integration:
 - Trusted peer lifecycle records can validate enroll, approve, pause, resume, revoke, expire, and trust scope update transitions while linking transport sessions and reporting stale, expired, and revoked peers.
 - Runtime exchange scheduler records can plan signed-summary exchange, cluster-state synchronization, and event propagation jobs with interval/backoff metadata and failure counters without executing background jobs.
 - Active federation validation records can score peer, exchange, sync, event, replay, scheduler, and runtime readiness before any live loop execution is enabled.
+- Cross-platform validation records can score runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, service-mode readiness, gateway readiness, and runtime health before installers or production service workflows are enabled.
 
 Target connection:
 

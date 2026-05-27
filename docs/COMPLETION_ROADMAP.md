@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Milestone P and Phase 98, covering Phases 0-98.
+PortMap-AI has completed baseline implementation through Milestone Q and Phase 104, covering Phases 0-104.
 
 Implemented foundation includes:
 
@@ -41,12 +41,20 @@ Implemented foundation includes:
 - Gateway and router log ingestion records with sanitized router/firewall log models, syslog-style parser helpers, NAT and allow/deny summaries, source/destination normalization, timestamp normalization, severity summaries, malformed log handling, runtime event hooks, topology hooks, export-ready summaries, and dashboard/API-ready dictionaries.
 - SPAN and mirror-port readiness records with dry-run profiles, passive capture requirements, interface capability summaries, expected traffic volume warnings, resource budget checks, privilege requirement summaries, packet-loss risk summaries, operator readiness checklists, telemetry scaling summaries, Raspberry Pi resource-awareness summaries, and dashboard/API-ready dictionaries.
 - Gateway mode validation records with telemetry enrichment, DNS visibility, router log, SPAN readiness, topology correlation, runtime health, and operator visibility validation summaries, safety checklists, export summaries, supported/degraded/unavailable/unsafe state models, and dashboard/API-ready dictionaries.
+- Cross-platform runtime detection records for macOS, Linux, Raspberry Pi/Linux ARM, Windows, and unknown platforms, including architecture, Python version, permission state, capability placeholders, and dashboard/API-ready compatibility dictionaries.
+- Windows runtime compatibility records with Windows-safe path normalization, log/export/cache summaries, process/socket visibility capability summaries, permission/elevation records, service-mode readiness previews, runtime profile defaults, degraded fallbacks, and dashboard/API-ready dictionaries.
+- Cross-platform packet capture readiness records for macOS BPF/libpcap, Linux libpcap/AF_PACKET/scapy, Raspberry Pi, and Windows Npcap/WinPcap backends, including permission requirements, passive safety warnings, payload prohibition fields, and dashboard/API-ready dictionaries.
+- Cross-platform firewall provider readiness records for Windows Defender Firewall, macOS pf, Linux nftables/ufw/iptables, and Raspberry Pi, including dry-run rule preview records, permission requirements, provider states, safety warnings, operator review flags, and dashboard/API-ready dictionaries.
+- Cross-platform filesystem and export safety records with safe log, cache, and export path summaries, OS-specific path normalization, artifact exclusion validation, private-file warnings, runtime artifact classification, public-doc safety checks, and dashboard/API-ready dictionaries.
+- Unified cross-platform validation records for macOS, Linux, Raspberry Pi/Linux ARM, and Windows with capture readiness, firewall readiness, filesystem/export safety, aggregate states, operator recommendations, and CLI/table/JSON/dashboard/API-ready output.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
 Milestone O integration is summarized in `docs/MILESTONE_O_INTEGRATION.md`, covering how passive interface discovery, packet metadata windows, flow reconstruction, protocol metadata, dynamic topology, and telemetry dashboard/API summaries connect to runtime, events, storage, topology, drift, federation, and operator visibility.
 
 Milestone P integration is summarized in `docs/MILESTONE_P_INTEGRATION.md`, covering how flow enrichment, process/service attribution, DNS visibility, gateway/router logs, SPAN readiness, and gateway validation connect to live telemetry ingestion, flow reconstruction, protocol metadata, topology correlation, runtime health, gateway readiness, export bundles, and dashboard/API views.
+
+Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`, covering how cross-platform runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, and unified validation summaries connect to runtime health, telemetry readiness, gateway readiness, service-mode readiness, export safety, and Windows/macOS/Linux/Raspberry Pi compatibility.
 
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
@@ -100,7 +108,7 @@ Phases:
 | 97 | SPAN / Mirror-Port Readiness | Complete baseline: add dry-run readiness profiles, passive capture requirements, interface capability summaries, resource warnings, packet-loss risk summaries, operator checklists, telemetry scaling summaries, and dashboard/API dictionaries. |
 | 98 | Gateway Mode Validation | Complete baseline: add sanitized gateway validation records spanning telemetry enrichment, DNS visibility, router logs, SPAN readiness, topology correlation, safety checklist, exports, supported/degraded/unavailable/unsafe states, and dashboard/API dictionaries. |
 
-### Milestone Q - Cross-Platform Runtime Hardening
+### Milestone Q - Cross-Platform Runtime Hardening (Complete Baseline)
 
 Goal:
 Make PortMap-AI reliably testable and operable across macOS, Linux/Raspberry Pi, and Windows before deeper behavioral intelligence and commercial packaging.
@@ -109,12 +117,12 @@ Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 99 | Cross-Platform Runtime Detection | Add platform detection helpers, OS capability summaries, admin/root permission detection, and supported/degraded/unavailable state records. |
-| 100 | Windows Runtime Compatibility | Add Windows path handling, process/socket visibility fallbacks, Windows-safe runtime profile defaults, and Windows service-mode readiness preview only. |
-| 101 | Cross-Platform Packet Capture Readiness | Add macOS/Linux/Windows capture capability summaries, Npcap/WinPcap readiness detection, BPF/libpcap/scapy readiness summaries, and no automatic capture mode changes. |
-| 102 | Cross-Platform Firewall Provider Readiness | Add Windows Defender Firewall, macOS pf, and Linux nftables/ufw/iptables preview providers with dry-run output only and no rule changes. |
-| 103 | Cross-Platform Filesystem and Export Safety | Add safe log path summaries, safe export path summaries, artifact exclusion validation, and OS-specific path normalization. |
-| 104 | Cross-Platform Validation Summary | Add unified macOS/Linux/Raspberry Pi/Windows validation reports with CLI table/JSON output and dashboard/API-ready compatibility summaries. |
+| 99 | Cross-Platform Runtime Detection | Complete baseline: platform detection helpers, platform family records, architecture and Python summaries, permission detection, capability placeholders, and dashboard/API-ready compatibility dictionaries. |
+| 100 | Windows Runtime Compatibility | Complete baseline: Windows-safe path handling, process/socket visibility fallbacks, permission/elevation summaries, runtime profile defaults, service-mode previews, degraded states, and dashboard/API-ready dictionaries. |
+| 101 | Cross-Platform Packet Capture Readiness | Complete baseline: macOS/Linux/Raspberry Pi/Windows capture capability summaries, Npcap/WinPcap readiness, BPF/libpcap/scapy readiness, backend states, passive warnings, and no automatic capture mode changes. |
+| 102 | Cross-Platform Firewall Provider Readiness | Complete baseline: Windows Defender Firewall, macOS pf, Linux nftables/ufw/iptables, and Raspberry Pi dry-run preview providers with rule safety warnings and no rule changes. |
+| 103 | Cross-Platform Filesystem and Export Safety | Complete baseline: safe log/export/cache path summaries, artifact exclusion validation, private-file warnings, runtime artifact classification, public-doc checks, and OS-specific path normalization. |
+| 104 | Cross-Platform Validation Summary | Complete baseline: unified macOS/Linux/Raspberry Pi/Windows validation reports with capture/firewall/filesystem/export rollups, CLI table/JSON output, recommendations, and dashboard/API-ready compatibility summaries. |
 
 ### Future Production Security and Access Control Themes
 

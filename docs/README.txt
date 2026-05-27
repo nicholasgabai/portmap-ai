@@ -8,7 +8,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-98 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-104 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -16,6 +16,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/MILESTONE_N_INTEGRATION.md` - detailed integration summary for Phase 83-86 active federation runtime work.
 - `docs/MILESTONE_O_INTEGRATION.md` - detailed integration summary for Phase 87-92 live network telemetry work.
 - `docs/MILESTONE_P_INTEGRATION.md` - detailed integration summary for Phase 93-98 gateway and telemetry enrichment work.
+- `docs/MILESTONE_Q_INTEGRATION.md` - detailed integration summary for Phase 99-104 cross-platform runtime hardening work.
 - `docs/PHASE_59_64_PLAN.md` - completed milestone plan for runtime pipeline and persistent topology integration.
 - `docs/PHASE_65_70_PLAN.md` - completed milestone plan for unified runtime operations.
 - `docs/PHASE_71_76_PLAN.md` - completed milestone plan for distributed runtime intelligence.
@@ -23,6 +24,12 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_87_92_PLAN.md` - implementation plan for passive live telemetry ingestion, flow reconstruction, protocol metadata, dynamic topology, and telemetry dashboard integration.
 - `docs/PHASE_93_98_PLAN.md` - revised milestone plan for gateway telemetry enrichment, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway validation.
 - `docs/PHASE_99_104_PLAN.md` - milestone plan for cross-platform runtime hardening across macOS, Linux/Raspberry Pi, and Windows.
+- `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
+- `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
+- `docs/cross_platform_packet_capture_readiness.md` - Phase 101 passive packet capture backend readiness, permission, safety warning, and payload prohibition summaries.
+- `docs/cross_platform_firewall_provider_readiness.md` - Phase 102 dry-run firewall provider previews, permission requirements, safety warnings, and operator review flags.
+- `docs/cross_platform_filesystem_export_safety.md` - Phase 103 safe log/export/cache path, artifact exclusion, private-file warning, and public-doc safety summaries.
+- `docs/cross_platform_validation_summary.md` - Phase 104 unified macOS, Linux, Raspberry Pi/Linux ARM, Windows, capture, firewall, filesystem, export, and validation summaries.
 - `docs/flow_telemetry_enrichment.md` - Phase 93 metadata-only flow enrichment records, rolling statistics, direction inference, state transitions, and dashboard/API summaries.
 - `docs/process_service_attribution.md` - Phase 94 process-to-port, service-name, listening socket ownership, degraded platform, and minimized operator display summaries.
 - `docs/dns_visibility_mode.md` - Phase 95 metadata-only DNS query/response visibility, domain-to-flow correlation, resolver classification, anomaly hints, and dashboard/API summaries.
@@ -85,6 +92,12 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/protocol_metadata_extraction.md` - safe HTTP/TLS/DNS metadata summaries, protocol fingerprints, confidence scoring, governance fields, anomaly summaries, and dashboard/API-ready dictionaries.
 - `docs/dynamic_topology_correlation.md` - live node relationship inference, flow-to-topology edge correlation, protocol-aware topology summaries, drift correlation, bounded graph controls, replay-safe updates, and dashboard/API-ready dictionaries.
 - `docs/realtime_telemetry_dashboard.md` - read-only live telemetry dashboard/API models for interface, packet rate, flow rate, topology, protocol, resource, federation, health, bounded update, and empty/stale state summaries.
+- `docs/cross_platform_runtime_detection.md` - cross-platform runtime detection records for platform family, architecture, Python, permissions, capability states, and dashboard/API compatibility.
+- `docs/windows_runtime_compatibility.md` - Windows-safe path normalization, process/socket fallback, service-mode preview, runtime profile, degraded state, and dashboard/API compatibility records.
+- `docs/cross_platform_packet_capture_readiness.md` - passive capture readiness records for macOS, Linux, Raspberry Pi/Linux ARM, and Windows backends without starting capture.
+- `docs/cross_platform_firewall_provider_readiness.md` - dry-run firewall provider readiness records for Windows Defender Firewall, macOS pf, Linux nftables/ufw/iptables, and Raspberry Pi.
+- `docs/cross_platform_filesystem_export_safety.md` - safe filesystem, export path, artifact exclusion, runtime artifact, and public documentation safety records.
+- `docs/cross_platform_validation_summary.md` - unified cross-platform validation summaries with CLI/table/JSON and dashboard/API-ready compatibility output.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.
