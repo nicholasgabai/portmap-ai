@@ -50,6 +50,13 @@ from core_engine.platform.filesystem_safety import (
     validate_artifact_exclusions,
     validate_public_doc_safety,
 )
+from core_engine.platform.operator_views import (
+    build_cross_platform_validation_api_response,
+    build_cross_platform_validation_dashboard_record,
+    build_cross_platform_validation_operator_view,
+    build_cross_platform_validation_table,
+    deterministic_platform_operator_view_json,
+)
 from core_engine.platform.runtime_detection import (
     PLATFORM_FAMILIES,
     PLATFORM_RUNTIME_SAFETY_FLAGS,
@@ -58,6 +65,14 @@ from core_engine.platform.runtime_detection import (
     detect_admin_permission,
     detect_platform_family,
     deterministic_runtime_detection_json,
+)
+from core_engine.platform.validation_summary import (
+    PLATFORM_VALIDATION_SAFETY_FLAGS,
+    build_cli_table_rows,
+    build_cross_platform_validation_report,
+    build_operator_recommendations,
+    deterministic_validation_summary_json,
+    export_validation_summary_json,
 )
 from core_engine.platform.windows_paths import (
     WINDOWS_PATH_SAFETY_FLAGS,
@@ -86,6 +101,7 @@ __all__ = [
     "PLATFORM_CAPABILITY_SAFETY_FLAGS",
     "PLATFORM_FAMILIES",
     "PLATFORM_RUNTIME_SAFETY_FLAGS",
+    "PLATFORM_VALIDATION_SAFETY_FLAGS",
     "WINDOWS_PATH_SAFETY_FLAGS",
     "WINDOWS_RUNTIME_SAFETY_FLAGS",
     "build_capability_status_record",
@@ -95,6 +111,11 @@ __all__ = [
     "build_cross_platform_capture_readiness_report",
     "build_cross_platform_firewall_readiness_report",
     "build_cross_platform_path_summary",
+    "build_cross_platform_validation_api_response",
+    "build_cross_platform_validation_dashboard_record",
+    "build_cross_platform_validation_operator_view",
+    "build_cross_platform_validation_report",
+    "build_cross_platform_validation_table",
     "build_export_path_summary",
     "build_filesystem_safety_report",
     "build_firewall_provider_capability",
@@ -108,6 +129,8 @@ __all__ = [
     "build_platform_runtime_record",
     "build_runtime_compatibility_report",
     "build_service_mode_capability",
+    "build_cli_table_rows",
+    "build_operator_recommendations",
     "build_windows_path_summary",
     "build_windows_permission_summary",
     "build_windows_process_socket_visibility_summary",
@@ -123,10 +146,13 @@ __all__ = [
     "deterministic_firewall_readiness_json",
     "deterministic_export_path_json",
     "deterministic_filesystem_safety_json",
+    "deterministic_platform_operator_view_json",
     "deterministic_platform_capability_json",
     "deterministic_runtime_detection_json",
+    "deterministic_validation_summary_json",
     "deterministic_windows_path_json",
     "deterministic_windows_runtime_json",
+    "export_validation_summary_json",
     "normalize_cross_platform_path",
     "normalize_windows_path",
     "summarize_platform_capabilities",

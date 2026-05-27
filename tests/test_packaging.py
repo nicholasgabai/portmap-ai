@@ -81,6 +81,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/cross_platform_filesystem_export_safety.md" in data_files["share/portmap-ai/docs"]
     assert "docs/cross_platform_packet_capture_readiness.md" in data_files["share/portmap-ai/docs"]
     assert "docs/cross_platform_runtime_detection.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/cross_platform_validation_summary.md" in data_files["share/portmap-ai/docs"]
     assert "docs/cluster_runtime_health.md" in data_files["share/portmap-ai/docs"]
     assert "docs/dashboard_data_providers.md" in data_files["share/portmap-ai/docs"]
     assert "docs/dashboard_foundation.md" in data_files["share/portmap-ai/docs"]
