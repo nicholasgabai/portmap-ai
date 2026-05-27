@@ -140,6 +140,8 @@ Acceptance:
 
 ## Phase 102 - Cross-Platform Firewall Provider Readiness
 
+Status: Complete Baseline
+
 Goal:
 Add dry-run firewall provider readiness previews for Windows, macOS, and Linux without applying rules or enabling enforcement.
 

@@ -102,6 +102,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/configuration.md",
   "docs/coordinated_export_bundles.md",
   "docs/cve_intelligence.md",
+  "docs/cross_platform_firewall_provider_readiness.md",
   "docs/cross_platform_packet_capture_readiness.md",
   "docs/cross_platform_runtime_detection.md",
   "docs/cluster_runtime_health.md",
