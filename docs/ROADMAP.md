@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 104 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_Q_INTEGRATION.md` summarizes Phase 99-104 cross-platform runtime hardening integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 104 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_Q_INTEGRATION.md` summarizes Phase 99-104 cross-platform runtime hardening integration, `docs/PHASE_105_110_PLAN.md` defines the next behavioral intelligence foundation milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -85,12 +85,13 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Milestone R - Installer, Service, and Release Packaging.
-- Milestone S - AI Security Intelligence Layer.
+- Milestone R - Behavioral Intelligence Foundation.
+- Future installer, service, release packaging, production security, and AI intelligence work.
 - Milestone T - Commercial SaaS and Fleet Management.
 
 ## Medium-Term Work
 
+- Add historical behavioral baselines, anomaly windows, service fingerprints, DNS behavior learning, adaptive risk weighting, and operator behavior summaries.
 - Harden service-management packaging for long-running agents.
 - Expand dashboard usability while preserving the terminal-first product direction.
 - Add operator-friendly import/export flows for telemetry and advisory packets.
@@ -122,6 +123,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_87_92_PLAN.md`
 - `docs/PHASE_93_98_PLAN.md`
 - `docs/PHASE_99_104_PLAN.md`
+- `docs/PHASE_105_110_PLAN.md`
 - `docs/event_pipeline.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`

@@ -56,6 +56,8 @@ Milestone P integration is summarized in `docs/MILESTONE_P_INTEGRATION.md`, cove
 
 Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`, covering how cross-platform runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, and unified validation summaries connect to runtime health, telemetry readiness, gateway readiness, service-mode readiness, export safety, and Windows/macOS/Linux/Raspberry Pi compatibility.
 
+Milestone R planning is tracked in `docs/PHASE_105_110_PLAN.md`, covering the first historical behavioral intelligence layer for flow baselines, temporal anomaly windows, service behavior fingerprints, DNS and destination behavior learning, adaptive risk weighting, and operator summaries.
+
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
 ## Completion Milestone Roadmap
@@ -124,6 +126,22 @@ Phases:
 | 103 | Cross-Platform Filesystem and Export Safety | Complete baseline: safe log/export/cache path summaries, artifact exclusion validation, private-file warnings, runtime artifact classification, public-doc checks, and OS-specific path normalization. |
 | 104 | Cross-Platform Validation Summary | Complete baseline: unified macOS/Linux/Raspberry Pi/Windows validation reports with capture/firewall/filesystem/export rollups, CLI table/JSON output, recommendations, and dashboard/API-ready compatibility summaries. |
 
+### Milestone R - Behavioral Intelligence Foundation
+
+Goal:
+Add the first historical behavioral intelligence layer for PortMap-AI so the platform can begin learning normal network behavior over time instead of only showing current telemetry snapshots.
+
+Phases:
+
+| Phase | Name | Focus |
+| --- | --- | --- |
+| 105 | Historical Flow Baselines | Add rolling baseline records for flows, services, ports, and protocols with first-seen and last-seen windows, frequency counters, stable versus new behavior classification, and baseline confidence scoring. |
+| 106 | Temporal Anomaly Windows | Add time-window anomaly records with short, medium, and long summaries, burst detection, rare service timing detection, volume drift hints, and advisory anomaly labels. |
+| 107 | Service Behavior Fingerprints | Add recurring service fingerprint records for port, protocol, process, and service combinations, expected service behavior profiles, unusual service state detection, and fingerprint confidence summaries. |
+| 108 | DNS and Destination Behavior Learning | Add recurring DNS/domain summaries, destination reputation placeholder hooks without external calls, domain frequency and novelty scoring, resolver behavior summaries, and safe redaction/truncation support. |
+| 109 | Adaptive Risk Weighting | Add local adaptive scoring helpers, baseline-aware score adjustments, confidence-aware risk weights, and explanation records for operator review with no automatic enforcement. |
+| 110 | Behavioral Intelligence Operator Summary | Add dashboard/API-ready behavior summaries, export-ready baseline/anomaly summaries, operator recommendations, and supported/degraded/unavailable states. |
+
 ### Future Production Security and Access Control Themes
 
 Goal:
@@ -138,21 +156,19 @@ Candidate future work:
 - Data retention and redaction policy enforcement.
 - Security hardening validation under local and distributed scenarios.
 
-### Milestone R - Installer, Service, and Release Packaging
+### Future Installer, Service, and Release Packaging Themes
 
 Goal:
 Make PortMap-AI installable and maintainable across operating systems.
 
-Phases:
+Candidate future work:
 
-| Phase | Name | Focus |
-| --- | --- | --- |
-| 107 | Linux Service Installer | Add operator-approved Linux service installation, preflight checks, rollback records, and systemd integration. |
-| 108 | macOS Launch Agent Support | Add macOS launch agent templates, install checks, local paths, and operator-controlled startup. |
-| 109 | Windows Service Support | Add Windows service templates, install previews, local configuration paths, and validation workflows. |
-| 110 | Release Build Pipeline | Build repeatable release artifacts, checksums, dependency manifests, and provenance records. |
-| 111 | Upgrade/Rollback Workflow | Provide versioned upgrades, database migrations, backups, rollback plans, and operator confirmation records. |
-| 112 | Installer Validation | Validate install, service, upgrade, rollback, and uninstall paths across supported platforms. |
+- Operator-approved Linux service installation, preflight checks, rollback records, and systemd integration.
+- macOS launch agent templates, install checks, local paths, and operator-controlled startup.
+- Windows service templates, install previews, local configuration paths, and validation workflows.
+- Repeatable release artifacts, checksums, dependency manifests, and provenance records.
+- Versioned upgrades, database migrations, backups, rollback plans, and operator confirmation records.
+- Install, service, upgrade, rollback, and uninstall validation across supported platforms.
 
 ### Milestone S - AI Security Intelligence Layer
 

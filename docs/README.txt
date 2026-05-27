@@ -24,6 +24,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_87_92_PLAN.md` - implementation plan for passive live telemetry ingestion, flow reconstruction, protocol metadata, dynamic topology, and telemetry dashboard integration.
 - `docs/PHASE_93_98_PLAN.md` - revised milestone plan for gateway telemetry enrichment, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway validation.
 - `docs/PHASE_99_104_PLAN.md` - milestone plan for cross-platform runtime hardening across macOS, Linux/Raspberry Pi, and Windows.
+- `docs/PHASE_105_110_PLAN.md` - milestone plan for historical behavioral intelligence baselines, anomaly windows, service fingerprints, DNS learning, adaptive risk weighting, and operator summaries.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
 - `docs/cross_platform_packet_capture_readiness.md` - Phase 101 passive packet capture backend readiness, permission, safety warning, and payload prohibition summaries.
