@@ -40,6 +40,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 105 | Historical flow baselines with rolling metadata-only baseline records for ports, protocols, services, process/service fingerprints, flow tuple digests, and DNS/domain observations, bounded short/medium/long windows, stable/new/recurring/decaying classifications, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 | 106 | Temporal anomaly windows with short/medium/long anomaly records, burst detection summaries, rare service timing, volume drift hints, port/protocol/service novelty labels, baseline-aware advisory confidence scoring, operator-readable explanations, dashboard/API summaries, and export-ready digests | Complete baseline |
 | 107 | Service behavior fingerprints with recurring metadata-only process/service/protocol/port profiles, expected behavior summaries, unusual process-port and protocol-binding labels, dormant service return tracking, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
+| 108 | DNS and destination behavior learning with redacted or hashed domain summaries, resolver hashes, destination placeholders, stable/new/recurring/unusual/dormant/drift labels, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 
 ## Baseline Meaning
 

@@ -8,7 +8,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-107 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-108 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -28,6 +28,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/historical_flow_baselines.md` - Phase 105 rolling metadata-only behavior baselines, bounded windows, stable/new classification, confidence scoring, dashboard/API summaries, and export-ready digests.
 - `docs/temporal_anomaly_windows.md` - Phase 106 short/medium/long anomaly windows, burst detection, rare service timing, volume drift hints, novelty labels, explanations, and dashboard/API/export summaries.
 - `docs/service_behavior_fingerprints.md` - Phase 107 metadata-only service behavior fingerprints, expected profiles, unusual combination labels, dormant service tracking, confidence scoring, and dashboard/API/export summaries.
+- `docs/dns_destination_behavior_learning.md` - Phase 108 redacted or hashed DNS and destination behavior learning, resolver behavior, destination drift hints, confidence scoring, and dashboard/API/export summaries.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
 - `docs/cross_platform_packet_capture_readiness.md` - Phase 101 passive packet capture backend readiness, permission, safety warning, and payload prohibition summaries.

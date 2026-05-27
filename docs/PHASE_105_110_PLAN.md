@@ -142,13 +142,15 @@ Acceptance:
 
 ## Phase 108 - DNS and Destination Behavior Learning
 
+Status: Complete Baseline
+
 Goal:
 Learn recurring DNS, resolver, and destination metadata patterns with safe redaction and no external reputation lookups.
 
 Build:
 
-- `core_engine/behavior/dns_behavior.py`
-- `core_engine/behavior/destination_learning.py`
+- `core_engine/telemetry/dns_behavior.py`
+- `core_engine/telemetry/destination_learning.py`
 - `tests/test_dns_destination_behavior_learning.py`
 - `docs/dns_destination_behavior_learning.md`
 
@@ -158,6 +160,8 @@ Features:
 - Destination reputation placeholder hooks with no external calls.
 - Domain frequency and novelty scoring.
 - Resolver behavior summaries.
+- Stable, unusual, newly observed, dormant-returned, and drifting destination labels.
+- Optional domain hashing helpers.
 - DNS timing and error pattern summaries.
 - Safe domain truncation and redaction support.
 - Encrypted DNS limitation records.
@@ -168,6 +172,7 @@ Acceptance:
 - DNS and destination behavior summaries are deterministic for sanitized fixtures.
 - External reputation services are not called.
 - Domain metadata can be truncated or redacted for public/export use.
+- Resolver and destination IP values are represented through hashes or classification placeholders.
 - Unknown, encrypted, and insufficient-history states degrade safely.
 - No credentials or packet payload contents are retained.
 

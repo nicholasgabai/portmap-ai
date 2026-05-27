@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 107, covering Phases 0-107.
+PortMap-AI has completed baseline implementation through Phase 108, covering Phases 0-108.
 
 Implemented foundation includes:
 
@@ -50,6 +50,7 @@ Implemented foundation includes:
 - Historical flow baseline records for ports, protocols, services, process/service fingerprints, flow tuple digests, and DNS/domain observations with first-seen and last-seen windows, frequency counters, rolling average scores, stable/new/recurring/decaying behavior classification, advisory confidence scoring, bounded window retention, dashboard/API summaries, and export-ready digests.
 - Temporal anomaly window records with short, medium, and long summaries, burst detection, rare service timing, volume drift hints, port/protocol/service novelty labels, baseline-aware anomaly confidence scoring, operator-readable explanations, dashboard/API dictionaries, and export-ready digests.
 - Service behavior fingerprint records for recurring metadata-only process, service, protocol, port, transport, flow role, redacted DNS-summary, runtime platform, interface class, and direction combinations with expected profile summaries, unusual combination labels, dormant service return tracking, advisory confidence scoring, dashboard/API dictionaries, and export-ready digests.
+- DNS and destination behavior records for redacted or hashed domain summaries, resolver hashes, destination classification placeholders, recurrence timing, novelty, stable/new/recurring/unusual/dormant/drift labels, advisory confidence scoring, dashboard/API summaries, and export-ready digests.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -141,7 +142,7 @@ Phases:
 | 105 | Historical Flow Baselines | Complete baseline: rolling metadata-only baseline records for flows, services, ports, protocols, process/service fingerprints, and DNS/domain observations with first-seen and last-seen windows, frequency counters, stable versus new classification, bounded windows, confidence scoring, dashboard/API summaries, and export-ready digests. |
 | 106 | Temporal Anomaly Windows | Complete baseline: time-window anomaly records with short, medium, and long summaries, burst detection, rare service timing detection, volume drift hints, novelty labels, advisory confidence scoring, operator explanations, dashboard/API dictionaries, and export-ready digests. |
 | 107 | Service Behavior Fingerprints | Complete baseline: recurring metadata-only service fingerprint records for process, service, protocol, port, transport, flow role, redacted DNS-summary, runtime platform, interface class, and direction combinations with expected service behavior profiles, unusual combination labels, dormant service return tracking, confidence summaries, dashboard/API dictionaries, and export-ready digests. |
-| 108 | DNS and Destination Behavior Learning | Add recurring DNS/domain summaries, destination reputation placeholder hooks without external calls, domain frequency and novelty scoring, resolver behavior summaries, and safe redaction/truncation support. |
+| 108 | DNS and Destination Behavior Learning | Complete baseline: recurring redacted or hashed DNS/domain summaries, resolver hashes, destination classification placeholders, domain frequency and novelty scoring, stable/unusual/new/dormant/drift labels, confidence summaries, dashboard/API dictionaries, and export-ready digests with no external reputation calls. |
 | 109 | Adaptive Risk Weighting | Add local adaptive scoring helpers, baseline-aware score adjustments, confidence-aware risk weights, and explanation records for operator review with no automatic enforcement. |
 | 110 | Behavioral Intelligence Operator Summary | Add dashboard/API-ready behavior summaries, export-ready baseline/anomaly summaries, operator recommendations, and supported/degraded/unavailable states. |
 
