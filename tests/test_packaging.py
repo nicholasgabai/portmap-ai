@@ -72,6 +72,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/alerting_siem_integrations.md" in data_files["share/portmap-ai/docs"]
     assert "docs/quick_start.md" in data_files["share/portmap-ai/docs"]
     assert "docs/architecture.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/adaptive_risk_weighting.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ai_behavioral_learning.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ai_layer.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ai_payload_classification.md" in data_files["share/portmap-ai/docs"]

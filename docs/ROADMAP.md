@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 108 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_Q_INTEGRATION.md` summarizes Phase 99-104 cross-platform runtime hardening integration, `docs/PHASE_105_110_PLAN.md` defines the current behavioral intelligence foundation milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 109 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_Q_INTEGRATION.md` summarizes Phase 99-104 cross-platform runtime hardening integration, `docs/PHASE_105_110_PLAN.md` defines the current behavioral intelligence foundation milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -26,10 +26,11 @@ This roadmap summarizes the current direction after the Phase 108 baseline. `POR
 | 106 | Behavioral intelligence foundation: temporal anomaly windows with short/medium/long anomaly records, burst detection, rare service timing, volume drift hints, baseline-aware labels, advisory confidence, explanations, and dashboard/API/export summaries | Complete baseline |
 | 107 | Behavioral intelligence foundation: service behavior fingerprints with recurring metadata-only process/service/protocol/port profiles, unusual combination labels, dormant service return tracking, confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 | 108 | Behavioral intelligence foundation: DNS and destination behavior learning with redacted or hashed domain summaries, resolver hashes, destination placeholders, stable/new/recurring/unusual/dormant/drift labels, confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
+| 109 | Behavioral intelligence foundation: adaptive risk weighting with baseline-aware score reductions, novelty and anomaly increases, unusual service and destination weighting, confidence dampening, no-enforcement explanations, dashboard/API summaries, and export-ready digests | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-108 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-109 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -82,6 +83,7 @@ Current stable posture:
 - Temporal anomaly windows now summarize short, medium, and long behavior changes against local baselines with burst detection, rare service timing, volume drift hints, port/protocol/service novelty labels, advisory confidence scoring, operator explanations, dashboard/API dictionaries, and export-ready digests.
 - Service behavior fingerprints now track recurring metadata-only process, service, protocol, port, transport, flow role, redacted DNS-summary, runtime platform, interface class, and direction combinations with expected profile summaries, unusual combination labels, dormant service return tracking, confidence scoring, dashboard/API dictionaries, and export-ready digests.
 - DNS and destination behavior learning now tracks recurring redacted or hashed domain summaries, resolver hashes, destination IP classification placeholders, destination frequency, recurrence timing, novelty, confidence, unusual resolver behavior, dormant destination returns, drift hints, dashboard/API dictionaries, and export-ready digests without external reputation calls.
+- Adaptive risk weighting now adjusts advisory scores using local historical baselines, temporal anomalies, service fingerprints, and DNS/destination behavior with confidence-aware dampening, no-enforcement explanations, dashboard/API dictionaries, and export-ready digests.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.

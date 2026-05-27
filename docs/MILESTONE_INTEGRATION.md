@@ -1,6 +1,6 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-108 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, `docs/MILESTONE_Q_INTEGRATION.md` provides the detailed Phase 99-104 integration summary, and `docs/PHASE_105_110_PLAN.md` remains the Milestone R implementation plan.
+This document is the consolidated integration guide for the completed Phase 44-109 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, `docs/MILESTONE_Q_INTEGRATION.md` provides the detailed Phase 99-104 integration summary, and `docs/PHASE_105_110_PLAN.md` remains the Milestone R implementation plan.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
@@ -25,6 +25,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Live Network Telemetry | 87-92 | Passive interface discovery, dry-run capture planning, bounded packet metadata windows, transport summaries, replay-safe counters, bidirectional flow reconstruction, service association, topology edges, protocol metadata, fingerprints, confidence scoring, anomaly summaries, dynamic topology correlation, bounded graph controls, replay-safe updates, real-time telemetry dashboard models, and API-ready dictionaries | Complete baseline |
 | Gateway and Telemetry Enrichment | 93-98 | Flow telemetry enrichment, process/service attribution, DNS visibility, gateway/router log ingestion, SPAN/mirror-port readiness, gateway mode validation, export-ready summaries, supported/degraded/unavailable/unsafe states, and dashboard/API-ready dictionaries | Complete baseline |
 | Cross-Platform Runtime Hardening | 99-104 | Runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, unified validation summaries, CLI/table/JSON-ready output, and dashboard/API-ready compatibility dictionaries | Complete baseline |
+| Behavioral Intelligence Foundation | 105-109 | Historical flow baselines, temporal anomaly windows, service behavior fingerprints, DNS/destination behavior learning, adaptive risk weighting, operator explanations, export-ready digests, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Module Map
 
@@ -91,6 +92,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Temporal Anomaly Windows | `core_engine.telemetry.temporal_anomalies`, `core_engine.telemetry.anomaly_windows` | Build short, medium, and long anomaly windows with burst, rare service timing, volume drift, novelty labels, advisory confidence scoring, operator explanations, dashboard/API dictionaries, and export-ready digests. |
 | Service Behavior Fingerprints | `core_engine.telemetry.service_fingerprints`, `core_engine.telemetry.fingerprint_profiles` | Build recurring metadata-only service profiles for process, service, protocol, port, transport, flow role, redacted DNS-summary, platform, interface, and direction combinations with unusual combination labels, dormant service return tracking, confidence scoring, dashboard/API summaries, and export-ready digests. |
 | DNS and Destination Behavior Learning | `core_engine.telemetry.dns_behavior`, `core_engine.telemetry.destination_learning` | Build recurring DNS and destination profiles with redacted or hashed domains, resolver hashes, destination placeholders, novelty and drift hints, unusual resolver labels, confidence scoring, dashboard/API summaries, and export-ready digests. |
+| Adaptive Risk Weighting | `core_engine.telemetry.adaptive_risk`, `core_engine.telemetry.risk_weights` | Adjust advisory scores using local baseline, anomaly, service fingerprint, and DNS/destination behavior context with confidence dampening, no-enforcement explanations, dashboard/API summaries, and export-ready digests. |
 
 ## Consolidated Data Flow
 
@@ -279,6 +281,7 @@ Phase 54-58 modules already expose structured records for platform integration:
 - Runtime exchange scheduler records can plan signed-summary exchange, cluster-state synchronization, and event propagation jobs with interval/backoff metadata and failure counters without executing background jobs.
 - Active federation validation records can score peer, exchange, sync, event, replay, scheduler, and runtime readiness before any live loop execution is enabled.
 - Cross-platform validation records can score runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, service-mode readiness, gateway readiness, and runtime health before installers or production service workflows are enabled.
+- Adaptive risk records can combine historical baselines, temporal anomalies, service fingerprints, and DNS/destination behavior into operator-readable advisory score explanations without enforcement.
 
 Target connection:
 
@@ -388,6 +391,7 @@ Default binding should remain localhost-only whenever a runtime API is explicitl
 - Federation diagnostics with readiness scoring, recommendation records, and local health events.
 - Federation dashboard/API readiness views for trusted peers, transports, signed exchanges, sync windows, events, diagnostics, readiness, and counters.
 - Federation runtime manager records with peer enrollment summaries, planned signed exchange/sync/event loops, per-peer counters, and runtime dashboard/API state.
+- Adaptive risk weighting records with base and adjusted scores, behavioral context, confidence-aware adjustments, no-enforcement explanations, dashboard/API summaries, and export-ready digests.
 
 ## What Is Not Wired Together Yet
 

@@ -178,13 +178,15 @@ Acceptance:
 
 ## Phase 109 - Adaptive Risk Weighting
 
+Status: Complete Baseline
+
 Goal:
 Add local baseline-aware scoring helpers that adjust advisory risk using confidence, novelty, frequency, and temporal anomaly context.
 
 Build:
 
-- `core_engine/behavior/adaptive_risk.py`
-- `core_engine/behavior/risk_explanations.py`
+- `core_engine/telemetry/adaptive_risk.py`
+- `core_engine/telemetry/risk_weights.py`
 - `tests/test_adaptive_risk_weighting.py`
 - `docs/adaptive_risk_weighting.md`
 
@@ -195,7 +197,9 @@ Features:
 - Confidence-aware risk weights.
 - Novelty, recurrence, burst, and unusual service weighting.
 - Explanation records for operator review.
-- Finding and review queue integration hooks.
+- Baseline, anomaly, service fingerprint, and DNS/destination context records.
+- No-enforcement explanation fields.
+- Telemetry operator summary integration.
 - Export-ready risk explanation summaries.
 - Dashboard/API-ready adaptive risk dictionaries.
 
@@ -206,6 +210,7 @@ Acceptance:
 - Explanation records include evidence references and confidence values.
 - No automatic enforcement, blocking, firewall modification, or remediation execution is added.
 - Low-confidence inputs reduce certainty instead of inflating severity.
+- `enforcement_allowed` remains false by default.
 
 ## Phase 110 - Behavioral Intelligence Operator Summary
 
