@@ -19,12 +19,29 @@ from core_engine.platform.runtime_detection import (
     detect_platform_family,
     deterministic_runtime_detection_json,
 )
+from core_engine.platform.windows_paths import (
+    WINDOWS_PATH_SAFETY_FLAGS,
+    build_windows_path_summary,
+    deterministic_windows_path_json,
+    normalize_windows_path,
+)
+from core_engine.platform.windows_runtime import (
+    WINDOWS_RUNTIME_SAFETY_FLAGS,
+    build_windows_permission_summary,
+    build_windows_process_socket_visibility_summary,
+    build_windows_runtime_compatibility_report,
+    build_windows_runtime_profile_defaults,
+    build_windows_service_mode_preview,
+    deterministic_windows_runtime_json,
+)
 
 __all__ = [
     "CAPABILITY_STATUSES",
     "PLATFORM_CAPABILITY_SAFETY_FLAGS",
     "PLATFORM_FAMILIES",
     "PLATFORM_RUNTIME_SAFETY_FLAGS",
+    "WINDOWS_PATH_SAFETY_FLAGS",
+    "WINDOWS_RUNTIME_SAFETY_FLAGS",
     "build_capability_status_record",
     "build_firewall_provider_capability",
     "build_packet_capture_capability",
@@ -33,9 +50,18 @@ __all__ = [
     "build_platform_runtime_record",
     "build_runtime_compatibility_report",
     "build_service_mode_capability",
+    "build_windows_path_summary",
+    "build_windows_permission_summary",
+    "build_windows_process_socket_visibility_summary",
+    "build_windows_runtime_compatibility_report",
+    "build_windows_runtime_profile_defaults",
+    "build_windows_service_mode_preview",
     "detect_admin_permission",
     "detect_platform_family",
     "deterministic_platform_capability_json",
     "deterministic_runtime_detection_json",
+    "deterministic_windows_path_json",
+    "deterministic_windows_runtime_json",
+    "normalize_windows_path",
     "summarize_platform_capabilities",
 ]

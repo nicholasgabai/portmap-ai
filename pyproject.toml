@@ -192,6 +192,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/unified_configuration_profiles.md",
   "docs/visualization_gui_platform.md",
   "docs/vulnerability_correlation.md",
+  "docs/windows_runtime_compatibility.md",
 ]
 "share/portmap-ai/docs/archive" = [
   "docs/archive/PHASE_44_53_INTEGRATION_PLAN.md",

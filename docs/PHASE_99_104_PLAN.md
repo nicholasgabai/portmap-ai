@@ -73,13 +73,15 @@ Acceptance:
 
 ## Phase 100 - Windows Runtime Compatibility
 
+Status: Complete Baseline
+
 Goal:
 Add Windows compatibility helpers for paths, process/socket visibility fallbacks, runtime profile defaults, and service-mode preview behavior.
 
 Build:
 
-- `core_engine/platform/windows_compat.py`
-- `core_engine/platform/windows_profiles.py`
+- `core_engine/platform/windows_runtime.py`
+- `core_engine/platform/windows_paths.py`
 - `tests/test_windows_runtime_compatibility.py`
 - `docs/windows_runtime_compatibility.md`
 
