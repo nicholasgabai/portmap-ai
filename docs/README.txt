@@ -8,7 +8,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-109 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-110 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -30,6 +30,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/service_behavior_fingerprints.md` - Phase 107 metadata-only service behavior fingerprints, expected profiles, unusual combination labels, dormant service tracking, confidence scoring, and dashboard/API/export summaries.
 - `docs/dns_destination_behavior_learning.md` - Phase 108 redacted or hashed DNS and destination behavior learning, resolver behavior, destination drift hints, confidence scoring, and dashboard/API/export summaries.
 - `docs/adaptive_risk_weighting.md` - Phase 109 local baseline-aware adaptive risk weighting, confidence-aware adjustments, no-enforcement explanations, dashboard/API summaries, and export-ready digests.
+- `docs/behavioral_intelligence_operator_summary.md` - Phase 110 unified behavioral intelligence rollups, supported/degraded/unavailable states, advisory recommendations, dashboard/API views, and export-ready digests.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
 - `docs/cross_platform_packet_capture_readiness.md` - Phase 101 passive packet capture backend readiness, permission, safety warning, and payload prohibition summaries.
@@ -107,6 +108,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/historical_flow_baselines.md` - historical flow baseline records for ports, protocols, services, process/service fingerprints, flow tuple digests, DNS/domain observations, bounded windows, classifications, and export-ready summaries.
 - `docs/temporal_anomaly_windows.md` - temporal anomaly window records for burst, rarity, drift, and novelty labels over local metadata-only behavior baselines.
 - `docs/adaptive_risk_weighting.md` - adaptive advisory score weighting from historical baselines, temporal anomalies, service fingerprints, and DNS/destination behavior with enforcement disabled by default.
+- `docs/behavioral_intelligence_operator_summary.md` - unified behavioral intelligence operator summaries across baselines, anomalies, service fingerprints, DNS/destination learning, and adaptive risk.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.

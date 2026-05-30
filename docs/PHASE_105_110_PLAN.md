@@ -214,13 +214,15 @@ Acceptance:
 
 ## Phase 110 - Behavioral Intelligence Operator Summary
 
+Status: Complete Baseline
+
 Goal:
 Summarize baselines, anomaly windows, service fingerprints, DNS behavior, and adaptive risk into operator-ready dashboard/API, review, and export records.
 
 Build:
 
-- `core_engine/behavior/operator_summary.py`
-- `gui/web/behavior_views.py`
+- `core_engine/telemetry/behavior_summary.py`
+- `core_engine/telemetry/behavior_operator_views.py`
 - `tests/test_behavioral_intelligence_operator_summary.py`
 - `docs/behavioral_intelligence_operator_summary.md`
 
@@ -232,7 +234,9 @@ Features:
 - Supported, degraded, unavailable, and insufficient-history state records.
 - Baseline, anomaly, service fingerprint, DNS behavior, and adaptive risk rollups.
 - Review-ready recommendation records.
-- Resource and retention summaries.
+- Privacy and safety field summaries.
+- Advisory-only explanation records.
+- Live telemetry operator panel integration.
 - Federation-safe behavior summary dictionaries.
 
 Acceptance:

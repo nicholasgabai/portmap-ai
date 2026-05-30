@@ -42,6 +42,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 107 | Service behavior fingerprints with recurring metadata-only process/service/protocol/port profiles, expected behavior summaries, unusual process-port and protocol-binding labels, dormant service return tracking, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 | 108 | DNS and destination behavior learning with redacted or hashed domain summaries, resolver hashes, destination placeholders, stable/new/recurring/unusual/dormant/drift labels, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 | 109 | Adaptive risk weighting with baseline-aware score reductions, novelty and anomaly score increases, unusual service and destination weighting, confidence dampening, no-enforcement explanations, dashboard/API summaries, and export-ready digests | Complete baseline |
+| 110 | Behavioral intelligence operator summaries with baseline, anomaly, service fingerprint, DNS/destination, and adaptive risk rollups, supported/degraded/unavailable states, advisory recommendations, explanation records, dashboard/API views, and export-ready digests | Complete baseline |
 
 ## Baseline Meaning
 

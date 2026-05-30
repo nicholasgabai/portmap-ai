@@ -7,6 +7,7 @@ from typing import Any, Iterable
 from core_engine.telemetry.flows import summarize_flows
 from core_engine.telemetry.interfaces import TELEMETRY_SAFETY_FLAGS
 from core_engine.telemetry.adaptive_risk import build_adaptive_risk_operator_panel
+from core_engine.telemetry.behavior_operator_views import build_behavioral_intelligence_operator_view
 from core_engine.telemetry.dns_behavior import build_dns_destination_operator_panel
 from core_engine.telemetry.service_fingerprints import build_service_fingerprint_operator_panel
 
@@ -42,6 +43,7 @@ def build_live_telemetry_operator_summary(
     service_fingerprint_report: dict[str, Any] | None = None,
     dns_destination_behavior_report: dict[str, Any] | None = None,
     adaptive_risk_report: dict[str, Any] | None = None,
+    behavioral_intelligence_summary: dict[str, Any] | None = None,
     runtime_health: dict[str, Any] | None = None,
     federation_diagnostics: dict[str, Any] | None = None,
     operator_visibility: dict[str, Any] | None = None,
@@ -80,6 +82,8 @@ def build_live_telemetry_operator_summary(
         panels["dns_destination_behavior"] = build_dns_destination_operator_panel(dns_destination_behavior_report, generated_at=timestamp)
     if adaptive_risk_report is not None:
         panels["adaptive_risk"] = build_adaptive_risk_operator_panel(adaptive_risk_report, generated_at=timestamp)
+    if behavioral_intelligence_summary is not None:
+        panels["behavioral_intelligence"] = build_behavioral_intelligence_operator_view(behavioral_intelligence_summary, generated_at=timestamp)
     update_controls = build_bounded_update_interval_controls(
         requested_update_interval_seconds=requested_update_interval_seconds,
         min_update_interval_seconds=min_update_interval_seconds,
@@ -99,6 +103,7 @@ def build_live_telemetry_operator_summary(
             service_fingerprint_report,
             dns_destination_behavior_report,
             adaptive_risk_report,
+            behavioral_intelligence_summary,
             runtime_health,
             federation_diagnostics,
             operator_visibility,
@@ -487,6 +492,11 @@ def summarize_live_telemetry_panels(
     fingerprint_count = int(metrics.get("service_fingerprints", {}).get("profile_count") or 0)
     dns_destination_count = int(metrics.get("dns_destination_behavior", {}).get("destination_count") or 0)
     adaptive_risk_count = int(metrics.get("adaptive_risk", {}).get("record_count") or 0)
+    behavioral_component_count = (
+        int(metrics.get("behavioral_intelligence", {}).get("supported_component_count") or 0)
+        + int(metrics.get("behavioral_intelligence", {}).get("degraded_component_count") or 0)
+    )
+    behavioral_review_count = int(metrics.get("behavioral_intelligence", {}).get("recommended_review_count") or 0)
     return {
         "record_type": "live_telemetry_dashboard_summary",
         "generated_at": generated_at or _now(),
@@ -502,8 +512,10 @@ def summarize_live_telemetry_panels(
         "service_fingerprint_count": fingerprint_count,
         "dns_destination_behavior_count": dns_destination_count,
         "adaptive_risk_count": adaptive_risk_count,
+        "behavioral_component_count": behavioral_component_count,
+        "behavioral_recommendation_count": behavioral_review_count,
         "federation_aware": bool(metrics.get("federation_rollup", {}).get("federation_aware")),
-        "empty_state": not any((interface_count, packet_count, flow_count, topology_node_count, protocol_count, behavior_count, anomaly_count, fingerprint_count, dns_destination_count, adaptive_risk_count)),
+        "empty_state": not any((interface_count, packet_count, flow_count, topology_node_count, protocol_count, behavior_count, anomaly_count, fingerprint_count, dns_destination_count, adaptive_risk_count, behavioral_component_count, behavioral_review_count)),
         "stale": bool(stale_state.get("stale")),
         **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
     }

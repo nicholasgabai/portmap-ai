@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 109, covering Phases 0-109.
+PortMap-AI has completed baseline implementation through Phase 110, covering Phases 0-110.
 
 Implemented foundation includes:
 
@@ -52,6 +52,7 @@ Implemented foundation includes:
 - Service behavior fingerprint records for recurring metadata-only process, service, protocol, port, transport, flow role, redacted DNS-summary, runtime platform, interface class, and direction combinations with expected profile summaries, unusual combination labels, dormant service return tracking, advisory confidence scoring, dashboard/API dictionaries, and export-ready digests.
 - DNS and destination behavior records for redacted or hashed domain summaries, resolver hashes, destination classification placeholders, recurrence timing, novelty, stable/new/recurring/unusual/dormant/drift labels, advisory confidence scoring, dashboard/API summaries, and export-ready digests.
 - Adaptive risk weighting records with base and adjusted advisory scores, baseline context, temporal anomaly context, service fingerprint context, DNS/destination context, confidence-aware adjustments, no-enforcement explanation records, dashboard/API summaries, and export-ready digests.
+- Behavioral intelligence operator summary records with baseline, anomaly, service fingerprint, DNS/destination, and adaptive risk rollups, supported/degraded/unavailable states, advisory recommendation records, explanation records, dashboard/API views, privacy/safety summaries, and export-ready digests.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -61,7 +62,7 @@ Milestone P integration is summarized in `docs/MILESTONE_P_INTEGRATION.md`, cove
 
 Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`, covering how cross-platform runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, and unified validation summaries connect to runtime health, telemetry readiness, gateway readiness, service-mode readiness, export safety, and Windows/macOS/Linux/Raspberry Pi compatibility.
 
-Milestone R planning is tracked in `docs/PHASE_105_110_PLAN.md`, covering the first historical behavioral intelligence layer for flow baselines, temporal anomaly windows, service behavior fingerprints, DNS and destination behavior learning, adaptive risk weighting, and operator summaries.
+Milestone R baseline tracking is in `docs/PHASE_105_110_PLAN.md`, covering the first historical behavioral intelligence layer for flow baselines, temporal anomaly windows, service behavior fingerprints, DNS and destination behavior learning, adaptive risk weighting, and operator summaries.
 
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
@@ -131,7 +132,7 @@ Phases:
 | 103 | Cross-Platform Filesystem and Export Safety | Complete baseline: safe log/export/cache path summaries, artifact exclusion validation, private-file warnings, runtime artifact classification, public-doc checks, and OS-specific path normalization. |
 | 104 | Cross-Platform Validation Summary | Complete baseline: unified macOS/Linux/Raspberry Pi/Windows validation reports with capture/firewall/filesystem/export rollups, CLI table/JSON output, recommendations, and dashboard/API-ready compatibility summaries. |
 
-### Milestone R - Behavioral Intelligence Foundation
+### Milestone R - Behavioral Intelligence Foundation (Complete Baseline)
 
 Goal:
 Add the first historical behavioral intelligence layer for PortMap-AI so the platform can begin learning normal network behavior over time instead of only showing current telemetry snapshots.
@@ -145,7 +146,7 @@ Phases:
 | 107 | Service Behavior Fingerprints | Complete baseline: recurring metadata-only service fingerprint records for process, service, protocol, port, transport, flow role, redacted DNS-summary, runtime platform, interface class, and direction combinations with expected service behavior profiles, unusual combination labels, dormant service return tracking, confidence summaries, dashboard/API dictionaries, and export-ready digests. |
 | 108 | DNS and Destination Behavior Learning | Complete baseline: recurring redacted or hashed DNS/domain summaries, resolver hashes, destination classification placeholders, domain frequency and novelty scoring, stable/unusual/new/dormant/drift labels, confidence summaries, dashboard/API dictionaries, and export-ready digests with no external reputation calls. |
 | 109 | Adaptive Risk Weighting | Complete baseline: local adaptive scoring helpers with stable behavior reductions, novelty and anomaly increases, unusual service and destination weighting, low-confidence dampening, no-enforcement explanations, dashboard/API dictionaries, and export-ready digests. |
-| 110 | Behavioral Intelligence Operator Summary | Add dashboard/API-ready behavior summaries, export-ready baseline/anomaly summaries, operator recommendations, and supported/degraded/unavailable states. |
+| 110 | Behavioral Intelligence Operator Summary | Complete baseline: unified operator summaries across baselines, anomalies, service fingerprints, DNS/destination learning, and adaptive risk with supported/degraded/unavailable states, recommendations, explanations, dashboard/API views, and export-ready digests. |
 
 ### Future Production Security and Access Control Themes
 

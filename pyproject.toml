@@ -102,6 +102,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/ai_recommendation_engine.md",
   "docs/beginner_guide.md",
   "docs/behavior_correlation.md",
+  "docs/behavioral_intelligence_operator_summary.md",
   "docs/configuration.md",
   "docs/coordinated_export_bundles.md",
   "docs/cve_intelligence.md",
