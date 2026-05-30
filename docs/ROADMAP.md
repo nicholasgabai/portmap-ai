@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 110 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_Q_INTEGRATION.md` summarizes Phase 99-104 cross-platform runtime hardening integration, `docs/PHASE_105_110_PLAN.md` defines the current behavioral intelligence foundation milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 110 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -22,12 +22,7 @@ This roadmap summarizes the current direction after the Phase 110 baseline. `POR
 | 87-92 | Live network telemetry: passive interface discovery, bounded packet metadata windows, flow reconstruction, protocol metadata extraction, dynamic topology correlation, and real-time telemetry dashboard/API summaries | Complete baseline |
 | 93-98 | Gateway and telemetry enrichment: enriched flow observations, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway mode validation | Complete baseline |
 | 99-104 | Cross-platform runtime hardening: runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, and unified validation summaries | Complete baseline |
-| 105 | Behavioral intelligence foundation: historical flow baselines with rolling metadata-only baseline records, bounded windows, stable/new behavior classification, confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
-| 106 | Behavioral intelligence foundation: temporal anomaly windows with short/medium/long anomaly records, burst detection, rare service timing, volume drift hints, baseline-aware labels, advisory confidence, explanations, and dashboard/API/export summaries | Complete baseline |
-| 107 | Behavioral intelligence foundation: service behavior fingerprints with recurring metadata-only process/service/protocol/port profiles, unusual combination labels, dormant service return tracking, confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
-| 108 | Behavioral intelligence foundation: DNS and destination behavior learning with redacted or hashed domain summaries, resolver hashes, destination placeholders, stable/new/recurring/unusual/dormant/drift labels, confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
-| 109 | Behavioral intelligence foundation: adaptive risk weighting with baseline-aware score reductions, novelty and anomaly increases, unusual service and destination weighting, confidence dampening, no-enforcement explanations, dashboard/API summaries, and export-ready digests | Complete baseline |
-| 110 | Behavioral intelligence foundation: unified operator summaries with baseline, anomaly, service fingerprint, DNS/destination, and adaptive risk rollups, supported/degraded/unavailable states, recommendations, explanations, dashboard/API views, and export-ready digests | Complete baseline |
+| 105-110 | Behavioral intelligence foundation: historical flow baselines, temporal anomaly windows, service behavior fingerprints, DNS/destination behavior learning, adaptive risk weighting, and unified operator summaries | Complete baseline |
 
 ## Current Implementation State
 
@@ -97,7 +92,6 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Milestone R - Behavioral Intelligence Foundation.
 - Future installer, service, release packaging, production security, and AI intelligence work.
 - Milestone T - Commercial SaaS and Fleet Management.
 
@@ -128,6 +122,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_O_INTEGRATION.md`
 - `docs/MILESTONE_P_INTEGRATION.md`
 - `docs/MILESTONE_Q_INTEGRATION.md`
+- `docs/MILESTONE_R_INTEGRATION.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
 - `docs/PHASE_71_76_PLAN.md`

@@ -17,6 +17,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/MILESTONE_O_INTEGRATION.md` - detailed integration summary for Phase 87-92 live network telemetry work.
 - `docs/MILESTONE_P_INTEGRATION.md` - detailed integration summary for Phase 93-98 gateway and telemetry enrichment work.
 - `docs/MILESTONE_Q_INTEGRATION.md` - detailed integration summary for Phase 99-104 cross-platform runtime hardening work.
+- `docs/MILESTONE_R_INTEGRATION.md` - detailed integration summary for Phase 105-110 behavioral intelligence foundation work.
 - `docs/PHASE_59_64_PLAN.md` - completed milestone plan for runtime pipeline and persistent topology integration.
 - `docs/PHASE_65_70_PLAN.md` - completed milestone plan for unified runtime operations.
 - `docs/PHASE_71_76_PLAN.md` - completed milestone plan for distributed runtime intelligence.
@@ -31,6 +32,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/dns_destination_behavior_learning.md` - Phase 108 redacted or hashed DNS and destination behavior learning, resolver behavior, destination drift hints, confidence scoring, and dashboard/API/export summaries.
 - `docs/adaptive_risk_weighting.md` - Phase 109 local baseline-aware adaptive risk weighting, confidence-aware adjustments, no-enforcement explanations, dashboard/API summaries, and export-ready digests.
 - `docs/behavioral_intelligence_operator_summary.md` - Phase 110 unified behavioral intelligence rollups, supported/degraded/unavailable states, advisory recommendations, dashboard/API views, and export-ready digests.
+- `docs/MILESTONE_R_INTEGRATION.md` - Milestone R connection map for behavioral baselines, anomalies, fingerprints, DNS/destination learning, adaptive risk, operator summaries, exports, dashboard/API views, gateway readiness, and platform compatibility.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
 - `docs/cross_platform_packet_capture_readiness.md` - Phase 101 passive packet capture backend readiness, permission, safety warning, and payload prohibition summaries.

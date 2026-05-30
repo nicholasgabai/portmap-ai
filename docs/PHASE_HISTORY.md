@@ -54,7 +54,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering Milestone R behavioral intelligence and later production themes. Milestone Q implementation planning is tracked in `docs/PHASE_99_104_PLAN.md`, Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`, and Milestone R implementation planning is tracked in `docs/PHASE_105_110_PLAN.md`.
+The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening and later commercial themes. Milestone Q implementation planning is tracked in `docs/PHASE_99_104_PLAN.md`, Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`, and Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`.
 
 ## References
 
@@ -70,6 +70,7 @@ The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.
 - `docs/MILESTONE_O_INTEGRATION.md`
 - `docs/MILESTONE_P_INTEGRATION.md`
 - `docs/MILESTONE_Q_INTEGRATION.md`
+- `docs/MILESTONE_R_INTEGRATION.md`
 - `docs/PHASE_99_104_PLAN.md`
 - `docs/PHASE_105_110_PLAN.md`
 - `docs/ROADMAP.md`
