@@ -105,13 +105,15 @@ Acceptance:
 
 ## Phase 113 - Long-Term Topology Evolution
 
+Status: Complete Baseline
+
 Goal:
 Summarize how topology relationships evolve over time using stored metadata snapshots and bounded history.
 
 Build:
 
-- `core_engine/telemetry/topology_evolution.py`
-- `core_engine/telemetry/relationship_history.py`
+- `core_engine/history/topology_evolution.py`
+- `core_engine/history/relationship_history.py`
 - `tests/test_long_term_topology_evolution.py`
 - `docs/long_term_topology_evolution.md`
 

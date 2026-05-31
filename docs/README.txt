@@ -35,6 +35,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/behavioral_intelligence_operator_summary.md` - Phase 110 unified behavioral intelligence rollups, supported/degraded/unavailable states, advisory recommendations, dashboard/API views, and export-ready digests.
 - `docs/historical_snapshot_persistence.md` - Phase 111 metadata-only historical snapshot persistence, bounded rotation, export-safe summaries, and dashboard/API-safe snapshot dictionaries.
 - `docs/baseline_aging_decay.md` - Phase 112 baseline aging policies, confidence decay, inactive/stale/dormant behavior summaries, maturity scoring, and export-safe decay records.
+- `docs/long_term_topology_evolution.md` - Phase 113 long-term topology evolution, relationship history, stable/transient classifications, topology drift, and communication path summaries.
 - `docs/MILESTONE_R_INTEGRATION.md` - Milestone R connection map for behavioral baselines, anomalies, fingerprints, DNS/destination learning, adaptive risk, operator summaries, exports, dashboard/API views, gateway readiness, and platform compatibility.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
@@ -116,6 +117,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/behavioral_intelligence_operator_summary.md` - unified behavioral intelligence operator summaries across baselines, anomalies, service fingerprints, DNS/destination learning, and adaptive risk.
 - `docs/historical_snapshot_persistence.md` - metadata-only historical snapshot persistence for rolling behavioral intelligence summaries.
 - `docs/baseline_aging_decay.md` - baseline aging and decay summaries for stale, inactive, dormant, and mature historical behavior metadata.
+- `docs/long_term_topology_evolution.md` - long-term topology evolution summaries for recurring, stable, transient, and dormant-return relationships.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.
