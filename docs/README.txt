@@ -38,6 +38,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/long_term_topology_evolution.md` - Phase 113 long-term topology evolution, relationship history, stable/transient classifications, topology drift, and communication path summaries.
 - `docs/historical_replay_windows.md` - Phase 114 replay-safe historical review windows, bounded timeline reconstruction, anomaly/topology/component replay summaries, and offline review helpers.
 - `docs/resource_aware_historical_retention.md` - Phase 115 resource-aware historical retention policies, storage/memory budget summaries, Raspberry Pi retention profiles, and preview-only retention recommendations.
+- `docs/long_term_intelligence_operator_summary.md` - Phase 116 unified long-term intelligence summaries, component rollups, recommendations, privacy/safety summaries, and dashboard/API/export-safe operator views.
 - `docs/MILESTONE_R_INTEGRATION.md` - Milestone R connection map for behavioral baselines, anomalies, fingerprints, DNS/destination learning, adaptive risk, operator summaries, exports, dashboard/API views, gateway readiness, and platform compatibility.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
@@ -122,6 +123,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/long_term_topology_evolution.md` - long-term topology evolution summaries for recurring, stable, transient, and dormant-return relationships.
 - `docs/historical_replay_windows.md` - bounded historical replay windows for offline review of snapshots, anomalies, topology changes, and behavioral component summaries.
 - `docs/resource_aware_historical_retention.md` - resource-aware retention summaries for snapshots, replay windows, topology history, and behavioral baselines.
+- `docs/long_term_intelligence_operator_summary.md` - unified long-term intelligence operator views for historical snapshots, aging/decay, topology evolution, replay, and retention.
 - `docs/runtime_pipeline.md` - explicit dry-run workflow wiring for visibility, events, topology snapshots, drift, policy review, correlation, and optional local storage writes.
 - `docs/dashboard_data_providers.md` - storage-backed, runtime-backed, topology, review, and diagnostic data providers for local dashboard models.
 - `docs/operational_export_bundle.md` - local operational export bundles for snapshots, topology, findings, reviews, runtime, and diagnostics.

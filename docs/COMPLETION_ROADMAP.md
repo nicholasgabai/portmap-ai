@@ -53,6 +53,12 @@ Implemented foundation includes:
 - DNS and destination behavior records for redacted or hashed domain summaries, resolver hashes, destination classification placeholders, recurrence timing, novelty, stable/new/recurring/unusual/dormant/drift labels, advisory confidence scoring, dashboard/API summaries, and export-ready digests.
 - Adaptive risk weighting records with base and adjusted advisory scores, baseline context, temporal anomaly context, service fingerprint context, DNS/destination context, confidence-aware adjustments, no-enforcement explanation records, dashboard/API summaries, and export-ready digests.
 - Behavioral intelligence operator summary records with baseline, anomaly, service fingerprint, DNS/destination, and adaptive risk rollups, supported/degraded/unavailable states, advisory recommendation records, explanation records, dashboard/API views, privacy/safety summaries, and export-ready digests.
+- Historical snapshot persistence records with metadata-only behavioral intelligence snapshots, bounded rotation, export-safe summaries, malformed input isolation, and dashboard/API-safe dictionaries.
+- Baseline aging and decay records with inactive, stale, dormant, and maturity summaries for baselines, service fingerprints, and destination behavior.
+- Long-term topology evolution records with recurring relationship tracking, stable/transient classification, topology drift, dormant relationship returns, and export/dashboard/API-safe rollups.
+- Historical replay windows with bounded timeline reconstruction for snapshots, anomalies, topology changes, baseline decay, service fingerprints, DNS/destination behavior, adaptive risk, and offline review helpers.
+- Resource-aware historical retention records with storage and memory budgets, Raspberry Pi and edge profiles, adaptive retention windows, preview-only recommendations, and no automatic deletion.
+- Long-term intelligence operator summary records with historical snapshot, baseline aging/decay, topology evolution, replay, and retention rollups, supported/degraded/unavailable states, recommendations, privacy/safety summaries, and dashboard/API/export-ready dictionaries.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -64,7 +70,7 @@ Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`, cove
 
 Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, covering how historical flow baselines, temporal anomaly windows, service fingerprints, DNS/destination learning, adaptive risk weighting, and behavioral operator summaries connect to live telemetry, flow enrichment, process/service attribution, DNS visibility, exports, dashboard/API views, gateway readiness, and cross-platform compatibility.
 
-Milestone S planning is tracked in `docs/PHASE_111_116_PLAN.md`, covering lightweight historical persistence, baseline aging, topology evolution, replay windows, resource-aware retention, and long-term intelligence operator summaries.
+Milestone S planning is tracked in `docs/PHASE_111_116_PLAN.md`, covering completed baseline work for lightweight historical persistence, baseline aging, topology evolution, replay windows, resource-aware retention, and long-term intelligence operator summaries.
 
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
@@ -150,7 +156,7 @@ Phases:
 | 109 | Adaptive Risk Weighting | Complete baseline: local adaptive scoring helpers with stable behavior reductions, novelty and anomaly increases, unusual service and destination weighting, low-confidence dampening, no-enforcement explanations, dashboard/API dictionaries, and export-ready digests. |
 | 110 | Behavioral Intelligence Operator Summary | Complete baseline: unified operator summaries across baselines, anomalies, service fingerprints, DNS/destination learning, and adaptive risk with supported/degraded/unavailable states, recommendations, explanations, dashboard/API views, and export-ready digests. |
 
-### Milestone S - Historical Persistence and Long-Term Intelligence
+### Milestone S - Historical Persistence and Long-Term Intelligence (Complete Baseline)
 
 Goal:
 Add lightweight, resource-conscious historical persistence and long-term behavioral memory so PortMap-AI can retain, age, summarize, and replay behavioral intelligence over time without storing raw packet payloads.
@@ -159,12 +165,12 @@ Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 111 | Historical Snapshot Persistence | Add rolling metadata snapshot persistence, lightweight storage records, snapshot rotation, bounded retention windows, and export-safe persistence summaries. |
-| 112 | Baseline Aging and Decay | Add aging and decay helpers, inactive behavior fading, stale fingerprint handling, confidence decay, and long-term baseline maturity tracking. |
-| 113 | Long-Term Topology Evolution | Add topology evolution summaries, recurring node relationship tracking, topology drift history, and stable versus transient relationship modeling. |
-| 114 | Historical Replay Windows | Add replay-safe behavioral summaries, historical timeline reconstruction, anomaly replay summaries, and bounded offline review helpers. |
-| 115 | Resource-Aware Historical Retention | Add Raspberry Pi resource-aware retention controls, adaptive retention windows, storage safety summaries, and low-resource degradation states. |
-| 116 | Long-Term Intelligence Operator Summary | Add unified historical intelligence summaries, export-ready persistence rollups, dashboard/API historical views, recommendations, and supported/degraded/unavailable states. |
+| 111 | Historical Snapshot Persistence | Complete baseline: rolling metadata snapshot persistence, lightweight storage records, snapshot rotation, bounded retention windows, and export-safe persistence summaries. |
+| 112 | Baseline Aging and Decay | Complete baseline: aging and decay helpers, inactive behavior fading, stale fingerprint handling, confidence decay, and long-term baseline maturity tracking. |
+| 113 | Long-Term Topology Evolution | Complete baseline: topology evolution summaries, recurring node relationship tracking, topology drift history, and stable versus transient relationship modeling. |
+| 114 | Historical Replay Windows | Complete baseline: replay-safe behavioral summaries, historical timeline reconstruction, anomaly replay summaries, and bounded offline review helpers. |
+| 115 | Resource-Aware Historical Retention | Complete baseline: Raspberry Pi resource-aware retention controls, adaptive retention windows, storage safety summaries, and low-resource degradation states. |
+| 116 | Long-Term Intelligence Operator Summary | Complete baseline: unified historical intelligence summaries, export-ready persistence rollups, dashboard/API historical views, recommendations, and supported/degraded/unavailable states. |
 
 ### Future Production Security and Access Control Themes
 

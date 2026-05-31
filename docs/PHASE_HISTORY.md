@@ -48,6 +48,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 113 | Long-term topology evolution with recurring relationship tracking, stable/transient classification, topology drift summaries, dormant relationship return detection, communication path rollups, and dashboard/API/export-safe topology history | Complete baseline |
 | 114 | Historical replay windows with bounded metadata timeline reconstruction, anomaly/topology/component replay summaries, replay cursors, malformed input isolation, and offline review helpers | Complete baseline |
 | 115 | Resource-aware historical retention with storage and memory budget summaries, Raspberry Pi and edge-device profiles, adaptive retention windows, preview-only recommendations, and dashboard/API/export-safe retention dictionaries | Complete baseline |
+| 116 | Long-term intelligence operator summaries combining historical snapshots, baseline aging/decay, topology evolution, replay windows, and resource-aware retention into supported/degraded/unavailable states, recommendations, privacy summaries, and dashboard/API/export-safe records | Complete baseline |
 
 ## Baseline Meaning
 
@@ -59,7 +60,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phases 111-115 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, and resource-aware retention controls. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering unified long-term intelligence summaries, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, and Milestone S implementation planning is tracked in `docs/PHASE_111_116_PLAN.md`.
+Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, and Milestone S implementation planning is tracked in `docs/PHASE_111_116_PLAN.md`.
 
 ## References
 
@@ -82,6 +83,7 @@ Phases 111-115 are complete as baselines for metadata-only historical snapshot p
 - `docs/baseline_aging_decay.md`
 - `docs/historical_replay_windows.md`
 - `docs/historical_snapshot_persistence.md`
+- `docs/long_term_intelligence_operator_summary.md`
 - `docs/long_term_topology_evolution.md`
 - `docs/resource_aware_historical_retention.md`
 - `docs/ROADMAP.md`

@@ -204,13 +204,15 @@ Acceptance:
 
 ## Phase 116 - Long-Term Intelligence Operator Summary
 
+Status: Complete Baseline
+
 Goal:
 Combine historical persistence, aging, topology evolution, replay, and retention summaries into operator-ready historical intelligence records.
 
 Build:
 
-- `core_engine/telemetry/historical_operator_summary.py`
-- `gui/web/historical_intelligence_views.py`
+- `core_engine/history/intelligence_summary.py`
+- `core_engine/history/operator_views.py`
 - `tests/test_long_term_intelligence_operator_summary.py`
 - `docs/long_term_intelligence_operator_summary.md`
 
