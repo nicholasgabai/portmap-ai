@@ -64,6 +64,8 @@ Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`, cove
 
 Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, covering how historical flow baselines, temporal anomaly windows, service fingerprints, DNS/destination learning, adaptive risk weighting, and behavioral operator summaries connect to live telemetry, flow enrichment, process/service attribution, DNS visibility, exports, dashboard/API views, gateway readiness, and cross-platform compatibility.
 
+Milestone S planning is tracked in `docs/PHASE_111_116_PLAN.md`, covering lightweight historical persistence, baseline aging, topology evolution, replay windows, resource-aware retention, and long-term intelligence operator summaries.
+
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
 ## Completion Milestone Roadmap
@@ -148,6 +150,22 @@ Phases:
 | 109 | Adaptive Risk Weighting | Complete baseline: local adaptive scoring helpers with stable behavior reductions, novelty and anomaly increases, unusual service and destination weighting, low-confidence dampening, no-enforcement explanations, dashboard/API dictionaries, and export-ready digests. |
 | 110 | Behavioral Intelligence Operator Summary | Complete baseline: unified operator summaries across baselines, anomalies, service fingerprints, DNS/destination learning, and adaptive risk with supported/degraded/unavailable states, recommendations, explanations, dashboard/API views, and export-ready digests. |
 
+### Milestone S - Historical Persistence and Long-Term Intelligence
+
+Goal:
+Add lightweight, resource-conscious historical persistence and long-term behavioral memory so PortMap-AI can retain, age, summarize, and replay behavioral intelligence over time without storing raw packet payloads.
+
+Phases:
+
+| Phase | Name | Focus |
+| --- | --- | --- |
+| 111 | Historical Snapshot Persistence | Add rolling metadata snapshot persistence, lightweight storage records, snapshot rotation, bounded retention windows, and export-safe persistence summaries. |
+| 112 | Baseline Aging and Decay | Add aging and decay helpers, inactive behavior fading, stale fingerprint handling, confidence decay, and long-term baseline maturity tracking. |
+| 113 | Long-Term Topology Evolution | Add topology evolution summaries, recurring node relationship tracking, topology drift history, and stable versus transient relationship modeling. |
+| 114 | Historical Replay Windows | Add replay-safe behavioral summaries, historical timeline reconstruction, anomaly replay summaries, and bounded offline review helpers. |
+| 115 | Resource-Aware Historical Retention | Add Raspberry Pi resource-aware retention controls, adaptive retention windows, storage safety summaries, and low-resource degradation states. |
+| 116 | Long-Term Intelligence Operator Summary | Add unified historical intelligence summaries, export-ready persistence rollups, dashboard/API historical views, recommendations, and supported/degraded/unavailable states. |
+
 ### Future Production Security and Access Control Themes
 
 Goal:
@@ -176,21 +194,19 @@ Candidate future work:
 - Versioned upgrades, database migrations, backups, rollback plans, and operator confirmation records.
 - Install, service, upgrade, rollback, and uninstall validation across supported platforms.
 
-### Milestone S - AI Security Intelligence Layer
+### Future AI Security Intelligence Layer
 
 Goal:
 Add advanced behavior intelligence on top of real telemetry.
 
-Phases:
+Candidate future work:
 
-| Phase | Name | Focus |
-| --- | --- | --- |
-| 113 | Behavioral Baseline Models | Build telemetry-backed baselines for hosts, services, flows, protocols, and time windows. |
-| 114 | Anomaly and Drift Scoring | Score deviations, service drift, topology drift, protocol anomalies, and federation anomalies. |
-| 115 | Attack Path Reconstruction | Reconstruct likely attack paths from topology, flow, finding, event, and review evidence. |
-| 116 | Explainable AI Review Summaries | Produce operator-readable explanations, evidence references, confidence, severity, and recommended review actions. |
-| 117 | Adaptive Trust Scoring | Adjust trusted-node, service, and topology confidence using signed summaries, health, drift, and anomaly signals. |
-| 118 | AI Intelligence Validation | Validate scoring determinism, explainability, false-positive controls, and safety boundaries with sanitized fixtures. |
+- Telemetry-backed baselines for hosts, services, flows, protocols, and time windows beyond the current metadata-only behavioral baseline layer.
+- Deviation scoring for service drift, topology drift, protocol anomalies, and federation anomalies.
+- Attack-path reconstruction from topology, flow, finding, event, and review evidence.
+- Explainable review summaries with evidence references, confidence, severity, and recommended review actions.
+- Adaptive trust scoring for trusted nodes, services, and topology confidence using signed summaries, health, drift, and anomaly signals.
+- AI intelligence validation for determinism, explainability, false-positive controls, and safety boundaries with sanitized fixtures.
 
 ### Milestone T - Commercial SaaS and Fleet Management
 

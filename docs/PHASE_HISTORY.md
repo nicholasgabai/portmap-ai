@@ -54,7 +54,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening and later commercial themes. Milestone Q implementation planning is tracked in `docs/PHASE_99_104_PLAN.md`, Milestone Q integration is summarized in `docs/MILESTONE_Q_INTEGRATION.md`, and Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`.
+The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering historical persistence, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, and Milestone S implementation planning is tracked in `docs/PHASE_111_116_PLAN.md`.
 
 ## References
 
@@ -73,4 +73,5 @@ The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.
 - `docs/MILESTONE_R_INTEGRATION.md`
 - `docs/PHASE_99_104_PLAN.md`
 - `docs/PHASE_105_110_PLAN.md`
+- `docs/PHASE_111_116_PLAN.md`
 - `docs/ROADMAP.md`
