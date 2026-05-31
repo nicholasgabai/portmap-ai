@@ -105,7 +105,7 @@ Planned remaining milestones:
 
 ## Medium-Term Work
 
-- Prepare Milestone T operationalization and deployment foundation work.
+- Continue Milestone T operationalization work after the completed Phase 117 production runtime profile baseline.
 - Harden service-management packaging for long-running agents.
 - Expand dashboard usability while preserving the terminal-first product direction.
 - Add operator-friendly import/export flows for telemetry and advisory packets.

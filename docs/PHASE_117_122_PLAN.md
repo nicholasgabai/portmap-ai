@@ -37,13 +37,16 @@ Milestone T should model deployment readiness and operator workflows only. It sh
 
 ## Phase 117 - Production Runtime Profiles
 
+Status: Complete Baseline
+
 Goal:
 Add production, staging, and development runtime profile records that make deployment posture explicit before service installation or long-running operation.
 
 Build:
 
 - `core_engine/deployment/runtime_profiles.py`
-- `core_engine/deployment/profile_readiness.py`
+- `core_engine/deployment/profile_validation.py`
+- `core_engine/deployment/__init__.py`
 - `tests/test_production_runtime_profiles.py`
 - `docs/production_runtime_profiles.md`
 
