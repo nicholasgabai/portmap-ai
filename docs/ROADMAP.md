@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 116 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/PHASE_111_116_PLAN.md` defines the current historical persistence milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 116 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -23,6 +23,7 @@ This roadmap summarizes the current direction after the Phase 116 baseline. `POR
 | 93-98 | Gateway and telemetry enrichment: enriched flow observations, process/service attribution, DNS visibility, router log ingestion, SPAN readiness, and gateway mode validation | Complete baseline |
 | 99-104 | Cross-platform runtime hardening: runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, and unified validation summaries | Complete baseline |
 | 105-110 | Behavioral intelligence foundation: historical flow baselines, temporal anomaly windows, service behavior fingerprints, DNS/destination behavior learning, adaptive risk weighting, and unified operator summaries | Complete baseline |
+| 111-116 | Historical persistence and long-term intelligence: historical snapshots, baseline aging and decay, topology evolution, replay windows, resource-aware retention, and long-term intelligence operator summaries | Complete baseline |
 
 ## Current Implementation State
 
@@ -98,7 +99,6 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Milestone S - Historical Persistence and Long-Term Intelligence.
 - Future installer, service, release packaging, production security, and AI intelligence work.
 - Milestone T - Commercial SaaS and Fleet Management.
 
@@ -130,6 +130,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_P_INTEGRATION.md`
 - `docs/MILESTONE_Q_INTEGRATION.md`
 - `docs/MILESTONE_R_INTEGRATION.md`
+- `docs/MILESTONE_S_INTEGRATION.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
