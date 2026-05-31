@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 110 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/PHASE_111_116_PLAN.md` defines the next historical persistence milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 115 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/PHASE_111_116_PLAN.md` defines the current historical persistence milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -26,7 +26,7 @@ This roadmap summarizes the current direction after the Phase 110 baseline. `POR
 
 ## Current Implementation State
 
-Phases 0-110 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-115 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
 
 Current stable posture:
 
@@ -85,6 +85,7 @@ Current stable posture:
 - Baseline aging and decay now applies safe local aging policies to metadata-only baselines, service fingerprints, and destination behavior with inactive, stale, dormant, and maturity summaries plus export/dashboard/API-ready decay records.
 - Long-term topology evolution now tracks recurring node relationships, stable versus transient paths, dormant relationship returns, topology drift summaries, communication path rollups, and dashboard/API/export-safe topology history.
 - Historical replay windows now reconstruct bounded metadata timelines from snapshots, anomaly summaries, topology evolution, baseline decay, service fingerprints, DNS/destination behavior, and adaptive risk for offline operator review.
+- Resource-aware historical retention now builds storage and memory budget summaries, Raspberry Pi and edge-device retention profiles, adaptive retention windows, preview-only recommendations, and dashboard/API/export-safe retention summaries without deleting files.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -102,7 +103,7 @@ Planned remaining milestones:
 
 ## Medium-Term Work
 
-- Expand historical persistence integration after the Phase 114 baseline, including resource-aware retention controls and unified historical intelligence summaries.
+- Expand historical persistence integration after the Phase 115 baseline, including unified historical intelligence summaries.
 - Harden service-management packaging for long-running agents.
 - Expand dashboard usability while preserving the terminal-first product direction.
 - Add operator-friendly import/export flows for telemetry and advisory packets.
@@ -142,6 +143,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/historical_snapshot_persistence.md`
 - `docs/historical_replay_windows.md`
 - `docs/long_term_topology_evolution.md`
+- `docs/resource_aware_historical_retention.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`
 - `docs/node_coordination.md`

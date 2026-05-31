@@ -171,13 +171,15 @@ Acceptance:
 
 ## Phase 115 - Resource-Aware Historical Retention
 
+Status: Complete Baseline
+
 Goal:
 Add Raspberry Pi-conscious and cross-platform retention controls for long-term metadata history.
 
 Build:
 
-- `core_engine/telemetry/historical_retention.py`
-- `core_engine/telemetry/resource_retention.py`
+- `core_engine/history/retention_policies.py`
+- `core_engine/history/resource_retention.py`
 - `tests/test_resource_aware_historical_retention.py`
 - `docs/resource_aware_historical_retention.md`
 

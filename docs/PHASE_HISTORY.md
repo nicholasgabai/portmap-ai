@@ -43,6 +43,11 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 108 | DNS and destination behavior learning with redacted or hashed domain summaries, resolver hashes, destination placeholders, stable/new/recurring/unusual/dormant/drift labels, advisory confidence scoring, dashboard/API summaries, and export-ready digests | Complete baseline |
 | 109 | Adaptive risk weighting with baseline-aware score reductions, novelty and anomaly score increases, unusual service and destination weighting, confidence dampening, no-enforcement explanations, dashboard/API summaries, and export-ready digests | Complete baseline |
 | 110 | Behavioral intelligence operator summaries with baseline, anomaly, service fingerprint, DNS/destination, and adaptive risk rollups, supported/degraded/unavailable states, advisory recommendations, explanation records, dashboard/API views, and export-ready digests | Complete baseline |
+| 111 | Historical snapshot persistence with metadata-only behavioral intelligence snapshots, bounded rotation helpers, export-safe summaries, structured malformed input handling, dashboard/API-safe dictionaries, and temporary-path-only write tests | Complete baseline |
+| 112 | Baseline aging and decay with safe local aging policies, inactive/stale/dormant behavior summaries, confidence decay, maturity scoring, operator explanations, and dashboard/API/export-ready records | Complete baseline |
+| 113 | Long-term topology evolution with recurring relationship tracking, stable/transient classification, topology drift summaries, dormant relationship return detection, communication path rollups, and dashboard/API/export-safe topology history | Complete baseline |
+| 114 | Historical replay windows with bounded metadata timeline reconstruction, anomaly/topology/component replay summaries, replay cursors, malformed input isolation, and offline review helpers | Complete baseline |
+| 115 | Resource-aware historical retention with storage and memory budget summaries, Raspberry Pi and edge-device profiles, adaptive retention windows, preview-only recommendations, and dashboard/API/export-safe retention dictionaries | Complete baseline |
 
 ## Baseline Meaning
 
@@ -54,7 +59,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phases 111-114 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, and replay-safe historical review windows. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering resource-aware retention, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, and Milestone S implementation planning is tracked in `docs/PHASE_111_116_PLAN.md`.
+Phases 111-115 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, and resource-aware retention controls. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering unified long-term intelligence summaries, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, and Milestone S implementation planning is tracked in `docs/PHASE_111_116_PLAN.md`.
 
 ## References
 
@@ -78,4 +83,5 @@ Phases 111-114 are complete as baselines for metadata-only historical snapshot p
 - `docs/historical_replay_windows.md`
 - `docs/historical_snapshot_persistence.md`
 - `docs/long_term_topology_evolution.md`
+- `docs/resource_aware_historical_retention.md`
 - `docs/ROADMAP.md`

@@ -182,6 +182,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/remote_operator_visibility_prep.md",
   "docs/release_candidate.md",
   "docs/remediation_safety.md",
+  "docs/resource_aware_historical_retention.md",
   "docs/runtime_cli.md",
   "docs/runtime_health_monitor.md",
   "docs/runtime_pipeline.md",
