@@ -72,13 +72,15 @@ Acceptance:
 
 ## Phase 112 - Baseline Aging and Decay
 
+Status: Complete Baseline
+
 Goal:
 Add aging and decay helpers for long-lived behavior baselines, inactive behavior, stale fingerprints, and confidence values.
 
 Build:
 
-- `core_engine/telemetry/baseline_aging.py`
-- `core_engine/telemetry/decay_models.py`
+- `core_engine/history/baseline_decay.py`
+- `core_engine/history/aging_policies.py`
 - `tests/test_baseline_aging_decay.py`
 - `docs/baseline_aging_decay.md`
 

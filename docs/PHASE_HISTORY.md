@@ -54,7 +54,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phase 111 is complete as a baseline for metadata-only historical snapshot persistence. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering baseline aging, topology evolution, replay windows, resource-aware retention, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, and Milestone S implementation planning is tracked in `docs/PHASE_111_116_PLAN.md`.
+Phases 111-112 are complete as baselines for metadata-only historical snapshot persistence and baseline aging/decay. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering topology evolution, replay windows, resource-aware retention, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, and Milestone S implementation planning is tracked in `docs/PHASE_111_116_PLAN.md`.
 
 ## References
 
@@ -74,5 +74,6 @@ Phase 111 is complete as a baseline for metadata-only historical snapshot persis
 - `docs/PHASE_99_104_PLAN.md`
 - `docs/PHASE_105_110_PLAN.md`
 - `docs/PHASE_111_116_PLAN.md`
+- `docs/baseline_aging_decay.md`
 - `docs/historical_snapshot_persistence.md`
 - `docs/ROADMAP.md`
