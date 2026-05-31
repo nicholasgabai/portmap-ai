@@ -38,13 +38,16 @@ Milestone S should persist and replay metadata summaries only. It should not per
 
 ## Phase 111 - Historical Snapshot Persistence
 
+Status: Complete Baseline
+
 Goal:
 Add rolling metadata snapshot persistence records for behavioral intelligence outputs with rotation, retention windows, and export-safe summaries.
 
 Build:
 
-- `core_engine/telemetry/historical_snapshots.py`
-- `core_engine/telemetry/snapshot_retention.py`
+- `core_engine/history/snapshots.py`
+- `core_engine/history/snapshot_store.py`
+- `core_engine/history/__init__.py`
 - `tests/test_historical_snapshot_persistence.py`
 - `docs/historical_snapshot_persistence.md`
 

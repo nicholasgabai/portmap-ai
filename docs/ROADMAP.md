@@ -81,6 +81,7 @@ Current stable posture:
 - DNS and destination behavior learning now tracks recurring redacted or hashed domain summaries, resolver hashes, destination IP classification placeholders, destination frequency, recurrence timing, novelty, confidence, unusual resolver behavior, dormant destination returns, drift hints, dashboard/API dictionaries, and export-ready digests without external reputation calls.
 - Adaptive risk weighting now adjusts advisory scores using local historical baselines, temporal anomalies, service fingerprints, and DNS/destination behavior with confidence-aware dampening, no-enforcement explanations, dashboard/API dictionaries, and export-ready digests.
 - Behavioral intelligence operator summaries now combine baselines, temporal anomalies, service fingerprints, DNS/destination learning, and adaptive risk into supported, degraded, and unavailable states with advisory recommendations, explanations, dashboard/API views, and export-ready digests.
+- Historical snapshot persistence now stores rolling metadata-only behavioral intelligence snapshots with bounded rotation helpers, export-safe summaries, structured malformed input handling, dashboard/API-safe dictionaries, and temporary-path-only write tests.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -98,7 +99,7 @@ Planned remaining milestones:
 
 ## Medium-Term Work
 
-- Expand behavioral intelligence integration depth after the Phase 105-110 baseline, including review workflows and long-running retention controls.
+- Expand historical persistence integration after the Phase 111 baseline, including aging, replay, topology evolution, and resource-aware retention controls.
 - Harden service-management packaging for long-running agents.
 - Expand dashboard usability while preserving the terminal-first product direction.
 - Add operator-friendly import/export flows for telemetry and advisory packets.
@@ -134,6 +135,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_99_104_PLAN.md`
 - `docs/PHASE_105_110_PLAN.md`
 - `docs/event_pipeline.md`
+- `docs/historical_snapshot_persistence.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`
 - `docs/node_coordination.md`
