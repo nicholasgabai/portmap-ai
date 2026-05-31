@@ -72,6 +72,8 @@ Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, cove
 
 Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, covering how historical snapshot persistence, baseline aging and decay, long-term topology evolution, replay windows, resource-aware retention, and long-term intelligence operator summaries connect to behavioral intelligence, telemetry enrichment, topology correlation, exports, dashboard/API views, cross-platform resource awareness, and Raspberry Pi/edge readiness.
 
+Milestone T planning is tracked in `docs/PHASE_117_122_PLAN.md`, covering production runtime profiles, service lifecycle readiness, deployment manifests, upgrade and migration readiness, backup and restore planning, and deployment operator summaries.
+
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
 ## Completion Milestone Roadmap
@@ -214,21 +216,35 @@ Candidate future work:
 - Adaptive trust scoring for trusted nodes, services, and topology confidence using signed summaries, health, drift, and anomaly signals.
 - AI intelligence validation for determinism, explainability, false-positive controls, and safety boundaries with sanitized fixtures.
 
-### Milestone T - Commercial SaaS and Fleet Management
+### Milestone T - Operationalization and Deployment Foundation
 
 Goal:
-Prepare the future business and enterprise deployment model.
+Prepare PortMap-AI for reliable real-world deployment by adding production-safe runtime profiles, service lifecycle modeling, deployment manifests, upgrade readiness, backup/restore planning, and operator deployment validation without enabling destructive automation.
 
 Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 119 | Fleet Management Architecture | Define fleet inventory, node groups, enrollment, policy assignment, and fleet-level summaries. |
-| 120 | Organization and Tenant Model | Model organizations, tenants, users, roles, workspaces, quotas, audit boundaries, and data isolation. |
-| 121 | Licensing and Subscription Hooks | Add local license state records, entitlement checks, plan metadata, and commercial feature flags. |
-| 122 | Cloud Control Plane Blueprint | Document future cloud control plane boundaries, sync contracts, privacy controls, and operational ownership. |
-| 123 | Enterprise API Blueprint | Define enterprise API resources, auth scopes, pagination, filtering, audit, and export semantics. |
-| 124 | Commercial Readiness Review | Review packaging, security, docs, support workflows, compliance posture, and go-to-market constraints. |
+| 117 | Production Runtime Profiles | Add production, staging, and development runtime profile records, safe defaults, environment checks, deployment mode summaries, and configuration readiness flags. |
+| 118 | Service Lifecycle Readiness | Add service install previews, daemon/systemd/launchd/Windows service readiness summaries, start/stop/restart preview plans, and permission requirement summaries without installing services. |
+| 119 | Deployment Manifest Generation | Add sanitized deployment manifests, node role summaries, orchestrator/master/worker profiles, edge/Raspberry Pi manifests, and export-safe deployment dictionaries. |
+| 120 | Upgrade and Migration Readiness | Add configuration migration previews, version compatibility summaries, rollback readiness, schema migration safety checks, and no-destructive-migration records. |
+| 121 | Backup and Restore Planning | Add backup plans, restore previews, export bundle references, historical intelligence backup summaries, and no automatic restore/delete behavior. |
+| 122 | Deployment Operator Summary | Add unified deployment readiness summaries, dashboard/API-safe views, recommendations, supported/degraded/unavailable states, and release-readiness checklists. |
+
+### Future Commercial SaaS and Fleet Management
+
+Goal:
+Prepare the future business and enterprise deployment model after local operationalization and deployment readiness are stable.
+
+Candidate future work:
+
+- Fleet management architecture for node groups, enrollment, policy assignment, and fleet-level summaries.
+- Organization and tenant model with users, roles, workspaces, quotas, audit boundaries, and data isolation.
+- Licensing and subscription hooks with local license state, entitlement checks, plan metadata, and commercial feature flags.
+- Cloud control plane blueprint with sync contracts, privacy controls, and operational ownership.
+- Enterprise API blueprint with auth scopes, pagination, filtering, audit, and export semantics.
+- Commercial readiness review covering packaging, security, docs, support workflows, compliance posture, and go-to-market constraints.
 
 ## Completion Definition
 

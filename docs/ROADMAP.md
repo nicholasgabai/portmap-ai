@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 116 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 116 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/PHASE_117_122_PLAN.md` defines the next operationalization and deployment milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -99,12 +99,13 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
+- Milestone T - Operationalization and Deployment Foundation.
 - Future installer, service, release packaging, production security, and AI intelligence work.
-- Milestone T - Commercial SaaS and Fleet Management.
+- Future commercial SaaS and fleet management work.
 
 ## Medium-Term Work
 
-- Prepare the next milestone after the Phase 116 historical persistence baseline.
+- Prepare Milestone T operationalization and deployment foundation work.
 - Harden service-management packaging for long-running agents.
 - Expand dashboard usability while preserving the terminal-first product direction.
 - Add operator-friendly import/export flows for telemetry and advisory packets.
@@ -131,6 +132,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_Q_INTEGRATION.md`
 - `docs/MILESTONE_R_INTEGRATION.md`
 - `docs/MILESTONE_S_INTEGRATION.md`
+- `docs/PHASE_117_122_PLAN.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`

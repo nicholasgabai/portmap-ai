@@ -28,6 +28,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_99_104_PLAN.md` - milestone plan for cross-platform runtime hardening across macOS, Linux/Raspberry Pi, and Windows.
 - `docs/PHASE_105_110_PLAN.md` - milestone plan for historical behavioral intelligence baselines, anomaly windows, service fingerprints, DNS learning, adaptive risk weighting, and operator summaries.
 - `docs/PHASE_111_116_PLAN.md` - milestone plan for historical persistence, baseline aging, topology evolution, replay windows, resource-aware retention, and long-term intelligence summaries.
+- `docs/PHASE_117_122_PLAN.md` - milestone plan for operationalization and deployment foundation: runtime profiles, service lifecycle previews, deployment manifests, upgrade readiness, backup/restore planning, and deployment summaries.
 - `docs/historical_flow_baselines.md` - Phase 105 rolling metadata-only behavior baselines, bounded windows, stable/new classification, confidence scoring, dashboard/API summaries, and export-ready digests.
 - `docs/temporal_anomaly_windows.md` - Phase 106 short/medium/long anomaly windows, burst detection, rare service timing, volume drift hints, novelty labels, explanations, and dashboard/API/export summaries.
 - `docs/service_behavior_fingerprints.md` - Phase 107 metadata-only service behavior fingerprints, expected profiles, unusual combination labels, dormant service tracking, confidence scoring, and dashboard/API/export summaries.
