@@ -138,13 +138,15 @@ Acceptance:
 
 ## Phase 114 - Historical Replay Windows
 
+Status: Complete Baseline
+
 Goal:
 Add replay-safe behavioral summaries and bounded offline review helpers for historical timeline reconstruction.
 
 Build:
 
-- `core_engine/telemetry/historical_replay.py`
-- `core_engine/telemetry/replay_windows.py`
+- `core_engine/history/timeline_replay.py`
+- `core_engine/history/replay_windows.py`
 - `tests/test_historical_replay_windows.py`
 - `docs/historical_replay_windows.md`
 

@@ -147,6 +147,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/firewall_plugins.md",
   "docs/high_speed_scan_engine.md",
   "docs/historical_flow_baselines.md",
+  "docs/historical_replay_windows.md",
   "docs/historical_snapshot_persistence.md",
   "docs/ipv6_dual_stack.md",
   "docs/logging_audit.md",

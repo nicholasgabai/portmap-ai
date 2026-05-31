@@ -84,6 +84,7 @@ Current stable posture:
 - Historical snapshot persistence now stores rolling metadata-only behavioral intelligence snapshots with bounded rotation helpers, export-safe summaries, structured malformed input handling, dashboard/API-safe dictionaries, and temporary-path-only write tests.
 - Baseline aging and decay now applies safe local aging policies to metadata-only baselines, service fingerprints, and destination behavior with inactive, stale, dormant, and maturity summaries plus export/dashboard/API-ready decay records.
 - Long-term topology evolution now tracks recurring node relationships, stable versus transient paths, dormant relationship returns, topology drift summaries, communication path rollups, and dashboard/API/export-safe topology history.
+- Historical replay windows now reconstruct bounded metadata timelines from snapshots, anomaly summaries, topology evolution, baseline decay, service fingerprints, DNS/destination behavior, and adaptive risk for offline operator review.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -101,7 +102,7 @@ Planned remaining milestones:
 
 ## Medium-Term Work
 
-- Expand historical persistence integration after the Phase 113 baseline, including replay windows and resource-aware retention controls.
+- Expand historical persistence integration after the Phase 114 baseline, including resource-aware retention controls and unified historical intelligence summaries.
 - Harden service-management packaging for long-running agents.
 - Expand dashboard usability while preserving the terminal-first product direction.
 - Add operator-friendly import/export flows for telemetry and advisory packets.
@@ -139,6 +140,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/baseline_aging_decay.md`
 - `docs/event_pipeline.md`
 - `docs/historical_snapshot_persistence.md`
+- `docs/historical_replay_windows.md`
 - `docs/long_term_topology_evolution.md`
 - `docs/local_storage.md`
 - `docs/runtime_scheduler.md`

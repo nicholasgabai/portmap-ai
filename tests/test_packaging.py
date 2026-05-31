@@ -121,6 +121,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/event_pipeline.md" in data_files["share/portmap-ai/docs"]
     assert "docs/high_speed_scan_engine.md" in data_files["share/portmap-ai/docs"]
     assert "docs/historical_flow_baselines.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/historical_replay_windows.md" in data_files["share/portmap-ai/docs"]
     assert "docs/historical_snapshot_persistence.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ipv6_dual_stack.md" in data_files["share/portmap-ai/docs"]
     assert "docs/logging_audit.md" in data_files["share/portmap-ai/docs"]
