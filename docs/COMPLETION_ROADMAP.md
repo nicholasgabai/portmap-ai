@@ -6,7 +6,7 @@ This is a planning document. It does not implement collectors, start services, o
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 110, covering Phases 0-110.
+PortMap-AI has completed baseline implementation through Phase 122, covering Phases 0-122.
 
 Implemented foundation includes:
 
@@ -59,6 +59,12 @@ Implemented foundation includes:
 - Historical replay windows with bounded timeline reconstruction for snapshots, anomalies, topology changes, baseline decay, service fingerprints, DNS/destination behavior, adaptive risk, and offline review helpers.
 - Resource-aware historical retention records with storage and memory budgets, Raspberry Pi and edge profiles, adaptive retention windows, preview-only recommendations, and no automatic deletion.
 - Long-term intelligence operator summary records with historical snapshot, baseline aging/decay, topology evolution, replay, and retention rollups, supported/degraded/unavailable states, recommendations, privacy/safety summaries, and dashboard/API/export-ready dictionaries.
+- Production runtime profile records for development, staging, production, edge, and lab deployment modes with safety, telemetry, orchestration, remediation, retention, resource, platform, capability, and compatibility summaries.
+- Service lifecycle readiness previews for systemd, launchd, Windows Service Control Manager, foreground process mode, and Raspberry Pi edge mode with sanitized command previews and no service installation.
+- Deployment manifest records for standalone, orchestrator, worker, edge, lab, and production-preview modes with node profile summaries, readiness states, export path placeholders, and backup recommendations.
+- Upgrade and migration readiness records with version compatibility, migration preview plans, rollback notes, required backups, validation steps, operator steps, and no destructive migration behavior.
+- Backup and restore planning records for configuration, manifests, runtime exports, historical intelligence, and operator evidence bundles with restore previews, conflict warnings, encryption recommendations, and no automatic restore/delete behavior.
+- Deployment operator summary records with readiness scores, release-readiness checklists, operator actions, safety warnings, ready/degraded/blocked/unknown states, dashboard/API-safe views, and export-safe dictionaries.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 
@@ -72,7 +78,7 @@ Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, cove
 
 Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, covering how historical snapshot persistence, baseline aging and decay, long-term topology evolution, replay windows, resource-aware retention, and long-term intelligence operator summaries connect to behavioral intelligence, telemetry enrichment, topology correlation, exports, dashboard/API views, cross-platform resource awareness, and Raspberry Pi/edge readiness.
 
-Milestone T planning is tracked in `docs/PHASE_117_122_PLAN.md`, covering production runtime profiles, service lifecycle readiness, deployment manifests, upgrade and migration readiness, backup and restore planning, and deployment operator summaries.
+Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, covering how production runtime profiles, service lifecycle readiness, deployment manifests, upgrade and migration readiness, backup/restore planning, and deployment operator summaries connect to runtime health, cross-platform readiness, historical intelligence, service-mode readiness, deployment safety, export safety, Raspberry Pi/edge readiness, and future installer/executable packaging.
 
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 

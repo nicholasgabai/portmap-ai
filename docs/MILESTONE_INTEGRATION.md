@@ -1,12 +1,12 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-116 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, `docs/MILESTONE_Q_INTEGRATION.md` provides the detailed Phase 99-104 integration summary, `docs/MILESTONE_R_INTEGRATION.md` provides the detailed Phase 105-110 integration summary, and `docs/MILESTONE_S_INTEGRATION.md` provides the detailed Phase 111-116 integration summary.
+This document is the consolidated integration guide for the completed Phase 44-122 milestone work. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, `docs/MILESTONE_Q_INTEGRATION.md` provides the detailed Phase 99-104 integration summary, `docs/MILESTONE_R_INTEGRATION.md` provides the detailed Phase 105-110 integration summary, `docs/MILESTONE_S_INTEGRATION.md` provides the detailed Phase 111-116 integration summary, and `docs/MILESTONE_T_INTEGRATION.md` provides the detailed Phase 117-122 integration summary.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
-The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering operationalization, deployment readiness, production hardening, AI security intelligence, future commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T planning is tracked in `docs/PHASE_117_122_PLAN.md`. Phase 117 production runtime profiles are documented in `docs/production_runtime_profiles.md`.
+The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, future installer/executable packaging, AI security intelligence, commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`.
 
 ## Completed Milestones
 
@@ -27,6 +27,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Cross-Platform Runtime Hardening | 99-104 | Runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, unified validation summaries, CLI/table/JSON-ready output, and dashboard/API-ready compatibility dictionaries | Complete baseline |
 | Behavioral Intelligence Foundation | 105-110 | Historical flow baselines, temporal anomaly windows, service behavior fingerprints, DNS/destination behavior learning, adaptive risk weighting, unified operator summaries, operator explanations, export-ready digests, and dashboard/API-ready dictionaries | Complete baseline |
 | Historical Persistence and Long-Term Intelligence | 111-116 | Historical snapshot persistence, baseline aging and decay, long-term topology evolution, historical replay windows, resource-aware retention, long-term intelligence operator summaries, export-ready digests, and dashboard/API-ready dictionaries | Complete baseline |
+| Operationalization and Deployment Foundation | 117-122 | Production runtime profiles, service lifecycle readiness, deployment manifests, upgrade and migration readiness, backup and restore planning, deployment operator summaries, release-readiness checklists, and dashboard/API-ready dictionaries | Complete baseline |
 
 ## Module Map
 
@@ -101,6 +102,7 @@ The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.
 | Historical Replay Windows | `core_engine.history.replay_windows`, `core_engine.history.timeline_replay` | Reconstruct bounded metadata timelines from historical snapshots and component summaries for offline review without re-running collectors. |
 | Resource-Aware Historical Retention | `core_engine.history.retention_policies`, `core_engine.history.resource_retention` | Build default, edge, and Raspberry Pi retention profiles, storage/memory budget summaries, adaptive retention windows, preview-only recommendations, dashboard/API dictionaries, and export-ready summaries. |
 | Long-Term Intelligence Operator Summary | `core_engine.history.intelligence_summary`, `core_engine.history.operator_views` | Combine historical snapshots, aging/decay, topology evolution, replay windows, and retention into supported/degraded/unavailable states, recommendations, privacy summaries, dashboard/API views, and export-ready dictionaries. |
+| Deployment Operationalization | `core_engine.deployment` | Build production runtime profiles, service lifecycle previews, sanitized deployment manifests, upgrade and migration previews, backup/restore plans, deployment readiness summaries, release checklists, and dashboard/API-ready deployment views. |
 
 ## Consolidated Data Flow
 
@@ -243,6 +245,19 @@ behavioral intelligence and topology metadata
   -> resource-aware retention controls
   -> long-term intelligence operator summaries
   -> dashboard/API views and export bundles
+```
+
+Milestone T target flow:
+
+```text
+runtime health and cross-platform readiness
+  -> production runtime profiles
+  -> service lifecycle readiness previews
+  -> deployment manifest generation
+  -> upgrade and migration readiness
+  -> backup and restore planning
+  -> deployment operator summaries
+  -> export-safe release review records and dashboard/API views
 ```
 
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.

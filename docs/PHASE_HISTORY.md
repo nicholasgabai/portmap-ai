@@ -49,6 +49,12 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 114 | Historical replay windows with bounded metadata timeline reconstruction, anomaly/topology/component replay summaries, replay cursors, malformed input isolation, and offline review helpers | Complete baseline |
 | 115 | Resource-aware historical retention with storage and memory budget summaries, Raspberry Pi and edge-device profiles, adaptive retention windows, preview-only recommendations, and dashboard/API/export-safe retention dictionaries | Complete baseline |
 | 116 | Long-term intelligence operator summaries combining historical snapshots, baseline aging/decay, topology evolution, replay windows, and resource-aware retention into supported/degraded/unavailable states, recommendations, privacy summaries, and dashboard/API/export-safe records | Complete baseline |
+| 117 | Production runtime profiles with development, staging, production, edge, and lab deployment postures, safety modes, telemetry levels, orchestration modes, remediation posture, retention modes, resource budgets, capability flags, compatibility validation, and export-safe dictionaries | Complete baseline |
+| 118 | Service lifecycle readiness with preview-only systemd, launchd, Windows Service Control Manager, foreground, and Raspberry Pi edge provider summaries, lifecycle action previews, permission summaries, sanitized command previews, and no destructive service behavior | Complete baseline |
+| 119 | Deployment manifest generation with sanitized standalone, orchestrator, worker, edge, lab, and production-preview manifests, node profiles, resource envelopes, deployment readiness, export paths, backup recommendations, and advisory-only dictionaries | Complete baseline |
+| 120 | Upgrade and migration readiness with version compatibility reports, migration preview plans, rollback notes, required backups, validation steps, operator steps, safety warnings, and no destructive migration execution | Complete baseline |
+| 121 | Backup and restore planning with dry-run backup plans, restore previews, historical intelligence and evidence bundle safety records, encryption recommendations, conflict warnings, and no automatic backup, restore, delete, or overwrite behavior | Complete baseline |
+| 122 | Deployment operator summaries with unified deployment readiness records, readiness scores, release-readiness checklists, operator actions, safety warnings, ready/degraded/blocked/unknown states, and dashboard/API/export-safe views | Complete baseline |
 
 ## Baseline Meaning
 
@@ -60,7 +66,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, release packaging, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T implementation planning is tracked in `docs/PHASE_117_122_PLAN.md`.
+Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`.
 
 ## References
 
@@ -78,6 +84,7 @@ Phases 111-116 are complete as baselines for metadata-only historical snapshot p
 - `docs/MILESTONE_Q_INTEGRATION.md`
 - `docs/MILESTONE_R_INTEGRATION.md`
 - `docs/MILESTONE_S_INTEGRATION.md`
+- `docs/MILESTONE_T_INTEGRATION.md`
 - `docs/PHASE_99_104_PLAN.md`
 - `docs/PHASE_105_110_PLAN.md`
 - `docs/PHASE_111_116_PLAN.md`

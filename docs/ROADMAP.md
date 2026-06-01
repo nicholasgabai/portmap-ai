@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 116 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/PHASE_117_122_PLAN.md` defines the next operationalization and deployment milestone, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 122 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
 
 ## Completed Milestones
 
@@ -24,10 +24,11 @@ This roadmap summarizes the current direction after the Phase 116 baseline. `POR
 | 99-104 | Cross-platform runtime hardening: runtime detection, Windows compatibility, packet capture readiness, firewall provider readiness, filesystem/export safety, and unified validation summaries | Complete baseline |
 | 105-110 | Behavioral intelligence foundation: historical flow baselines, temporal anomaly windows, service behavior fingerprints, DNS/destination behavior learning, adaptive risk weighting, and unified operator summaries | Complete baseline |
 | 111-116 | Historical persistence and long-term intelligence: historical snapshots, baseline aging and decay, topology evolution, replay windows, resource-aware retention, and long-term intelligence operator summaries | Complete baseline |
+| 117-122 | Operationalization and deployment foundation: production runtime profiles, service lifecycle readiness, deployment manifests, upgrade and migration readiness, backup/restore planning, and deployment operator summaries | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-116 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, and operator workflows.
+Phases 0-122 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
 
 Current stable posture:
 
@@ -88,6 +89,12 @@ Current stable posture:
 - Historical replay windows now reconstruct bounded metadata timelines from snapshots, anomaly summaries, topology evolution, baseline decay, service fingerprints, DNS/destination behavior, and adaptive risk for offline operator review.
 - Resource-aware historical retention now builds storage and memory budget summaries, Raspberry Pi and edge-device retention profiles, adaptive retention windows, preview-only recommendations, and dashboard/API/export-safe retention summaries without deleting files.
 - Long-term intelligence operator summaries now combine historical snapshots, baseline aging/decay, topology evolution, replay windows, and resource-aware retention into unified supported, degraded, and unavailable states with dashboard/API/export-safe operator views.
+- Production runtime profiles now model development, staging, production, edge, and lab deployment postures with safety mode, telemetry level, orchestration mode, remediation mode, history retention, resource budgets, capability flags, and compatibility validation.
+- Service lifecycle readiness now previews systemd, launchd, Windows Service Control Manager, foreground, and Raspberry Pi edge provider states without installing, registering, starting, stopping, or modifying services.
+- Deployment manifest generation now creates sanitized standalone, orchestrator, worker, edge, lab, and production-preview deployment records with node profiles, resource envelopes, readiness, export path placeholders, backup recommendations, and advisory notes.
+- Upgrade and migration readiness now previews version compatibility, runtime profile impact, manifest impact, service lifecycle impact, telemetry impact, history retention impact, rollback availability, migration safety checks, and operator steps without executing migrations.
+- Backup and restore planning now builds dry-run backup plans and restore previews for configs, manifests, runtime exports, historical intelligence, and operator evidence bundles without copying, restoring, deleting, overwriting, or compressing runtime artifacts.
+- Deployment operator summaries now combine deployment profiles, service lifecycle readiness, manifests, upgrade/migration readiness, and backup/restore planning into readiness scores, release checklists, operator actions, safety warnings, and dashboard/API/export-safe views.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -99,8 +106,7 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Milestone T - Operationalization and Deployment Foundation.
-- Future installer, service, release packaging, production security, and AI intelligence work.
+- Future installer, executable, service, release packaging, production security, and AI intelligence work.
 - Future commercial SaaS and fleet management work.
 
 ## Medium-Term Work
@@ -132,6 +138,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_Q_INTEGRATION.md`
 - `docs/MILESTONE_R_INTEGRATION.md`
 - `docs/MILESTONE_S_INTEGRATION.md`
+- `docs/MILESTONE_T_INTEGRATION.md`
 - `docs/PHASE_117_122_PLAN.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
