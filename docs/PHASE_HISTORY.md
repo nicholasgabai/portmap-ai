@@ -60,7 +60,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-119 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, and sanitized deployment manifest generation. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering operationalization, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T implementation planning is tracked in `docs/PHASE_117_122_PLAN.md`.
+Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-120 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, and upgrade/migration readiness previews. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering operationalization, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T implementation planning is tracked in `docs/PHASE_117_122_PLAN.md`.
 
 ## References
 
@@ -85,6 +85,7 @@ Phases 111-116 are complete as baselines for metadata-only historical snapshot p
 - `docs/production_runtime_profiles.md`
 - `docs/service_lifecycle_readiness.md`
 - `docs/deployment_manifest_generation.md`
+- `docs/upgrade_migration_readiness.md`
 - `docs/baseline_aging_decay.md`
 - `docs/historical_replay_windows.md`
 - `docs/historical_snapshot_persistence.md`

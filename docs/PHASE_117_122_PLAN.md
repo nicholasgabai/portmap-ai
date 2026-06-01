@@ -135,13 +135,15 @@ Acceptance:
 
 ## Phase 120 - Upgrade and Migration Readiness
 
+Status: Complete Baseline
+
 Goal:
 Add upgrade and migration preview records for configuration, schema, and rollback readiness without destructive migrations.
 
 Build:
 
 - `core_engine/deployment/upgrade_readiness.py`
-- `core_engine/deployment/migration_previews.py`
+- `core_engine/deployment/migration_plans.py`
 - `tests/test_upgrade_migration_readiness.py`
 - `docs/upgrade_migration_readiness.md`
 

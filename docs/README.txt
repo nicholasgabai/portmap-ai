@@ -32,6 +32,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/production_runtime_profiles.md` - Phase 117 deployment runtime profiles, compatibility validation, advisory states, and production-safe profile summaries.
 - `docs/service_lifecycle_readiness.md` - Phase 118 dry-run systemd, launchd, Windows service, foreground process, and Raspberry Pi edge lifecycle readiness previews.
 - `docs/deployment_manifest_generation.md` - Phase 119 sanitized deployment manifests, node profiles, readiness summaries, export paths, and backup recommendations.
+- `docs/upgrade_migration_readiness.md` - Phase 120 upgrade readiness, migration preview plans, rollback notes, backup requirements, and no-destructive-migration safety records.
 - `docs/historical_flow_baselines.md` - Phase 105 rolling metadata-only behavior baselines, bounded windows, stable/new classification, confidence scoring, dashboard/API summaries, and export-ready digests.
 - `docs/temporal_anomaly_windows.md` - Phase 106 short/medium/long anomaly windows, burst detection, rare service timing, volume drift hints, novelty labels, explanations, and dashboard/API/export summaries.
 - `docs/service_behavior_fingerprints.md` - Phase 107 metadata-only service behavior fingerprints, expected profiles, unusual combination labels, dormant service tracking, confidence scoring, and dashboard/API/export summaries.

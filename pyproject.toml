@@ -215,6 +215,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/traffic_flow_reconstruction.md",
   "docs/udp_scanning.md",
   "docs/unified_configuration_profiles.md",
+  "docs/upgrade_migration_readiness.md",
   "docs/visualization_gui_platform.md",
   "docs/vulnerability_correlation.md",
   "docs/windows_runtime_compatibility.md",
