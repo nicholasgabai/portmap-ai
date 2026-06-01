@@ -104,6 +104,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/ai_layer.md",
   "docs/ai_payload_classification.md",
   "docs/ai_recommendation_engine.md",
+  "docs/backup_restore_planning.md",
   "docs/beginner_guide.md",
   "docs/behavior_correlation.md",
   "docs/behavioral_intelligence_operator_summary.md",

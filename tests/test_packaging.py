@@ -81,6 +81,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/ai_layer.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ai_payload_classification.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ai_recommendation_engine.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/backup_restore_planning.md" in data_files["share/portmap-ai/docs"]
     assert "docs/behavior_correlation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/behavioral_intelligence_operator_summary.md" in data_files["share/portmap-ai/docs"]
     assert "docs/baseline_aging_decay.md" in data_files["share/portmap-ai/docs"]

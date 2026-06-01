@@ -167,13 +167,15 @@ Acceptance:
 
 ## Phase 121 - Backup and Restore Planning
 
+Status: Complete Baseline
+
 Goal:
 Add backup and restore planning records that reference export bundles and historical intelligence summaries without automatically restoring or deleting data.
 
 Build:
 
 - `core_engine/deployment/backup_plans.py`
-- `core_engine/deployment/restore_previews.py`
+- `core_engine/deployment/restore_plans.py`
 - `tests/test_backup_restore_planning.py`
 - `docs/backup_restore_planning.md`
 
