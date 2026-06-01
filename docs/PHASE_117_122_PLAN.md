@@ -103,13 +103,15 @@ Acceptance:
 
 ## Phase 119 - Deployment Manifest Generation
 
+Status: Complete Baseline
+
 Goal:
-Add sanitized deployment manifest records for orchestrator, master, worker, and edge deployments.
+Add sanitized deployment manifest records for standalone, orchestrator, worker, edge, lab, and production-preview deployments.
 
 Build:
 
 - `core_engine/deployment/manifests.py`
-- `core_engine/deployment/node_roles.py`
+- `core_engine/deployment/node_profiles.py`
 - `tests/test_deployment_manifest_generation.py`
 - `docs/deployment_manifest_generation.md`
 

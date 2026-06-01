@@ -120,6 +120,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/dashboard_data_providers.md",
   "docs/dashboard_foundation.md",
   "docs/deployment_options.md",
+  "docs/deployment_manifest_generation.md",
   "docs/deep_packet_inspection.md",
   "docs/diagnostic_relay_simulator.md",
   "docs/docker_deployment.md",
