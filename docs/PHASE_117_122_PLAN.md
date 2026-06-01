@@ -71,13 +71,15 @@ Acceptance:
 
 ## Phase 118 - Service Lifecycle Readiness
 
+Status: Complete Baseline
+
 Goal:
 Add cross-platform service lifecycle preview records for daemon, systemd, launchd, and Windows service operation without installing or controlling services.
 
 Build:
 
 - `core_engine/deployment/service_lifecycle.py`
-- `core_engine/deployment/service_previews.py`
+- `core_engine/deployment/service_providers.py`
 - `tests/test_service_lifecycle_readiness.py`
 - `docs/service_lifecycle_readiness.md`
 

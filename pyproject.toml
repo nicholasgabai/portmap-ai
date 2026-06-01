@@ -199,6 +199,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/security_authentication.md",
   "docs/service_enumeration.md",
   "docs/service_behavior_fingerprints.md",
+  "docs/service_lifecycle_readiness.md",
   "docs/service_mode_readiness.md",
   "docs/service_installer_templates.md",
   "docs/signed_runtime_summary_exchange.md",

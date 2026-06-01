@@ -226,7 +226,7 @@ Phases:
 | Phase | Name | Focus |
 | --- | --- | --- |
 | 117 | Production Runtime Profiles | Complete baseline: production, staging, development, edge, and lab runtime profile records with safe defaults, compatibility validation, deployment mode summaries, and configuration readiness flags. |
-| 118 | Service Lifecycle Readiness | Add service install previews, daemon/systemd/launchd/Windows service readiness summaries, start/stop/restart preview plans, and permission requirement summaries without installing services. |
+| 118 | Service Lifecycle Readiness | Complete baseline: service provider readiness for systemd, launchd, Windows Service Control Manager, foreground mode, and Raspberry Pi edge mode with dry-run lifecycle previews and sanitized command summaries. |
 | 119 | Deployment Manifest Generation | Add sanitized deployment manifests, node role summaries, orchestrator/master/worker profiles, edge/Raspberry Pi manifests, and export-safe deployment dictionaries. |
 | 120 | Upgrade and Migration Readiness | Add configuration migration previews, version compatibility summaries, rollback readiness, schema migration safety checks, and no-destructive-migration records. |
 | 121 | Backup and Restore Planning | Add backup plans, restore previews, export bundle references, historical intelligence backup summaries, and no automatic restore/delete behavior. |
