@@ -199,12 +199,14 @@ Acceptance:
 
 ## Phase 122 - Deployment Operator Summary
 
+Status: Complete Baseline
+
 Goal:
 Combine runtime profile readiness, service lifecycle previews, deployment manifests, upgrade readiness, backup/restore planning, and platform validation into a unified operator deployment summary.
 
 Build:
 
-- `core_engine/deployment/operator_summary.py`
+- `core_engine/deployment/deployment_summary.py`
 - `core_engine/deployment/operator_views.py`
 - `tests/test_deployment_operator_summary.py`
 - `docs/deployment_operator_summary.md`

@@ -230,7 +230,7 @@ Phases:
 | 119 | Deployment Manifest Generation | Complete baseline: sanitized standalone, orchestrator, worker, edge, lab, and production-preview manifests with node profiles, readiness summaries, export paths, and backup recommendations. |
 | 120 | Upgrade and Migration Readiness | Complete baseline: upgrade readiness reports, version compatibility summaries, migration preview plans, rollback notes, backup requirements, and no-destructive-migration records. |
 | 121 | Backup and Restore Planning | Complete baseline: backup plans, restore previews, historical intelligence and evidence bundle safety records, encryption recommendations, conflict warnings, and no automatic restore/delete behavior. |
-| 122 | Deployment Operator Summary | Add unified deployment readiness summaries, dashboard/API-safe views, recommendations, supported/degraded/unavailable states, and release-readiness checklists. |
+| 122 | Deployment Operator Summary | Complete baseline: unified deployment readiness summaries, dashboard/API-safe views, recommendations, ready/degraded/blocked/unknown states, and release-readiness checklists. |
 
 ### Future Commercial SaaS and Fleet Management
 

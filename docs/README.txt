@@ -34,6 +34,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/deployment_manifest_generation.md` - Phase 119 sanitized deployment manifests, node profiles, readiness summaries, export paths, and backup recommendations.
 - `docs/upgrade_migration_readiness.md` - Phase 120 upgrade readiness, migration preview plans, rollback notes, backup requirements, and no-destructive-migration safety records.
 - `docs/backup_restore_planning.md` - Phase 121 backup plans, restore previews, historical intelligence expectations, evidence bundle safety, and no automatic restore/delete behavior.
+- `docs/deployment_operator_summary.md` - Phase 122 unified deployment readiness summaries, release checklists, dashboard/API views, and advisory deployment recommendations.
 - `docs/historical_flow_baselines.md` - Phase 105 rolling metadata-only behavior baselines, bounded windows, stable/new classification, confidence scoring, dashboard/API summaries, and export-ready digests.
 - `docs/temporal_anomaly_windows.md` - Phase 106 short/medium/long anomaly windows, burst detection, rare service timing, volume drift hints, novelty labels, explanations, and dashboard/API/export summaries.
 - `docs/service_behavior_fingerprints.md` - Phase 107 metadata-only service behavior fingerprints, expected profiles, unusual combination labels, dormant service tracking, confidence scoring, and dashboard/API/export summaries.

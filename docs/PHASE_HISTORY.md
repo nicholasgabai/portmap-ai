@@ -60,7 +60,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-121 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, and backup/restore planning records. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering operationalization, production hardening, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T implementation planning is tracked in `docs/PHASE_117_122_PLAN.md`.
+Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, release packaging, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T implementation planning is tracked in `docs/PHASE_117_122_PLAN.md`.
 
 ## References
 
@@ -87,6 +87,7 @@ Phases 111-116 are complete as baselines for metadata-only historical snapshot p
 - `docs/deployment_manifest_generation.md`
 - `docs/upgrade_migration_readiness.md`
 - `docs/backup_restore_planning.md`
+- `docs/deployment_operator_summary.md`
 - `docs/baseline_aging_decay.md`
 - `docs/historical_replay_windows.md`
 - `docs/historical_snapshot_persistence.md`
