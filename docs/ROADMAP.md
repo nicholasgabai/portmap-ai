@@ -96,6 +96,7 @@ Current stable posture:
 - Backup and restore planning now builds dry-run backup plans and restore previews for configs, manifests, runtime exports, historical intelligence, and operator evidence bundles without copying, restoring, deleting, overwriting, or compressing runtime artifacts.
 - Deployment operator summaries now combine deployment profiles, service lifecycle readiness, manifests, upgrade/migration readiness, and backup/restore planning into readiness scores, release checklists, operator actions, safety warnings, and dashboard/API/export-safe views.
 - Pre-Milestone U source labeling now prevents `dummy_app` and `dummy_db` from appearing in live/default TUI runtime views unless simulation or fixture mode is explicit. Live unresolved attribution displays as `Unattributed` or `Unknown`, and TUI/dashboard/API/export summaries preserve source mode.
+- Pre-Milestone U live scan snapshot deduplication now bounds each worker scan cycle as a current snapshot, collapses duplicate socket rows, prunes transient live socket states, keeps remediation scoring stable across repeated identical scans, and keeps the TUI scan-results panel focused on the latest snapshot per node.
 - The Textual terminal dashboard remains the primary operator UI.
 - Static web dashboard rendering exists as a reusable foundation, not a replacement UI.
 - Docker remains optional and advanced.
@@ -141,6 +142,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_S_INTEGRATION.md`
 - `docs/MILESTONE_T_INTEGRATION.md`
 - `docs/source_mode_labeling.md`
+- `docs/live_scan_snapshot_deduplication.md`
 - `docs/PHASE_117_122_PLAN.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`

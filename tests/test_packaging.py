@@ -133,6 +133,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/logging_audit.md" in data_files["share/portmap-ai/docs"]
     assert "docs/live_cluster_state_synchronization.md" in data_files["share/portmap-ai/docs"]
     assert "docs/live_packet_ingestion.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/live_scan_snapshot_deduplication.md" in data_files["share/portmap-ai/docs"]
     assert "docs/local_api.md" in data_files["share/portmap-ai/docs"]
     assert "docs/local_storage.md" in data_files["share/portmap-ai/docs"]
     assert "docs/long_term_intelligence_operator_summary.md" in data_files["share/portmap-ai/docs"]

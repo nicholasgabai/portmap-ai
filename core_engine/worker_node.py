@@ -24,7 +24,7 @@ from core_engine.config_loader import PROJECT_ROOT, load_node_config
 from core_engine.config_validation import require_valid_config
 from core_engine.logging_utils import configure_logger, update_log_level
 from core_engine.platform_utils import local_node_address
-from core_engine.modules.scanner import basic_scan
+from core_engine.modules.scanner import basic_scan, normalize_scan_snapshot, scan_snapshot_id
 from core_engine.firewall_hooks import configure_firewall
 from core_engine.tls_utils import create_client_context, merge_tls_config
 
@@ -51,21 +51,36 @@ def collect_connections(logger: logging.Logger):
 
 
 def build_payload(node_id: str, connections, logger: logging.Logger, autolearn: bool) -> dict:
+    snapshot_connections = normalize_scan_snapshot(connections, node_id=node_id)
+    source_modes = sorted({str(row.get("source_mode") or "unknown") for row in snapshot_connections})
+    snapshot_id = scan_snapshot_id(snapshot_connections, node_id=node_id)
     payload = {
         "node_id": node_id,
         "timestamp": int(time.time()),
         "ports": [],
         "anomalies": [],
         "score": 0.0,
+        "scan_snapshot": {
+            "record_type": "worker_scan_snapshot",
+            "snapshot_id": snapshot_id,
+            "source_modes": source_modes,
+            "observation_count": len(snapshot_connections),
+            "bounded": True,
+            "current_snapshot": True,
+            "historical_storage": False,
+            "raw_payload_stored": False,
+        },
     }
 
-    if not connections:
+    if not snapshot_connections:
         logger.info("⚠️ No connections found — sending heartbeat only.")
         return payload
 
     total_score = 0.0
     scored = 0
-    for connection in connections:
+    scored_connections = []
+    for connection in snapshot_connections:
+        connection = dict(connection)
         try:
             score = float(get_score(connection, use_ml=autolearn))
             connection["score"] = score
@@ -73,8 +88,9 @@ def build_payload(node_id: str, connections, logger: logging.Logger, autolearn: 
             scored += 1
         except Exception as exc:
             logger.warning("scoring failed for %s: %s", connection, exc)
+        scored_connections.append(connection)
 
-    payload["ports"] = connections
+    payload["ports"] = scored_connections
     if scored:
         payload["score"] = round(total_score / scored, 3)
     return payload

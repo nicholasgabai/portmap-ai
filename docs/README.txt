@@ -37,6 +37,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/backup_restore_planning.md` - Phase 121 backup plans, restore previews, historical intelligence expectations, evidence bundle safety, and no automatic restore/delete behavior.
 - `docs/deployment_operator_summary.md` - Phase 122 unified deployment readiness summaries, release checklists, dashboard/API views, and advisory deployment recommendations.
 - `docs/source_mode_labeling.md` - pre-Milestone U source-mode labeling rules for live, simulated, fixture, replay, and unknown TUI/dashboard/API/export records.
+- `docs/live_scan_snapshot_deduplication.md` - pre-Milestone U live scan snapshot deduplication, stale/transient pruning, bounded worker payloads, and TUI latest-snapshot behavior.
 - `docs/historical_flow_baselines.md` - Phase 105 rolling metadata-only behavior baselines, bounded windows, stable/new classification, confidence scoring, dashboard/API summaries, and export-ready digests.
 - `docs/temporal_anomaly_windows.md` - Phase 106 short/medium/long anomaly windows, burst detection, rare service timing, volume drift hints, novelty labels, explanations, and dashboard/API/export summaries.
 - `docs/service_behavior_fingerprints.md` - Phase 107 metadata-only service behavior fingerprints, expected profiles, unusual combination labels, dormant service tracking, confidence scoring, and dashboard/API/export summaries.

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from ai_agent.remediation import handle_remediation
 from core_engine.audit_events import append_jsonl_event, record_audit_event, utc_timestamp
+from core_engine.modules.scanner import normalize_scan_snapshot, scan_snapshot_id
 from core_engine.remediation_safety import firewall_dry_run
 
 BASE_DIR = Path.home() / ".portmap-ai" / "logs"
@@ -37,7 +38,9 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
     node_id = payload.get("node_id", "unknown-node")
     score = payload.get("score", "-")
     anomalies = payload.get("anomalies", [])
-    ports = payload.get("ports", [])
+    ports = normalize_scan_snapshot(payload.get("ports", []), node_id=node_id)
+    snapshot = payload.get("scan_snapshot") if isinstance(payload.get("scan_snapshot"), dict) else {}
+    snapshot_id = str(snapshot.get("snapshot_id") or scan_snapshot_id(ports, node_id=node_id))
     score_factors = []
     if ports:
         try:
@@ -55,7 +58,10 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
         "score": score,
         "risk_score": score,
         "anomalies": anomalies,
+        "scan_snapshot_id": snapshot_id,
+        "source_mode": (ports[0].get("source_mode") if ports else "unknown"),
         "ports_sample": ports[:5],  # don’t spam the log
+        "current_snapshot": True,
         "score_factors": score_factors,
     }
 

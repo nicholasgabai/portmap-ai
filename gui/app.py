@@ -25,6 +25,7 @@ from gui.visualization import (
     topology_edge_rows,
     visualization_summary,
 )
+from core_engine.modules.scanner import normalize_scan_snapshot
 
 ORCHESTRATOR_STATE = Path.home() / ".portmap-ai" / "data" / "orchestrator_state.json"
 MASTER_LOG = Path.home() / ".portmap-ai" / "logs" / "master.log"
@@ -95,11 +96,26 @@ def _format_timestamp(value: Any) -> str:
 
 def _scan_rows_from_telemetry(events: List[Dict[str, Any]], limit: int = 20) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
+    latest_by_node: Dict[str, Dict[str, Any]] = {}
     for event in events:
+        node_id = str(event.get("node_id") or "-")
+        current = latest_by_node.get(node_id)
+        if current is None or str(event.get("timestamp") or "") >= str(current.get("timestamp") or ""):
+            latest_by_node[node_id] = event
+    for event in sorted(latest_by_node.values(), key=lambda item: str(item.get("timestamp") or "")):
         node_id = event.get("node_id", "-")
         event_score = event.get("risk_score", event.get("score", "-"))
         event_factors = event.get("score_factors") or []
+        event_source_mode = _source_mode(event.get("source_mode") or event.get("data_source"))
+        event_ports = []
         for port in event.get("ports_sample") or []:
+            if isinstance(port, dict):
+                row = dict(port)
+                row.setdefault("source_mode", event_source_mode)
+                row.setdefault("data_source", event_source_mode)
+                event_ports.append(row)
+        snapshot_ports = normalize_scan_snapshot(event_ports, node_id=str(node_id), max_observations=limit)
+        for port in snapshot_ports:
             if not isinstance(port, dict):
                 continue
             rows.append(

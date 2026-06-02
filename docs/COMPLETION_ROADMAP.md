@@ -66,6 +66,7 @@ Implemented foundation includes:
 - Backup and restore planning records for configuration, manifests, runtime exports, historical intelligence, and operator evidence bundles with restore previews, conflict warnings, encryption recommendations, and no automatic restore/delete behavior.
 - Deployment operator summary records with readiness scores, release-readiness checklists, operator actions, safety warnings, ready/degraded/blocked/unknown states, dashboard/API-safe views, and export-safe dictionaries.
 - Pre-Milestone U source labeling for TUI, dashboard, API, and export-safe telemetry records so live/default runtime views show unresolved attribution as Unattributed or Unknown and reserve dummy labels for explicit simulated or fixture data.
+- Pre-Milestone U live scan snapshot deduplication so worker payloads represent bounded current observations, duplicate socket rows collapse by stable metadata key, transient live socket states are pruned from current snapshots, and TUI latest-scan views do not accumulate stale rows.
 
 Current posture remains local-first, operator-controlled, advisory by default, read-only unless explicitly run in local-write mode, and suitable for sanitized test fixtures.
 

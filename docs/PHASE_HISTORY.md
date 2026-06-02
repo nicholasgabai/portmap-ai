@@ -56,6 +56,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 121 | Backup and restore planning with dry-run backup plans, restore previews, historical intelligence and evidence bundle safety records, encryption recommendations, conflict warnings, and no automatic backup, restore, delete, or overwrite behavior | Complete baseline |
 | 122 | Deployment operator summaries with unified deployment readiness records, readiness scores, release-readiness checklists, operator actions, safety warnings, ready/degraded/blocked/unknown states, and dashboard/API/export-safe views | Complete baseline |
 | Pre-U | TUI source labeling hardening with explicit live, simulated, fixture, replay, and unknown source modes, fixture-only dummy labels, live unresolved attribution displayed as Unattributed or Unknown, and preserved source mode in dashboard/API/export dictionaries | Complete hardening fix |
+| Pre-U | Live scan snapshot deduplication with current per-cycle worker snapshots, stable metadata keys, duplicate socket collapse, transient live socket pruning, bounded payloads, stable repeated-scan scoring, and latest-snapshot TUI rows | Complete hardening fix |
 
 ## Baseline Meaning
 
@@ -97,6 +98,7 @@ Phases 111-116 are complete as baselines for metadata-only historical snapshot p
 - `docs/backup_restore_planning.md`
 - `docs/deployment_operator_summary.md`
 - `docs/source_mode_labeling.md`
+- `docs/live_scan_snapshot_deduplication.md`
 - `docs/baseline_aging_decay.md`
 - `docs/historical_replay_windows.md`
 - `docs/historical_snapshot_persistence.md`

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import socket
+from hashlib import sha256
+from ipaddress import ip_address
 from typing import Any, Dict, Iterable, List
 
 from core_engine import platform_utils
 from core_engine.risky_ports import service_name_for_port
 
 SOURCE_MODES = frozenset({"live", "simulated", "fixture", "replay", "unknown"})
+DEFAULT_MAX_SCAN_OBSERVATIONS = 128
+DEFAULT_TRANSIENT_STATUSES = frozenset({"TIME_WAIT"})
 
 
 def _normalize_source_mode(value: Any) -> str:
@@ -27,6 +31,47 @@ def _format_address(addr: Any) -> str:
     if host is None:
         return "-"
     return f"{host}:{port}" if port is not None else str(host)
+
+
+def _split_host_port(value: Any) -> tuple[str, int | None]:
+    text = str(value or "").strip()
+    if text in {"", "-"}:
+        return "", None
+    if text.startswith("[") and "]" in text:
+        host, _, tail = text[1:].partition("]")
+        port_text = tail[1:] if tail.startswith(":") else ""
+    elif text.count(":") == 1:
+        host, port_text = text.rsplit(":", 1)
+    else:
+        host, port_text = text, ""
+    try:
+        port = int(port_text) if port_text else None
+    except ValueError:
+        port = None
+    return host, port
+
+
+def _address_class(value: Any) -> str:
+    host, _ = _split_host_port(value)
+    if not host:
+        return "none"
+    try:
+        address = ip_address(host)
+    except ValueError:
+        return "unknown"
+    if address.is_loopback:
+        return "loopback"
+    if address.is_unspecified:
+        return "unspecified"
+    if address.is_multicast:
+        return "multicast"
+    if address.is_link_local:
+        return "link_local"
+    if address.is_private:
+        return "private_or_documentation"
+    if address.is_global:
+        return "global"
+    return "other"
 
 
 def _get_process_name(pid: int | None) -> str:
@@ -78,6 +123,77 @@ def _dedupe(connections: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
         seen.add(key)
         unique.append(conn)
     return unique
+
+
+def scan_snapshot_key(connection: Dict[str, Any], *, node_id: str = "") -> tuple:
+    local = connection.get("local")
+    remote = connection.get("remote")
+    _, remote_port = _split_host_port(remote)
+    return (
+        str(node_id or connection.get("node_id") or ""),
+        _address_class(local),
+        int(connection.get("port") or 0),
+        _address_class(remote),
+        remote_port or 0,
+        str(connection.get("protocol") or "Unknown").upper(),
+        str(connection.get("status") or connection.get("state") or "UNKNOWN").upper(),
+        str(connection.get("program") or connection.get("service_name") or "Unattributed").lower(),
+        _normalize_source_mode(connection.get("source_mode") or connection.get("data_source") or "live"),
+    )
+
+
+def normalize_scan_snapshot(
+    connections: Iterable[Dict[str, Any]],
+    *,
+    node_id: str = "",
+    max_observations: int = DEFAULT_MAX_SCAN_OBSERVATIONS,
+    prune_transient: bool = True,
+    transient_statuses: Iterable[str] = DEFAULT_TRANSIENT_STATUSES,
+) -> List[Dict[str, Any]]:
+    """Return a bounded, deduplicated current scan snapshot."""
+    transient = {str(status).upper() for status in transient_statuses}
+    unique: dict[tuple, Dict[str, Any]] = {}
+    for raw in connections or []:
+        if not isinstance(raw, dict):
+            continue
+        row = dict(raw)
+        mode = _normalize_source_mode(row.get("source_mode") or row.get("data_source") or "live")
+        status = str(row.get("status") or row.get("state") or "UNKNOWN").upper()
+        if prune_transient and mode == "live" and status in transient:
+            continue
+        if str(row.get("program") or "").strip() in {"dummy_app", "dummy_db"} and mode not in {"simulated", "fixture"}:
+            row["program"] = "Unattributed"
+            row["attribution_status"] = "unattributed"
+        row["source_mode"] = mode
+        row.setdefault("data_source", "local_socket_inventory" if mode == "live" else mode)
+        row.setdefault("attribution_status", "matched" if row.get("pid") else "unattributed")
+        key = scan_snapshot_key(row, node_id=node_id)
+        row["scan_snapshot_key"] = "|".join(str(part) for part in key)
+        row["current_snapshot"] = True
+        unique.setdefault(key, row)
+    rows = sorted(
+        unique.values(),
+        key=lambda item: (
+            int(item.get("port") or 0),
+            str(item.get("program") or ""),
+            str(item.get("protocol") or ""),
+            str(item.get("status") or ""),
+            str(item.get("local") or ""),
+            str(item.get("remote") or ""),
+        ),
+    )
+    limit = max(0, int(max_observations))
+    return rows[:limit] if limit else []
+
+
+def scan_snapshot_id(rows: Iterable[Dict[str, Any]], *, node_id: str = "") -> str:
+    material = json_safe_snapshot(rows, node_id=node_id)
+    return "scan-snapshot-" + sha256(material.encode("utf-8")).hexdigest()[:16]
+
+
+def json_safe_snapshot(rows: Iterable[Dict[str, Any]], *, node_id: str = "") -> str:
+    parts = sorted(str(scan_snapshot_key(row, node_id=node_id)) for row in rows or [] if isinstance(row, dict))
+    return "\n".join(parts)
 
 
 def _fallback_connections(*, source_mode: str = "simulated") -> List[Dict[str, Any]]:
@@ -165,16 +281,7 @@ def basic_scan(kind: str = "inet", *, source_mode: str = "live", allow_simulated
             }
         )
 
-    normalized = _dedupe(normalized)
-    normalized.sort(
-        key=lambda item: (
-            item.get("port", 0),
-            item.get("program", ""),
-            item.get("pid", 0),
-            item.get("local", ""),
-            item.get("remote", ""),
-        )
-    )
+    normalized = normalize_scan_snapshot(_dedupe(normalized), prune_transient=True)
     if normalized:
         return normalized
     return _fallback_connections(source_mode=mode if mode in {"fixture", "simulated"} else "simulated") if allow_simulated_fallback or mode in {"fixture", "simulated"} else []

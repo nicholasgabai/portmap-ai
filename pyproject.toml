@@ -159,6 +159,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/logging_audit.md",
   "docs/live_cluster_state_synchronization.md",
   "docs/live_packet_ingestion.md",
+  "docs/live_scan_snapshot_deduplication.md",
   "docs/local_api.md",
   "docs/local_storage.md",
   "docs/long_term_intelligence_operator_summary.md",
