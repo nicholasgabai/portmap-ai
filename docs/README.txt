@@ -31,6 +31,8 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_105_110_PLAN.md` - milestone plan for historical behavioral intelligence baselines, anomaly windows, service fingerprints, DNS learning, adaptive risk weighting, and operator summaries.
 - `docs/PHASE_111_116_PLAN.md` - milestone plan for historical persistence, baseline aging, topology evolution, replay windows, resource-aware retention, and long-term intelligence summaries.
 - `docs/PHASE_117_122_PLAN.md` - milestone plan for operationalization and deployment foundation: runtime profiles, service lifecycle previews, deployment manifests, upgrade readiness, backup/restore planning, and deployment summaries.
+- `docs/PHASE_123_128_PLAN.md` - milestone plan for security foundation and trusted runtime: secure node identity, encrypted transport readiness, secure config, RBAC, tamper detection, and secure updates.
+- `docs/secure_node_identity.md` - Phase 123 secure logical node identities, enrollment previews, trust-chain summaries, rotation previews, and export-safe safety fields.
 - `docs/production_runtime_profiles.md` - Phase 117 deployment runtime profiles, compatibility validation, advisory states, and production-safe profile summaries.
 - `docs/service_lifecycle_readiness.md` - Phase 118 dry-run systemd, launchd, Windows service, foreground process, and Raspberry Pi edge lifecycle readiness previews.
 - `docs/deployment_manifest_generation.md` - Phase 119 sanitized deployment manifests, node profiles, readiness summaries, export paths, and backup recommendations.

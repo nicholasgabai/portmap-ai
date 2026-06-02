@@ -5,7 +5,6 @@ import hmac
 import re
 from typing import Any, Mapping
 
-
 SECRET_KEYWORDS = ("token", "secret", "password", "passwd", "key", "credential")
 NODE_ID_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
 VALID_NODE_ROLES = {"orchestrator", "master", "worker"}
@@ -69,3 +68,59 @@ def validate_node_identity(node_id: Any, role: Any) -> list[str]:
     if not isinstance(role, str) or role.lower() not in VALID_NODE_ROLES:
         errors.append(f"role must be one of: {', '.join(sorted(VALID_NODE_ROLES))}")
     return errors
+
+
+from .enrollment import (  # noqa: E402
+    ENROLLMENT_STATES,
+    SecureEnrollmentError,
+    WorkerEnrollmentPreview,
+    create_worker_enrollment_preview,
+)
+from .node_identity import (  # noqa: E402
+    ENROLLMENT_IDENTITY_STATES,
+    LOGICAL_NODE_CLASSES,
+    TRUST_IDENTITY_STATES,
+    SecureNodeIdentity,
+    SecureNodeIdentityError,
+    create_secure_node_identity,
+    identity_regeneration_preview,
+    identity_rotation_preview,
+)
+from .trust_chain import (  # noqa: E402
+    TRUST_RELATIONSHIP_STATES,
+    SecureTrustChainError,
+    TrustRelationshipSummary,
+    build_trust_chain_summary,
+    create_trust_relationship_summary,
+)
+
+__all__ = [
+    "ENROLLMENT_IDENTITY_STATES",
+    "ENROLLMENT_STATES",
+    "LOGICAL_NODE_CLASSES",
+    "NODE_ID_PATTERN",
+    "SECRET_KEYWORDS",
+    "TRUST_IDENTITY_STATES",
+    "TRUST_RELATIONSHIP_STATES",
+    "SecureEnrollmentError",
+    "SecureNodeIdentity",
+    "SecureNodeIdentityError",
+    "SecureTrustChainError",
+    "TrustRelationshipSummary",
+    "VALID_NODE_ROLES",
+    "WorkerEnrollmentPreview",
+    "build_trust_chain_summary",
+    "create_secure_node_identity",
+    "create_trust_relationship_summary",
+    "create_worker_enrollment_preview",
+    "extract_bearer_token",
+    "identity_regeneration_preview",
+    "identity_rotation_preview",
+    "is_secret_key",
+    "redact_secret",
+    "scrub_secrets",
+    "token_fingerprint",
+    "validate_node_identity",
+    "verify_bearer_header",
+    "verify_token",
+]

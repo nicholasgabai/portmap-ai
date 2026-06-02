@@ -55,6 +55,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 120 | Upgrade and migration readiness with version compatibility reports, migration preview plans, rollback notes, required backups, validation steps, operator steps, safety warnings, and no destructive migration execution | Complete baseline |
 | 121 | Backup and restore planning with dry-run backup plans, restore previews, historical intelligence and evidence bundle safety records, encryption recommendations, conflict warnings, and no automatic backup, restore, delete, or overwrite behavior | Complete baseline |
 | 122 | Deployment operator summaries with unified deployment readiness records, readiness scores, release-readiness checklists, operator actions, safety warnings, ready/degraded/blocked/unknown states, and dashboard/API/export-safe views | Complete baseline |
+| 123 | Secure node identity with deterministic logical node UUIDs, worker enrollment previews, trust-chain summaries, identity regeneration and rotation previews, export-safe safety fields, and no hardware identifier, credential exchange, certificate, listener, or privileged enrollment behavior | Complete baseline |
 | Pre-U | TUI source labeling hardening with explicit live, simulated, fixture, replay, and unknown source modes, fixture-only dummy labels, live unresolved attribution displayed as Unattributed or Unknown, and preserved source mode in dashboard/API/export dictionaries | Complete hardening fix |
 | Pre-U | Live scan snapshot deduplication with current per-cycle worker snapshots, stable metadata keys, duplicate socket collapse, transient live socket pruning, bounded payloads, stable repeated-scan scoring, and latest-snapshot TUI rows | Complete hardening fix |
 
@@ -68,7 +69,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`.
+Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. Phase 123 is complete as the first Milestone U baseline for secure logical node identity, enrollment previews, and trust-chain summaries. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`.
 
 ## References
 
@@ -92,6 +93,8 @@ Phases 111-116 are complete as baselines for metadata-only historical snapshot p
 - `docs/PHASE_105_110_PLAN.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_117_122_PLAN.md`
+- `docs/PHASE_123_128_PLAN.md`
+- `docs/secure_node_identity.md`
 - `docs/production_runtime_profiles.md`
 - `docs/service_lifecycle_readiness.md`
 - `docs/deployment_manifest_generation.md`

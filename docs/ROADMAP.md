@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 122 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
+This roadmap summarizes the current direction after the Phase 123 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
 
 ## Completed Milestones
 
@@ -25,10 +25,11 @@ This roadmap summarizes the current direction after the Phase 122 baseline. `POR
 | 105-110 | Behavioral intelligence foundation: historical flow baselines, temporal anomaly windows, service behavior fingerprints, DNS/destination behavior learning, adaptive risk weighting, and unified operator summaries | Complete baseline |
 | 111-116 | Historical persistence and long-term intelligence: historical snapshots, baseline aging and decay, topology evolution, replay windows, resource-aware retention, and long-term intelligence operator summaries | Complete baseline |
 | 117-122 | Operationalization and deployment foundation: production runtime profiles, service lifecycle readiness, deployment manifests, upgrade and migration readiness, backup/restore planning, and deployment operator summaries | Complete baseline |
+| 123 | Security foundation and trusted runtime: secure logical node identity, worker enrollment previews, trust-chain summaries, identity regeneration/rotation previews, and export-safe safety fields | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-122 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
+Phases 0-123 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
 
 Current stable posture:
 
@@ -95,6 +96,7 @@ Current stable posture:
 - Upgrade and migration readiness now previews version compatibility, runtime profile impact, manifest impact, service lifecycle impact, telemetry impact, history retention impact, rollback availability, migration safety checks, and operator steps without executing migrations.
 - Backup and restore planning now builds dry-run backup plans and restore previews for configs, manifests, runtime exports, historical intelligence, and operator evidence bundles without copying, restoring, deleting, overwriting, or compressing runtime artifacts.
 - Deployment operator summaries now combine deployment profiles, service lifecycle readiness, manifests, upgrade/migration readiness, and backup/restore planning into readiness scores, release checklists, operator actions, safety warnings, and dashboard/API/export-safe views.
+- Secure node identity now provides deterministic logical node UUIDs, worker enrollment previews, orchestrator/master/worker/edge trust relationship summaries, identity regeneration and rotation previews, and export-safe safety fields without exposing hardware identifiers, hostnames, usernames, serial numbers, MAC addresses, credentials, certificates, listeners, or privileged enrollment actions.
 - Pre-Milestone U source labeling now prevents `dummy_app` and `dummy_db` from appearing in live/default TUI runtime views unless simulation or fixture mode is explicit. Live unresolved attribution displays as `Unattributed` or `Unknown`, and TUI/dashboard/API/export summaries preserve source mode.
 - Pre-Milestone U live scan snapshot deduplication now bounds each worker scan cycle as a current snapshot, collapses duplicate socket rows, prunes transient live socket states, keeps remediation scoring stable across repeated identical scans, and keeps the TUI scan-results panel focused on the latest snapshot per node.
 - The Textual terminal dashboard remains the primary operator UI.
@@ -108,7 +110,7 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`. Th
 
 Planned remaining milestones:
 
-- Milestone U security foundation and trusted runtime work.
+- Continue Milestone U security foundation and trusted runtime work after the Phase 123 secure node identity baseline.
 - Deep flow intelligence, autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -145,6 +147,8 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/source_mode_labeling.md`
 - `docs/live_scan_snapshot_deduplication.md`
 - `docs/PHASE_117_122_PLAN.md`
+- `docs/PHASE_123_128_PLAN.md`
+- `docs/secure_node_identity.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
