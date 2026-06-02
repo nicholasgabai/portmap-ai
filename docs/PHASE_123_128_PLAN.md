@@ -78,6 +78,8 @@ Acceptance:
 
 ## Phase 124 - Encrypted Orchestration Transport
 
+Status: Complete Baseline
+
 Goal:
 Prepare encrypted orchestration transport records for trusted node communication without opening network listeners automatically.
 
@@ -96,6 +98,9 @@ Features:
 - Certificate reference placeholders.
 - Graceful degraded states for unsupported platforms.
 - Export-safe transport dictionaries.
+- Plaintext development, TLS-ready, mTLS-ready, pinned-certificate-ready, and production-required profile records.
+- Downgrade warning fields and operator action summaries.
+- Dry-run-only session negotiation previews for orchestrator/master/worker/edge role pairs.
 
 Acceptance:
 
@@ -103,6 +108,7 @@ Acceptance:
 - No live sockets are opened.
 - No certificates or private keys are generated or stored in public fixtures.
 - Degraded and unavailable states are explicit.
+- No live authentication exchange or mTLS handshake is performed.
 
 ## Phase 125 - Secure Config And Secrets Management
 

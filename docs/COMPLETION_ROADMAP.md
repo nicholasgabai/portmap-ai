@@ -8,7 +8,7 @@ The extended production-launch roadmap after the Phase 122 baseline is tracked i
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 123, covering Phases 0-123.
+PortMap-AI has completed baseline implementation through Phase 124, covering Phases 0-124.
 
 Implemented foundation includes:
 
@@ -68,6 +68,7 @@ Implemented foundation includes:
 - Backup and restore planning records for configuration, manifests, runtime exports, historical intelligence, and operator evidence bundles with restore previews, conflict warnings, encryption recommendations, and no automatic restore/delete behavior.
 - Deployment operator summary records with readiness scores, release-readiness checklists, operator actions, safety warnings, ready/degraded/blocked/unknown states, dashboard/API-safe views, and export-safe dictionaries.
 - Secure logical node identity records with deterministic installation-scoped UUIDs, worker enrollment previews, trust-chain summaries, identity regeneration and rotation previews, advisory-only safety fields, and no raw hardware identifiers, hostnames, usernames, MAC addresses, serial numbers, plaintext secrets, certificates, listeners, or privileged enrollment actions.
+- Encrypted orchestration transport readiness records with plaintext development, TLS-ready, mTLS-ready, pinned-certificate-ready, and production-required profiles, downgrade warnings, session negotiation previews, mutual-auth requirement summaries, and no certificate generation, private key material, listener changes, live auth exchange, or mTLS handshakes.
 - Pre-Milestone U source labeling for TUI, dashboard, API, and export-safe telemetry records so live/default runtime views show unresolved attribution as Unattributed or Unknown and reserve dummy labels for explicit simulated or fixture data.
 - Pre-Milestone U live scan snapshot deduplication so worker payloads represent bounded current observations, duplicate socket rows collapse by stable metadata key, transient live socket states are pruned from current snapshots, and TUI latest-scan views do not accumulate stale rows.
 
