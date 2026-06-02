@@ -112,6 +112,8 @@ Acceptance:
 
 ## Phase 125 - Secure Config And Secrets Management
 
+Status: Complete Baseline
+
 Goal:
 Add secure configuration and secret-handling readiness records without storing credentials in plaintext.
 
@@ -119,8 +121,8 @@ Build:
 
 - `core_engine/security/secure_config.py`
 - `core_engine/security/secrets.py`
-- `tests/test_secure_config_secrets.py`
-- `docs/secure_config_secrets.md`
+- `tests/test_secure_config_and_secrets.py`
+- `docs/secure_config_and_secrets.md`
 
 Features:
 
@@ -129,12 +131,17 @@ Features:
 - Secret rotation preview records.
 - Environment abstraction summaries.
 - Redaction/export-safety fields.
+- Development, staging, production, edge, and ephemeral-runtime configuration profile records.
+- Orchestrator token, worker enrollment secret, future mTLS material, API/session token, and runtime encryption key preview records.
+- Plaintext persistence rejection fields.
+- External secret provider readiness records.
 
 Acceptance:
 
 - No secret material appears in docs, tests, or export-safe dictionaries.
 - Rotation remains preview-only.
 - Unsupported platform behavior is safely degraded.
+- No OS keychain, credential store, live encryption, real key generation, or live secret exchange is performed.
 
 ## Phase 126 - RBAC And Operator Permissions
 
@@ -267,7 +274,7 @@ Each phase should add focused documentation:
 
 - `docs/secure_node_identity.md`
 - `docs/encrypted_orchestration_transport.md`
-- `docs/secure_config_secrets.md`
+- `docs/secure_config_and_secrets.md`
 - `docs/rbac_operator_permissions.md`
 - `docs/tamper_detection.md`
 - `docs/secure_update_framework.md`

@@ -206,6 +206,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/scanner_risk_engine.md",
   "docs/schema_validation_engine.md",
   "docs/security_authentication.md",
+  "docs/secure_config_and_secrets.md",
   "docs/service_enumeration.md",
   "docs/service_behavior_fingerprints.md",
   "docs/service_lifecycle_readiness.md",
