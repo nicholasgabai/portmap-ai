@@ -191,6 +191,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/raspberry_pi_deployment.md",
   "docs/real_device_validation.md",
   "docs/realtime_telemetry_dashboard.md",
+  "docs/rbac_operator_permissions.md",
   "docs/remote_operator_visibility_prep.md",
   "docs/release_candidate.md",
   "docs/remediation_safety.md",

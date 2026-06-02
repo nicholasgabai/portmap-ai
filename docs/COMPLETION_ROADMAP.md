@@ -8,7 +8,7 @@ The extended production-launch roadmap after the Phase 122 baseline is tracked i
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 125, covering Phases 0-125.
+PortMap-AI has completed baseline implementation through Phase 126, covering Phases 0-126.
 
 Implemented foundation includes:
 
@@ -70,6 +70,7 @@ Implemented foundation includes:
 - Secure logical node identity records with deterministic installation-scoped UUIDs, worker enrollment previews, trust-chain summaries, identity regeneration and rotation previews, advisory-only safety fields, and no raw hardware identifiers, hostnames, usernames, MAC addresses, serial numbers, plaintext secrets, certificates, listeners, or privileged enrollment actions.
 - Encrypted orchestration transport readiness records with plaintext development, TLS-ready, mTLS-ready, pinned-certificate-ready, and production-required profiles, downgrade warnings, session negotiation previews, mutual-auth requirement summaries, and no certificate generation, private key material, listener changes, live auth exchange, or mTLS handshakes.
 - Secure configuration and secrets-management readiness records with development, staging, production, edge, and ephemeral runtime profiles, secret-management previews for orchestration/runtime classes, plaintext persistence rejection, rotation readiness, external provider readiness, and no credential storage, key generation, OS keychain integration, live encryption, or secret exchange.
+- RBAC and operator permission readiness records with admin, security-operator, analyst, auditor, read-only, and service-account roles, permission evaluation previews, remediation/enrollment/export/config/audit boundaries, and no user account creation, password or token storage, live authentication enforcement, or API behavior changes.
 - Pre-Milestone U source labeling for TUI, dashboard, API, and export-safe telemetry records so live/default runtime views show unresolved attribution as Unattributed or Unknown and reserve dummy labels for explicit simulated or fixture data.
 - Pre-Milestone U live scan snapshot deduplication so worker payloads represent bounded current observations, duplicate socket rows collapse by stable metadata key, transient live socket states are pruned from current snapshots, and TUI latest-scan views do not accumulate stale rows.
 

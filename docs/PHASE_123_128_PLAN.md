@@ -145,6 +145,8 @@ Acceptance:
 
 ## Phase 126 - RBAC And Operator Permissions
 
+Status: Complete Baseline
+
 Goal:
 Add role-based access and permission summary models for future secured operator workflows.
 
@@ -157,16 +159,19 @@ Build:
 
 Features:
 
-- Admin, operator, auditor, and read-only role summaries.
+- Admin, security operator, analyst, auditor, read-only, and service-account role summaries.
 - Permission scope records.
 - Enforcement-mode protection flags.
 - Dashboard/API-safe permission dictionaries.
+- Permission evaluation previews for telemetry, history, exports, remediation, node identity rotation, enrollment, configuration, audit logs, and role management.
+- Allowed, denied, requires-approval, and unavailable permission states.
 
 Acceptance:
 
 - Permission summaries are deterministic.
 - No authentication backend is required in this phase.
 - Unsafe or unknown permission states are reported, not hidden.
+- No user accounts, passwords, tokens, credential stores, live auth enforcement, or API access behavior changes are added.
 
 ## Phase 127 - Tamper Detection
 
