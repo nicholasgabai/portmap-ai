@@ -6,7 +6,7 @@ This is documentation summary only. It does not add runtime behavior, start serv
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
-The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, future installer/executable packaging, AI security intelligence, commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`.
+The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, future installer/executable packaging, AI security intelligence, commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. The extended production-launch roadmap from Milestone U through commercial launch readiness is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`.
 
 ## Completed Milestones
 

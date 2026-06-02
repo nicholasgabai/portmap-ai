@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 122 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, and `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path.
+This roadmap summarizes the current direction after the Phase 122 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
 
 ## Completed Milestones
 
@@ -104,12 +104,12 @@ Current stable posture:
 
 ## Completion Roadmap
 
-The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`.
+The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`. The extended production-launch roadmap is maintained in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 Planned remaining milestones:
 
-- Future installer, executable, service, release packaging, production security, and AI intelligence work.
-- Future commercial SaaS and fleet management work.
+- Milestone U security foundation and trusted runtime work.
+- Deep flow intelligence, autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
 
@@ -128,6 +128,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `PORTMAP_AI_HANDOFF.md`
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
 - `docs/COMPLETION_ROADMAP.md`
+- `docs/PORTMAP_AI_FINAL_ROADMAP.md`
 - `docs/PHASE_HISTORY.md`
 - `docs/MILESTONE_INTEGRATION.md`
 - `docs/MILESTONE_J_INTEGRATION.md`

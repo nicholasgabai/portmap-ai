@@ -68,13 +68,14 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`.
+Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, and Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`.
 
 ## References
 
 - `PORTMAP_AI_HANDOFF.md`
 - `PORTMAP_AI_CODEX_PHASE_19_40_HANDOFF.md`
 - `docs/COMPLETION_ROADMAP.md`
+- `docs/PORTMAP_AI_FINAL_ROADMAP.md`
 - `docs/MILESTONE_INTEGRATION.md`
 - `docs/MILESTONE_J_INTEGRATION.md`
 - `docs/MILESTONE_K_INTEGRATION.md`

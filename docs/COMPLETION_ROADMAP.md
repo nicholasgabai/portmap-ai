@@ -4,6 +4,8 @@ This roadmap defines the remaining end-to-end work required to turn PortMap-AI f
 
 This is a planning document. It does not implement collectors, start services, open network listeners, change host networking, enable gateway behavior, transmit data externally, or perform automatic enforcement.
 
+The extended production-launch roadmap after the Phase 122 baseline is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. That document starts with Milestone U security foundation and continues through deep flow intelligence, supervised response, enterprise visibility, scalability, packaging, governance, AI evolution, and commercial launch readiness.
+
 ## Current Completed Foundation
 
 PortMap-AI has completed baseline implementation through Phase 122, covering Phases 0-122.

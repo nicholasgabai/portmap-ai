@@ -49,6 +49,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/CLI_REFERENCE.md" in data_files["share/portmap-ai/docs"]
     assert "docs/COMPLETION_ROADMAP.md" in data_files["share/portmap-ai/docs"]
     assert "docs/DEPLOYMENT.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/PORTMAP_AI_FINAL_ROADMAP.md" in data_files["share/portmap-ai/docs"]
     assert "docs/MILESTONE_INTEGRATION.md" in data_files["share/portmap-ai/docs"]
     assert "docs/MILESTONE_J_INTEGRATION.md" in data_files["share/portmap-ai/docs"]
     assert "docs/MILESTONE_K_INTEGRATION.md" in data_files["share/portmap-ai/docs"]

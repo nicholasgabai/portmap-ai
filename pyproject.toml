@@ -72,6 +72,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/CLI_REFERENCE.md",
   "docs/COMPLETION_ROADMAP.md",
   "docs/DEPLOYMENT.md",
+  "docs/PORTMAP_AI_FINAL_ROADMAP.md",
   "docs/MILESTONE_INTEGRATION.md",
   "docs/MILESTONE_J_INTEGRATION.md",
   "docs/MILESTONE_K_INTEGRATION.md",
