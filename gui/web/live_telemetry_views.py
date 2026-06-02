@@ -23,6 +23,7 @@ def build_live_telemetry_dashboard_view(
     resource_usage: dict[str, Any] | None = None,
     requested_update_interval_seconds: int = 5,
     stale_after_seconds: int = 300,
+    source_mode: str = "live",
     last_updated_at: str | None = None,
     generated_at: str | None = None,
 ) -> dict[str, Any]:
@@ -39,6 +40,7 @@ def build_live_telemetry_dashboard_view(
         resource_usage=resource_usage,
         requested_update_interval_seconds=requested_update_interval_seconds,
         stale_after_seconds=stale_after_seconds,
+        source_mode=source_mode,
         last_updated_at=last_updated_at,
         generated_at=generated_at,
     )
@@ -73,6 +75,8 @@ def live_telemetry_api_response(model: dict[str, Any]) -> dict[str, Any]:
         "record_type": "live_telemetry_dashboard_api_response",
         "status": api.get("status", model.get("status", "unknown")),
         "generated_at": api.get("generated_at", model.get("generated_at")),
+        "source_mode": api.get("source_mode", model.get("source_mode", "unknown")),
+        "data_source": api.get("data_source", model.get("data_source", "unknown")),
         "count": api.get("count", 0),
         "summary": api.get("summary", model.get("summary", {})),
         "panels": api.get("panels", model.get("panels", {})),
@@ -92,11 +96,14 @@ def _section(title: str, panel: Any, primary_metric: str) -> dict[str, Any]:
     payload = panel if isinstance(panel, dict) else {}
     metrics = payload.get("metrics") if isinstance(payload.get("metrics"), dict) else {}
     value = metrics.get(primary_metric, 0)
+    source_mode = str(payload.get("source_mode") or payload.get("data_source") or "unknown")
+    status = str(payload.get("status") or "empty")
     return {
         "title": title,
         "value": value,
-        "detail": str(payload.get("status") or "empty"),
+        "detail": f"{status} source={source_mode}",
         "panel": str(payload.get("panel") or title.lower().replace(" ", "_")),
+        "source_mode": source_mode,
         "metrics": dict(metrics),
         **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
     }

@@ -34,6 +34,20 @@ COMMAND_AUDIT_LOG = Path.home() / ".portmap-ai" / "logs" / "command_events.jsonl
 FLOW_EVENTS_LOG = Path.home() / ".portmap-ai" / "logs" / "flow_events.jsonl"
 DEFAULT_ORCHESTRATOR_URL = os.environ.get("PORTMAP_ORCHESTRATOR_URL", "http://127.0.0.1:9100")
 DEFAULT_ORCHESTRATOR_TOKEN = os.environ.get("PORTMAP_ORCHESTRATOR_TOKEN", "test-token")
+SOURCE_MODES = {"live", "simulated", "fixture", "replay", "unknown"}
+
+
+def _source_mode(value: Any) -> str:
+    mode = str(value or "live").strip().lower()
+    return mode if mode in SOURCE_MODES else "unknown"
+
+
+def _display_program_for_source(program: Any, source_mode: Any) -> str:
+    mode = _source_mode(source_mode)
+    text = str(program or "").strip()
+    if text in {"dummy_app", "dummy_db"} and mode not in {"simulated", "fixture"}:
+        return "Unattributed"
+    return text or "Unattributed"
 
 
 def _format_score_factors(event: Dict[str, Any], limit: int = 2) -> str:
@@ -92,10 +106,11 @@ def _scan_rows_from_telemetry(events: List[Dict[str, Any]], limit: int = 20) -> 
                 {
                     "timestamp": event.get("timestamp", "-"),
                     "node_id": node_id,
-                    "program": port.get("program") or "-",
+                    "program": _display_program_for_source(port.get("program"), port.get("source_mode") or event.get("source_mode") or event.get("data_source")),
                     "port": port.get("port", "-"),
                     "protocol": port.get("protocol") or port.get("service_name") or "-",
                     "status": port.get("status") or "-",
+                    "source_mode": _source_mode(port.get("source_mode") or event.get("source_mode") or event.get("data_source")),
                     "score": port.get("score", event_score),
                     "score_factors": port.get("score_factors") or event_factors,
                     "risk_explanation": port.get("risk_explanation") or "",
@@ -114,10 +129,11 @@ def _scan_rows_from_remediation(events: List[Dict[str, Any]], limit: int = 20) -
             {
                 "timestamp": event.get("timestamp", "-"),
                 "node_id": event.get("node_id", "-"),
-                "program": event.get("program") or "-",
+                "program": _display_program_for_source(event.get("program"), event.get("source_mode") or event.get("data_source")),
                 "port": event.get("port", "-"),
                 "protocol": event.get("protocol") or "-",
                 "status": event.get("status") or "-",
+                "source_mode": _source_mode(event.get("source_mode") or event.get("data_source")),
                 "score": event.get("risk_score", event.get("score", "-")),
                 "score_factors": event.get("score_factors") or [],
                 "risk_explanation": event.get("reason") or "",
@@ -378,6 +394,7 @@ class ScanResultsPanel(DataTable):
         self.add_column("Port")
         self.add_column("Protocol")
         self.add_column("Status")
+        self.add_column("Source")
         self.add_column("Score")
         self.add_column("Provider")
         self.add_column("Signals")
@@ -392,6 +409,7 @@ class ScanResultsPanel(DataTable):
                 str(row.get("port", "-")),
                 str(row.get("protocol", "-")),
                 str(row.get("status", "-")),
+                str(row.get("source_mode", "unknown")),
                 _format_risk_score(row.get("score")),
                 str(row.get("ai_provider", "-")),
                 _format_score_factors(row),

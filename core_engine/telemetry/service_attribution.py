@@ -10,6 +10,7 @@ from core_engine.telemetry.process_attribution import (
     PROCESS_ATTRIBUTION_RECORD_VERSION,
     attribute_process_to_flow,
     build_process_socket_inventory,
+    normalize_source_mode,
 )
 
 
@@ -31,14 +32,17 @@ def build_process_service_attribution_report(
     process_records: Iterable[dict[str, Any]] | None = None,
     protocol_records: Iterable[dict[str, Any]] | None = None,
     platform_status: dict[str, Any] | None = None,
+    source_mode: str = "live",
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     timestamp = generated_at or _now()
+    mode = normalize_source_mode(source_mode)
     flow_rows = sorted([dict(row) for row in enriched_flows or [] if isinstance(row, dict)], key=lambda item: str(item.get("flow_ref") or ""))
     inventory = build_process_socket_inventory(
         socket_records=socket_records,
         process_records=process_records,
         platform_status=platform_status,
+        source_mode=mode,
         generated_at=timestamp,
     )
     protocol_index = _protocol_index(protocol_records)
@@ -59,6 +63,8 @@ def build_process_service_attribution_report(
         "record_version": SERVICE_ATTRIBUTION_RECORD_VERSION,
         "report_id": "process-service-attribution-" + _digest({"generated_at": timestamp, "flows": [row.get("flow_ref") for row in flow_rows]})[:16],
         "generated_at": timestamp,
+        "source_mode": mode,
+        "data_source": mode,
         "inventory": inventory,
         "attributions": attributions,
         "summary": summary,
@@ -79,6 +85,7 @@ def build_service_attribution_record(
     flow = dict(flow_observation or {})
     process = dict(process_attribution or {})
     protocol = dict(protocol_record or {})
+    mode = normalize_source_mode(flow.get("source_mode") or flow.get("data_source") or process.get("source_mode") or process.get("data_source") or "live")
     service_hint = flow.get("service_port_hint") if isinstance(flow.get("service_port_hint"), dict) else {}
     service_name = _service_name(service_hint=service_hint, protocol_record=protocol)
     confidence = score_service_attribution_confidence(
@@ -92,6 +99,8 @@ def build_service_attribution_record(
         "attribution_id": "service-attribution-" + _digest({"flow": flow.get("flow_ref"), "service": service_name, "process": process.get("process_ref")})[:16],
         "generated_at": timestamp,
         "flow_ref": str(flow.get("flow_ref") or ""),
+        "source_mode": mode,
+        "data_source": mode,
         "service_name": service_name,
         "service_port": service_hint.get("service_port"),
         "transport_protocol": str(flow.get("transport_protocol") or "unknown"),
@@ -164,7 +173,8 @@ def build_sanitized_attribution_display(
         "service_name": service_name,
         "service_port": service_hint.get("service_port"),
         "process_ref": process_attribution.get("process_ref"),
-        "process_display_name": process_display.get("display_name") or "unknown",
+        "process_display_name": process_display.get("display_name") or ("Unattributed" if process_attribution.get("status") == "unmatched" else "Unknown"),
+        "source_mode": normalize_source_mode(process_attribution.get("source_mode") or process_attribution.get("data_source") or "unknown"),
         "confidence_level": process_attribution.get("confidence_level"),
         "metadata_minimized": True,
         "command_line_stored": False,
@@ -199,6 +209,8 @@ def build_service_attribution_dashboard_record(
                 "flow_ref": row.get("flow_ref"),
                 "service_name": row.get("service_name"),
                 "service_port": row.get("service_port"),
+                "source_mode": row.get("source_mode") or row.get("data_source") or "unknown",
+                "operator_display": dict(row.get("operator_display") or {}),
                 "process_ref": (row.get("process_attribution") or {}).get("process_ref") if isinstance(row.get("process_attribution"), dict) else "",
                 "process_status": (row.get("process_attribution") or {}).get("status") if isinstance(row.get("process_attribution"), dict) else "unknown",
                 "confidence_level": row.get("confidence_level"),

@@ -18,7 +18,7 @@ portmap stack --verbose
 
 - Node Overview: registered nodes, role, status, and last heartbeat.
 - Metrics: node counts, last heartbeat, remediation totals, firewall mode, orchestrator health, and API counters.
-- Scan Results: latest sampled ports, risk score, AI provider, and scoring signals from worker telemetry.
+- Scan Results: latest sampled ports, source mode, risk score, AI provider, and scoring signals from worker telemetry.
 - Remediation Feed: recent remediation decisions with action, enforcement mode, reason, score, and signals.
 - Expected Services: observed candidate services and configured allowlisted services.
 - Command Outcomes: worker command audit events such as received, applied, failed, or ignored.
@@ -50,3 +50,9 @@ The dashboard reads local runtime state and logs:
 - `~/.portmap-ai/logs/master.log`
 
 It also checks the configured orchestrator `/healthz` and `/metrics` endpoints when refreshing.
+
+## Source Labels
+
+TUI scan-result rows include source labels so operators can distinguish live observations from demo, fixture, replay, or unknown records. Live/default runtime rows do not display `dummy_app` or `dummy_db`; unresolved live process attribution is shown as `Unattributed` or `Unknown`. Dummy labels are reserved for explicit `simulated` or `fixture` mode.
+
+See `docs/source_mode_labeling.md` for the shared source-mode rules used by TUI, dashboard, API, and export-safe telemetry summaries.

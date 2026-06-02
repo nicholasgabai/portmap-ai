@@ -11,6 +11,7 @@ from core_engine.telemetry.interfaces import TELEMETRY_SAFETY_FLAGS
 
 PROCESS_ATTRIBUTION_RECORD_VERSION = 1
 SENSITIVE_PROCESS_TOKENS = ("token", "secret", "password", "key", "credential")
+SOURCE_MODES = frozenset({"live", "simulated", "fixture", "replay", "unknown"})
 
 PROCESS_ATTRIBUTION_SAFETY_FLAGS = {
     **TELEMETRY_SAFETY_FLAGS,
@@ -29,13 +30,15 @@ def build_process_socket_inventory(
     socket_records: Iterable[dict[str, Any]] | None = None,
     process_records: Iterable[dict[str, Any]] | None = None,
     platform_status: dict[str, Any] | None = None,
+    source_mode: str = "live",
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     """Normalize operator-provided process/socket metadata into minimized records."""
     timestamp = generated_at or _now()
+    mode = normalize_source_mode(source_mode)
     status = dict(platform_status or {})
-    sockets = [normalize_socket_record(row) for row in socket_records or [] if isinstance(row, dict)]
-    processes = [minimize_process_metadata(row) for row in process_records or [] if isinstance(row, dict)]
+    sockets = [normalize_socket_record(row, source_mode=mode) for row in socket_records or [] if isinstance(row, dict)]
+    processes = [minimize_process_metadata(row, source_mode=mode) for row in process_records or [] if isinstance(row, dict)]
     process_index = {row["process_ref"]: row for row in processes if row.get("process_ref")}
     socket_rows = []
     for row in sockets:
@@ -50,13 +53,15 @@ def build_process_socket_inventory(
     permission_denied = bool(status.get("permission_denied"))
     unsupported = bool(status.get("unsupported_platform"))
     degraded = permission_denied or unsupported or bool(status.get("degraded"))
-    summary = summarize_socket_inventory(socket_rows=socket_rows, process_rows=processes, platform_status=status, generated_at=timestamp)
+    summary = summarize_socket_inventory(socket_rows=socket_rows, process_rows=processes, platform_status=status, source_mode=mode, generated_at=timestamp)
     dashboard = build_process_inventory_dashboard_record(summary=summary, socket_rows=socket_rows, generated_at=timestamp)
     return {
         "record_type": "process_socket_inventory",
         "record_version": PROCESS_ATTRIBUTION_RECORD_VERSION,
         "inventory_id": "process-socket-inventory-" + _digest({"generated_at": timestamp, "sockets": socket_rows, "processes": processes})[:16],
         "generated_at": timestamp,
+        "source_mode": mode,
+        "data_source": mode,
         "status": "degraded" if degraded else "ok",
         "platform_status": {
             "status": str(status.get("status") or "ok" if not degraded else "degraded"),
@@ -83,6 +88,7 @@ def build_process_socket_inventory_from_platform(*, generated_at: str | None = N
             socket_records=[],
             process_records=[],
             platform_status={"permission_denied": True, "reason": str(exc)},
+            source_mode="live",
             generated_at=timestamp,
         )
     except Exception as exc:
@@ -90,6 +96,7 @@ def build_process_socket_inventory_from_platform(*, generated_at: str | None = N
             socket_records=[],
             process_records=[],
             platform_status={"degraded": True, "reason": str(exc)},
+            source_mode="live",
             generated_at=timestamp,
         )
     socket_rows = []
@@ -105,11 +112,13 @@ def build_process_socket_inventory_from_platform(*, generated_at: str | None = N
         socket_records=socket_rows,
         process_records=process_rows,
         platform_status={"unsupported_platform": unsupported, "reason": "psutil unavailable" if unsupported else ""},
+        source_mode="live",
         generated_at=timestamp,
     )
 
 
-def minimize_process_metadata(record: dict[str, Any]) -> dict[str, Any]:
+def minimize_process_metadata(record: dict[str, Any], *, source_mode: str = "live") -> dict[str, Any]:
+    mode = normalize_source_mode(record.get("source_mode") or record.get("data_source") or source_mode)
     pid = _safe_int(record.get("pid"))
     name = _sanitize_process_name(record.get("name") or record.get("process_name") or "unknown")
     process_ref = str(record.get("process_ref") or _process_ref(pid=pid, name=name))
@@ -121,6 +130,8 @@ def minimize_process_metadata(record: dict[str, Any]) -> dict[str, Any]:
         "pid_ref": _pid_ref(pid) if pid is not None else "",
         "process_name": name,
         "display_name": name,
+        "source_mode": mode,
+        "data_source": mode,
         "metadata_minimized": True,
         "command_line_stored": False,
         "environment_stored": False,
@@ -132,7 +143,8 @@ def minimize_process_metadata(record: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def normalize_socket_record(record: dict[str, Any]) -> dict[str, Any]:
+def normalize_socket_record(record: dict[str, Any], *, source_mode: str = "live") -> dict[str, Any]:
+    mode = normalize_source_mode(record.get("source_mode") or record.get("data_source") or source_mode)
     pid = _safe_int(record.get("pid"))
     process_name = _sanitize_process_name(record.get("process_name") or record.get("name") or "")
     process_ref = str(record.get("process_ref") or _process_ref(pid=pid, name=process_name))
@@ -159,6 +171,8 @@ def normalize_socket_record(record: dict[str, Any]) -> dict[str, Any]:
         "process_ref": process_ref,
         "pid_ref": _pid_ref(pid) if pid is not None else "",
         "process_name_hint": process_name or "unknown",
+        "source_mode": mode,
+        "data_source": mode,
         **PROCESS_ATTRIBUTION_SAFETY_FLAGS,
     }
 
@@ -171,6 +185,7 @@ def attribute_process_to_flow(
 ) -> dict[str, Any]:
     timestamp = generated_at or _now()
     observation = dict(flow_observation or {})
+    mode = normalize_source_mode(observation.get("source_mode") or observation.get("data_source") or inventory.get("source_mode") or inventory.get("data_source") or "live")
     socket_rows = [dict(row) for row in inventory.get("socket_records") or [] if isinstance(row, dict)]
     match = _best_socket_match(observation, socket_rows)
     platform_status = inventory.get("platform_status") if isinstance(inventory.get("platform_status"), dict) else {}
@@ -183,12 +198,14 @@ def attribute_process_to_flow(
         "record_version": PROCESS_ATTRIBUTION_RECORD_VERSION,
         "generated_at": timestamp,
         "flow_ref": str(observation.get("flow_ref") or ""),
+        "source_mode": mode,
+        "data_source": mode,
         "status": status,
         "process_ref": str(match.get("process_ref") if match else ""),
         "socket_ref": str(match.get("socket_id") if match else ""),
         "local_port": match.get("local_port") if match else _observed_service_port(observation),
         "transport_protocol": str(observation.get("transport_protocol") or "unknown"),
-        "process_display": _operator_process_display(match.get("owner_process") if isinstance(match, dict) else None),
+        "process_display": _operator_process_display_with_source(match.get("owner_process") if isinstance(match, dict) else None, status=status, source_mode=mode),
         "confidence": confidence,
         "confidence_level": _confidence_level(confidence),
         "match_reasons": _match_reasons(match=match, status=status),
@@ -203,6 +220,7 @@ def summarize_socket_inventory(
     socket_rows: Iterable[dict[str, Any]],
     process_rows: Iterable[dict[str, Any]],
     platform_status: dict[str, Any],
+    source_mode: str = "live",
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     sockets = [dict(row) for row in socket_rows or [] if isinstance(row, dict)]
@@ -211,6 +229,8 @@ def summarize_socket_inventory(
         "record_type": "process_socket_inventory_summary",
         "record_version": PROCESS_ATTRIBUTION_RECORD_VERSION,
         "generated_at": generated_at or _now(),
+        "source_mode": normalize_source_mode(source_mode),
+        "data_source": normalize_source_mode(source_mode),
         "socket_count": len(sockets),
         "listening_socket_count": sum(1 for row in sockets if row.get("listening")),
         "process_count": len(processes),
@@ -346,10 +366,17 @@ def _match_reasons(*, match: dict[str, Any] | None, status: str) -> list[str]:
 
 
 def _operator_process_display(record: dict[str, Any] | None) -> dict[str, Any]:
+    return _operator_process_display_with_source(record, status="unknown", source_mode="live")
+
+
+def _operator_process_display_with_source(record: dict[str, Any] | None, *, status: str, source_mode: str) -> dict[str, Any]:
+    mode = normalize_source_mode(source_mode)
     if not record:
+        display_name = "Unattributed" if status == "unmatched" else "Unknown"
         return {
             "process_ref": "",
-            "display_name": "unknown",
+            "display_name": display_name,
+            "source_mode": mode,
             "metadata_minimized": True,
             "command_line_stored": False,
             "username_stored": False,
@@ -357,6 +384,7 @@ def _operator_process_display(record: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "process_ref": str(record.get("process_ref") or ""),
         "display_name": str(record.get("display_name") or record.get("process_name") or "unknown"),
+        "source_mode": normalize_source_mode(record.get("source_mode") or record.get("data_source") or mode),
         "metadata_minimized": True,
         "command_line_stored": False,
         "username_stored": False,
@@ -371,7 +399,8 @@ def _socket_display(record: dict[str, Any]) -> dict[str, Any]:
         "local_port": record.get("local_port"),
         "status": record.get("status"),
         "process_ref": record.get("process_ref"),
-        "process_display": _operator_process_display(owner),
+        "source_mode": record.get("source_mode") or record.get("data_source") or "unknown",
+        "process_display": _operator_process_display_with_source(owner, status="matched" if owner else "unmatched", source_mode=str(record.get("source_mode") or record.get("data_source") or "unknown")),
     }
 
 
@@ -395,6 +424,11 @@ def _sanitize_process_name(value: Any) -> str:
     if any(token in lowered for token in SENSITIVE_PROCESS_TOKENS):
         return "redacted-process"
     return text[:80]
+
+
+def normalize_source_mode(value: Any) -> str:
+    mode = str(value or "unknown").strip().lower()
+    return mode if mode in SOURCE_MODES else "unknown"
 
 
 def _process_ref(*, pid: int | None, name: str) -> str:

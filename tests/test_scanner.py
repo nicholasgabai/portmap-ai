@@ -45,7 +45,8 @@ def test_basic_scan_falls_back_when_collection_fails(monkeypatch):
     fake_psutil = SimpleNamespace(net_connections=lambda kind="inet": (_ for _ in ()).throw(RuntimeError("boom")))
     monkeypatch.setattr(platform_utils, "psutil", fake_psutil)
 
-    results = scanner.basic_scan()
+    results = scanner.basic_scan(source_mode="simulated")
 
     assert len(results) == 2
     assert {item["program"] for item in results} == {"dummy_app", "dummy_db"}
+    assert {item["source_mode"] for item in results} == {"simulated"}

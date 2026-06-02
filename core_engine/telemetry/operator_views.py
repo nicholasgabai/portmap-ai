@@ -44,6 +44,7 @@ def build_live_telemetry_operator_summary(
     dns_destination_behavior_report: dict[str, Any] | None = None,
     adaptive_risk_report: dict[str, Any] | None = None,
     behavioral_intelligence_summary: dict[str, Any] | None = None,
+    process_service_attribution_report: dict[str, Any] | None = None,
     runtime_health: dict[str, Any] | None = None,
     federation_diagnostics: dict[str, Any] | None = None,
     operator_visibility: dict[str, Any] | None = None,
@@ -52,10 +53,12 @@ def build_live_telemetry_operator_summary(
     min_update_interval_seconds: int = MIN_UPDATE_INTERVAL_SECONDS,
     max_update_interval_seconds: int = MAX_UPDATE_INTERVAL_SECONDS,
     stale_after_seconds: int = DEFAULT_STALE_AFTER_SECONDS,
+    source_mode: str = "live",
     last_updated_at: str | None = None,
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     timestamp = generated_at or _now()
+    mode = _source_mode(source_mode)
     flow_rows = _rows(flows)
     effective_flow_summary = dict(flow_summary or summarize_flows(flow_rows, generated_at=timestamp))
     panels = {
@@ -72,6 +75,8 @@ def build_live_telemetry_operator_summary(
             generated_at=timestamp,
         ),
     }
+    if process_service_attribution_report is not None:
+        panels["process_service_attribution"] = build_process_service_attribution_operator_panel(process_service_attribution_report, source_mode=mode, generated_at=timestamp)
     if behavior_baseline_report is not None:
         panels["behavior_baselines"] = build_behavior_baseline_operator_panel(behavior_baseline_report, generated_at=timestamp)
     if temporal_anomaly_report is not None:
@@ -98,6 +103,7 @@ def build_live_telemetry_operator_summary(
             effective_flow_summary,
             protocol_report,
             live_topology,
+            process_service_attribution_report,
             behavior_baseline_report,
             temporal_anomaly_report,
             service_fingerprint_report,
@@ -127,6 +133,8 @@ def build_live_telemetry_operator_summary(
         "record_type": "live_telemetry_operator_summary",
         "record_version": LIVE_TELEMETRY_VIEW_RECORD_VERSION,
         "generated_at": timestamp,
+        "source_mode": mode,
+        "data_source": mode,
         "status": health["status"],
         "panels": panels,
         "summary": summary,
@@ -276,6 +284,57 @@ def build_protocol_distribution_summary(protocol_report: dict[str, Any] | None, 
             "truncated_field_count": int(summary.get("truncated_field_count") or 0),
         },
         "by_protocol": dict(summary.get("by_protocol") or {}),
+        **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
+    }
+
+
+def build_process_service_attribution_operator_panel(
+    process_service_attribution_report: dict[str, Any] | None,
+    *,
+    source_mode: str = "live",
+    generated_at: str | None = None,
+) -> dict[str, Any]:
+    timestamp = generated_at or _now()
+    mode = _source_mode((process_service_attribution_report or {}).get("source_mode") or (process_service_attribution_report or {}).get("data_source") or source_mode)
+    if not process_service_attribution_report:
+        panel = _empty_panel("process_service_attribution", generated_at=timestamp)
+        panel["source_mode"] = mode
+        return panel
+    dashboard = process_service_attribution_report.get("dashboard_status") if isinstance(process_service_attribution_report.get("dashboard_status"), dict) else {}
+    summary = process_service_attribution_report.get("summary") if isinstance(process_service_attribution_report.get("summary"), dict) else {}
+    metrics = dashboard.get("metrics") if isinstance(dashboard.get("metrics"), dict) else {}
+    rows = []
+    for row in dashboard.get("rows") or []:
+        if not isinstance(row, dict):
+            continue
+        display = row.get("operator_display") if isinstance(row.get("operator_display"), dict) else {}
+        rows.append(
+            {
+                "flow_ref": row.get("flow_ref"),
+                "service_name": row.get("service_name") or "unknown",
+                "service_port": row.get("service_port"),
+                "source_mode": _source_mode(row.get("source_mode") or mode),
+                "process_display_name": display.get("process_display_name") or ("Unattributed" if row.get("process_status") == "unmatched" else "Unknown"),
+                "process_status": row.get("process_status") or "unknown",
+                "confidence_level": row.get("confidence_level") or "none",
+            }
+        )
+    return {
+        "record_type": "process_service_attribution_operator_panel",
+        "panel": "process_service_attribution",
+        "status": str(dashboard.get("status") or process_service_attribution_report.get("status") or "unknown"),
+        "generated_at": timestamp,
+        "source_mode": mode,
+        "data_source": mode,
+        "metrics": {
+            "attribution_count": int(metrics.get("attribution_count") or summary.get("attribution_count") or 0),
+            "matched_process_count": int(metrics.get("matched_process_count") or summary.get("matched_process_count") or 0),
+            "unmatched_process_count": int(metrics.get("unmatched_process_count") or summary.get("unmatched_process_count") or 0),
+            "permission_denied_count": int(summary.get("permission_denied_count") or 0),
+            "unsupported_platform_count": int(summary.get("unsupported_platform_count") or 0),
+        },
+        "rows": rows,
+        "recommended_review": bool(dashboard.get("recommended_review")),
         **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
     }
 
@@ -492,6 +551,7 @@ def summarize_live_telemetry_panels(
     fingerprint_count = int(metrics.get("service_fingerprints", {}).get("profile_count") or 0)
     dns_destination_count = int(metrics.get("dns_destination_behavior", {}).get("destination_count") or 0)
     adaptive_risk_count = int(metrics.get("adaptive_risk", {}).get("record_count") or 0)
+    attribution_count = int(metrics.get("process_service_attribution", {}).get("attribution_count") or 0)
     behavioral_component_count = (
         int(metrics.get("behavioral_intelligence", {}).get("supported_component_count") or 0)
         + int(metrics.get("behavioral_intelligence", {}).get("degraded_component_count") or 0)
@@ -512,10 +572,12 @@ def summarize_live_telemetry_panels(
         "service_fingerprint_count": fingerprint_count,
         "dns_destination_behavior_count": dns_destination_count,
         "adaptive_risk_count": adaptive_risk_count,
+        "process_service_attribution_count": attribution_count,
         "behavioral_component_count": behavioral_component_count,
         "behavioral_recommendation_count": behavioral_review_count,
         "federation_aware": bool(metrics.get("federation_rollup", {}).get("federation_aware")),
-        "empty_state": not any((interface_count, packet_count, flow_count, topology_node_count, protocol_count, behavior_count, anomaly_count, fingerprint_count, dns_destination_count, adaptive_risk_count, behavioral_component_count, behavioral_review_count)),
+        "source_modes": sorted({_source_mode(panel.get("source_mode") or panel.get("data_source") or "unknown") for panel in panels.values()}),
+        "empty_state": not any((interface_count, packet_count, flow_count, topology_node_count, protocol_count, behavior_count, anomaly_count, fingerprint_count, dns_destination_count, adaptive_risk_count, attribution_count, behavioral_component_count, behavioral_review_count)),
         "stale": bool(stale_state.get("stale")),
         **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
     }
@@ -535,6 +597,8 @@ def build_live_telemetry_api_response(
         "record_type": "live_telemetry_api",
         "generated_at": generated_at or _now(),
         "status": str(health.get("status") or "unknown"),
+        "source_mode": _primary_source_mode(summary.get("source_modes")),
+        "data_source": _primary_source_mode(summary.get("source_modes")),
         "count": len(panels),
         "summary": dict(summary),
         "panels": panels,
@@ -556,6 +620,8 @@ def _empty_panel(panel: str, *, generated_at: str) -> dict[str, Any]:
         "panel": panel,
         "status": "empty",
         "generated_at": generated_at,
+        "source_mode": "unknown",
+        "data_source": "unknown",
         "metrics": {},
         "rows": [],
         **LIVE_TELEMETRY_VIEW_SAFETY_FLAGS,
@@ -597,6 +663,17 @@ def _parse_time(value: str) -> datetime | None:
 
 def _rows(value: Any) -> list[dict[str, Any]]:
     return [dict(item) for item in value or [] if isinstance(item, dict)]
+
+
+def _source_mode(value: Any) -> str:
+    mode = str(value or "unknown").strip().lower()
+    return mode if mode in {"live", "simulated", "fixture", "replay", "unknown"} else "unknown"
+
+
+def _primary_source_mode(values: Any) -> str:
+    modes = [_source_mode(value) for value in values or []]
+    non_unknown = [mode for mode in modes if mode != "unknown"]
+    return sorted(non_unknown or modes or ["unknown"])[0]
 
 
 def _now() -> str:

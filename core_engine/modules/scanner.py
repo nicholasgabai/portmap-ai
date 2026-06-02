@@ -6,6 +6,13 @@ from typing import Any, Dict, Iterable, List
 from core_engine import platform_utils
 from core_engine.risky_ports import service_name_for_port
 
+SOURCE_MODES = frozenset({"live", "simulated", "fixture", "replay", "unknown"})
+
+
+def _normalize_source_mode(value: Any) -> str:
+    mode = str(value or "live").strip().lower()
+    return mode if mode in SOURCE_MODES else "unknown"
+
 
 def _format_address(addr: Any) -> str:
     if not addr:
@@ -73,7 +80,8 @@ def _dedupe(connections: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return unique
 
 
-def _fallback_connections() -> List[Dict[str, Any]]:
+def _fallback_connections(*, source_mode: str = "simulated") -> List[Dict[str, Any]]:
+    mode = _normalize_source_mode(source_mode)
     return [
         {
             "program": "dummy_app",
@@ -87,6 +95,9 @@ def _fallback_connections() -> List[Dict[str, Any]]:
             "direction": "incoming",
             "local": "127.0.0.1:8080",
             "remote": "-",
+            "source_mode": mode,
+            "data_source": mode,
+            "attribution_status": "simulated",
         },
         {
             "program": "dummy_db",
@@ -100,22 +111,27 @@ def _fallback_connections() -> List[Dict[str, Any]]:
             "direction": "incoming",
             "local": "127.0.0.1:3306",
             "remote": "-",
+            "source_mode": mode,
+            "data_source": mode,
+            "attribution_status": "simulated",
         },
     ]
 
 
-def basic_scan(kind: str = "inet") -> List[Dict[str, Any]]:
+def basic_scan(kind: str = "inet", *, source_mode: str = "live", allow_simulated_fallback: bool = False) -> List[Dict[str, Any]]:
     """Return local host network connections in the legacy worker payload shape.
 
-    Falls back to deterministic demo connections when psutil is unavailable or
-    the runtime cannot enumerate sockets.
+    Deterministic dummy connections are only emitted for explicit fixture or
+    simulation mode. Live/default mode returns no rows when the runtime cannot
+    enumerate sockets, avoiding misleading dummy labels in operator views.
     """
+    mode = _normalize_source_mode(source_mode)
     try:
         raw_connections = platform_utils.net_connections(kind=kind)
     except Exception:
-        return _fallback_connections()
+        return _fallback_connections(source_mode=mode if mode in {"fixture", "simulated"} else "simulated") if allow_simulated_fallback or mode in {"fixture", "simulated"} else []
     if not raw_connections:
-        return _fallback_connections()
+        return _fallback_connections(source_mode=mode if mode in {"fixture", "simulated"} else "simulated") if allow_simulated_fallback or mode in {"fixture", "simulated"} else []
 
     normalized: List[Dict[str, Any]] = []
     for conn in raw_connections:
@@ -143,6 +159,9 @@ def basic_scan(kind: str = "inet") -> List[Dict[str, Any]]:
                 "direction": _infer_direction(status, remote),
                 "local": local,
                 "remote": remote,
+                "source_mode": mode,
+                "data_source": "local_socket_inventory" if mode == "live" else mode,
+                "attribution_status": "matched" if conn.pid else "unattributed",
             }
         )
 
@@ -156,4 +175,6 @@ def basic_scan(kind: str = "inet") -> List[Dict[str, Any]]:
             item.get("remote", ""),
         )
     )
-    return normalized or _fallback_connections()
+    if normalized:
+        return normalized
+    return _fallback_connections(source_mode=mode if mode in {"fixture", "simulated"} else "simulated") if allow_simulated_fallback or mode in {"fixture", "simulated"} else []
