@@ -33,12 +33,14 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_111_116_PLAN.md` - milestone plan for historical persistence, baseline aging, topology evolution, replay windows, resource-aware retention, and long-term intelligence summaries.
 - `docs/PHASE_117_122_PLAN.md` - milestone plan for operationalization and deployment foundation: runtime profiles, service lifecycle previews, deployment manifests, upgrade readiness, backup/restore planning, and deployment summaries.
 - `docs/PHASE_123_128_PLAN.md` - milestone plan for security foundation and trusted runtime: secure node identity, encrypted transport readiness, secure config, RBAC, tamper detection, and secure updates.
+- `docs/PHASE_129_134_PLAN.md` - milestone plan for deep network flow intelligence: bidirectional flow reconstruction, packet metadata correlation, cross-node relationships, application attribution, drift detection, and topology intelligence.
 - `docs/secure_node_identity.md` - Phase 123 secure logical node identities, enrollment previews, trust-chain summaries, rotation previews, and export-safe safety fields.
 - `docs/encrypted_orchestration_transport.md` - Phase 124 encrypted orchestration transport readiness profiles, downgrade warnings, and session negotiation previews.
 - `docs/secure_config_and_secrets.md` - Phase 125 secure configuration profiles, secret-management previews, plaintext rejection, rotation readiness, and provider-readiness notes.
 - `docs/rbac_operator_permissions.md` - Phase 126 RBAC role records, permission evaluation previews, remediation/enrollment boundaries, and future dashboard/API enforcement path.
 - `docs/tamper_detection.md` - Phase 127 integrity target records, tamper detection previews, transport downgrade warnings, and safe operator review workflow.
 - `docs/secure_update_framework.md` - Phase 128 update verification records, rollback previews, migration safety, and future signed update readiness.
+- `docs/bidirectional_flow_reconstruction.md` - Phase 129 metadata-only bidirectional session tracking, flow relationships, source-mode preservation, and reconstruction confidence summaries.
 - `docs/production_runtime_profiles.md` - Phase 117 deployment runtime profiles, compatibility validation, advisory states, and production-safe profile summaries.
 - `docs/service_lifecycle_readiness.md` - Phase 118 dry-run systemd, launchd, Windows service, foreground process, and Raspberry Pi edge lifecycle readiness previews.
 - `docs/deployment_manifest_generation.md` - Phase 119 sanitized deployment manifests, node profiles, readiness summaries, export paths, and backup recommendations.

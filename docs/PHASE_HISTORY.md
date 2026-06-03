@@ -61,6 +61,7 @@ This document is a concise phase index. The full phase-by-phase implementation n
 | 126 | RBAC and operator permissions with admin, security-operator, analyst, auditor, read-only, and service-account role records, permission evaluation previews, remediation/enrollment/export/config/audit boundaries, and no user account, password, token, live auth enforcement, or API behavior changes | Complete baseline |
 | 127 | Tamper detection with runtime integrity targets, config/manifest tamper previews, identity rotation mismatch warnings, trust-chain drift warnings, transport downgrade warnings, package digest mismatch records, history-store drift summaries, export-safe dictionaries, and no file watching, private-file hashing, blocking, quarantine, deletion, rollback, or config modification | Complete baseline |
 | 128 | Secure update framework with release/package/signature/migration/compatibility/rollback manifest verification records, rollback preview plans, backup and compatibility requirements, operator update checklists, and no downloads, installers, file modification, restore, delete, overwrite, private keys, live signature trust, or migration execution | Complete baseline |
+| 129 | Bidirectional flow reconstruction with normalized session tracking records, inbound/outbound/local-loopback/unknown direction inference, source-mode preservation, flow pairs, flow relationships, inferred/transient/recurring session summaries, relationship strength, recurrence scoring, drift hints, and no payload inspection, PCAP generation, DPI, credential storage, or automatic enforcement | Complete baseline |
 | Pre-U | TUI source labeling hardening with explicit live, simulated, fixture, replay, and unknown source modes, fixture-only dummy labels, live unresolved attribution displayed as Unattributed or Unknown, and preserved source mode in dashboard/API/export dictionaries | Complete hardening fix |
 | Pre-U | Live scan snapshot deduplication with current per-cycle worker snapshots, stable metadata keys, duplicate socket collapse, transient live socket pruning, bounded payloads, stable repeated-scan scoring, and latest-snapshot TUI rows | Complete hardening fix |
 
@@ -74,7 +75,7 @@ The latest recorded full-suite result in the handoff is updated after each compl
 
 ## Future Roadmap
 
-Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. Phases 123-128 are complete as Milestone U baselines for secure logical node identity, enrollment previews, trust-chain summaries, transport security profiles, session negotiation previews, secure configuration profiles, secret-management previews, RBAC roles, permission evaluation previews, integrity target records, tamper detection previews, update verification records, and rollback preview plans. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, and Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`.
+Phases 111-116 are complete as baselines for metadata-only historical snapshot persistence, baseline aging/decay, long-term topology evolution, replay-safe historical review windows, resource-aware retention controls, and long-term intelligence operator summaries. Phases 117-122 are complete as baselines for production-safe deployment runtime profiles, compatibility validation, dry-run service lifecycle readiness previews, sanitized deployment manifest generation, upgrade/migration readiness previews, backup/restore planning records, and unified deployment operator summaries. Phases 123-128 are complete as Milestone U baselines for secure logical node identity, enrollment previews, trust-chain summaries, transport security profiles, session negotiation previews, secure configuration profiles, secret-management previews, RBAC roles, permission evaluation previews, integrity target records, tamper detection previews, update verification records, and rollback preview plans. Phase 129 begins Milestone V with metadata-only bidirectional flow reconstruction and session-aware relationship modeling. The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, and Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`.
 
 ## References
 
@@ -100,12 +101,14 @@ Phases 111-116 are complete as baselines for metadata-only historical snapshot p
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_117_122_PLAN.md`
 - `docs/PHASE_123_128_PLAN.md`
+- `docs/PHASE_129_134_PLAN.md`
 - `docs/secure_node_identity.md`
 - `docs/encrypted_orchestration_transport.md`
 - `docs/secure_config_and_secrets.md`
 - `docs/rbac_operator_permissions.md`
 - `docs/tamper_detection.md`
 - `docs/secure_update_framework.md`
+- `docs/bidirectional_flow_reconstruction.md`
 - `docs/production_runtime_profiles.md`
 - `docs/service_lifecycle_readiness.md`
 - `docs/deployment_manifest_generation.md`

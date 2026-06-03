@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 128 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
+This roadmap summarizes the current direction after the Phase 129 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
 
 ## Completed Milestones
 
@@ -31,10 +31,11 @@ This roadmap summarizes the current direction after the Phase 128 baseline. `POR
 | 126 | RBAC and operator permissions: admin, security-operator, analyst, auditor, read-only, and service-account role records plus permission evaluation previews without user accounts, credentials, live auth enforcement, or API behavior changes | Complete baseline |
 | 127 | Tamper detection: runtime integrity targets, config and manifest tamper previews, identity/trust-chain drift warnings, transport downgrade warnings, package digest mismatch records, and export-safe safety fields without file watching, blocking, quarantine, deletion, rollback, or config modification | Complete baseline |
 | 128 | Secure update framework: update verification records, signed release metadata readiness, migration and compatibility manifest previews, rollback plan previews, and export-safe safety fields without downloads, installers, file modification, restore, delete, overwrite, private keys, live signature trust, or migration execution | Complete baseline |
+| 129 | Bidirectional flow reconstruction: normalized session tracking, inbound/outbound/loopback direction inference, flow pairs, flow relationships, transient/recurring session summaries, source-mode preservation, and metadata-only dashboard/API/export dictionaries without payload inspection or PCAP generation | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-128 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
+Phases 0-129 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
 
 Current stable posture:
 
@@ -107,6 +108,7 @@ Current stable posture:
 - RBAC and operator permissions now model admin, security-operator, analyst, auditor, read-only, and service-account roles plus preview-only permission decisions for telemetry, history, exports, remediation, enrollment, identity rotation, configuration, audit logs, and role management without creating users, storing credentials, enforcing live auth, or changing API access behavior.
 - Tamper detection now models integrity targets and tamper preview records for runtime configs, manifests, identities, trust chains, transport profiles, package manifests, binary artifacts, and history stores without file watchers, private-file hashing, blocking, quarantine, deletion, rollback, configuration modification, or binary modification.
 - Secure update framework readiness now models release manifests, package digests, signature status, migration manifests, compatibility manifests, rollback manifests, and rollback preview plans without downloads, installers, file modification, restore, delete, overwrite, private key creation, live signature trust, or migration execution.
+- Bidirectional flow reconstruction now models normalized metadata-only sessions, direction inference, source-mode preservation, flow pairs, relationships, transient/recurring session groups, relationship strength, recurrence score, drift hints, and reconstruction confidence without payload inspection, PCAP generation, DPI, credential storage, or automatic enforcement.
 - Pre-Milestone U source labeling now prevents `dummy_app` and `dummy_db` from appearing in live/default TUI runtime views unless simulation or fixture mode is explicit. Live unresolved attribution displays as `Unattributed` or `Unknown`, and TUI/dashboard/API/export summaries preserve source mode.
 - Pre-Milestone U live scan snapshot deduplication now bounds each worker scan cycle as a current snapshot, collapses duplicate socket rows, prunes transient live socket states, keeps remediation scoring stable across repeated identical scans, and keeps the TUI scan-results panel focused on the latest snapshot per node.
 - The Textual terminal dashboard remains the primary operator UI.
@@ -121,7 +123,8 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`. Th
 Planned remaining milestones:
 
 - Milestone U security foundation and trusted runtime work is complete as a baseline through Phase 128.
-- Deep flow intelligence, autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
+- Continue Milestone V deep network flow intelligence work after the Phase 129 bidirectional flow reconstruction baseline.
+- Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
 
@@ -159,12 +162,14 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/live_scan_snapshot_deduplication.md`
 - `docs/PHASE_117_122_PLAN.md`
 - `docs/PHASE_123_128_PLAN.md`
+- `docs/PHASE_129_134_PLAN.md`
 - `docs/secure_node_identity.md`
 - `docs/encrypted_orchestration_transport.md`
 - `docs/secure_config_and_secrets.md`
 - `docs/rbac_operator_permissions.md`
 - `docs/tamper_detection.md`
 - `docs/secure_update_framework.md`
+- `docs/bidirectional_flow_reconstruction.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`

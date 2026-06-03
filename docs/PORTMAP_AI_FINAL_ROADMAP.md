@@ -134,7 +134,7 @@ Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 129 | Bidirectional Flow Reconstruction | Session-aware flow tracking, connection lifecycle reconstruction, and state-aware relationship mapping. |
+| 129 | Bidirectional Flow Reconstruction | Complete baseline: session-aware metadata-only flow tracking, direction inference, relationship mapping, source-mode preservation, and reconstruction confidence without payload inspection or PCAP generation. |
 | 130 | Packet Metadata Correlation | Correlate process, destination, protocol, flow, timing, and topology metadata. |
 | 131 | Cross-Node Relationship Mapping | Model lateral relationships, shared services, recurring paths, and node-to-node behavior. |
 | 132 | Dynamic Application Attribution | Replace static labels with probabilistic metadata-only application attribution, confidence models, and continuous learning support. |
