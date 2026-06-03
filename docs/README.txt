@@ -21,6 +21,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/MILESTONE_R_INTEGRATION.md` - detailed integration summary for Phase 105-110 behavioral intelligence foundation work.
 - `docs/MILESTONE_S_INTEGRATION.md` - detailed integration summary for Phase 111-116 historical persistence and long-term intelligence work.
 - `docs/MILESTONE_T_INTEGRATION.md` - detailed integration summary for Phase 117-122 operationalization and deployment foundation work.
+- `docs/MILESTONE_U_INTEGRATION.md` - detailed integration summary for Phase 123-128 security foundation and trusted runtime work.
 - `docs/PHASE_59_64_PLAN.md` - completed milestone plan for runtime pipeline and persistent topology integration.
 - `docs/PHASE_65_70_PLAN.md` - completed milestone plan for unified runtime operations.
 - `docs/PHASE_71_76_PLAN.md` - completed milestone plan for distributed runtime intelligence.
@@ -61,6 +62,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/MILESTONE_R_INTEGRATION.md` - Milestone R connection map for behavioral baselines, anomalies, fingerprints, DNS/destination learning, adaptive risk, operator summaries, exports, dashboard/API views, gateway readiness, and platform compatibility.
 - `docs/MILESTONE_S_INTEGRATION.md` - Milestone S connection map for historical snapshots, aging/decay, topology evolution, replay, retention, long-term summaries, exports, dashboard/API views, and edge resource awareness.
 - `docs/MILESTONE_T_INTEGRATION.md` - Milestone T connection map for production profiles, service lifecycle previews, deployment manifests, upgrade/migration readiness, backup/restore planning, deployment summaries, exports, and future packaging.
+- `docs/MILESTONE_U_INTEGRATION.md` - Milestone U connection map for secure node identity, transport readiness, secure config and secrets, RBAC, tamper detection, secure updates, rollback planning, federation trust, and future SaaS control-plane readiness.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
 - `docs/cross_platform_packet_capture_readiness.md` - Phase 101 passive packet capture backend readiness, permission, safety warning, and payload prohibition summaries.

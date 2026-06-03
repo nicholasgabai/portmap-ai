@@ -126,6 +126,8 @@ Build:
 
 ## Milestone V - Deep Network Flow Intelligence
 
+Milestone U is complete as a baseline through Phase 128. Its integration summary is tracked in `docs/MILESTONE_U_INTEGRATION.md` and covers the secure node identity, encrypted transport readiness, secure configuration, RBAC, tamper detection, secure update, rollback, federation trust, and future SaaS control-plane readiness layer.
+
 Goal: move from socket and metadata visibility into deeper behavior-aware network intelligence without storing payloads or credentials.
 
 Phases:
