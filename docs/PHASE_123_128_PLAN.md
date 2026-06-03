@@ -175,6 +175,8 @@ Acceptance:
 
 ## Phase 127 - Tamper Detection
 
+Status: Complete Baseline
+
 Goal:
 Add tamper detection readiness records for runtime integrity, configuration integrity, and signed artifact validation.
 
@@ -190,7 +192,12 @@ Features:
 - Runtime integrity summary records.
 - Config tamper alert previews.
 - Binary verification support records.
-- Degraded and unknown integrity states.
+- Verified, drift-detected, unverifiable, and unknown integrity states.
+- Tamper preview records for config changes, manifest changes, identity rotation mismatches, trust-chain drift, transport downgrades, package digest mismatches, and history-store drift.
+- Clean, suspicious, tampered, unverifiable, and unknown detection states.
+- Severity mapping and operator action requirements.
+- Preview-only remediation summaries.
+- No blocking, quarantine, deletion, rollback, or configuration modification.
 - Export-safe tamper summaries.
 
 Acceptance:
@@ -198,6 +205,8 @@ Acceptance:
 - No privileged file watching is started.
 - No system files are modified.
 - Tamper summaries use sanitized fixture paths only.
+- No private paths, credentials, hostnames, usernames, IP addresses, or MAC addresses are emitted.
+- Tests cover state transitions, malformed records, transport downgrade warnings, identity/trust-chain drift warnings, serialization, and cross-platform-safe behavior.
 
 ## Phase 128 - Secure Update Framework
 

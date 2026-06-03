@@ -9,7 +9,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PORTMAP_AI_FINAL_ROADMAP.md` - forward-looking production-launch roadmap from Milestone U through commercial launch readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-122 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-127 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -36,6 +36,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/encrypted_orchestration_transport.md` - Phase 124 encrypted orchestration transport readiness profiles, downgrade warnings, and session negotiation previews.
 - `docs/secure_config_and_secrets.md` - Phase 125 secure configuration profiles, secret-management previews, plaintext rejection, rotation readiness, and provider-readiness notes.
 - `docs/rbac_operator_permissions.md` - Phase 126 RBAC role records, permission evaluation previews, remediation/enrollment boundaries, and future dashboard/API enforcement path.
+- `docs/tamper_detection.md` - Phase 127 integrity target records, tamper detection previews, transport downgrade warnings, and safe operator review workflow.
 - `docs/production_runtime_profiles.md` - Phase 117 deployment runtime profiles, compatibility validation, advisory states, and production-safe profile summaries.
 - `docs/service_lifecycle_readiness.md` - Phase 118 dry-run systemd, launchd, Windows service, foreground process, and Raspberry Pi edge lifecycle readiness previews.
 - `docs/deployment_manifest_generation.md` - Phase 119 sanitized deployment manifests, node profiles, readiness summaries, export paths, and backup recommendations.

@@ -217,6 +217,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/signed_runtime_summary_exchange.md",
   "docs/snapshot_drift_detection.md",
   "docs/stack_stability.md",
+  "docs/tamper_detection.md",
   "docs/threat_correlation.md",
   "docs/temporal_anomaly_windows.md",
   "docs/trusted_node_transport.md",
