@@ -8,7 +8,7 @@ The extended production-launch roadmap after the Phase 122 baseline is tracked i
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 127, covering Phases 0-127.
+PortMap-AI has completed baseline implementation through Phase 128, covering Phases 0-128.
 
 Implemented foundation includes:
 
@@ -72,6 +72,7 @@ Implemented foundation includes:
 - Secure configuration and secrets-management readiness records with development, staging, production, edge, and ephemeral runtime profiles, secret-management previews for orchestration/runtime classes, plaintext persistence rejection, rotation readiness, external provider readiness, and no credential storage, key generation, OS keychain integration, live encryption, or secret exchange.
 - RBAC and operator permission readiness records with admin, security-operator, analyst, auditor, read-only, and service-account roles, permission evaluation previews, remediation/enrollment/export/config/audit boundaries, and no user account creation, password or token storage, live authentication enforcement, or API behavior changes.
 - Tamper detection readiness records with integrity targets for runtime configs, deployment manifests, node identities, trust chains, transport profiles, package manifests, binary artifacts, and history stores plus preview-only tamper detections for config changes, manifest changes, identity rotation mismatches, trust-chain drift, transport downgrades, package digest mismatches, and history-store drift without file watching, private-file hashing, blocking, quarantine, deletion, rollback, or configuration modification.
+- Secure update framework readiness records with release manifest, package digest, signature status, migration manifest, compatibility manifest, and rollback manifest verification previews plus config, package, migration, identity, trust-chain, and history-store rollback previews without downloads, installer execution, file modification, restore, delete, overwrite, private key creation, live signature trust, or migration execution.
 - Pre-Milestone U source labeling for TUI, dashboard, API, and export-safe telemetry records so live/default runtime views show unresolved attribution as Unattributed or Unknown and reserve dummy labels for explicit simulated or fixture data.
 - Pre-Milestone U live scan snapshot deduplication so worker payloads represent bounded current observations, duplicate socket rows collapse by stable metadata key, transient live socket states are pruned from current snapshots, and TUI latest-scan views do not accumulate stale rows.
 

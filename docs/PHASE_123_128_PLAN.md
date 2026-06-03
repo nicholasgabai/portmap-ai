@@ -210,6 +210,8 @@ Acceptance:
 
 ## Phase 128 - Secure Update Framework
 
+Status: Complete Baseline
+
 Goal:
 Add signed update and rollback readiness records without executing updates or migrations.
 
@@ -227,12 +229,18 @@ Features:
 - Rollback safety records.
 - Migration verification hooks.
 - Operator-approved update checklist.
+- Release manifest, package digest, signature status, migration manifest, compatibility manifest, and rollback manifest records.
+- Verified, degraded, blocked, unavailable, and unknown update verification states.
+- Config, package, migration, identity, trust-chain, and history-store rollback previews.
+- Backup-required and compatibility-required rollback summaries.
+- No downloads, installer execution, file modification, restore, delete, overwrite, private key creation, or live signature trust.
 
 Acceptance:
 
 - No updates are downloaded or installed.
 - No migrations execute automatically.
 - Rollback plans are preview-only and export-safe.
+- Tests cover update state transitions, migration-required handling, compatibility warnings, rollback previews, safety flags, serialization, malformed version handling, and cross-platform-safe behavior.
 
 ## Cross-Phase Data Flow
 
