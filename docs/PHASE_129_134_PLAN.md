@@ -108,30 +108,39 @@ Acceptance:
 
 ## Phase 131 - Cross-Node Relationship Mapping
 
+Status: Complete Baseline
+
 Goal:
-Map metadata-only relationships across trusted local nodes while preserving node attribution and source confidence.
+Introduce cross-node relationship mapping and lateral relationship inference so PortMap-AI can model node-to-node communication patterns, shared service relationships, recurring peer interactions, and topology adjacency without requiring payload inspection or centralized packet capture.
 
 Build:
 
-- `core_engine/flows/cross_node_relationships.py`
-- `core_engine/flows/node_relationship_index.py`
+- `core_engine/topology/relationship_graphs.py`
+- `core_engine/topology/lateral_analysis.py`
 - `tests/test_cross_node_relationship_mapping.py`
 - `docs/cross_node_relationship_mapping.md`
 
 Features:
 
-- Cross-node flow relationship records.
-- Master/worker/orchestrator relationship summaries.
-- Source node attribution.
-- Recurring path summaries.
-- Lateral relationship hints.
-- Federated topology hooks.
+- Normalized node relationship graph records.
+- Orchestrator, master, worker, edge, external, and unknown node classes.
+- Active, recurring, transient, dormant, and unknown relationship states.
+- Flow and session references.
+- Shared service states.
+- Recurring interaction scoring.
+- Topology distance handling.
+- Relationship strength and confidence scoring.
+- Lateral relationship analysis with expected, unusual, suspicious, isolated, and unknown states.
+- Dashboard/API/export-safe dictionaries.
 
 Acceptance:
 
-- Node attribution survives all merge steps.
-- Conflicts and stale nodes are reported.
-- No remote probing or command execution is added.
+- Cross-node relationships are deterministic for sanitized fixtures.
+- Recurring peer interaction scoring is bounded.
+- Transient and recurring relationships classify predictably.
+- Source mode is preserved.
+- Lateral analysis remains advisory and does not produce threat verdicts.
+- No payload inspection, packet storage, graph database dependency, enforcement logic, threat verdict engine, remote probing, or command execution is added.
 
 ## Phase 132 - Dynamic Application Attribution
 

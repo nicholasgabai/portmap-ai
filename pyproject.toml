@@ -117,6 +117,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/baseline_aging_decay.md",
   "docs/configuration.md",
   "docs/coordinated_export_bundles.md",
+  "docs/cross_node_relationship_mapping.md",
   "docs/cve_intelligence.md",
   "docs/cross_platform_firewall_provider_readiness.md",
   "docs/cross_platform_filesystem_export_safety.md",

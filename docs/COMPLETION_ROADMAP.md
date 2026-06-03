@@ -8,7 +8,7 @@ The extended production-launch roadmap after the Phase 122 baseline is tracked i
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 130, covering Phases 0-130.
+PortMap-AI has completed baseline implementation through Phase 131, covering Phases 0-131.
 
 Implemented foundation includes:
 
@@ -75,6 +75,7 @@ Implemented foundation includes:
 - Secure update framework readiness records with release manifest, package digest, signature status, migration manifest, compatibility manifest, and rollback manifest verification previews plus config, package, migration, identity, trust-chain, and history-store rollback previews without downloads, installer execution, file modification, restore, delete, overwrite, private key creation, live signature trust, or migration execution.
 - Bidirectional flow reconstruction records with normalized session tracking, inbound/outbound/loopback direction inference, source-mode preservation, flow pairs, flow relationships, inferred/transient/recurring session summaries, relationship strength scoring, recurrence scoring, drift hints, reconstruction confidence, and metadata-only dashboard/API/export-safe dictionaries.
 - Packet metadata correlation records connecting packet metadata, socket observations, reconstructed sessions, flow pairs, redacted DNS/destination behavior, protocol hints, process/service attribution, and topology relationships with source-mode preservation, Unknown/Unattributed live fallbacks, fixture/simulated-only demo labels, confidence scoring, and dashboard/API/export-safe dictionaries.
+- Cross-node relationship mapping records with normalized node relationship graphs, orchestrator/master/worker/edge/external node classes, shared service states, recurring interaction scores, topology distance, relationship strength and confidence, drift hints, metadata-only lateral analysis, advisory operator summaries, and dashboard/API/export-safe dictionaries.
 - Pre-Milestone U source labeling for TUI, dashboard, API, and export-safe telemetry records so live/default runtime views show unresolved attribution as Unattributed or Unknown and reserve dummy labels for explicit simulated or fixture data.
 - Pre-Milestone U live scan snapshot deduplication so worker payloads represent bounded current observations, duplicate socket rows collapse by stable metadata key, transient live socket states are pruned from current snapshots, and TUI latest-scan views do not accumulate stale rows.
 

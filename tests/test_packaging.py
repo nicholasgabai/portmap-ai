@@ -92,6 +92,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/behavioral_intelligence_operator_summary.md" in data_files["share/portmap-ai/docs"]
     assert "docs/baseline_aging_decay.md" in data_files["share/portmap-ai/docs"]
     assert "docs/coordinated_export_bundles.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/cross_node_relationship_mapping.md" in data_files["share/portmap-ai/docs"]
     assert "docs/cve_intelligence.md" in data_files["share/portmap-ai/docs"]
     assert "docs/cross_platform_firewall_provider_readiness.md" in data_files["share/portmap-ai/docs"]
     assert "docs/cross_platform_filesystem_export_safety.md" in data_files["share/portmap-ai/docs"]
