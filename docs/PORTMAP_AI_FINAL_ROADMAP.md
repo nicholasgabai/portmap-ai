@@ -137,7 +137,7 @@ Phases:
 | 129 | Bidirectional Flow Reconstruction | Complete baseline: session-aware metadata-only flow tracking, direction inference, relationship mapping, source-mode preservation, and reconstruction confidence without payload inspection or PCAP generation. |
 | 130 | Packet Metadata Correlation | Complete baseline: correlate packet, socket, session, flow, DNS, protocol, process, service, and topology metadata with source-mode preservation and no payload or PCAP storage. |
 | 131 | Cross-Node Relationship Mapping | Complete baseline: model node-to-node relationships, shared services, recurring peer interactions, topology adjacency, and advisory lateral analysis without payload inspection or graph database dependency. |
-| 132 | Dynamic Application Attribution | Replace static labels with probabilistic metadata-only application attribution, confidence models, and continuous learning support. |
+| 132 | Dynamic Application Attribution | Complete baseline: infer generic probable app/service classes from metadata hints, behavioral signatures, confidence models, and source-mode-aware Unknown/Unattributed fallbacks without payload inspection or hardcoded live identities. |
 | 133 | Behavioral Drift Detection | Detect environment drift, evolving anomalies, and deviation from historical baselines. |
 | 134 | Network Topology Intelligence | Infer trust zones, subnet relationships, service dependencies, and adaptive topology models. |
 

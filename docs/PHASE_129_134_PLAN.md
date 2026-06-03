@@ -144,29 +144,43 @@ Acceptance:
 
 ## Phase 132 - Dynamic Application Attribution
 
+Status: Complete Baseline
+
 Goal:
-Replace static labels with probabilistic metadata-only application attribution, confidence models, and continuous learning support.
+Introduce metadata-only dynamic application attribution models so PortMap-AI can infer probable application/service identities from process hints, service hints, protocol metadata, destination behavior, flow/session behavior, and recurring behavioral signatures without relying on dummy labels, payload inspection, or hardcoded live identities.
 
 Build:
 
-- `core_engine/flows/application_attribution.py`
-- `core_engine/flows/application_profiles.py`
+- `core_engine/attribution/probabilistic_apps.py`
+- `core_engine/attribution/signature_learning.py`
+- `core_engine/attribution/confidence_models.py`
+- `core_engine/attribution/__init__.py`
 - `tests/test_dynamic_application_attribution.py`
 - `docs/dynamic_application_attribution.md`
 
 Features:
 
-- Application attribution profiles.
-- Browser, SSH client, database, update agent, remote access, cloud sync, and unknown behavior hints.
-- Confidence and evidence summaries.
+- Probable application attribution records.
+- Multiple candidates per observation.
+- Generic candidate app and service classes.
+- Process, service, protocol, destination, flow, and recurrence confidence scoring.
+- Conflict penalties.
+- Metadata-only behavioral signature records.
+- Recurring port, protocol, destination, timing, process/service, and flow relationship patterns.
 - Source-mode-aware attribution.
-- Safe unknown/unattributed fallbacks.
+- Unknown and Unattributed live fallbacks.
+- Fixture/simulated-only demo labels.
+- Dashboard/API/export-safe dictionaries.
 
 Acceptance:
 
 - Attribution uses metadata-only evidence.
-- No command-line secrets or payload contents are stored.
-- Low-confidence attribution remains explicit.
+- Confidence scores are bounded and deterministic.
+- Strong repeated metadata signals increase confidence.
+- Conflicting signals reduce confidence.
+- Live/default unresolved attribution remains Unknown or Unattributed.
+- `dummy_app` and `dummy_db` remain fixture/simulated-only.
+- No payload inspection, packet storage, PCAP generation, raw DNS browsing-history storage, host/IP/user/MAC identifier storage, hardcoded fake live app labels, or automatic enforcement is added.
 
 ## Phase 133 - Behavioral Drift Detection
 

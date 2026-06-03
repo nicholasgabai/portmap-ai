@@ -9,7 +9,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PORTMAP_AI_FINAL_ROADMAP.md` - forward-looking production-launch roadmap from Milestone U through commercial launch readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-131 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-132 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -43,6 +43,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/bidirectional_flow_reconstruction.md` - Phase 129 metadata-only bidirectional session tracking, flow relationships, source-mode preservation, and reconstruction confidence summaries.
 - `docs/packet_metadata_correlation.md` - Phase 130 metadata-only packet, socket, session, DNS, protocol, process, service, and topology correlation records.
 - `docs/cross_node_relationship_mapping.md` - Phase 131 cross-node relationship graphs, recurring peer interaction scoring, topology adjacency, and metadata-only lateral analysis.
+- `docs/dynamic_application_attribution.md` - Phase 132 metadata-only dynamic application attribution, behavioral signatures, confidence scoring, source-mode rules, and Unknown/Unattributed live fallbacks.
 - `docs/production_runtime_profiles.md` - Phase 117 deployment runtime profiles, compatibility validation, advisory states, and production-safe profile summaries.
 - `docs/service_lifecycle_readiness.md` - Phase 118 dry-run systemd, launchd, Windows service, foreground process, and Raspberry Pi edge lifecycle readiness previews.
 - `docs/deployment_manifest_generation.md` - Phase 119 sanitized deployment manifests, node profiles, readiness summaries, export paths, and backup recommendations.

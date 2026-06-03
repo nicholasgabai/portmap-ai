@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any, Iterable
 
-from core_engine.telemetry.process_attribution import normalize_source_mode
 from core_engine.topology.node_merge import SAFETY_FLAGS
 
 
@@ -363,6 +362,11 @@ def score_relationship_confidence(
 def normalize_node_class(value: Any) -> str:
     text = str(value or "unknown").strip().lower().replace("-", "_")
     return text if text in NODE_CLASSES else "unknown"
+
+
+def normalize_source_mode(value: Any) -> str:
+    text = str(value or "unknown").strip().lower()
+    return text if text in {"live", "simulated", "fixture", "replay", "unknown"} else "unknown"
 
 
 def normalize_shared_service_state(value: Any) -> str:
