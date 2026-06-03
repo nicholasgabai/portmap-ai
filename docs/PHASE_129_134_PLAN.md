@@ -73,30 +73,38 @@ Acceptance:
 
 ## Phase 130 - Packet Metadata Correlation
 
+Status: Complete Baseline
+
 Goal:
-Correlate process, destination, protocol, flow, timing, and topology metadata into unified relationship evidence records.
+Add metadata-only packet/flow correlation models that connect packet-derived metadata, socket observations, process/service attribution, DNS/destination behavior, and reconstructed flow sessions without inspecting payload contents or storing raw packets.
 
 Build:
 
-- `core_engine/flows/packet_correlation.py`
-- `core_engine/flows/metadata_relationships.py`
+- `core_engine/flows/metadata_correlation.py`
+- `core_engine/flows/process_correlation.py`
 - `tests/test_packet_metadata_correlation.py`
 - `docs/packet_metadata_correlation.md`
 
 Features:
 
-- Packet metadata correlation records.
-- Flow-to-process and flow-to-service evidence links.
-- Destination and DNS timing correlation.
-- Protocol hint correlation.
-- Source-mode-aware confidence scoring.
-- Export-safe relationship dictionaries.
+- Metadata correlation records connecting packet metadata, socket observations, reconstructed sessions, DNS/destination behavior, protocol metadata, and topology relationships.
+- Correlated, partially-correlated, uncorrelated, conflicting, and unknown states.
+- Source-mode preservation across live, simulated, fixture, replay, and unknown inputs.
+- Session and flow reference preservation.
+- DNS and topology correlation states.
+- Process/service attribution correlation records.
+- Unknown and Unattributed live fallbacks for unresolved attribution.
+- Fixture/simulated-only demo labels.
+- Metadata confidence scoring.
+- Dashboard/API/export-safe dictionaries.
 
 Acceptance:
 
 - Correlation is deterministic for sanitized fixtures.
 - Missing or malformed records are isolated.
-- No payload inspection or PCAP generation is added.
+- Source modes are preserved.
+- `dummy_app` and `dummy_db` remain fixture/simulated-only.
+- No payload inspection, raw packet storage, raw DNS browsing-history logging, PCAP generation, DPI, credential storage, or automatic enforcement is added.
 
 ## Phase 131 - Cross-Node Relationship Mapping
 
