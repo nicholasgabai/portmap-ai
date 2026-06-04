@@ -7,6 +7,11 @@ from ai_agent.remediation import handle_remediation
 from core_engine.audit_events import append_jsonl_event, record_audit_event, utc_timestamp
 from core_engine.modules.scanner import normalize_scan_snapshot, scan_snapshot_id
 from core_engine.remediation_safety import firewall_dry_run
+from core_engine.runtime.milestone_v_bridge import (
+    build_milestone_v_runtime_bridge,
+    empty_milestone_v_runtime_bridge,
+    format_runtime_counter_summary,
+)
 
 BASE_DIR = Path.home() / ".portmap-ai" / "logs"
 BASE_DIR.mkdir(parents=True, exist_ok=True)
@@ -51,8 +56,18 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
     else:
         top_port = None
 
+    timestamp = utc_timestamp()
+    try:
+        milestone_v = build_milestone_v_runtime_bridge(ports, node_id=node_id, generated_at=timestamp)
+    except Exception as exc:
+        milestone_v = empty_milestone_v_runtime_bridge(
+            node_id=node_id,
+            generated_at=timestamp,
+            error_summary=str(exc),
+        )
+
     line = {
-        "timestamp": utc_timestamp(),
+        "timestamp": timestamp,
         "event_type": "worker_telemetry",
         "node_id": node_id,
         "score": score,
@@ -63,6 +78,10 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
         "ports_sample": ports[:5],  # don’t spam the log
         "current_snapshot": True,
         "score_factors": score_factors,
+        "milestone_v": milestone_v.get("operator_summary") or {},
+        "milestone_v_counters": milestone_v.get("runtime_counters") or {},
+        "flows": milestone_v.get("flow_events") or [],
+        "topology_edges": milestone_v.get("topology_edges") or [],
     }
 
     try:
@@ -72,7 +91,11 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
         print(f"⚠️ Failed to write master log: {e}")
 
     factor_suffix = f" factors={','.join(score_factors[:3])}" if score_factors else ""
-    msg = f"📨 [{node_id}] score={score} anomalies={len(anomalies)} ports={len(ports)}{factor_suffix}"
+    counter_suffix = format_runtime_counter_summary(milestone_v.get("runtime_counters") or {})
+    msg = (
+        f"📨 [{node_id}] score={score} anomalies={len(anomalies)} ports={len(ports)}"
+        f"{factor_suffix} milestone_v {counter_suffix}"
+    )
     if logger:
         logger.info(msg)
     else:

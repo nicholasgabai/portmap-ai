@@ -23,6 +23,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/MILESTONE_T_INTEGRATION.md` - detailed integration summary for Phase 117-122 operationalization and deployment foundation work.
 - `docs/MILESTONE_U_INTEGRATION.md` - detailed integration summary for Phase 123-128 security foundation and trusted runtime work.
 - `docs/MILESTONE_V_INTEGRATION.md` - detailed integration summary for Phase 129-134 deep network flow intelligence work.
+- `docs/milestone_v_live_runtime_integration.md` - pre-Milestone W bridge from live worker socket snapshots into Milestone V flow, correlation, attribution, drift, topology, TUI, dashboard/API, and export-safe summaries.
 - `docs/PHASE_59_64_PLAN.md` - completed milestone plan for runtime pipeline and persistent topology integration.
 - `docs/PHASE_65_70_PLAN.md` - completed milestone plan for unified runtime operations.
 - `docs/PHASE_71_76_PLAN.md` - completed milestone plan for distributed runtime intelligence.
@@ -47,6 +48,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/dynamic_application_attribution.md` - Phase 132 metadata-only dynamic application attribution, behavioral signatures, confidence scoring, source-mode rules, and Unknown/Unattributed live fallbacks.
 - `docs/behavioral_drift_detection.md` - Phase 133 metadata-only behavioral drift records, baseline/current comparison, environment drift aggregation, no threat verdicts, and no enforcement.
 - `docs/network_topology_intelligence.md` - Phase 134 trust-zone inference, dependency mapping, topology adjacency, source-mode preservation, and dashboard/API/export-safe topology intelligence.
+- `docs/milestone_v_live_runtime_integration.md` - live runtime bridge for current socket snapshots, Milestone V counters, Traffic Flows, Topology Edges, socket-only visibility limits, and sanitized operator validation.
 - `docs/production_runtime_profiles.md` - Phase 117 deployment runtime profiles, compatibility validation, advisory states, and production-safe profile summaries.
 - `docs/service_lifecycle_readiness.md` - Phase 118 dry-run systemd, launchd, Windows service, foreground process, and Raspberry Pi edge lifecycle readiness previews.
 - `docs/deployment_manifest_generation.md` - Phase 119 sanitized deployment manifests, node profiles, readiness summaries, export paths, and backup recommendations.
@@ -72,6 +74,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/MILESTONE_T_INTEGRATION.md` - Milestone T connection map for production profiles, service lifecycle previews, deployment manifests, upgrade/migration readiness, backup/restore planning, deployment summaries, exports, and future packaging.
 - `docs/MILESTONE_U_INTEGRATION.md` - Milestone U connection map for secure node identity, transport readiness, secure config and secrets, RBAC, tamper detection, secure updates, rollback planning, federation trust, and future SaaS control-plane readiness.
 - `docs/MILESTONE_V_INTEGRATION.md` - Milestone V connection map for reconstructed sessions, packet correlation, cross-node topology, application attribution, drift, trust zones, dependency mapping, and source-mode-safe operator views.
+- `docs/milestone_v_live_runtime_integration.md` - runtime bridge notes for invoking Milestone V intelligence from live/default worker telemetry while preserving bounded snapshots and source-mode-safe TUI output.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.
 - `docs/cross_platform_packet_capture_readiness.md` - Phase 101 passive packet capture backend readiness, permission, safety warning, and payload prohibition summaries.
@@ -140,6 +143,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/protocol_metadata_extraction.md` - safe HTTP/TLS/DNS metadata summaries, protocol fingerprints, confidence scoring, governance fields, anomaly summaries, and dashboard/API-ready dictionaries.
 - `docs/dynamic_topology_correlation.md` - live node relationship inference, flow-to-topology edge correlation, protocol-aware topology summaries, drift correlation, bounded graph controls, replay-safe updates, and dashboard/API-ready dictionaries.
 - `docs/realtime_telemetry_dashboard.md` - read-only live telemetry dashboard/API models for interface, packet rate, flow rate, topology, protocol, resource, federation, health, bounded update, and empty/stale state summaries.
+- `docs/milestone_v_live_runtime_integration.md` - live socket snapshot bridge into Milestone V flow, correlation, attribution, drift, topology, and TUI summaries.
 - `docs/cross_platform_runtime_detection.md` - cross-platform runtime detection records for platform family, architecture, Python, permissions, capability states, and dashboard/API compatibility.
 - `docs/windows_runtime_compatibility.md` - Windows-safe path normalization, process/socket fallback, service-mode preview, runtime profile, degraded state, and dashboard/API compatibility records.
 - `docs/cross_platform_packet_capture_readiness.md` - passive capture readiness records for macOS, Linux, Raspberry Pi/Linux ARM, and Windows backends without starting capture.

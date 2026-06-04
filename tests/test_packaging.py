@@ -149,6 +149,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/long_term_intelligence_operator_summary.md" in data_files["share/portmap-ai/docs"]
     assert "docs/long_term_topology_evolution.md" in data_files["share/portmap-ai/docs"]
     assert "docs/local_visibility_operator_tooling.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/milestone_v_live_runtime_integration.md" in data_files["share/portmap-ai/docs"]
     assert "docs/metadata_stream_parser.md" in data_files["share/portmap-ai/docs"]
     assert "docs/node_coordination.md" in data_files["share/portmap-ai/docs"]
     assert "docs/network_control_layer.md" in data_files["share/portmap-ai/docs"]

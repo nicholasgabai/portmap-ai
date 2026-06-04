@@ -8,7 +8,7 @@ The extended production-launch roadmap after the Phase 122 baseline is tracked i
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 134, covering Phases 0-134.
+PortMap-AI has completed baseline implementation through Phase 134, covering Phases 0-134, plus a pre-Milestone W Milestone V live runtime bridge that wires current worker socket snapshots into flow, correlation, attribution, drift, topology, TUI, dashboard/API, and export-safe summaries.
 
 Implemented foundation includes:
 
@@ -79,6 +79,7 @@ Implemented foundation includes:
 - Dynamic application attribution records with generic probable application and service candidates, process/service/protocol/destination/flow hints, metadata-only behavioral signatures, recurrence and stability scores, deterministic confidence scoring, conflict penalties, source-mode-aware Unknown/Unattributed live fallbacks, and dashboard/API/export-safe dictionaries.
 - Behavioral drift detection records for application, service, destination, flow, topology, and protocol behavior with baseline/current references, bounded drift and confidence scoring, recurrence state, source-mode preservation, environment drift aggregation, operator summaries, dashboard/API/export-safe dictionaries, no threat verdicts, and no enforcement.
 - Network topology intelligence records with internal, management, service, external, and unknown trust zones, service dependencies, communication chains, node dependencies, topology adjacency, relationship strength, recurrence scoring, confidence scoring, topology distance, source-mode preservation, and dashboard/API/export-safe dictionaries.
+- Milestone V live runtime bridge summaries that convert bounded current socket snapshots into reconstructed sessions, flow rows, metadata correlations, process/service correlations, relationship edges, attribution candidates, drift records, topology records, runtime counters, and TUI-visible Traffic Flows and Topology Edges without payload inspection or PCAP generation.
 - Pre-Milestone U source labeling for TUI, dashboard, API, and export-safe telemetry records so live/default runtime views show unresolved attribution as Unattributed or Unknown and reserve dummy labels for explicit simulated or fixture data.
 - Pre-Milestone U live scan snapshot deduplication so worker payloads represent bounded current observations, duplicate socket rows collapse by stable metadata key, transient live socket states are pruned from current snapshots, and TUI latest-scan views do not accumulate stale rows.
 
@@ -98,7 +99,7 @@ Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, cove
 
 Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, covering how secure node identity, encrypted transport readiness, secure config and secrets management, RBAC, tamper detection, and secure update previews connect to distributed federation, trust boundaries, future mTLS, signed enrollment, secure secret storage, dashboard/API RBAC, tamper enforcement, signed updates, rollback-safe upgrades, and future SaaS control-plane readiness.
 
-Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, covering how bidirectional flow reconstruction, packet metadata correlation, cross-node relationship mapping, dynamic application attribution, behavioral drift detection, and network topology intelligence connect socket observations, reconstructed sessions, DNS/destination behavior, process/service attribution, source-mode-safe operator views, trust zones, and service dependency mapping.
+Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, covering how bidirectional flow reconstruction, packet metadata correlation, cross-node relationship mapping, dynamic application attribution, behavioral drift detection, and network topology intelligence connect socket observations, reconstructed sessions, DNS/destination behavior, process/service attribution, source-mode-safe operator views, trust zones, and service dependency mapping. The live runtime bridge is documented in `docs/milestone_v_live_runtime_integration.md`, including socket-only visibility limits for ICMP and short-lived TCP/UDP activity.
 
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
