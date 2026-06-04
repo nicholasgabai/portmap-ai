@@ -523,14 +523,19 @@ def _safe_int(value: Any) -> int:
 def _is_permission_error(exc: Exception) -> bool:
     if isinstance(exc, PermissionError):
         return True
+    class_name = type(exc).__name__.strip().lower().replace("_", "")
+    if "accessdenied" in class_name:
+        return True
     text = str(exc).lower()
-    return "permission" in text or "operation not permitted" in text
+    return "permission" in text or "operation not permitted" in text or "access denied" in text or "accessdenied" in text
 
 
 def _safe_error_summary(exc: Any) -> str:
     text = str(exc or "").strip().replace("\n", " ")
     if not text:
         return ""
+    if "AccessDenied" in text or "access denied" in text.lower() or "accessdenied" in text.lower():
+        return "access_denied"
     if "Operation not permitted" in text:
         return "operation_not_permitted"
     if "Permission denied" in text:

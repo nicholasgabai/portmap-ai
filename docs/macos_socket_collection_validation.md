@@ -6,7 +6,7 @@ The issue was upstream of Milestone V: the runtime bridge worked when socket obs
 
 ## Root Cause
 
-On macOS, the primary psutil socket inventory call can fail with an operating-system permission error when the process is not allowed to enumerate system-wide sockets. The previous scanner path caught that exception and returned an empty live list, which made the worker log:
+On macOS, the primary psutil socket inventory call can fail with an operating-system permission error when the process is not allowed to enumerate system-wide sockets. The error can appear as `AccessDenied`, `PermissionError`, `Operation not permitted`, or a wrapped exception whose class name or message indicates access denial. The previous scanner path caught that exception and returned an empty live list, which made the worker log:
 
 ```text
 No connections found - sending heartbeat only.
@@ -22,7 +22,7 @@ The live/default macOS path is:
 
 ```text
 psutil socket inventory
-  -> if permission-blocked or empty on macOS
+  -> if AccessDenied, PermissionError, Operation not permitted, or empty on macOS
   -> non-privileged lsof socket inventory fallback
   -> scanner normalization
   -> bounded worker payload
@@ -53,6 +53,7 @@ Diagnostics do not log raw endpoints, packet payloads, credentials, hostnames, u
 
 Use operator-approved local traffic only.
 
+- Confirm macOS can expose socket metadata without sudo using `lsof -nP -iTCP`.
 - A macOS system with active SSH or SCP sessions should produce TCP socket observations when visible to the OS.
 - A macOS system with active HTTPS sessions should produce TCP socket observations when visible to the OS.
 - DNS-like UDP socket observations can appear when visible at scan time.

@@ -43,7 +43,7 @@ Socket-only mode is not packet capture. Expected limitations:
 
 - ICMP ping may not appear because ping is not represented as a normal TCP or UDP socket row on many platforms.
 - Very short-lived curl, dig, or nslookup activity may disappear between scan intervals.
-- macOS psutil socket inventory can be permission-blocked; the scanner records safe diagnostics and can use a non-privileged live `lsof` fallback when available.
+- macOS psutil socket inventory can be permission-blocked with `AccessDenied`, `PermissionError`, or `Operation not permitted`; the scanner records safe diagnostics and can use a non-privileged live `lsof` fallback when available.
 - DNS visibility depends on whether the OS exposes a UDP socket observation at scan time.
 - Packet payloads, request bodies, DNS payload contents, credentials, and PCAPs are never captured or stored by this bridge.
 
