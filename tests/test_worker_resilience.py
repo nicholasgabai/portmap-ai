@@ -31,3 +31,34 @@ def test_worker_heartbeat_reregisters_after_orchestrator_state_loss(monkeypatch)
         "heartbeat",
     ]
     assert response["commands"][0]["type"] == "scan_now"
+
+
+def test_worker_logs_safe_socket_collection_diagnostics(monkeypatch, caplog):
+    diagnostics = {
+        "platform_family": "macos",
+        "primary_backend": "psutil",
+        "primary_raw_count": 0,
+        "primary_error_type": "PermissionError",
+        "primary_error_summary": "operation_not_permitted",
+        "permission_blocked": True,
+        "fallback_backend": "macos_lsof",
+        "fallback_attempted": True,
+        "fallback_available": True,
+        "fallback_used": False,
+        "fallback_raw_count": 0,
+        "candidate_count": 0,
+        "normalized_count": 0,
+        "result_state": "empty",
+        "raw_endpoint_logged": False,
+        "privilege_escalation_attempted": False,
+    }
+    monkeypatch.setattr(worker_node, "basic_scan_with_diagnostics", lambda: ([], diagnostics))
+
+    with caplog.at_level(logging.INFO):
+        rows = worker_node.collect_connections(logging.getLogger("test.worker.diagnostics"))
+
+    assert rows == []
+    assert "Socket collection returned no observations" in caplog.text
+    assert "operation_not_permitted" in caplog.text
+    assert "macos_lsof" in caplog.text
+    assert "raw_endpoint_logged': False" in caplog.text

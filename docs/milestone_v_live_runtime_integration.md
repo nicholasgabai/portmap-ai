@@ -23,6 +23,8 @@ scanner basic_scan
 
 The bridge runs on the current worker payload already received by the master. It keeps live scan snapshots bounded and does not turn current observations into historical storage. Historical behavior remains the responsibility of the baseline, history, and retention modules.
 
+macOS socket collection diagnostics and fallback behavior are documented separately in `docs/macos_socket_collection_validation.md`.
+
 ## What Socket Scanning Can See
 
 Socket-only runtime scanning can summarize current observable TCP and UDP socket metadata when the operating system exposes it. Useful rows can include:
@@ -41,6 +43,7 @@ Socket-only mode is not packet capture. Expected limitations:
 
 - ICMP ping may not appear because ping is not represented as a normal TCP or UDP socket row on many platforms.
 - Very short-lived curl, dig, or nslookup activity may disappear between scan intervals.
+- macOS psutil socket inventory can be permission-blocked; the scanner records safe diagnostics and can use a non-privileged live `lsof` fallback when available.
 - DNS visibility depends on whether the OS exposes a UDP socket observation at scan time.
 - Packet payloads, request bodies, DNS payload contents, credentials, and PCAPs are never captured or stored by this bridge.
 

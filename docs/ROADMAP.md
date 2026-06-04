@@ -135,6 +135,7 @@ Planned remaining milestones:
 - Milestone U security foundation and trusted runtime work is complete as a baseline through Phase 128.
 - Milestone V deep network flow intelligence work is complete as a baseline through Phase 134.
 - The Milestone V live runtime bridge now feeds current worker socket snapshots into reconstructed sessions, metadata/process correlations, relationship edges, attribution candidates, drift records, topology records, Traffic Flows, and Topology Edges while preserving socket-only limits and metadata-only safety.
+- The macOS socket collection blocker discovered during Milestone V validation is handled by scanner diagnostics and a non-privileged live `lsof` fallback when psutil socket enumeration is permission-blocked.
 - Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -171,6 +172,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_U_INTEGRATION.md`
 - `docs/MILESTONE_V_INTEGRATION.md`
 - `docs/milestone_v_live_runtime_integration.md`
+- `docs/macos_socket_collection_validation.md`
 - `docs/source_mode_labeling.md`
 - `docs/live_scan_snapshot_deduplication.md`
 - `docs/PHASE_117_122_PLAN.md`

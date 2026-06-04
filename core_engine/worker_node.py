@@ -24,7 +24,7 @@ from core_engine.config_loader import PROJECT_ROOT, load_node_config
 from core_engine.config_validation import require_valid_config
 from core_engine.logging_utils import configure_logger, update_log_level
 from core_engine.platform_utils import local_node_address
-from core_engine.modules.scanner import basic_scan, normalize_scan_snapshot, scan_snapshot_id
+from core_engine.modules.scanner import basic_scan_with_diagnostics, normalize_scan_snapshot, scan_snapshot_id
 from core_engine.firewall_hooks import configure_firewall
 from core_engine.tls_utils import create_client_context, merge_tls_config
 
@@ -42,12 +42,36 @@ def parse_level(level_name: str) -> int:
 
 def collect_connections(logger: logging.Logger):
     try:
-        connections = basic_scan()
+        connections, diagnostics = basic_scan_with_diagnostics()
         logger.debug("Collected %d connection(s) from basic_scan()", len(connections))
+        logger.debug("Socket collection diagnostics: %s", _scanner_diagnostic_log_fields(diagnostics))
+        if not connections:
+            logger.info("Socket collection returned no observations: %s", _scanner_diagnostic_log_fields(diagnostics))
         return connections
     except Exception as exc:
         logger.warning("basic_scan() failed: %s", exc)
         return []
+
+
+def _scanner_diagnostic_log_fields(diagnostics: dict) -> dict:
+    return {
+        "platform_family": diagnostics.get("platform_family", "unknown"),
+        "primary_backend": diagnostics.get("primary_backend", "unknown"),
+        "primary_raw_count": diagnostics.get("primary_raw_count", 0),
+        "primary_error_type": diagnostics.get("primary_error_type", ""),
+        "primary_error_summary": diagnostics.get("primary_error_summary", ""),
+        "permission_blocked": diagnostics.get("permission_blocked", False),
+        "fallback_backend": diagnostics.get("fallback_backend", ""),
+        "fallback_attempted": diagnostics.get("fallback_attempted", False),
+        "fallback_available": diagnostics.get("fallback_available", False),
+        "fallback_used": diagnostics.get("fallback_used", False),
+        "fallback_raw_count": diagnostics.get("fallback_raw_count", 0),
+        "candidate_count": diagnostics.get("candidate_count", 0),
+        "normalized_count": diagnostics.get("normalized_count", 0),
+        "result_state": diagnostics.get("result_state", "unknown"),
+        "raw_endpoint_logged": False,
+        "privilege_escalation_attempted": False,
+    }
 
 
 def build_payload(node_id: str, connections, logger: logging.Logger, autolearn: bool) -> dict:

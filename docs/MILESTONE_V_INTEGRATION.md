@@ -4,7 +4,7 @@ Milestone V adds the deep network flow intelligence layer for PortMap-AI. It con
 
 This milestone remains local-first, metadata-only, advisory-first, source-mode aware, resource-bounded, Raspberry Pi/Linux ARM compatible, macOS/Linux/Windows aware, and export-safe. It does not inspect packet payloads, generate PCAP files, store raw DNS browsing history, create hardcoded live dummy labels, produce threat verdicts, require a graph database, or perform enforcement actions.
 
-The pre-Milestone W live runtime bridge is documented in `docs/milestone_v_live_runtime_integration.md`. It invokes Milestone V summaries from bounded current worker socket snapshots and exposes runtime counters, Traffic Flows, Topology Edges, attribution, drift, and topology intelligence summaries through master telemetry events and operator-safe TUI/dashboard/API/export dictionaries.
+The pre-Milestone W live runtime bridge is documented in `docs/milestone_v_live_runtime_integration.md`. It invokes Milestone V summaries from bounded current worker socket snapshots and exposes runtime counters, Traffic Flows, Topology Edges, attribution, drift, and topology intelligence summaries through master telemetry events and operator-safe TUI/dashboard/API/export dictionaries. macOS socket collection validation is documented in `docs/macos_socket_collection_validation.md`.
 
 ## Phase Summary
 
@@ -96,6 +96,7 @@ The Milestone V live runtime bridge connects current worker telemetry to the Mil
 - Nested flow rows are added to master telemetry events so the existing TUI Traffic Flows and Topology Edges panels can render current flow and topology summaries.
 - ICMP ping absence is expected under socket-only mode, and very short-lived TCP or UDP activity may require scan timing alignment until a future passive capture path is explicitly enabled.
 - Live/default unresolved attribution remains Unknown or Unattributed, while `dummy_app` and `dummy_db` remain restricted to explicit fixture or simulated source modes.
+- On macOS, scanner diagnostics report psutil permission-blocked inventory and use a non-privileged live `lsof` fallback when available.
 
 ## Safety Guarantees
 
