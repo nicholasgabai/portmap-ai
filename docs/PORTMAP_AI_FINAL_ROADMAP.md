@@ -128,6 +128,8 @@ Build:
 
 Milestone U is complete as a baseline through Phase 128. Its integration summary is tracked in `docs/MILESTONE_U_INTEGRATION.md` and covers the secure node identity, encrypted transport readiness, secure configuration, RBAC, tamper detection, secure update, rollback, federation trust, and future SaaS control-plane readiness layer.
 
+Milestone V is complete as a baseline through Phase 134. Its integration summary is tracked in `docs/MILESTONE_V_INTEGRATION.md` and covers bidirectional flow reconstruction, packet metadata correlation, cross-node relationship mapping, dynamic application attribution, behavioral drift detection, network topology intelligence, source-mode safety, trust-zone inference, and dependency mapping.
+
 Goal: move from socket and metadata visibility into deeper behavior-aware network intelligence without storing payloads or credentials.
 
 Phases:

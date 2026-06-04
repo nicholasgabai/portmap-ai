@@ -98,6 +98,8 @@ Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, cove
 
 Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, covering how secure node identity, encrypted transport readiness, secure config and secrets management, RBAC, tamper detection, and secure update previews connect to distributed federation, trust boundaries, future mTLS, signed enrollment, secure secret storage, dashboard/API RBAC, tamper enforcement, signed updates, rollback-safe upgrades, and future SaaS control-plane readiness.
 
+Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, covering how bidirectional flow reconstruction, packet metadata correlation, cross-node relationship mapping, dynamic application attribution, behavioral drift detection, and network topology intelligence connect socket observations, reconstructed sessions, DNS/destination behavior, process/service attribution, source-mode-safe operator views, trust zones, and service dependency mapping.
+
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
 ## Completion Milestone Roadmap
