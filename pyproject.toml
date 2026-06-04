@@ -178,6 +178,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/metadata_stream_parser.md",
   "docs/network_control_layer.md",
   "docs/node_coordination.md",
+  "docs/network_topology_intelligence.md",
   "docs/network_asset_inventory.md",
   "docs/operator_review_queue_integration.md",
   "docs/operational_export_bundle.md",

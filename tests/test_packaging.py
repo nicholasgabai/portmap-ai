@@ -151,6 +151,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/metadata_stream_parser.md" in data_files["share/portmap-ai/docs"]
     assert "docs/node_coordination.md" in data_files["share/portmap-ai/docs"]
     assert "docs/network_control_layer.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/network_topology_intelligence.md" in data_files["share/portmap-ai/docs"]
     assert "docs/network_asset_inventory.md" in data_files["share/portmap-ai/docs"]
     assert "docs/operator_review_queue_integration.md" in data_files["share/portmap-ai/docs"]
     assert "docs/operational_export_bundle.md" in data_files["share/portmap-ai/docs"]

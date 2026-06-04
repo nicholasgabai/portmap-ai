@@ -220,29 +220,37 @@ Acceptance:
 
 ## Phase 134 - Network Topology Intelligence
 
+Status: Complete Baseline
+
 Goal:
-Infer trust zones, subnet relationships, service dependencies, and adaptive topology models from metadata-only flow intelligence.
+Infer trust zones, service dependencies, topology adjacency, and network structure intelligence from historical observations, reconstructed flows, and cross-node relationships.
 
 Build:
 
-- `core_engine/flows/topology_intelligence.py`
-- `core_engine/flows/trust_zones.py`
+- `core_engine/topology/trust_zones.py`
+- `core_engine/topology/dependency_mapping.py`
 - `tests/test_network_topology_intelligence.py`
 - `docs/network_topology_intelligence.md`
 
 Features:
 
-- Trust-zone inference summaries.
-- Service dependency records.
-- Adaptive topology confidence scoring.
-- Flow-derived topology relationship rollups.
-- Dashboard/API/export-safe topology intelligence dictionaries.
+- Internal, management, service, external, and unknown trust-zone inference.
+- Trust-zone records with relationship counts, confidence scores, drift flags, source modes, and advisory notes.
+- Service dependency, recurring communication chain, node dependency, topology adjacency, management dependency, external dependency, and unknown dependency records.
+- Relationship strength, recurrence score, confidence score, topology distance, source mode, and advisory notes.
+- Topology adjacency classification from normalized relationship records.
+- Dashboard/API/export-safe trust-zone and dependency dictionaries.
+- Metadata-only safety fields for no payload inspection, no packet storage, no graph database dependency, and no enforcement.
 
 Acceptance:
 
+- Trust-zone inference is deterministic for sanitized relationship fixtures.
+- Dependency mapping and topology adjacency classify predictably.
+- Relationship and confidence scores remain bounded.
+- Malformed topology inputs are isolated with structured errors.
+- Source mode is preserved.
 - Topology intelligence remains advisory and local-only.
-- Bounded graph growth is preserved.
-- No network scanning, traffic injection, or enforcement is added.
+- No payload inspection, packet storage, PCAP generation, active probing, graph database dependency, traffic injection, or enforcement is added.
 
 ## Validation Checklist
 
