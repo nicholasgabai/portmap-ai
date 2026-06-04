@@ -89,6 +89,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/backup_restore_planning.md" in data_files["share/portmap-ai/docs"]
     assert "docs/bidirectional_flow_reconstruction.md" in data_files["share/portmap-ai/docs"]
     assert "docs/behavior_correlation.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/behavioral_drift_detection.md" in data_files["share/portmap-ai/docs"]
     assert "docs/behavioral_intelligence_operator_summary.md" in data_files["share/portmap-ai/docs"]
     assert "docs/baseline_aging_decay.md" in data_files["share/portmap-ai/docs"]
     assert "docs/coordinated_export_bundles.md" in data_files["share/portmap-ai/docs"]

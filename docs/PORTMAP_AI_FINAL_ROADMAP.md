@@ -138,7 +138,7 @@ Phases:
 | 130 | Packet Metadata Correlation | Complete baseline: correlate packet, socket, session, flow, DNS, protocol, process, service, and topology metadata with source-mode preservation and no payload or PCAP storage. |
 | 131 | Cross-Node Relationship Mapping | Complete baseline: model node-to-node relationships, shared services, recurring peer interactions, topology adjacency, and advisory lateral analysis without payload inspection or graph database dependency. |
 | 132 | Dynamic Application Attribution | Complete baseline: infer generic probable app/service classes from metadata hints, behavioral signatures, confidence models, and source-mode-aware Unknown/Unattributed fallbacks without payload inspection or hardcoded live identities. |
-| 133 | Behavioral Drift Detection | Detect environment drift, evolving anomalies, and deviation from historical baselines. |
+| 133 | Behavioral Drift Detection | Complete baseline: compare current application, service, destination, flow, topology, and protocol behavior against historical baselines with bounded drift and confidence scores, recurrence state, environment aggregation, source-mode preservation, no threat verdicts, and no enforcement. |
 | 134 | Network Topology Intelligence | Infer trust zones, subnet relationships, service dependencies, and adaptive topology models. |
 
 Primary deliverable areas:

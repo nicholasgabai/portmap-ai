@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 132 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
+This roadmap summarizes the current direction after the Phase 133 baseline. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
 
 ## Completed Milestones
 
@@ -35,10 +35,11 @@ This roadmap summarizes the current direction after the Phase 132 baseline. `POR
 | 130 | Packet metadata correlation: metadata-only packet, socket, session, flow, DNS, protocol, process, service, and topology correlation records with source-mode preservation, Unknown/Unattributed live fallbacks, fixture/simulated-only demo labels, and dashboard/API/export dictionaries without raw packet storage or PCAP generation | Complete baseline |
 | 131 | Cross-node relationship mapping: normalized node relationship graphs, orchestrator/master/worker/edge/external classes, shared service states, recurring peer scoring, topology distance, lateral analysis states, and dashboard/API/export dictionaries without payload inspection, packet storage, graph database dependency, threat verdicts, or enforcement | Complete baseline |
 | 132 | Dynamic application attribution: probable generic application/service candidates, metadata-only behavioral signatures, confidence scoring, conflict penalties, source-mode-aware Unknown/Unattributed live fallbacks, and fixture/simulated-only demo labels without payload inspection, raw DNS history, hardcoded live identities, or enforcement | Complete baseline |
+| 133 | Behavioral drift detection: application, service, destination, flow, topology, and protocol drift records, baseline/current references, bounded scores, recurrence state, environment drift aggregation, source-mode preservation, dashboard/API/export dictionaries, and no threat verdicts or enforcement | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-132 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
+Phases 0-133 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
 
 Current stable posture:
 
@@ -115,6 +116,7 @@ Current stable posture:
 - Packet metadata correlation now connects packet metadata, socket observations, reconstructed sessions, flow pairs, redacted DNS/destination behavior, protocol hints, process/service attribution, and topology relationships into source-mode-aware evidence records with live Unknown/Unattributed fallbacks and fixture/simulated-only demo labels.
 - Cross-node relationship mapping now models orchestrator, master, worker, edge, external, and unknown node-class relationships with shared service states, recurring peer scoring, topology distance, relationship confidence, drift hints, and advisory lateral analysis without graph database, threat verdict, or enforcement behavior.
 - Dynamic application attribution now produces generic probable application and service candidates from metadata hints, behavioral signatures, confidence breakdowns, recurrence evidence, and conflict penalties while keeping unresolved live attribution as Unknown or Unattributed.
+- Behavioral drift detection now compares current application, service, destination, flow, topology, and protocol observations against historical baselines with bounded drift scores, recurrence state, confidence, environment aggregation, source-mode preservation, and explicit no-threat-verdict/no-enforcement safety fields.
 - Pre-Milestone U source labeling now prevents `dummy_app` and `dummy_db` from appearing in live/default TUI runtime views unless simulation or fixture mode is explicit. Live unresolved attribution displays as `Unattributed` or `Unknown`, and TUI/dashboard/API/export summaries preserve source mode.
 - Pre-Milestone U live scan snapshot deduplication now bounds each worker scan cycle as a current snapshot, collapses duplicate socket rows, prunes transient live socket states, keeps remediation scoring stable across repeated identical scans, and keeps the TUI scan-results panel focused on the latest snapshot per node.
 - The Textual terminal dashboard remains the primary operator UI.
@@ -129,7 +131,7 @@ The detailed remaining roadmap is maintained in `docs/COMPLETION_ROADMAP.md`. Th
 Planned remaining milestones:
 
 - Milestone U security foundation and trusted runtime work is complete as a baseline through Phase 128.
-- Continue Milestone V deep network flow intelligence work after the Phase 132 dynamic application attribution baseline.
+- Continue Milestone V deep network flow intelligence work after the Phase 133 behavioral drift detection baseline.
 - Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -179,6 +181,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/packet_metadata_correlation.md`
 - `docs/cross_node_relationship_mapping.md`
 - `docs/dynamic_application_attribution.md`
+- `docs/behavioral_drift_detection.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`

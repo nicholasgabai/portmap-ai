@@ -113,6 +113,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/bidirectional_flow_reconstruction.md",
   "docs/beginner_guide.md",
   "docs/behavior_correlation.md",
+  "docs/behavioral_drift_detection.md",
   "docs/behavioral_intelligence_operator_summary.md",
   "docs/baseline_aging_decay.md",
   "docs/configuration.md",

@@ -184,30 +184,39 @@ Acceptance:
 
 ## Phase 133 - Behavioral Drift Detection
 
+Status: Complete Baseline
+
 Goal:
-Detect environment drift, evolving anomalies, and deviations from historical baselines using metadata-only relationship records.
+Detect gradual and sudden changes in learned network, service, application, flow, destination, and topology behavior by comparing current observations against historical baselines without generating threat verdicts or enforcement actions.
 
 Build:
 
-- `core_engine/flows/behavioral_drift.py`
-- `core_engine/flows/drift_windows.py`
-- `tests/test_flow_behavioral_drift.py`
-- `docs/flow_behavioral_drift.md`
+- `core_engine/behavior/drift_detection.py`
+- `core_engine/behavior/environment_drift.py`
+- `core_engine/behavior/__init__.py`
+- `tests/test_behavioral_drift_detection.py`
+- `docs/behavioral_drift_detection.md`
 
 Features:
 
-- Flow drift records.
-- Relationship novelty scoring.
-- Recurring path drift.
-- Service/process attribution drift.
-- DNS/destination drift links.
-- Advisory drift explanations.
+- Behavioral drift records for application, service, destination, flow, topology, and protocol behavior.
+- Baseline and current observation references.
+- Stable, minor drift, moderate drift, major drift, and unknown states.
+- Drift score, severity, recurrence state, confidence score, source mode, and advisory notes.
+- Evidence summaries that compare metadata-only baseline and current scores, frequencies, and labels.
+- Environment drift aggregation with affected categories, stability score, drift trend, recurring change detection, unusual change detection, confidence score, and operator summaries.
+- Dashboard/API/export-safe dictionaries.
+- Explicit safety fields for no payload inspection, no raw packet storage, no raw DNS browsing history, no threat verdicts, and no enforcement.
 
 Acceptance:
 
-- Drift output is deterministic and advisory-only.
-- Historical baselines remain metadata-only.
-- No enforcement or blocking is added.
+- Stable and drifted behavior classify deterministically with sanitized fixtures.
+- Drift and confidence scores remain bounded.
+- Recurring changes are reported separately from one-off drift.
+- Environment summaries aggregate multiple drift records without producing threat verdicts.
+- Malformed baseline or comparison input is isolated with structured errors.
+- Source mode is preserved.
+- No payload inspection, packet storage, PCAP generation, credential storage, threat verdict engine, or automatic enforcement is added.
 
 ## Phase 134 - Network Topology Intelligence
 
