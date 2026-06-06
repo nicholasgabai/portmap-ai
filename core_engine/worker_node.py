@@ -26,6 +26,7 @@ from core_engine.logging_utils import configure_logger, update_log_level
 from core_engine.platform_utils import local_node_address
 from core_engine.modules.scanner import basic_scan_with_diagnostics, normalize_scan_snapshot, scan_snapshot_id
 from core_engine.firewall_hooks import configure_firewall
+from core_engine.telemetry_framing import encode_json_frame, summarize_worker_payload
 from core_engine.tls_utils import create_client_context, merge_tls_config
 
 DEFAULT_TIMEOUT = 5
@@ -132,7 +133,7 @@ def send_to_master(
 ):
     connections = collect_connections(logger)
     payload = build_payload(node_id, connections, logger, autolearn)
-    data = json.dumps(payload).encode("utf-8")
+    data = encode_json_frame(payload)
 
     logger.info("🔌 Connecting to master %s:%s with timeout=%ss ...", master_ip, port, timeout)
     sock = None
@@ -147,7 +148,7 @@ def send_to_master(
             sock = raw_sock
         logger.info("✅ Connected. Sending payload bytes: %s", len(data))
         sock.sendall(data)
-        logger.debug("Payload: %s", payload)
+        logger.debug("Payload summary: %s", summarize_worker_payload(payload))
 
         sock.settimeout(1.0)
         try:

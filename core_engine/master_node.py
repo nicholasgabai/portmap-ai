@@ -20,6 +20,12 @@ from core_engine.config_validation import require_valid_config
 from core_engine.dispatcher import dispatch_alert
 from core_engine.logging_utils import configure_logger, update_log_level
 from core_engine.remediation_safety import enforce_remediation_command_safety, firewall_dry_run
+from core_engine.telemetry_framing import (
+    TelemetryFrameError,
+    read_json_frames,
+    summarize_worker_payload,
+    telemetry_frame_error_summary,
+)
 from core_engine.tls_utils import create_server_context, merge_tls_config
 
 
@@ -118,39 +124,45 @@ def start_master_server(
                 conn = raw_conn
             logger.info("🔗 Connection from %s", addr)
             with conn:
-                data = conn.recv(65536)
-                if not data:
-                    logger.debug("Received empty payload from %s", addr)
-                    continue
                 try:
-                    payload = json.loads(data.decode("utf-8", errors="ignore"))
-                    logger.info(
-                        "📥 Received from %s | score=%s ports=%s",
-                        payload.get("node_id", "unknown"),
-                        payload.get("score"),
-                        len(payload.get("ports", [])),
-                    )
-                    logger.debug("Payload detail: %s", payload)
-                    decision = dispatch_alert(payload, logger=logger, settings=settings)
-                    command = build_remediation_command(payload, decision, settings=settings)
-                    if command:
-                        _queue_orchestrator_command(
-                            orchestrator_url,
-                            orchestrator_token,
-                            payload.get("node_id", "unknown"),
-                            command,
-                            logger,
+                    payloads = read_json_frames(conn)
+                    if not payloads:
+                        logger.debug("Received empty telemetry frame from %s", addr)
+                        continue
+                    for payload in payloads:
+                        summary = summarize_worker_payload(payload)
+                        logger.info(
+                            "📥 Received from %s | score=%s ports=%s",
+                            summary["node_id"],
+                            summary["score"],
+                            summary["ports_count"],
                         )
-                    ack_message = {"status": "ok"}
-                    if decision:
-                        ack_message["remediation"] = decision.to_dict()
-                    try:
-                        conn.sendall(json.dumps(ack_message).encode("utf-8"))
-                        logger.debug("Sent ack to %s: %s", addr, ack_message)
-                    except Exception as ack_exc:
-                        logger.warning("Failed to send ack to %s: %s", addr, ack_exc)
+                        logger.debug("Payload summary: %s", summary)
+                        decision = dispatch_alert(payload, logger=logger, settings=settings)
+                        command = build_remediation_command(payload, decision, settings=settings)
+                        if command:
+                            _queue_orchestrator_command(
+                                orchestrator_url,
+                                orchestrator_token,
+                                payload.get("node_id", "unknown"),
+                                command,
+                                logger,
+                            )
+                        ack_message = {"status": "ok"}
+                        if decision:
+                            ack_message["remediation"] = decision.to_dict()
+                        try:
+                            conn.sendall(json.dumps(ack_message).encode("utf-8"))
+                            logger.debug("Sent ack to %s: %s", addr, ack_message)
+                        except Exception as ack_exc:
+                            logger.warning("Failed to send ack to %s: %s", addr, ack_exc)
+                except TelemetryFrameError as exc:
+                    logger.warning(
+                        "Rejected worker telemetry frame: %s",
+                        telemetry_frame_error_summary(exc),
+                    )
                 except Exception as exc:
-                    logger.error("⚠️ Error parsing worker payload: %s", exc, exc_info=True)
+                    logger.error("⚠️ Error handling worker telemetry: %s", exc, exc_info=True)
     except KeyboardInterrupt:
         logger.info("🛑 Master node stopping...")
     finally:

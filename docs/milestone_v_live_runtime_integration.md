@@ -25,6 +25,14 @@ The bridge runs on the current worker payload already received by the master. It
 
 macOS socket collection diagnostics and fallback behavior are documented separately in `docs/macos_socket_collection_validation.md`.
 
+## Worker Telemetry Framing
+
+Worker-to-master telemetry uses newline-delimited JSON framing. Each worker scan sends one complete JSON object followed by a newline delimiter, and the master reads until a complete frame is available before decoding it.
+
+This matters because TCP is a byte stream. A single `recv` call can return a partial JSON document, multiple documents, or any boundary in between. Large live telemetry payloads, including Milestone V flow and topology fields, must therefore be framed before the master calls `json.loads`.
+
+The master also accepts a complete legacy raw JSON object without a trailing newline for compatibility with older small payloads. New workers should use framed telemetry. Frames are bounded by a maximum size, malformed frames are rejected with sanitized diagnostics, and runtime logs record safe payload summaries instead of raw endpoint rows.
+
 ## What Socket Scanning Can See
 
 Socket-only runtime scanning can summarize current observable TCP and UDP socket metadata when the operating system exposes it. Useful rows can include:
