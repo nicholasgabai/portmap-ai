@@ -211,6 +211,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/release_candidate.md",
   "docs/remediation_safety.md",
   "docs/resource_aware_historical_retention.md",
+  "docs/risk_escalation_pipelines.md",
   "docs/source_mode_labeling.md",
   "docs/runtime_cli.md",
   "docs/runtime_health_monitor.md",

@@ -143,13 +143,15 @@ Acceptance:
 
 ## Phase 138 - Risk Escalation Pipelines
 
+Status: Complete Baseline
+
 Goal:
 Build multi-signal escalation chains that roll up flow, attribution, drift, topology, health, and gateway signals into incident candidate summaries without threat verdicts.
 
 Build:
 
-- `core_engine/response/escalation_pipeline.py`
-- `core_engine/response/incident_candidates.py`
+- `core_engine/remediation/risk_escalation.py`
+- `core_engine/remediation/incident_candidates.py`
 - `tests/test_risk_escalation_pipelines.py`
 - `docs/risk_escalation_pipelines.md`
 

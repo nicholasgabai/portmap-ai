@@ -53,6 +53,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/policy_runtime_engine.md` - Phase 135 dry-run policy runtime records, policy bundle loading, validation summaries, advisory evaluations, and no-enforcement safety boundaries.
 - `docs/adaptive_remediation_logic.md` - Phase 136 confidence-weighted remediation recommendations, escalation previews, approval gates, rollback preview flags, and advisory-only safety boundaries.
 - `docs/quarantine_isolation_provider_readiness.md` - Phase 137 dry-run quarantine/isolation provider readiness for Windows Defender Firewall, Linux nftables/ufw/iptables, macOS pf, Raspberry Pi edge, and manual operator review.
+- `docs/risk_escalation_pipelines.md` - Phase 138 advisory risk escalation pipelines, multi-signal aggregation, incident candidates, safety blockers, and no final threat verdicts.
 - `docs/milestone_v_live_runtime_integration.md` - live runtime bridge for current socket snapshots, Milestone V counters, Traffic Flows, Topology Edges, socket-only visibility limits, and sanitized operator validation.
 - `docs/macos_socket_collection_validation.md` - macOS scanner validation for psutil permission failures, live `lsof` fallback behavior, safe diagnostics, and socket-only limits.
 - `docs/production_runtime_profiles.md` - Phase 117 deployment runtime profiles, compatibility validation, advisory states, and production-safe profile summaries.

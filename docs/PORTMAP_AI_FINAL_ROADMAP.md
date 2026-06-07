@@ -165,7 +165,7 @@ Phases:
 | 135 | Policy Runtime Engine | Complete baseline: dry-run policy records, fixture-safe loading, validation, advisory evaluation, safe enforcement-mode rejection, export-safe summaries, and no live enforcement. |
 | 136 | Adaptive Remediation Logic | Complete baseline: confidence-weighted preview recommendations, escalation-aware decisions, approval gates, rollback summaries, export-safe records, and no action execution. |
 | 137 | Quarantine And Isolation Providers | Complete baseline: dry-run provider readiness for Windows Defender Firewall, Linux nftables/ufw/iptables, macOS pf, Raspberry Pi edge, manual review, sanitized command previews, approval/rollback summaries, and no execution. |
-| 138 | Risk Escalation Pipelines | Multi-signal escalation, chained anomaly analysis, and progressive threat scoring. |
+| 138 | Risk Escalation Pipelines | Complete baseline: multi-signal advisory escalation, incident candidates, safety blockers, operator actions, export-safe records, no final threat verdicts, and no enforcement. |
 | 139 | Safety Guardrails | Rollback safety, blast-radius control, and enforcement simulation mode. |
 | 140 | Autonomous Enforcement Modes | Monitor, supervised, autonomous, and hardened autonomous mode records. |
 

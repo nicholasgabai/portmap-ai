@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 137 baseline and the pre-Milestone W Milestone V live runtime bridge. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/MILESTONE_V_INTEGRATION.md` summarizes Phase 129-134 deep network flow intelligence integration, `docs/PHASE_135_140_PLAN.md` defines the next Milestone W autonomous response and policy engine plan, `docs/milestone_v_live_runtime_integration.md` documents the runtime bridge from live socket snapshots into Milestone V operator views, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
+This roadmap summarizes the current direction after the Phase 138 baseline and the pre-Milestone W Milestone V live runtime bridge. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/MILESTONE_V_INTEGRATION.md` summarizes Phase 129-134 deep network flow intelligence integration, `docs/PHASE_135_140_PLAN.md` defines the next Milestone W autonomous response and policy engine plan, `docs/milestone_v_live_runtime_integration.md` documents the runtime bridge from live socket snapshots into Milestone V operator views, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
 
 ## Completed Milestones
 
@@ -122,6 +122,7 @@ Current stable posture:
 - Network topology intelligence now infers internal, management, service, external, and unknown trust zones plus service, communication-chain, node, adjacency, management, and external dependencies from normalized relationship records with bounded confidence, topology distance, source-mode preservation, and dashboard/API/export-safe summaries.
 - Policy runtime engine records now load, validate, and evaluate advisory policy definitions against metadata-only telemetry, flow, attribution, drift, topology, and runtime context with preview-only evaluation records, bounded confidence scoring, safe enforcement-mode validation, and export-safe summaries without firewall, service, quarantine, rollback, or live enforcement behavior.
 - Quarantine and isolation provider readiness now models Windows Defender Firewall, Linux nftables/ufw/iptables, macOS pf, Raspberry Pi edge, and manual operator review as dry-run provider previews with sanitized command text, approval and rollback requirements, blast-radius summaries, safety blockers, and no subprocess, firewall, service, process, or containment side effects.
+- Risk escalation pipelines now combine policy evaluations, adaptive remediation previews, flow intelligence, attribution uncertainty, drift, topology, runtime health, and provider readiness into advisory escalation records and incident candidates without final threat verdicts or response execution.
 - Pre-Milestone U source labeling now prevents `dummy_app` and `dummy_db` from appearing in live/default TUI runtime views unless simulation or fixture mode is explicit. Live unresolved attribution displays as `Unattributed` or `Unknown`, and TUI/dashboard/API/export summaries preserve source mode.
 - Pre-Milestone U live scan snapshot deduplication now bounds each worker scan cycle as a current snapshot, collapses duplicate socket rows, prunes transient live socket states, keeps remediation scoring stable across repeated identical scans, and keeps the TUI scan-results panel focused on the latest snapshot per node.
 - The Textual terminal dashboard remains the primary operator UI.
@@ -139,7 +140,7 @@ Planned remaining milestones:
 - Milestone V deep network flow intelligence work is complete as a baseline through Phase 134.
 - The Milestone V live runtime bridge now feeds current worker socket snapshots into reconstructed sessions, metadata/process correlations, relationship edges, attribution candidates, drift records, topology records, Traffic Flows, and Topology Edges while preserving socket-only limits and metadata-only safety.
 - The macOS socket collection blocker discovered during Milestone V validation is handled by scanner diagnostics and a non-privileged live `lsof` fallback when psutil socket enumeration is permission-blocked.
-- Milestone W autonomous response and policy engine work has begun with Phases 135-137 complete; Phases 138-140 remain planned in `docs/PHASE_135_140_PLAN.md` and must remain dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
+- Milestone W autonomous response and policy engine work has begun with Phases 135-138 complete; Phases 139-140 remain planned in `docs/PHASE_135_140_PLAN.md` and must remain dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
 - Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -198,6 +199,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/policy_runtime_engine.md`
 - `docs/adaptive_remediation_logic.md`
 - `docs/quarantine_isolation_provider_readiness.md`
+- `docs/risk_escalation_pipelines.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`
