@@ -144,14 +144,14 @@ Acceptance:
 
 ## Phase 144 - Risk Dashboard Models
 
-Status: Planned
+Status: Complete Baseline
 
 Goal:
 Build risk dashboard model records that summarize policy, remediation, drift, attribution, topology, runtime, and provider-readiness context as operator-safe visual panels.
 
 Build:
 
-- `core_engine/visualization/risk_panels.py`
+- `core_engine/visualization/risk_dashboard.py`
 - `core_engine/visualization/risk_cards.py`
 - `tests/test_risk_dashboard_models.py`
 - `docs/risk_dashboard_models.md`
@@ -161,13 +161,16 @@ Features:
 - Risk panel records.
 - Explanation records.
 - Recommendation summaries.
+- Overall risk score and highest severity summaries.
 - Drift risk cards.
 - Attribution risk cards.
 - Topology risk cards.
 - Policy match cards.
-- Provider readiness cards.
+- Asset inventory risk cards.
+- Runtime health cards.
 - Guardrail and rollback safety cards.
 - Empty/degraded panel states.
+- Max-card bounding and deduplication.
 - Dashboard/API/export-safe risk dictionaries.
 
 Acceptance:

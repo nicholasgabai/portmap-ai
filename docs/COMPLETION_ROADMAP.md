@@ -118,6 +118,8 @@ Phase 142 is complete as a baseline and documented in `docs/historical_network_t
 
 Phase 143 is complete as a baseline and documented in `docs/asset_inventory_intelligence.md`. It adds visualization-ready asset role inference, bounded inventory records, first-seen and last-seen summaries, service/flow/timeline relationship counts, confidence scoring, source-mode preservation, and export-safe inventory summaries without inventory databases, raw payloads, raw DNS history, private identifiers, or live actions.
 
+Phase 144 is complete as a baseline and documented in `docs/risk_dashboard_models.md`. It adds visualization-ready risk cards and dashboard panels for asset inventory, topology, flows, policy matches, remediation previews, incident candidates, guardrail blockers, runtime health, drift, and attribution records with severity/category counts, recommendation and blocked-action counts, high-risk sorting, max-card bounding, source-mode preservation, and export-safe serialization without browser UI, runtime databases, raw payloads, raw DNS history, private identifiers, or live actions.
+
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
 ## Completion Milestone Roadmap

@@ -147,6 +147,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/historical_network_timeline.md" in data_files["share/portmap-ai/docs"]
     assert "docs/historical_snapshot_persistence.md" in data_files["share/portmap-ai/docs"]
     assert "docs/interactive_topology_visualization.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/risk_dashboard_models.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ipv6_dual_stack.md" in data_files["share/portmap-ai/docs"]
     assert "docs/logging_audit.md" in data_files["share/portmap-ai/docs"]
     assert "docs/live_cluster_state_synchronization.md" in data_files["share/portmap-ai/docs"]

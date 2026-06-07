@@ -309,6 +309,8 @@ Phase 142 now adds replay-safe historical timeline event and window records unde
 
 Phase 143 now adds visualization-ready asset inventory intelligence records under `core_engine.visualization`. Asset role helpers infer workstation, server, router, switch, printer, NAS, phone, IoT, DNS resolver, cloud service, external service, and unknown roles from sanitized metadata hints. Inventory builders deduplicate assets, preserve source modes, summarize first-seen and last-seen windows, count related services/flows/timeline events, bound output with `max_assets`, and export role/state/confidence summaries without writing inventory databases, storing raw payloads, retaining raw DNS history, exporting private identifiers, executing remediation, or modifying host/network state.
 
+Phase 144 now adds visualization-ready risk dashboard cards and panels under `core_engine.visualization`. Risk builders convert asset inventory, topology graphs, flow summaries, policy evaluations, remediation recommendations, incident candidates, guardrail records, runtime health, drift, and attribution records into deduplicated, high-risk-sorted, max-card-bounded panels with severity counts, category counts, recommendation counts, blocked-action counts, source-mode preservation, and export-safe dictionaries. The risk dashboard layer does not add browser UI, write runtime databases, inspect packet payloads, retain raw DNS history, export private identifiers, execute remediation, or modify host/network state.
+
 ## Events Into Storage
 
 Planned connection:
