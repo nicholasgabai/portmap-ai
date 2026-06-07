@@ -303,6 +303,8 @@ telemetry, flow, topology, policy, remediation, risk, and fleet records
 
 Milestone X planning is tracked in `docs/PHASE_141_146_PLAN.md`. It must remain visualization-model only, source-mode preserving, bounded, export-safe, and free of browser UI, live enforcement, firewall changes, packet payload inspection, raw packet storage, raw DNS history, and private identifiers.
 
+Phase 141 now provides `core_engine.visualization` topology model records, asset classification helpers, observation-to-node conversion, flow-to-edge conversion, node deduplication, edge aggregation, confidence scoring, bounded graph summaries, and JSON/Mermaid/Cytoscape-safe exports. These records are visualization-model only and do not add GUI, browser UI, live network action, packet storage, raw DNS history, enforcement hooks, or private identifier export.
+
 ## Events Into Storage
 
 Planned connection:

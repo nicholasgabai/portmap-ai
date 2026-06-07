@@ -36,17 +36,21 @@ Milestone X should convert those records into visual model contracts. It should 
 
 ## Phase 141 - Interactive Network Topology Visualization
 
-Status: Planned
+Status: Complete Baseline
 
 Goal:
 Build bounded topology graph records that convert flow, topology, asset, trust-zone, and dependency intelligence into export-safe graph models.
 
 Build:
 
-- `core_engine/visualization/topology_graphs.py`
-- `core_engine/visualization/graph_exports.py`
-- `tests/test_interactive_network_topology_visualization.py`
-- `docs/interactive_network_topology_visualization.md`
+- `core_engine/visualization/topology_models.py`
+- `core_engine/visualization/topology_builder.py`
+- `core_engine/visualization/asset_classifier.py`
+- `core_engine/visualization/graph_export.py`
+- `tests/test_topology_builder.py`
+- `tests/test_asset_classifier.py`
+- `tests/test_graph_export.py`
+- `docs/interactive_topology_visualization.md`
 
 Features:
 
