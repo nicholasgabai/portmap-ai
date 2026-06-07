@@ -286,7 +286,7 @@ policy, flow, attribution, drift, topology, health, gateway, federation, and dep
   -> dashboard/API/export-safe operator review records
 ```
 
-Phase 135 now provides the advisory policy runtime and loader baseline. Phases 136-140 remain planned and must not enable firewall changes, quarantine execution, service disablement, destructive rollback, packet payload inspection, credential handling, threat verdicts, or automatic enforcement.
+Phases 135-136 now provide the advisory policy runtime, loader baseline, confidence-weighted adaptive remediation recommendations, and escalation decision previews. Phases 137-140 remain planned and must not enable firewall changes, quarantine execution, service disablement, destructive rollback, packet payload inspection, credential handling, threat verdicts, or automatic enforcement.
 
 ## Events Into Storage
 

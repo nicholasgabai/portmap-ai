@@ -74,13 +74,15 @@ Acceptance:
 
 ## Phase 136 - Adaptive Remediation Logic
 
+Status: Complete Baseline
+
 Goal:
 Generate confidence-weighted, escalation-aware remediation recommendations that remain supervised and advisory by default.
 
 Build:
 
-- `core_engine/response/remediation_logic.py`
-- `core_engine/response/recommendations.py`
+- `core_engine/remediation/adaptive_actions.py`
+- `core_engine/remediation/escalation.py`
 - `tests/test_adaptive_remediation_logic.py`
 - `docs/adaptive_remediation_logic.md`
 
