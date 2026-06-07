@@ -161,6 +161,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/macos_socket_collection_validation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/milestone_v_live_runtime_integration.md" in data_files["share/portmap-ai/docs"]
     assert "docs/metadata_stream_parser.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/multi_node_fleet_visibility.md" in data_files["share/portmap-ai/docs"]
     assert "docs/node_coordination.md" in data_files["share/portmap-ai/docs"]
     assert "docs/network_control_layer.md" in data_files["share/portmap-ai/docs"]
     assert "docs/network_topology_intelligence.md" in data_files["share/portmap-ai/docs"]

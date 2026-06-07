@@ -183,7 +183,7 @@ Acceptance:
 
 ## Phase 145 - Multi-Node Fleet Visibility
 
-Status: Planned
+Status: Complete Baseline
 
 Goal:
 Build site, group, node health, collector status, version, and check-in visual models for distributed and edge deployments.
@@ -203,6 +203,8 @@ Features:
 - Collector status models.
 - Version summaries.
 - Check-in summaries.
+- Telemetry freshness states.
+- Max-node bounding and deduplication.
 - Raspberry Pi/edge readiness rollups.
 - Windows/macOS/Linux compatibility rollups.
 - Degraded, stale, offline, and unknown node states.

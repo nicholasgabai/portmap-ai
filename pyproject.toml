@@ -188,6 +188,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/master_roadmap.md",
   "docs/metadata_stream_parser.md",
   "docs/milestone_v_live_runtime_integration.md",
+  "docs/multi_node_fleet_visibility.md",
   "docs/network_control_layer.md",
   "docs/node_coordination.md",
   "docs/network_topology_intelligence.md",

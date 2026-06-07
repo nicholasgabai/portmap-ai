@@ -185,7 +185,7 @@ Phases:
 | 142 | Historical Network Timeline | Complete baseline: timeline events, topology/flow/service change history, replay-safe visual summaries, bounded event windows, category/severity counts, and export-safe serialization. |
 | 143 | Asset Inventory Intelligence | Complete baseline: bounded asset inventory records, role inference, first-seen and last-seen summaries, service/flow/timeline counts, source-mode preservation, and confidence-scored export-safe labels. |
 | 144 | Risk Dashboard Models | Complete baseline: risk cards, dashboard panels, severity/category counts, recommendation and blocked-action counts, high-risk sorting, bounded cards, and export-safe visual risk summaries. |
-| 145 | Multi-Node Fleet Visibility | Site/group views, node health cards, collector status models, and version/check-in summaries. |
+| 145 | Multi-Node Fleet Visibility | Complete baseline: fleet node records, site/group summaries, collector health, version compatibility, last check-ins, telemetry freshness, max-node bounding, and export-safe fleet panels. |
 | 146 | Visualization Operator Summary | Unified visual intelligence summary, dashboard/API/export-safe records, readiness checklist, and degraded/empty-state models. |
 
 The Textual TUI remains supported. Browser dashboards should extend these visual models later without replacing terminal-first operations prematurely.

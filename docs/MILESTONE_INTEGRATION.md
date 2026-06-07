@@ -311,6 +311,8 @@ Phase 143 now adds visualization-ready asset inventory intelligence records unde
 
 Phase 144 now adds visualization-ready risk dashboard cards and panels under `core_engine.visualization`. Risk builders convert asset inventory, topology graphs, flow summaries, policy evaluations, remediation recommendations, incident candidates, guardrail records, runtime health, drift, and attribution records into deduplicated, high-risk-sorted, max-card-bounded panels with severity counts, category counts, recommendation counts, blocked-action counts, source-mode preservation, and export-safe dictionaries. The risk dashboard layer does not add browser UI, write runtime databases, inspect packet payloads, retain raw DNS history, export private identifiers, execute remediation, or modify host/network state.
 
+Phase 145 now adds visualization-ready multi-node fleet visibility records under `core_engine.visualization`. Fleet builders convert runtime node summaries, federation summaries, deployment summaries, cluster health summaries, topology summaries, asset inventory, and risk dashboard summaries into deduplicated, max-node-bounded fleet panels with site summaries, group summaries, collector health, version compatibility, last check-ins, telemetry freshness, observed asset/flow counts, risk rollups, empty/degraded states, source-mode preservation, and export-safe dictionaries. The fleet layer does not add cloud sync, remote control, browser UI, runtime databases, raw payload storage, private identifier export, remediation execution, or host/network state changes.
+
 ## Events Into Storage
 
 Planned connection:
