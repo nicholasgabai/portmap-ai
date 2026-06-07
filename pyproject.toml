@@ -108,6 +108,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/api_reference.md",
   "docs/alerting_siem_integrations.md",
   "docs/architecture.md",
+  "docs/asset_inventory_intelligence.md",
   "docs/adaptive_remediation_logic.md",
   "docs/adaptive_risk_weighting.md",
   "docs/ai_behavioral_learning.md",

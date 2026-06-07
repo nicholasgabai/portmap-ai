@@ -110,7 +110,7 @@ Acceptance:
 
 ## Phase 143 - Asset Inventory Intelligence
 
-Status: Planned
+Status: Complete Baseline
 
 Goal:
 Build visual asset inventory intelligence records that summarize devices, services, inferred roles, observation windows, and confidence-scored labels.
@@ -124,14 +124,14 @@ Build:
 
 Features:
 
-- Device inventory records.
-- Service inventory records.
-- Asset role inference.
+- Asset inventory records.
+- Asset role inference helpers.
 - First-seen and last-seen summaries.
+- Observed service, flow, and timeline relationship counts.
 - Confidence-scored asset labels.
-- Source-mode and source-node rollups.
-- Platform and collector visibility summaries.
-- Stable, new, dormant, degraded, and unknown asset states.
+- Source-mode rollups.
+- Active, new, recurring, dormant, stale, and unknown asset states.
+- Max-asset bounding and deduplication.
 - Dashboard/API/export-safe inventory dictionaries.
 
 Acceptance:

@@ -209,6 +209,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/autonomous_enforcement_modes.md`
 - `docs/interactive_topology_visualization.md`
 - `docs/historical_network_timeline.md`
+- `docs/asset_inventory_intelligence.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`

@@ -307,6 +307,8 @@ Phase 141 now provides `core_engine.visualization` topology model records, asset
 
 Phase 142 now adds replay-safe historical timeline event and window records under `core_engine.visualization`. Timeline builders convert topology graphs, flow summaries, asset classifications, drift records, policy evaluations, remediation recommendations, incident candidates, and runtime health summaries into deduplicated, chronologically sorted, max-event-bounded windows with category counts, severity counts, source-mode preservation, and export-safe dictionaries. The timeline layer does not write databases, store raw payloads, store raw DNS history, export private identifiers, execute remediation, or modify host/network state.
 
+Phase 143 now adds visualization-ready asset inventory intelligence records under `core_engine.visualization`. Asset role helpers infer workstation, server, router, switch, printer, NAS, phone, IoT, DNS resolver, cloud service, external service, and unknown roles from sanitized metadata hints. Inventory builders deduplicate assets, preserve source modes, summarize first-seen and last-seen windows, count related services/flows/timeline events, bound output with `max_assets`, and export role/state/confidence summaries without writing inventory databases, storing raw payloads, retaining raw DNS history, exporting private identifiers, executing remediation, or modifying host/network state.
+
 ## Events Into Storage
 
 Planned connection:

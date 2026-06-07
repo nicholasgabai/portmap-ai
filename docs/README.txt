@@ -42,6 +42,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/PHASE_141_146_PLAN.md` - milestone plan for visual intelligence layer work: topology graphs, historical timelines, asset inventory, risk dashboard models, fleet visibility, and visualization operator summaries.
 - `docs/interactive_topology_visualization.md` - Phase 141 visualization-model-only topology nodes, edges, graph building, asset classification, bounded graph growth, and JSON/Mermaid/Cytoscape-safe exports.
 - `docs/historical_network_timeline.md` - Phase 142 replay-safe historical timeline events, bounded event windows, category/severity counts, source-mode preservation, and export-safe serialization.
+- `docs/asset_inventory_intelligence.md` - Phase 143 visualization-ready asset role inference, bounded asset inventory summaries, first-seen/last-seen windows, confidence scoring, source-mode preservation, and export-safe serialization.
 - `docs/secure_node_identity.md` - Phase 123 secure logical node identities, enrollment previews, trust-chain summaries, rotation previews, and export-safe safety fields.
 - `docs/encrypted_orchestration_transport.md` - Phase 124 encrypted orchestration transport readiness profiles, downgrade warnings, and session negotiation previews.
 - `docs/secure_config_and_secrets.md` - Phase 125 secure configuration profiles, secret-management previews, plaintext rejection, rotation readiness, and provider-readiness notes.
