@@ -143,7 +143,7 @@ Planned remaining milestones:
 - The Milestone V live runtime bridge now feeds current worker socket snapshots into reconstructed sessions, metadata/process correlations, relationship edges, attribution candidates, drift records, topology records, Traffic Flows, and Topology Edges while preserving socket-only limits and metadata-only safety.
 - The macOS socket collection blocker discovered during Milestone V validation is handled by scanner diagnostics and a non-privileged live `lsof` fallback when psutil socket enumeration is permission-blocked.
 - Milestone W autonomous response and policy engine work is complete as a baseline through Phase 140. It remains dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
-- Milestone X visual intelligence layer planning is tracked in `docs/PHASE_141_146_PLAN.md`. Phase 141 is complete as a baseline for visualization-model-only topology nodes, edges, asset classification, bounded graph building, and JSON/Mermaid/Cytoscape-safe exports. Remaining Milestone X work remains visualization-model only, bounded, source-mode preserving, export-safe, and free of browser UI or live enforcement.
+- Milestone X visual intelligence layer planning is tracked in `docs/PHASE_141_146_PLAN.md`. Phases 141-142 are complete as baselines for visualization-model-only topology nodes, edges, asset classification, bounded graph building, JSON/Mermaid/Cytoscape-safe exports, replay-safe historical timeline events, bounded event windows, category/severity counts, and export-safe serialization. Remaining Milestone X work remains visualization-model only, bounded, source-mode preserving, export-safe, and free of browser UI or live enforcement.
 - Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -208,6 +208,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/safety_guardrails.md`
 - `docs/autonomous_enforcement_modes.md`
 - `docs/interactive_topology_visualization.md`
+- `docs/historical_network_timeline.md`
 - `docs/PHASE_111_116_PLAN.md`
 - `docs/PHASE_59_64_PLAN.md`
 - `docs/PHASE_65_70_PLAN.md`

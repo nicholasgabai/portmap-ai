@@ -114,6 +114,8 @@ Milestone X planning is tracked in `docs/PHASE_141_146_PLAN.md`. Phases 141-146 
 
 Phase 141 is complete as a baseline and documented in `docs/interactive_topology_visualization.md`. It adds pure visualization topology models, observation-to-node conversion, flow-to-edge conversion, node deduplication, edge aggregation, confidence scoring, bounded graph limits, and JSON/Mermaid/Cytoscape-safe exports without GUI, browser UI, live network action, packet storage, raw DNS history, or enforcement hooks.
 
+Phase 142 is complete as a baseline and documented in `docs/historical_network_timeline.md`. It adds replay-safe timeline event records, bounded timeline windows, chronological sorting, event deduplication, category and severity counts, source-mode preservation, and export-safe serialization for flow, topology, service, asset, drift, policy, remediation-preview, incident-candidate, and runtime-health records without timeline databases, raw payloads, raw DNS history, private identifiers, or live actions.
+
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
 ## Completion Milestone Roadmap

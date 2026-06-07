@@ -182,7 +182,7 @@ Phases:
 | Phase | Name | Focus |
 | --- | --- | --- |
 | 141 | Interactive Network Topology Visualization | Complete baseline: topology graph records, nodes, edges, asset classification, flow-to-graph conversion, bounded graph growth, and JSON/Mermaid/Cytoscape-safe export models. |
-| 142 | Historical Network Timeline | Timeline events, topology/flow/service change history, replay-safe visual summaries, and bounded event windows. |
+| 142 | Historical Network Timeline | Complete baseline: timeline events, topology/flow/service change history, replay-safe visual summaries, bounded event windows, category/severity counts, and export-safe serialization. |
 | 143 | Asset Inventory Intelligence | Device and service inventory records, asset role inference, first-seen and last-seen summaries, and confidence-scored asset labels. |
 | 144 | Risk Dashboard Models | Risk panels, explanation records, recommendation summaries, and drift/attribution/topology risk cards. |
 | 145 | Multi-Node Fleet Visibility | Site/group views, node health cards, collector status models, and version/check-in summaries. |

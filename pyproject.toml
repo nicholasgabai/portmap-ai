@@ -169,6 +169,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/high_speed_scan_engine.md",
   "docs/historical_flow_baselines.md",
   "docs/historical_replay_windows.md",
+  "docs/historical_network_timeline.md",
   "docs/historical_snapshot_persistence.md",
   "docs/interactive_topology_visualization.md",
   "docs/ipv6_dual_stack.md",

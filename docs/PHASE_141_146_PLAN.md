@@ -76,7 +76,7 @@ Acceptance:
 
 ## Phase 142 - Historical Network Timeline
 
-Status: Planned
+Status: Complete Baseline
 
 Goal:
 Build replay-safe historical timeline records for topology, flow, service, asset, drift, policy, and advisory-remediation changes.
@@ -84,7 +84,7 @@ Build replay-safe historical timeline records for topology, flow, service, asset
 Build:
 
 - `core_engine/visualization/timeline_models.py`
-- `core_engine/visualization/timeline_windows.py`
+- `core_engine/visualization/timeline_builder.py`
 - `tests/test_historical_network_timeline.py`
 - `docs/historical_network_timeline.md`
 

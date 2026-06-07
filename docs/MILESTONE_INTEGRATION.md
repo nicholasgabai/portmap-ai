@@ -305,6 +305,8 @@ Milestone X planning is tracked in `docs/PHASE_141_146_PLAN.md`. It must remain 
 
 Phase 141 now provides `core_engine.visualization` topology model records, asset classification helpers, observation-to-node conversion, flow-to-edge conversion, node deduplication, edge aggregation, confidence scoring, bounded graph summaries, and JSON/Mermaid/Cytoscape-safe exports. These records are visualization-model only and do not add GUI, browser UI, live network action, packet storage, raw DNS history, enforcement hooks, or private identifier export.
 
+Phase 142 now adds replay-safe historical timeline event and window records under `core_engine.visualization`. Timeline builders convert topology graphs, flow summaries, asset classifications, drift records, policy evaluations, remediation recommendations, incident candidates, and runtime health summaries into deduplicated, chronologically sorted, max-event-bounded windows with category counts, severity counts, source-mode preservation, and export-safe dictionaries. The timeline layer does not write databases, store raw payloads, store raw DNS history, export private identifiers, execute remediation, or modify host/network state.
+
 ## Events Into Storage
 
 Planned connection:
