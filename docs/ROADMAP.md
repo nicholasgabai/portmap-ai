@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 134 baseline and the pre-Milestone W Milestone V live runtime bridge. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/MILESTONE_V_INTEGRATION.md` summarizes Phase 129-134 deep network flow intelligence integration, `docs/milestone_v_live_runtime_integration.md` documents the runtime bridge from live socket snapshots into Milestone V operator views, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
+This roadmap summarizes the current direction after the Phase 134 baseline and the pre-Milestone W Milestone V live runtime bridge. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/MILESTONE_V_INTEGRATION.md` summarizes Phase 129-134 deep network flow intelligence integration, `docs/PHASE_135_140_PLAN.md` defines the next Milestone W autonomous response and policy engine plan, `docs/milestone_v_live_runtime_integration.md` documents the runtime bridge from live socket snapshots into Milestone V operator views, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
 
 ## Completed Milestones
 
@@ -136,6 +136,7 @@ Planned remaining milestones:
 - Milestone V deep network flow intelligence work is complete as a baseline through Phase 134.
 - The Milestone V live runtime bridge now feeds current worker socket snapshots into reconstructed sessions, metadata/process correlations, relationship edges, attribution candidates, drift records, topology records, Traffic Flows, and Topology Edges while preserving socket-only limits and metadata-only safety.
 - The macOS socket collection blocker discovered during Milestone V validation is handled by scanner diagnostics and a non-privileged live `lsof` fallback when psutil socket enumeration is permission-blocked.
+- Milestone W autonomous response and policy engine work is planned in `docs/PHASE_135_140_PLAN.md` and must remain dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
 - Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -178,6 +179,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_117_122_PLAN.md`
 - `docs/PHASE_123_128_PLAN.md`
 - `docs/PHASE_129_134_PLAN.md`
+- `docs/PHASE_135_140_PLAN.md`
 - `docs/secure_node_identity.md`
 - `docs/encrypted_orchestration_transport.md`
 - `docs/secure_config_and_secrets.md`

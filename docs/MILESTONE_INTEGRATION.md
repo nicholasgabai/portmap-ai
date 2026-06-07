@@ -1,12 +1,12 @@
 # Milestone Integration
 
-This document is the consolidated integration guide for the completed Phase 44-134 milestone work and the pre-Milestone W Milestone V live runtime bridge. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, `docs/MILESTONE_Q_INTEGRATION.md` provides the detailed Phase 99-104 integration summary, `docs/MILESTONE_R_INTEGRATION.md` provides the detailed Phase 105-110 integration summary, `docs/MILESTONE_S_INTEGRATION.md` provides the detailed Phase 111-116 integration summary, `docs/MILESTONE_T_INTEGRATION.md` provides the detailed Phase 117-122 integration summary, `docs/MILESTONE_U_INTEGRATION.md` provides the detailed Phase 123-128 integration summary for security foundation and trusted runtime work, and `docs/MILESTONE_V_INTEGRATION.md` provides the detailed Phase 129-134 integration summary for deep network flow intelligence. The live bridge is documented in `docs/milestone_v_live_runtime_integration.md`.
+This document is the consolidated integration guide for the completed Phase 44-134 milestone work and the pre-Milestone W Milestone V live runtime bridge. It replaces the phase-specific planning docs as the primary implementation map. Archived planning files remain under `docs/archive/` for historical reference, `docs/MILESTONE_J_INTEGRATION.md` provides the detailed Phase 59-64 integration summary, `docs/MILESTONE_K_INTEGRATION.md` provides the detailed Phase 65-70 integration summary, `docs/MILESTONE_L_INTEGRATION.md` provides the detailed Phase 71-76 integration summary, `docs/MILESTONE_M_INTEGRATION.md` provides the detailed Phase 77-82 integration summary, `docs/MILESTONE_N_INTEGRATION.md` provides the detailed Phase 83-86 integration summary, `docs/MILESTONE_O_INTEGRATION.md` provides the detailed Phase 87-92 integration summary, `docs/MILESTONE_P_INTEGRATION.md` provides the detailed Phase 93-98 integration summary, `docs/MILESTONE_Q_INTEGRATION.md` provides the detailed Phase 99-104 integration summary, `docs/MILESTONE_R_INTEGRATION.md` provides the detailed Phase 105-110 integration summary, `docs/MILESTONE_S_INTEGRATION.md` provides the detailed Phase 111-116 integration summary, `docs/MILESTONE_T_INTEGRATION.md` provides the detailed Phase 117-122 integration summary, `docs/MILESTONE_U_INTEGRATION.md` provides the detailed Phase 123-128 integration summary for security foundation and trusted runtime work, and `docs/MILESTONE_V_INTEGRATION.md` provides the detailed Phase 129-134 integration summary for deep network flow intelligence. The Milestone W plan is tracked in `docs/PHASE_135_140_PLAN.md`. The live bridge is documented in `docs/milestone_v_live_runtime_integration.md`.
 
 This is documentation summary only. It does not add runtime behavior, start services, execute plugins automatically, open relay listeners, install service units, transmit data externally, or modify host configuration.
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
-The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, future installer/executable packaging, AI security intelligence, commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. The extended production-launch roadmap from Milestone U through commercial launch readiness is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, and Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`.
+The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, future installer/executable packaging, AI security intelligence, commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. The extended production-launch roadmap from Milestone U through commercial launch readiness is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, and Milestone W planning is tracked in `docs/PHASE_135_140_PLAN.md`.
 
 ## Completed Milestones
 
@@ -270,6 +270,21 @@ runtime health and cross-platform readiness
 ```
 
 No step in this plan adds cloud sync, public internet exposure, automatic enforcement, router modification, service installation, or background collection.
+
+Milestone W planned target flow:
+
+```text
+policy, flow, attribution, drift, topology, health, gateway, federation, and deployment records
+  -> advisory policy runtime evaluation
+  -> confidence-weighted remediation recommendations
+  -> quarantine/isolation provider readiness previews
+  -> risk escalation and incident candidate summaries
+  -> safety guardrail and response simulation records
+  -> monitor, supervised, autonomous-preview, and hardened-preview mode records
+  -> dashboard/API/export-safe operator review records
+```
+
+Milestone W remains planning-only until implemented. It must not enable firewall changes, quarantine execution, service disablement, destructive rollback, packet payload inspection, credential handling, threat verdicts, or automatic enforcement.
 
 ## Events Into Storage
 
