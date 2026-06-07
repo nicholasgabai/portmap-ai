@@ -109,13 +109,15 @@ Acceptance:
 
 ## Phase 137 - Quarantine and Isolation Provider Readiness
 
+Status: Complete Baseline
+
 Goal:
 Model quarantine and isolation provider readiness across platforms as dry-run previews only.
 
 Build:
 
-- `core_engine/response/isolation_providers.py`
-- `core_engine/response/quarantine_readiness.py`
+- `core_engine/remediation/isolation_providers.py`
+- `core_engine/remediation/quarantine_readiness.py`
 - `tests/test_quarantine_isolation_provider_readiness.py`
 - `docs/quarantine_isolation_provider_readiness.md`
 
