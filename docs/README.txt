@@ -50,6 +50,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/dynamic_application_attribution.md` - Phase 132 metadata-only dynamic application attribution, behavioral signatures, confidence scoring, source-mode rules, and Unknown/Unattributed live fallbacks.
 - `docs/behavioral_drift_detection.md` - Phase 133 metadata-only behavioral drift records, baseline/current comparison, environment drift aggregation, no threat verdicts, and no enforcement.
 - `docs/network_topology_intelligence.md` - Phase 134 trust-zone inference, dependency mapping, topology adjacency, source-mode preservation, and dashboard/API/export-safe topology intelligence.
+- `docs/policy_runtime_engine.md` - Phase 135 dry-run policy runtime records, policy bundle loading, validation summaries, advisory evaluations, and no-enforcement safety boundaries.
 - `docs/milestone_v_live_runtime_integration.md` - live runtime bridge for current socket snapshots, Milestone V counters, Traffic Flows, Topology Edges, socket-only visibility limits, and sanitized operator validation.
 - `docs/macos_socket_collection_validation.md` - macOS scanner validation for psutil permission failures, live `lsof` fallback behavior, safe diagnostics, and socket-only limits.
 - `docs/production_runtime_profiles.md` - Phase 117 deployment runtime profiles, compatibility validation, advisory states, and production-safe profile summaries.

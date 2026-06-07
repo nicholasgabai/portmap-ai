@@ -39,13 +39,15 @@ Milestone W should connect those records into response planning models. It shoul
 
 ## Phase 135 - Policy Runtime Engine
 
+Status: Complete Baseline
+
 Goal:
 Create policy runtime records and advisory evaluation helpers that can evaluate local metadata-only evidence against operator-reviewed policies without live enforcement.
 
 Build:
 
-- `core_engine/response/policy_runtime.py`
-- `core_engine/response/policy_loader.py`
+- `core_engine/policy/runtime_engine.py`
+- `core_engine/policy/policy_loader.py`
 - `tests/test_policy_runtime_engine.py`
 - `docs/policy_runtime_engine.md`
 

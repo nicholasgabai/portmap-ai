@@ -8,7 +8,7 @@ The extended production-launch roadmap after the Phase 122 baseline is tracked i
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 134, covering Phases 0-134, plus a pre-Milestone W Milestone V live runtime bridge that wires current worker socket snapshots into flow, correlation, attribution, drift, topology, TUI, dashboard/API, and export-safe summaries.
+PortMap-AI has completed baseline implementation through Phase 135, covering Phases 0-135, plus a pre-Milestone W Milestone V live runtime bridge that wires current worker socket snapshots into flow, correlation, attribution, drift, topology, TUI, dashboard/API, and export-safe summaries.
 
 Implemented foundation includes:
 
@@ -80,6 +80,7 @@ Implemented foundation includes:
 - Behavioral drift detection records for application, service, destination, flow, topology, and protocol behavior with baseline/current references, bounded drift and confidence scoring, recurrence state, source-mode preservation, environment drift aggregation, operator summaries, dashboard/API/export-safe dictionaries, no threat verdicts, and no enforcement.
 - Network topology intelligence records with internal, management, service, external, and unknown trust zones, service dependencies, communication chains, node dependencies, topology adjacency, relationship strength, recurrence scoring, confidence scoring, topology distance, source-mode preservation, and dashboard/API/export-safe dictionaries.
 - Milestone V live runtime bridge summaries that convert bounded current socket snapshots into reconstructed sessions, flow rows, metadata correlations, process/service correlations, relationship edges, attribution candidates, drift records, topology records, runtime counters, and TUI-visible Traffic Flows and Topology Edges without payload inspection or PCAP generation.
+- Policy runtime engine records that load, validate, and evaluate dry-run advisory policies against metadata-only telemetry, flow, attribution, drift, topology, and runtime context with safe enforcement-mode rejection, preview-only evaluation records, and no live enforcement.
 - macOS socket collection diagnostics and non-privileged live fallback behavior so psutil permission-blocked socket inventory can still produce current metadata observations when visible to the operating system.
 - Pre-Milestone U source labeling for TUI, dashboard, API, and export-safe telemetry records so live/default runtime views show unresolved attribution as Unattributed or Unknown and reserve dummy labels for explicit simulated or fixture data.
 - Pre-Milestone U live scan snapshot deduplication so worker payloads represent bounded current observations, duplicate socket rows collapse by stable metadata key, transient live socket states are pruned from current snapshots, and TUI latest-scan views do not accumulate stale rows.
@@ -102,7 +103,7 @@ Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, cove
 
 Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, covering how bidirectional flow reconstruction, packet metadata correlation, cross-node relationship mapping, dynamic application attribution, behavioral drift detection, and network topology intelligence connect socket observations, reconstructed sessions, DNS/destination behavior, process/service attribution, source-mode-safe operator views, trust zones, and service dependency mapping. The live runtime bridge is documented in `docs/milestone_v_live_runtime_integration.md`, including socket-only visibility limits for ICMP and short-lived TCP/UDP activity. macOS socket collection validation is documented in `docs/macos_socket_collection_validation.md`.
 
-Milestone W is planned in `docs/PHASE_135_140_PLAN.md`, covering policy runtime records, adaptive remediation recommendations, quarantine/isolation provider readiness, risk escalation pipelines, safety guardrails, and enforcement-mode previews. Milestone W remains dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
+Milestone W is planned in `docs/PHASE_135_140_PLAN.md`. Phase 135 is complete as a baseline for policy runtime records, fixture-safe loading, validation, and advisory evaluation. Phases 136-140 remain planned for adaptive remediation recommendations, quarantine/isolation provider readiness, risk escalation pipelines, safety guardrails, and enforcement-mode previews. Milestone W remains dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
 
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 
