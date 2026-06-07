@@ -166,7 +166,7 @@ Phases:
 | 136 | Adaptive Remediation Logic | Complete baseline: confidence-weighted preview recommendations, escalation-aware decisions, approval gates, rollback summaries, export-safe records, and no action execution. |
 | 137 | Quarantine And Isolation Providers | Complete baseline: dry-run provider readiness for Windows Defender Firewall, Linux nftables/ufw/iptables, macOS pf, Raspberry Pi edge, manual review, sanitized command previews, approval/rollback summaries, and no execution. |
 | 138 | Risk Escalation Pipelines | Complete baseline: multi-signal advisory escalation, incident candidates, safety blockers, operator actions, export-safe records, no final threat verdicts, and no enforcement. |
-| 139 | Safety Guardrails | Rollback safety, blast-radius control, and enforcement simulation mode. |
+| 139 | Safety Guardrails | Complete baseline: approval gates, rollback gates, blast-radius gates, provider readiness gates, confidence/runtime/policy/emergency-stop gates, rollback simulations, and no execution. |
 | 140 | Autonomous Enforcement Modes | Monitor, supervised, autonomous, and hardened autonomous mode records. |
 
 All enforcement work must remain explicit, reviewable, reversible, and disabled by default until separate production validation authorizes it.

@@ -178,13 +178,15 @@ Acceptance:
 
 ## Phase 139 - Safety Guardrails
 
+Status: Complete Baseline
+
 Goal:
 Create safety guardrail records that preview rollback, blast radius, response simulation, and operator approval gates before any future enforcement mode can be considered.
 
 Build:
 
-- `core_engine/response/safety_guardrails.py`
-- `core_engine/response/response_simulation.py`
+- `core_engine/remediation/safety_guardrails.py`
+- `core_engine/remediation/rollback_simulation.py`
 - `tests/test_safety_guardrails.py`
 - `docs/safety_guardrails.md`
 

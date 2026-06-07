@@ -192,6 +192,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/runtime_state_recovery.md" in data_files["share/portmap-ai/docs"]
     assert "docs/runtime_scheduler.md" in data_files["share/portmap-ai/docs"]
     assert "docs/saas_architecture.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/safety_guardrails.md" in data_files["share/portmap-ai/docs"]
     assert "docs/scanner_risk_engine.md" in data_files["share/portmap-ai/docs"]
     assert "docs/schema_validation_engine.md" in data_files["share/portmap-ai/docs"]
     assert "docs/security_authentication.md" in data_files["share/portmap-ai/docs"]
