@@ -1,6 +1,6 @@
 # PortMap-AI Roadmap
 
-This roadmap summarizes the current direction after the Phase 140 baseline and the pre-Milestone W Milestone V live runtime bridge. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/MILESTONE_V_INTEGRATION.md` summarizes Phase 129-134 deep network flow intelligence integration, `docs/PHASE_135_140_PLAN.md` defines the completed Milestone W autonomous response and policy engine baseline, `docs/milestone_v_live_runtime_integration.md` documents the runtime bridge from live socket snapshots into Milestone V operator views, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
+This roadmap summarizes the current direction after the Phase 140 baseline and the pre-Milestone W Milestone V live runtime bridge. `PORTMAP_AI_HANDOFF.md` remains the canonical implementation record, `docs/PHASE_HISTORY.md` records completed phase groups, `docs/MILESTONE_INTEGRATION.md` is the active integration guide, `docs/MILESTONE_R_INTEGRATION.md` summarizes Phase 105-110 behavioral intelligence integration, `docs/MILESTONE_S_INTEGRATION.md` summarizes Phase 111-116 historical persistence integration, `docs/MILESTONE_T_INTEGRATION.md` summarizes Phase 117-122 operationalization and deployment integration, `docs/MILESTONE_U_INTEGRATION.md` summarizes Phase 123-128 security foundation integration, `docs/MILESTONE_V_INTEGRATION.md` summarizes Phase 129-134 deep network flow intelligence integration, `docs/MILESTONE_W_INTEGRATION.md` summarizes Phase 135-140 autonomous response and policy engine integration, `docs/PHASE_135_140_PLAN.md` defines the completed Milestone W autonomous response and policy engine baseline, `docs/milestone_v_live_runtime_integration.md` documents the runtime bridge from live socket snapshots into Milestone V operator views, `docs/COMPLETION_ROADMAP.md` defines the remaining end-to-end completion path, and `docs/PORTMAP_AI_FINAL_ROADMAP.md` captures the longer production-launch roadmap from Milestone U onward.
 
 ## Completed Milestones
 
@@ -37,11 +37,11 @@ This roadmap summarizes the current direction after the Phase 140 baseline and t
 | 132 | Dynamic application attribution: probable generic application/service candidates, metadata-only behavioral signatures, confidence scoring, conflict penalties, source-mode-aware Unknown/Unattributed live fallbacks, and fixture/simulated-only demo labels without payload inspection, raw DNS history, hardcoded live identities, or enforcement | Complete baseline |
 | 133 | Behavioral drift detection: application, service, destination, flow, topology, and protocol drift records, baseline/current references, bounded scores, recurrence state, environment drift aggregation, source-mode preservation, dashboard/API/export dictionaries, and no threat verdicts or enforcement | Complete baseline |
 | 134 | Network topology intelligence: trust-zone inference, service dependencies, recurring communication chains, node dependency relationships, topology adjacency, bounded scoring, source-mode preservation, dashboard/API/export dictionaries, and no active probing, graph database dependency, or enforcement | Complete baseline |
-| 135 | Policy runtime engine: dry-run policy records, fixture-safe loading, validation records, advisory evaluation against telemetry, flow, attribution, drift, topology, and runtime context, export-safe summaries, and no live enforcement | Complete baseline |
+| 135-140 | Autonomous response and policy engine: policy runtime evaluation, adaptive remediation recommendations, quarantine/isolation provider readiness, risk escalation pipelines, incident candidates, safety guardrails, rollback simulation, autonomous enforcement mode modeling, containment disabled, and no live enforcement | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-135 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
+Phases 0-140 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
 
 Current stable posture:
 
@@ -178,6 +178,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/MILESTONE_T_INTEGRATION.md`
 - `docs/MILESTONE_U_INTEGRATION.md`
 - `docs/MILESTONE_V_INTEGRATION.md`
+- `docs/MILESTONE_W_INTEGRATION.md`
 - `docs/milestone_v_live_runtime_integration.md`
 - `docs/macos_socket_collection_validation.md`
 - `docs/source_mode_labeling.md`

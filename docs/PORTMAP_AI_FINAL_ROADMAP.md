@@ -156,7 +156,7 @@ Dynamic attribution should eventually identify likely browsers, SSH clients, dat
 
 Goal: transition from passive monitoring and advisory records into supervised response orchestration with explicit operator controls.
 
-Detailed implementation planning for this milestone is tracked in `docs/PHASE_135_140_PLAN.md`. The planned work remains dry-run safe, advisory-first, operator-approved, rollback-aware, and does not enable firewall changes, quarantine execution, service disablement, destructive rollback, packet payload inspection, credential handling, threat verdicts, or automatic enforcement.
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_135_140_PLAN.md`, and integration is summarized in `docs/MILESTONE_W_INTEGRATION.md`. The completed baseline remains dry-run safe, advisory-first, operator-approved, rollback-aware, and does not enable firewall changes, quarantine execution, service disablement, destructive rollback, packet payload inspection, credential handling, threat verdicts, or automatic enforcement.
 
 Phases:
 
