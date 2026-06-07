@@ -313,6 +313,8 @@ Phase 144 now adds visualization-ready risk dashboard cards and panels under `co
 
 Phase 145 now adds visualization-ready multi-node fleet visibility records under `core_engine.visualization`. Fleet builders convert runtime node summaries, federation summaries, deployment summaries, cluster health summaries, topology summaries, asset inventory, and risk dashboard summaries into deduplicated, max-node-bounded fleet panels with site summaries, group summaries, collector health, version compatibility, last check-ins, telemetry freshness, observed asset/flow counts, risk rollups, empty/degraded states, source-mode preservation, and export-safe dictionaries. The fleet layer does not add cloud sync, remote control, browser UI, runtime databases, raw payload storage, private identifier export, remediation execution, or host/network state changes.
 
+Phase 146 now adds unified visualization operator summaries and readiness checks under `core_engine.visualization`. Operator summaries roll up topology graphs, timeline windows, asset inventory, risk dashboards, fleet visibility, and runtime health into degraded/empty component lists, recommendation summaries, source-mode summaries, readiness states, and dashboard/API/export-safe dictionaries. The readiness layer reports available, missing, degraded, and empty components without starting browser UI, making remote calls, writing runtime databases, executing remediation, or modifying host/network state.
+
 ## Events Into Storage
 
 Planned connection:

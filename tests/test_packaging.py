@@ -226,6 +226,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/udp_scanning.md" in data_files["share/portmap-ai/docs"]
     assert "docs/unified_configuration_profiles.md" in data_files["share/portmap-ai/docs"]
     assert "docs/upgrade_migration_readiness.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/visualization_operator_summary.md" in data_files["share/portmap-ai/docs"]
     assert "docs/visualization_gui_platform.md" in data_files["share/portmap-ai/docs"]
     assert "docs/vulnerability_correlation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/windows_runtime_compatibility.md" in data_files["share/portmap-ai/docs"]

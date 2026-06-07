@@ -220,15 +220,15 @@ Acceptance:
 
 ## Phase 146 - Visualization Operator Summary
 
-Status: Planned
+Status: Complete Baseline
 
 Goal:
 Build a unified visual intelligence summary that combines topology graphs, historical timelines, asset inventory, risk dashboard models, and fleet visibility into dashboard/API/export-safe operator records.
 
 Build:
 
-- `core_engine/visualization/visual_summary.py`
-- `core_engine/visualization/operator_views.py`
+- `core_engine/visualization/operator_summary.py`
+- `core_engine/visualization/readiness.py`
 - `tests/test_visualization_operator_summary.py`
 - `docs/visualization_operator_summary.md`
 
@@ -240,8 +240,10 @@ Features:
 - Asset inventory rollups.
 - Risk panel rollups.
 - Fleet visibility rollups.
+- Runtime state rollups.
 - Readiness checklist records.
 - Degraded and empty-state models.
+- Recommendation summaries.
 - Source-mode and privacy/safety summaries.
 - Dashboard/API/export-safe visual intelligence dictionaries.
 
