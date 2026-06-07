@@ -171,22 +171,24 @@ Phases:
 
 All enforcement work must remain explicit, reviewable, reversible, and disabled by default until separate production validation authorizes it.
 
-## Milestone X - Enterprise Visibility Platform
+## Milestone X - Visual Intelligence Layer
 
-Goal: build the enterprise-grade GUI and operational ecosystem around the local-first engine.
+Goal: turn PortMap-AI's working telemetry, flow reconstruction, topology intelligence, policy evaluation, and advisory remediation layers into operator-facing visual intelligence models that can support a future GUI/dashboard experience without adding live enforcement or browser UI yet.
+
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_141_146_PLAN.md`. The planned work remains visualization-model only, source-mode preserving, bounded, export-safe, and does not add browser UI, live enforcement, firewall changes, packet payload inspection, raw packet storage, raw DNS history, or private identifiers.
 
 Phases:
 
 | Phase | Name | Focus |
 | --- | --- | --- |
-| 141 | Web Dashboard Backend | Stable REST APIs, WebSocket telemetry, dashboard sessions, and local auth integration. |
-| 142 | Topology Visualization UI | Live node graphing, relationship visualization, and dynamic topology rendering. |
-| 143 | Historical Replay Interface | Timeline scrubbing, historical playback, and snapshot replay visualization. |
-| 144 | Alert And Incident Console | Incident workflows, analyst views, and alert lifecycle management. |
-| 145 | Fleet Management | Node grouping, environment segmentation, labels, and operator-managed fleets. |
-| 146 | Multi-Tenant Architecture | Tenant isolation, organization-aware telemetry, and multi-customer deployment support. |
+| 141 | Interactive Network Topology Visualization | Topology graph records, nodes, edges, asset classification, flow-to-graph conversion, and JSON/Mermaid/Cytoscape-safe export models. |
+| 142 | Historical Network Timeline | Timeline events, topology/flow/service change history, replay-safe visual summaries, and bounded event windows. |
+| 143 | Asset Inventory Intelligence | Device and service inventory records, asset role inference, first-seen and last-seen summaries, and confidence-scored asset labels. |
+| 144 | Risk Dashboard Models | Risk panels, explanation records, recommendation summaries, and drift/attribution/topology risk cards. |
+| 145 | Multi-Node Fleet Visibility | Site/group views, node health cards, collector status models, and version/check-in summaries. |
+| 146 | Visualization Operator Summary | Unified visual intelligence summary, dashboard/API/export-safe records, readiness checklist, and degraded/empty-state models. |
 
-The Textual TUI remains supported. Browser dashboards should extend visibility without replacing terminal-first operations prematurely.
+The Textual TUI remains supported. Browser dashboards should extend these visual models later without replacing terminal-first operations prematurely.
 
 ## Milestone Y - Threat Intelligence And Detection Expansion
 

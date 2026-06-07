@@ -6,7 +6,7 @@ This is documentation summary only. It does not add runtime behavior, start serv
 
 The integration posture remains local-first, operator-controlled, read-only by default, bounded, auditable, and suitable for lightweight Linux and Raspberry Pi deployments.
 
-The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, future installer/executable packaging, AI security intelligence, commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. The extended production-launch roadmap from Milestone U through commercial launch readiness is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, Milestone W integration is summarized in `docs/MILESTONE_W_INTEGRATION.md`, and Milestone W planning is tracked in `docs/PHASE_135_140_PLAN.md`.
+The remaining end-to-end completion path is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, future installer/executable packaging, AI security intelligence, commercial readiness, and deeper gateway/router-adjacent operation beyond the current readiness layer. The extended production-launch roadmap from Milestone U through commercial launch readiness is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, Milestone W integration is summarized in `docs/MILESTONE_W_INTEGRATION.md`, Milestone W planning is tracked in `docs/PHASE_135_140_PLAN.md`, and Milestone X planning is tracked in `docs/PHASE_141_146_PLAN.md`.
 
 ## Completed Milestones
 
@@ -287,6 +287,21 @@ policy, flow, attribution, drift, topology, health, gateway, federation, and dep
 ```
 
 Phases 135-140 now provide the advisory policy runtime, loader baseline, confidence-weighted adaptive remediation recommendations, escalation decision previews, quarantine/isolation provider readiness previews, risk escalation incident candidates, safety guardrails, and autonomous enforcement mode models. Milestone W must not enable firewall changes, quarantine execution, service disablement, destructive rollback, packet payload inspection, credential handling, threat verdicts, or automatic enforcement.
+
+Milestone X target flow:
+
+```text
+telemetry, flow, topology, policy, remediation, risk, and fleet records
+  -> visualization-safe topology graph records
+  -> bounded historical timeline summaries
+  -> asset inventory intelligence
+  -> risk dashboard cards and explanation panels
+  -> multi-node fleet visibility models
+  -> unified visualization operator summaries
+  -> dashboard/API/export-safe visual intelligence records
+```
+
+Milestone X planning is tracked in `docs/PHASE_141_146_PLAN.md`. It must remain visualization-model only, source-mode preserving, bounded, export-safe, and free of browser UI, live enforcement, firewall changes, packet payload inspection, raw packet storage, raw DNS history, and private identifiers.
 
 ## Events Into Storage
 

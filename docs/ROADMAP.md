@@ -143,6 +143,7 @@ Planned remaining milestones:
 - The Milestone V live runtime bridge now feeds current worker socket snapshots into reconstructed sessions, metadata/process correlations, relationship edges, attribution candidates, drift records, topology records, Traffic Flows, and Topology Edges while preserving socket-only limits and metadata-only safety.
 - The macOS socket collection blocker discovered during Milestone V validation is handled by scanner diagnostics and a non-privileged live `lsof` fallback when psutil socket enumeration is permission-blocked.
 - Milestone W autonomous response and policy engine work is complete as a baseline through Phase 140. It remains dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
+- Milestone X visual intelligence layer planning is tracked in `docs/PHASE_141_146_PLAN.md` and remains visualization-model only, bounded, source-mode preserving, export-safe, and free of browser UI or live enforcement.
 - Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -187,6 +188,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_123_128_PLAN.md`
 - `docs/PHASE_129_134_PLAN.md`
 - `docs/PHASE_135_140_PLAN.md`
+- `docs/PHASE_141_146_PLAN.md`
 - `docs/secure_node_identity.md`
 - `docs/encrypted_orchestration_transport.md`
 - `docs/secure_config_and_secrets.md`
