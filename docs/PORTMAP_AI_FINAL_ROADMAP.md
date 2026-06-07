@@ -167,7 +167,7 @@ Phases:
 | 137 | Quarantine And Isolation Providers | Complete baseline: dry-run provider readiness for Windows Defender Firewall, Linux nftables/ufw/iptables, macOS pf, Raspberry Pi edge, manual review, sanitized command previews, approval/rollback summaries, and no execution. |
 | 138 | Risk Escalation Pipelines | Complete baseline: multi-signal advisory escalation, incident candidates, safety blockers, operator actions, export-safe records, no final threat verdicts, and no enforcement. |
 | 139 | Safety Guardrails | Complete baseline: approval gates, rollback gates, blast-radius gates, provider readiness gates, confidence/runtime/policy/emergency-stop gates, rollback simulations, and no execution. |
-| 140 | Autonomous Enforcement Modes | Monitor, supervised, autonomous, and hardened autonomous mode records. |
+| 140 | Autonomous Enforcement Modes | Complete baseline: monitor, supervised, autonomous-preview, hardened-preview mode records, autonomy controls, approval/audit/emergency-stop requirements, containment disabled, and no enforcement. |
 
 All enforcement work must remain explicit, reviewable, reversible, and disabled by default until separate production validation authorizes it.
 

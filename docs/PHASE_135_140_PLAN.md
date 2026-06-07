@@ -212,15 +212,17 @@ Acceptance:
 
 ## Phase 140 - Autonomous Enforcement Mode Modeling
 
+Status: Complete Baseline
+
 Goal:
 Define enforcement mode models for monitor, supervised, autonomous-preview, and hardened-preview operation without activating real enforcement.
 
 Build:
 
-- `core_engine/response/enforcement_modes.py`
-- `core_engine/response/operator_views.py`
-- `tests/test_autonomous_enforcement_mode_modeling.py`
-- `docs/autonomous_enforcement_mode_modeling.md`
+- `core_engine/remediation/enforcement_modes.py`
+- `core_engine/remediation/autonomy_controls.py`
+- `tests/test_autonomous_enforcement_modes.py`
+- `docs/autonomous_enforcement_modes.md`
 
 Features:
 
@@ -303,7 +305,7 @@ Each phase should add focused documentation:
 - `docs/quarantine_isolation_provider_readiness.md`
 - `docs/risk_escalation_pipelines.md`
 - `docs/safety_guardrails.md`
-- `docs/autonomous_enforcement_mode_modeling.md`
+- `docs/autonomous_enforcement_modes.md`
 
 Docs must use sanitized placeholders only.
 

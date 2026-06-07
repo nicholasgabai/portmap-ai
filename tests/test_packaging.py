@@ -90,6 +90,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/ai_payload_classification.md" in data_files["share/portmap-ai/docs"]
     assert "docs/ai_recommendation_engine.md" in data_files["share/portmap-ai/docs"]
     assert "docs/backup_restore_planning.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/autonomous_enforcement_modes.md" in data_files["share/portmap-ai/docs"]
     assert "docs/bidirectional_flow_reconstruction.md" in data_files["share/portmap-ai/docs"]
     assert "docs/behavior_correlation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/behavioral_drift_detection.md" in data_files["share/portmap-ai/docs"]
