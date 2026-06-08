@@ -175,7 +175,7 @@ All enforcement work must remain explicit, reviewable, reversible, and disabled 
 
 Goal: turn PortMap-AI's working telemetry, flow reconstruction, topology intelligence, policy evaluation, and advisory remediation layers into operator-facing visual intelligence models that can support a future GUI/dashboard experience without adding live enforcement or browser UI yet.
 
-Detailed implementation planning for this milestone is tracked in `docs/PHASE_141_146_PLAN.md`. The planned work remains visualization-model only, source-mode preserving, bounded, export-safe, and does not add browser UI, live enforcement, firewall changes, packet payload inspection, raw packet storage, raw DNS history, or private identifiers.
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_141_146_PLAN.md`, and integration is summarized in `docs/MILESTONE_X_INTEGRATION.md`. The completed baseline remains visualization-model only, source-mode preserving, bounded, export-safe, and does not add browser UI, remote control, live enforcement, firewall/process/service changes, remediation execution, packet payload storage, raw DNS history, private identifier export, cloud sync, or runtime database writes.
 
 Phases:
 
