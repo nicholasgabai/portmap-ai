@@ -173,15 +173,15 @@ Acceptance:
 
 ## Phase 151 - Threat Scoring Expansion
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Expand advisory threat scoring inputs to include IOC, signature, DNS threat analytics, AI correlation, drift, topology, attribution, policy, and remediation-preview context.
 
 Build:
 
-- `core_engine/threat/threat_scoring.py`
-- `core_engine/threat/scoring_weights.py`
+- `core_engine/intelligence/threat_scoring.py`
+- `core_engine/intelligence/scoring_weights.py`
 - `tests/test_threat_scoring_expansion.py`
 - `docs/threat_scoring_expansion.md`
 
@@ -193,12 +193,17 @@ Features:
 - Confidence dampening for low-quality or conflicting evidence.
 - Safety and limitation summaries.
 - Dashboard/API/export-safe scoring dictionaries.
+- Default advisory weight profiles with bounded confidence floors and ceilings.
+- Category score breakdowns for IOC, DNS, signature, correlation, flow, attribution, drift, topology, runtime health, remediation, and guardrail signals.
+- Source-mode preservation and supporting reference rollups.
 
 Acceptance:
 
 - Scores remain bounded and deterministic.
 - Low-confidence evidence dampens score movement.
 - Threat scoring does not become a final verdict.
+- Scoring records do not emit malicious labels.
+- Preview-only and destructive-action safety fields remain fixed.
 - No blocking, firewall, process, service, quarantine, or remediation action is executed.
 
 ## Phase 152 - Threat Hunting Queries
