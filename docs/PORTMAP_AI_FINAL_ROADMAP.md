@@ -194,6 +194,8 @@ The Textual TUI remains supported. Browser dashboards should extend these visual
 
 Goal: expand detection primitives while preserving privacy and avoiding external lookups unless explicitly configured.
 
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_147_152_PLAN.md`. Planned work remains metadata-only, advisory-first, source-mode preserving, bounded, export-safe, and does not add final threat verdicts, blocking, enforcement, firewall/process/service changes, external threat-feed lookups, credential storage, packet payload storage, raw DNS history, or private identifier export.
+
 Phases:
 
 | Phase | Name |

@@ -144,6 +144,7 @@ Planned remaining milestones:
 - The macOS socket collection blocker discovered during Milestone V validation is handled by scanner diagnostics and a non-privileged live `lsof` fallback when psutil socket enumeration is permission-blocked.
 - Milestone W autonomous response and policy engine work is complete as a baseline through Phase 140. It remains dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
 - Milestone X visual intelligence layer work is complete as a baseline through Phase 146 and summarized in `docs/MILESTONE_X_INTEGRATION.md`. It provides visualization-model-only topology graphs, historical timeline windows, asset inventory intelligence, risk dashboard cards and panels, multi-node fleet visibility, visualization operator summaries, readiness checks, source-mode preservation, bounded exports, and no browser UI, remote control, live enforcement, firewall/process/service changes, remediation execution, packet payload storage, raw DNS history, or private identifier export.
+- Milestone Y threat intelligence and detection expansion planning is tracked in `docs/PHASE_147_152_PLAN.md`. Planned work covers IOC records, DNS threat analytics, local signatures, AI correlation records, advisory threat scoring expansion, and local threat-hunting query models while avoiding final threat verdicts, enforcement, blocking, external threat-feed lookups, packet payload storage, raw DNS history, and private identifiers.
 - Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -190,6 +191,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/PHASE_129_134_PLAN.md`
 - `docs/PHASE_135_140_PLAN.md`
 - `docs/PHASE_141_146_PLAN.md`
+- `docs/PHASE_147_152_PLAN.md`
 - `docs/secure_node_identity.md`
 - `docs/encrypted_orchestration_transport.md`
 - `docs/secure_config_and_secrets.md`
