@@ -106,15 +106,15 @@ Acceptance:
 
 ## Phase 149 - Threat Signature Framework
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Build local metadata-only threat signature records and deterministic matching summaries without remote feeds.
 
 Build:
 
-- `core_engine/threat/signatures.py`
-- `core_engine/threat/signature_matching.py`
+- `core_engine/intelligence/signature_records.py`
+- `core_engine/intelligence/signature_matching.py`
 - `tests/test_threat_signature_framework.py`
 - `docs/threat_signature_framework.md`
 
@@ -126,6 +126,8 @@ Features:
 - Signature bundle summaries.
 - Invalid and unsupported signature handling.
 - Dashboard/API/export-safe signature dictionaries.
+- Composite signatures across local metadata signals.
+- Unsafe enforcement-like conditions are rejected during validation.
 
 Acceptance:
 
@@ -133,6 +135,7 @@ Acceptance:
 - Rule confidence stays within bounded scoring ranges.
 - No remote feed loading is introduced.
 - No payload inspection, raw packet storage, raw DNS history, credential storage, or enforcement behavior is introduced.
+- Signature matching produces no final verdict fields and no malicious flags.
 
 ## Phase 150 - AI Correlation Layer
 

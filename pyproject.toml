@@ -156,6 +156,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/dns_destination_behavior_learning.md",
   "docs/encrypted_orchestration_transport.md",
   "docs/enterprise_security.md",
+  "docs/threat_signature_framework.md",
   "docs/federated_topology_aggregation.md",
   "docs/federation_dashboard_api_readiness.md",
   "docs/federation_diagnostics.md",
