@@ -139,15 +139,15 @@ Acceptance:
 
 ## Phase 150 - AI Correlation Layer
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Build multi-signal correlation records and evidence chains that combine IOC, DNS, signature, flow, attribution, drift, topology, policy, risk, and runtime context without autonomous verdicts.
 
 Build:
 
-- `core_engine/threat/ai_correlation.py`
-- `core_engine/threat/evidence_chains.py`
+- `core_engine/intelligence/ai_correlation.py`
+- `core_engine/intelligence/evidence_chains.py`
 - `tests/test_ai_correlation_layer.py`
 - `docs/ai_correlation_layer.md`
 
@@ -160,6 +160,8 @@ Features:
 - Source-mode preservation.
 - Dashboard/API/export-safe correlation dictionaries.
 - Empty/degraded/unavailable state handling.
+- Deterministic local correlation across IOC, DNS, signature, flow, attribution, topology, drift, policy, remediation, guardrail, and risk summaries.
+- Composite evidence chains for multi-signal advisory summaries.
 
 Acceptance:
 
@@ -167,6 +169,7 @@ Acceptance:
 - Evidence chains reference export-safe IDs and summaries only.
 - Confidence scoring is bounded and deterministic.
 - No payload inspection, external services, autonomous remediation, or enforcement is introduced.
+- No external AI or model API call is performed.
 
 ## Phase 151 - Threat Scoring Expansion
 

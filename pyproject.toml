@@ -109,6 +109,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/SECURITY_MODEL.md",
   "docs/api_reference.md",
   "docs/alerting_siem_integrations.md",
+  "docs/ai_correlation_layer.md",
   "docs/architecture.md",
   "docs/asset_inventory_intelligence.md",
   "docs/adaptive_remediation_logic.md",

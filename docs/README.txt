@@ -51,6 +51,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/ioc_intelligence_framework.md` - Phase 147 metadata-only IOC records, bounded inventories, local matching, hash-only exports, redacted previews, and no-verdict/no-enforcement safety boundaries.
 - `docs/dns_threat_analytics.md` - Phase 148 metadata-only DNS pattern heuristics, resolver behavior summaries, IOC match integration, redacted domain previews, and no-lookup/no-blocking boundaries.
 - `docs/threat_signature_framework.md` - Phase 149 local metadata-only signature records, deterministic matching, composite signal support, unsafe-condition rejection, and no-feed/no-verdict/no-enforcement safety boundaries.
+- `docs/ai_correlation_layer.md` - Phase 150 metadata-only evidence chains, deterministic local AI correlation summaries, explanation points, and no-external-AI/no-verdict/no-enforcement boundaries.
 - `docs/secure_node_identity.md` - Phase 123 secure logical node identities, enrollment previews, trust-chain summaries, rotation previews, and export-safe safety fields.
 - `docs/encrypted_orchestration_transport.md` - Phase 124 encrypted orchestration transport readiness profiles, downgrade warnings, and session negotiation previews.
 - `docs/secure_config_and_secrets.md` - Phase 125 secure configuration profiles, secret-management previews, plaintext rejection, rotation readiness, and provider-readiness notes.

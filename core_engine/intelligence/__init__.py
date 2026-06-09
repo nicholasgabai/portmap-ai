@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+from core_engine.intelligence.ai_correlation import (
+    AICorrelationSummary,
+    build_ai_correlation_summary,
+    build_recommendation_summary,
+    build_risk_summary,
+    empty_ai_correlation_summary,
+    summarize_evidence_chains,
+)
 from core_engine.intelligence.dns_analytics import (
     DNSAnalyticsRecord,
     build_dns_analytics,
@@ -19,6 +27,13 @@ from core_engine.intelligence.domain_patterns import (
     normalize_domain,
     redacted_domain_preview,
     repeated_subdomain_detected,
+)
+from core_engine.intelligence.evidence_chains import (
+    EvidenceChainRecord,
+    build_evidence_chain,
+    chain_state_from_chains,
+    degraded_evidence_chain,
+    highest_severity,
 )
 from core_engine.intelligence.ioc_exports import (
     IOCExportSummary,
@@ -58,8 +73,10 @@ from core_engine.intelligence.signature_records import (
 )
 
 __all__ = [
+    "AICorrelationSummary",
     "DNSAnalyticsRecord",
     "DomainPatternRecord",
+    "EvidenceChainRecord",
     "IOCExportSummary",
     "IOCInventorySummary",
     "IOCMatchRecord",
@@ -70,19 +87,27 @@ __all__ = [
     "SignatureRecordError",
     "analyze_domain_pattern",
     "analyze_domain_patterns",
+    "build_ai_correlation_summary",
     "build_dns_analytics",
     "build_domain_pattern_record",
+    "build_evidence_chain",
     "build_ioc_export_summary",
     "build_ioc_inventory",
     "build_ioc_record",
+    "build_recommendation_summary",
     "build_resolver_behavior_summary",
+    "build_risk_summary",
     "build_signature_record",
+    "chain_state_from_chains",
+    "degraded_evidence_chain",
     "deterministic_ioc_json",
     "dns_tunneling_candidate",
+    "empty_ai_correlation_summary",
     "empty_dns_analytics",
     "empty_ioc_inventory",
     "empty_signature_record",
     "hash_domain",
+    "highest_severity",
     "ioc_summary_to_csv_rows",
     "label_entropy",
     "match_ioc",
@@ -96,6 +121,7 @@ __all__ = [
     "redacted_domain_preview",
     "repeated_subdomain_detected",
     "summarize_domain_patterns",
+    "summarize_evidence_chains",
     "summarize_ioc_matches",
     "validate_match_conditions",
 ]
