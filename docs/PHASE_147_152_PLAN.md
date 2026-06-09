@@ -36,27 +36,29 @@ Milestone Y should add threat-intelligence-ready model contracts and local match
 
 ## Phase 147 - IOC Intelligence Framework
 
-Status: Planned
+Status: Complete Baseline
 
 Goal:
 Build metadata-only IOC records, inventories, matching summaries, and export-safe rollups for locally supplied indicators.
 
 Build:
 
-- `core_engine/threat/ioc_records.py`
-- `core_engine/threat/ioc_inventory.py`
-- `core_engine/threat/ioc_matching.py`
+- `core_engine/intelligence/ioc_records.py`
+- `core_engine/intelligence/ioc_inventory.py`
+- `core_engine/intelligence/ioc_matching.py`
+- `core_engine/intelligence/ioc_exports.py`
 - `tests/test_ioc_intelligence_framework.py`
 - `docs/ioc_intelligence_framework.md`
 
 Features:
 
-- IOC records with indicator class, source classification, confidence, severity, source mode, and advisory notes.
+- IOC records with indicator class, source classification, confidence, source mode, redacted previews, value hashes, and advisory notes.
 - IOC inventory summaries with bounded retention and export-safe dictionaries.
 - IOC matching against DNS, flow, socket, process, TLS metadata, packet metadata, topology, and manual source classifications.
 - IOC match records with match state, confidence, evidence references, and no verdict fields.
 - IOC export summaries for dashboard/API/export consumers.
 - Malformed IOC handling with degraded/invalid records.
+- JSON-safe and CSV-row-safe dictionaries.
 
 Acceptance:
 
@@ -65,6 +67,7 @@ Acceptance:
 - Matching remains metadata-only and advisory.
 - No external threat-feed lookup or reputation query is performed.
 - No raw payloads, credentials, raw DNS history, private identifiers, or enforcement actions are introduced.
+- No malicious flag or threat verdict field is emitted.
 
 ## Phase 148 - DNS Threat Analytics
 

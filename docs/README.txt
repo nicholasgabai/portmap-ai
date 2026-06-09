@@ -48,6 +48,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/risk_dashboard_models.md` - Phase 144 visualization-ready risk cards, dashboard panels, explanation points, recommendation counts, blocked-action counts, bounded sorting, and export-safe serialization.
 - `docs/multi_node_fleet_visibility.md` - Phase 145 visualization-ready fleet node records, site/group summaries, collector health, telemetry freshness, version compatibility, source-mode preservation, and bounded fleet panels.
 - `docs/visualization_operator_summary.md` - Phase 146 unified visualization operator summaries, readiness checks, degraded/empty component detection, recommendation rollups, source-mode preservation, and export-safe outputs.
+- `docs/ioc_intelligence_framework.md` - Phase 147 metadata-only IOC records, bounded inventories, local matching, hash-only exports, redacted previews, and no-verdict/no-enforcement safety boundaries.
 - `docs/secure_node_identity.md` - Phase 123 secure logical node identities, enrollment previews, trust-chain summaries, rotation previews, and export-safe safety fields.
 - `docs/encrypted_orchestration_transport.md` - Phase 124 encrypted orchestration transport readiness profiles, downgrade warnings, and session negotiation previews.
 - `docs/secure_config_and_secrets.md` - Phase 125 secure configuration profiles, secret-management previews, plaintext rejection, rotation readiness, and provider-readiness notes.

@@ -38,10 +38,12 @@ This roadmap summarizes the current direction after the Phase 146 baseline and t
 | 133 | Behavioral drift detection: application, service, destination, flow, topology, and protocol drift records, baseline/current references, bounded scores, recurrence state, environment drift aggregation, source-mode preservation, dashboard/API/export dictionaries, and no threat verdicts or enforcement | Complete baseline |
 | 134 | Network topology intelligence: trust-zone inference, service dependencies, recurring communication chains, node dependency relationships, topology adjacency, bounded scoring, source-mode preservation, dashboard/API/export dictionaries, and no active probing, graph database dependency, or enforcement | Complete baseline |
 | 135-140 | Autonomous response and policy engine: policy runtime evaluation, adaptive remediation recommendations, quarantine/isolation provider readiness, risk escalation pipelines, incident candidates, safety guardrails, rollback simulation, autonomous enforcement mode modeling, containment disabled, and no live enforcement | Complete baseline |
+| 141-146 | Visual intelligence layer: topology graphs, timeline windows, asset inventory, risk dashboard cards, fleet visibility, visualization operator summaries, readiness checks, bounded exports, source-mode preservation, and no browser UI, remote control, live enforcement, or remediation execution | Complete baseline |
+| 147 | IOC intelligence framework: metadata-only IOC records, deterministic normalization, hash-only value export, redacted previews, bounded inventories, local exact/normalized/pattern matching, JSON/CSV-safe summaries, and no external lookups, malicious flags, threat verdict fields, or enforcement | Complete baseline |
 
 ## Current Implementation State
 
-Phases 0-140 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
+Phases 0-147 are implemented locally in the working tree and documented as complete baselines. A complete baseline means the foundational implementation is operational and tested, while future work may expand integration depth, production hardening, installer packaging, and operator workflows.
 
 Current stable posture:
 
@@ -144,7 +146,7 @@ Planned remaining milestones:
 - The macOS socket collection blocker discovered during Milestone V validation is handled by scanner diagnostics and a non-privileged live `lsof` fallback when psutil socket enumeration is permission-blocked.
 - Milestone W autonomous response and policy engine work is complete as a baseline through Phase 140. It remains dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
 - Milestone X visual intelligence layer work is complete as a baseline through Phase 146 and summarized in `docs/MILESTONE_X_INTEGRATION.md`. It provides visualization-model-only topology graphs, historical timeline windows, asset inventory intelligence, risk dashboard cards and panels, multi-node fleet visibility, visualization operator summaries, readiness checks, source-mode preservation, bounded exports, and no browser UI, remote control, live enforcement, firewall/process/service changes, remediation execution, packet payload storage, raw DNS history, or private identifier export.
-- Milestone Y threat intelligence and detection expansion planning is tracked in `docs/PHASE_147_152_PLAN.md`. Planned work covers IOC records, DNS threat analytics, local signatures, AI correlation records, advisory threat scoring expansion, and local threat-hunting query models while avoiding final threat verdicts, enforcement, blocking, external threat-feed lookups, packet payload storage, raw DNS history, and private identifiers.
+- Milestone Y threat intelligence and detection expansion planning is tracked in `docs/PHASE_147_152_PLAN.md`. Phase 147 is complete as a baseline for metadata-only IOC records, deterministic normalization, hash-only value export, redacted previews, bounded inventories, local matching, and export-safe summaries. Remaining planned work covers DNS threat analytics, local signatures, AI correlation records, advisory threat scoring expansion, and local threat-hunting query models while avoiding final threat verdicts, enforcement, blocking, external threat-feed lookups, packet payload storage, raw DNS history, and private identifiers.
 - Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
 
 ## Medium-Term Work
@@ -212,6 +214,7 @@ PortMap-AI aims to become an AI-native network observability, exposure managemen
 - `docs/autonomous_enforcement_modes.md`
 - `docs/interactive_topology_visualization.md`
 - `docs/historical_network_timeline.md`
+- `docs/ioc_intelligence_framework.md`
 - `docs/asset_inventory_intelligence.md`
 - `docs/risk_dashboard_models.md`
 - `docs/multi_node_fleet_visibility.md`

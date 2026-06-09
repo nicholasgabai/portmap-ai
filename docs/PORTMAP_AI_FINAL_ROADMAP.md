@@ -194,13 +194,13 @@ The Textual TUI remains supported. Browser dashboards should extend these visual
 
 Goal: expand detection primitives while preserving privacy and avoiding external lookups unless explicitly configured.
 
-Detailed implementation planning for this milestone is tracked in `docs/PHASE_147_152_PLAN.md`. Planned work remains metadata-only, advisory-first, source-mode preserving, bounded, export-safe, and does not add final threat verdicts, blocking, enforcement, firewall/process/service changes, external threat-feed lookups, credential storage, packet payload storage, raw DNS history, or private identifier export.
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_147_152_PLAN.md`. Phase 147 is complete as a baseline for metadata-only IOC records, bounded inventories, local matching, hash-only exports, and redacted previews. Remaining planned work remains metadata-only, advisory-first, source-mode preserving, bounded, export-safe, and does not add final threat verdicts, blocking, enforcement, firewall/process/service changes, external threat-feed lookups, credential storage, packet payload storage, raw DNS history, or private identifier export.
 
 Phases:
 
 | Phase | Name |
 | --- | --- |
-| 147 | IOC Intelligence Framework |
+| 147 | IOC Intelligence Framework | Complete baseline: metadata-only IOC records, deterministic normalization, hash-only value export, redacted previews, bounded inventories, local matching, JSON/CSV-safe summaries, and no external lookups, malicious flags, threat verdict fields, or enforcement. |
 | 148 | DNS Threat Analytics |
 | 149 | Threat Signature Framework |
 | 150 | AI Correlation Layer |

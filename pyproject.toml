@@ -174,6 +174,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/historical_replay_windows.md",
   "docs/historical_network_timeline.md",
   "docs/historical_snapshot_persistence.md",
+  "docs/ioc_intelligence_framework.md",
   "docs/interactive_topology_visualization.md",
   "docs/ipv6_dual_stack.md",
   "docs/risk_dashboard_models.md",
