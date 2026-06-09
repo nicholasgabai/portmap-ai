@@ -206,35 +206,38 @@ Acceptance:
 - Preview-only and destructive-action safety fields remain fixed.
 - No blocking, firewall, process, service, quarantine, or remediation action is executed.
 
-## Phase 152 - Threat Hunting Queries
+## Phase 152 - Threat Hunting Query Engine
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
-Build local query model records, hunt result summaries, and saved hunt templates for metadata-only threat hunting without external search.
+Build local query model records and hunt result summaries for metadata-only threat hunting without external search.
 
 Build:
 
-- `core_engine/threat/hunt_queries.py`
-- `core_engine/threat/hunt_results.py`
+- `core_engine/intelligence/hunting_queries.py`
+- `core_engine/intelligence/query_language.py`
 - `tests/test_threat_hunting_queries.py`
-- `docs/threat_hunting_queries.md`
+- `docs/threat_hunting_query_engine.md`
 
 Features:
 
 - Local hunt query model records.
-- Saved hunt templates.
 - Hunt result summaries.
 - Query scope, source mode, confidence, and limitation fields.
 - Bounded result windows.
 - Dashboard/API/export-safe hunt dictionaries.
 - Malformed query handling.
+- Equality, contains, confidence, severity, source-mode, and bounded-limit filters.
+- Scope-specific searches across IOC, DNS, signature, correlation, scoring, timeline, topology, fleet, risk, and composite records.
 
 Acceptance:
 
 - Queries run only against local metadata records supplied by callers.
 - No external search or remote feed lookup is introduced.
 - Results are bounded and export safe.
+- Hunting records do not emit final verdict fields or malicious labels.
+- Preview-only and destructive-action safety fields remain fixed.
 - Private identifiers, raw payloads, raw DNS history, credentials, certs, keys, logs, screenshots, runtime artifacts, and databases are not stored in docs or exports.
 
 ## Milestone Y Validation Checklist
