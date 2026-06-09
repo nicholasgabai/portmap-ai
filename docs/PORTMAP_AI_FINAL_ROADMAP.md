@@ -194,14 +194,14 @@ The Textual TUI remains supported. Browser dashboards should extend these visual
 
 Goal: expand detection primitives while preserving privacy and avoiding external lookups unless explicitly configured.
 
-Detailed implementation planning for this milestone is tracked in `docs/PHASE_147_152_PLAN.md`. Phase 147 is complete as a baseline for metadata-only IOC records, bounded inventories, local matching, hash-only exports, and redacted previews. Remaining planned work remains metadata-only, advisory-first, source-mode preserving, bounded, export-safe, and does not add final threat verdicts, blocking, enforcement, firewall/process/service changes, external threat-feed lookups, credential storage, packet payload storage, raw DNS history, or private identifier export.
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_147_152_PLAN.md`. Phases 147-148 are complete as baselines for metadata-only IOC records, bounded inventories, local matching, hash-only exports, redacted previews, DNS domain pattern records, resolver behavior summaries, IOC match integration, and DNS analytics state rollups. Remaining planned work remains metadata-only, advisory-first, source-mode preserving, bounded, export-safe, and does not add final threat verdicts, blocking, enforcement, firewall/process/service changes, external threat-feed lookups, credential storage, packet payload storage, raw DNS history, or private identifier export.
 
 Phases:
 
 | Phase | Name |
 | --- | --- |
 | 147 | IOC Intelligence Framework | Complete baseline: metadata-only IOC records, deterministic normalization, hash-only value export, redacted previews, bounded inventories, local matching, JSON/CSV-safe summaries, and no external lookups, malicious flags, threat verdict fields, or enforcement. |
-| 148 | DNS Threat Analytics |
+| 148 | DNS Threat Analytics | Complete baseline: metadata-only domain pattern records, deterministic domain normalization and hashing, redacted domain previews, resolver behavior summaries, local IOC match integration, DNS analytics state rollups, source-mode preservation, and no DNS lookups, external threat feeds, raw DNS history, domain blocking, malicious flags, final threat verdicts, or enforcement. |
 | 149 | Threat Signature Framework |
 | 150 | AI Correlation Layer |
 | 151 | Threat Scoring Expansion |

@@ -8,7 +8,7 @@ The extended production-launch roadmap after the Phase 122 baseline is tracked i
 
 ## Current Completed Foundation
 
-PortMap-AI has completed baseline implementation through Phase 147, covering Phases 0-147, plus a pre-Milestone W Milestone V live runtime bridge that wires current worker socket snapshots into flow, correlation, attribution, drift, topology, TUI, dashboard/API, and export-safe summaries.
+PortMap-AI has completed baseline implementation through Phase 148, covering Phases 0-148, plus a pre-Milestone W Milestone V live runtime bridge that wires current worker socket snapshots into flow, correlation, attribution, drift, topology, TUI, dashboard/API, and export-safe summaries.
 
 Implemented foundation includes:
 
@@ -127,6 +127,8 @@ Phase 146 is complete as a baseline and documented in `docs/visualization_operat
 Milestone Y planning is tracked in `docs/PHASE_147_152_PLAN.md`. Phases 147-152 will extend visual intelligence into metadata-only threat intelligence and detection readiness with IOC models, DNS threat analytics, local signatures, AI correlation records, expanded advisory threat scoring, and local threat-hunting query models. Milestone Y must remain advisory-first, source-mode preserving, bounded, export-safe, and free of final threat verdicts, blocking, enforcement, firewall/process/service changes, external threat-feed lookups, credential storage, packet payload storage, raw DNS history, and private identifiers.
 
 Phase 147 is complete as a baseline and documented in `docs/ioc_intelligence_framework.md`. It adds metadata-only IOC records, deterministic normalization, hash-only value export, redacted value previews, source-category and source-mode preservation, bounded IOC inventories, local exact/normalized/pattern matching, JSON-safe and CSV-row-safe export summaries, and safety fields without external lookups, malicious flags, threat verdict fields, blocking, enforcement, raw payload storage, raw DNS history, credentials, or private identifier export.
+
+Phase 148 is complete as a baseline and documented in `docs/dns_threat_analytics.md`. It adds metadata-only DNS pattern records, deterministic domain normalization and hashing, redacted domain previews, resolver behavior summaries, local IOC match integration, DNS analytics state rollups, source-mode preservation, and export-safe safety fields without DNS lookups, external threat feeds, raw DNS history, domain blocking, malicious flags, final threat verdicts, packet payload storage, or enforcement.
 
 Sanitized real-device validation after Milestone O confirmed that the local runtime stack can operate for an extended period with orchestrator, master, worker, TUI, runtime status, runtime export, remote administration, node heartbeats, scoring, advisory remediation, and live dashboard updates functioning together. It also confirmed dry-run safety, duplicate stack-start protection, multi-node dashboard status, live score changes, service observations, heuristic labels, and no automatic enforcement. Private validation artifacts remain out of public documentation.
 

@@ -9,7 +9,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
 - `docs/PORTMAP_AI_FINAL_ROADMAP.md` - forward-looking production-launch roadmap from Milestone U through commercial launch readiness.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-146 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-148 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -49,6 +49,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/multi_node_fleet_visibility.md` - Phase 145 visualization-ready fleet node records, site/group summaries, collector health, telemetry freshness, version compatibility, source-mode preservation, and bounded fleet panels.
 - `docs/visualization_operator_summary.md` - Phase 146 unified visualization operator summaries, readiness checks, degraded/empty component detection, recommendation rollups, source-mode preservation, and export-safe outputs.
 - `docs/ioc_intelligence_framework.md` - Phase 147 metadata-only IOC records, bounded inventories, local matching, hash-only exports, redacted previews, and no-verdict/no-enforcement safety boundaries.
+- `docs/dns_threat_analytics.md` - Phase 148 metadata-only DNS pattern heuristics, resolver behavior summaries, IOC match integration, redacted domain previews, and no-lookup/no-blocking boundaries.
 - `docs/secure_node_identity.md` - Phase 123 secure logical node identities, enrollment previews, trust-chain summaries, rotation previews, and export-safe safety fields.
 - `docs/encrypted_orchestration_transport.md` - Phase 124 encrypted orchestration transport readiness profiles, downgrade warnings, and session negotiation previews.
 - `docs/secure_config_and_secrets.md` - Phase 125 secure configuration profiles, secret-management previews, plaintext rejection, rotation readiness, and provider-readiness notes.

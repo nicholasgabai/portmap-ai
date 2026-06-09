@@ -150,6 +150,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/distributed_node_state_sync.md",
   "docs/distributed_review_queue.md",
   "docs/distributed_visibility_aggregation.md",
+  "docs/dns_threat_analytics.md",
   "docs/enterprise_cloud_orchestration.md",
   "docs/dns_visibility_mode.md",
   "docs/dns_destination_behavior_learning.md",

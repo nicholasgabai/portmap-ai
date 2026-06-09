@@ -71,15 +71,15 @@ Acceptance:
 
 ## Phase 148 - DNS Threat Analytics
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Build DNS behavior risk summaries and suspicious DNS indicator records from redacted or hashed metadata without storing raw DNS browsing history.
 
 Build:
 
-- `core_engine/threat/dns_threat_analytics.py`
-- `core_engine/threat/dns_indicators.py`
+- `core_engine/intelligence/dns_analytics.py`
+- `core_engine/intelligence/domain_patterns.py`
 - `tests/test_dns_threat_analytics.py`
 - `docs/dns_threat_analytics.md`
 
@@ -100,6 +100,9 @@ Acceptance:
 - Resolver and destination summaries remain metadata-only.
 - Suspicious indicators are advisory signals, not threat verdicts.
 - No external DNS reputation service or remote lookup is called.
+- Domain previews are hash-prefixed and export-safe.
+- IOC inventory and match records are consumed locally without remote feeds.
+- No blocking, malicious flags, or enforcement records are emitted.
 
 ## Phase 149 - Threat Signature Framework
 
