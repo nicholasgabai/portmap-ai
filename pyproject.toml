@@ -177,6 +177,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/active_federation_validation.md",
   "docs/event_pipeline.md",
   "docs/firewall_plugins.md",
+  "docs/high_volume_storage_engine.md",
   "docs/high_speed_scan_engine.md",
   "docs/historical_flow_baselines.md",
   "docs/historical_replay_windows.md",

@@ -66,19 +66,26 @@ Acceptance:
 
 ## Phase 154 - High-Volume Storage Engine
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Plan high-volume metadata storage with retention tiers, bounded read/write summaries, compaction previews, and safety records without destructive data operations.
 
 Build:
 
-- Storage planning records.
-- Retention tier summaries.
-- Bounded write and read summaries.
-- Compaction preview records.
-- Storage pressure and degradation summaries.
-- Export-safe storage readiness records.
+- `core_engine/scaling/retention_tiers.py`
+- `core_engine/scaling/storage_engine.py`
+- `tests/test_high_volume_storage_engine.py`
+- `docs/high_volume_storage_engine.md`
+
+Features:
+
+- Retention tier records for hot, warm, cold, archive-preview, and unknown tiers.
+- Bounded record, byte, retention-window, priority, compaction-policy, and export-policy fields.
+- Storage readiness summaries with total capacity, estimated current usage, utilization ratio, and pressure state.
+- Write/read capacity previews derived from tier capacity and Phase 153 telemetry bus summaries.
+- Compaction previews for summarize, sample, rollup, and drop-preview policies.
+- Export-safe, source-mode-preserving storage summaries with no runtime writes.
 
 Acceptance:
 
