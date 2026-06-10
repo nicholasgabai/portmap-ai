@@ -160,6 +160,7 @@ The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.
 - `docs/PHASE_135_140_PLAN.md`
 - `docs/PHASE_141_146_PLAN.md`
 - `docs/PHASE_147_152_PLAN.md`
+- `docs/PHASE_153_158_PLAN.md`
 - `docs/secure_node_identity.md`
 - `docs/encrypted_orchestration_transport.md`
 - `docs/secure_config_and_secrets.md`

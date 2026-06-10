@@ -211,6 +211,8 @@ Phases:
 
 Goal: scale federation and telemetry processing for larger local and enterprise deployments.
 
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_153_158_PLAN.md`. Planned work remains metadata-only, source-mode preserving, bounded, export-safe, cross-platform ready, and does not add external broker dependencies, live cloud provisioning, destructive storage actions, enforcement, firewall/process/service changes, credential storage, or private identifier export.
+
 Phases:
 
 | Phase | Name |
