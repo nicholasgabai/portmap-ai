@@ -149,6 +149,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/dynamic_topology_correlation.md",
   "docs/dynamic_application_attribution.md",
   "docs/distributed_cluster_scanning.md",
+  "docs/distributed_telemetry_bus.md",
   "docs/distributed_event_propagation.md",
   "docs/distributed_node_state_sync.md",
   "docs/distributed_review_queue.md",

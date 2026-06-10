@@ -35,12 +35,19 @@ Milestone Z should add scalability-ready model contracts and preview records. It
 
 ## Phase 153 - Distributed Telemetry Bus
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model local telemetry bus envelopes, topics, bounded queues, fanout readiness, and retry/backoff metadata without requiring an external broker.
 
 Build:
+
+- `core_engine/scaling/bus_envelopes.py`
+- `core_engine/scaling/telemetry_bus.py`
+- `tests/test_distributed_telemetry_bus.py`
+- `docs/distributed_telemetry_bus.md`
+
+Features:
 
 - Local message envelope records.
 - Telemetry topic records.

@@ -211,13 +211,13 @@ Phases:
 
 Goal: scale federation and telemetry processing for larger local and enterprise deployments.
 
-Detailed implementation planning for this milestone is tracked in `docs/PHASE_153_158_PLAN.md`. Planned work remains metadata-only, source-mode preserving, bounded, export-safe, cross-platform ready, and does not add external broker dependencies, live cloud provisioning, destructive storage actions, enforcement, firewall/process/service changes, credential storage, or private identifier export.
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_153_158_PLAN.md`. Phase 153 is complete as a baseline for metadata-only local telemetry bus envelopes, bounded in-memory queue summaries, fanout readiness, retry/backoff previews, and export-safe bus summaries without external broker dependencies, network forwarding, filesystem-backed runtime queues, enforcement, or raw payload storage. Remaining planned work remains metadata-only, source-mode preserving, bounded, export-safe, cross-platform ready, and does not add live cloud provisioning, destructive storage actions, enforcement, firewall/process/service changes, credential storage, or private identifier export.
 
 Phases:
 
 | Phase | Name |
 | --- | --- |
-| 153 | Distributed Telemetry Bus |
+| 153 | Distributed Telemetry Bus | Complete baseline: metadata-only local bus envelopes, telemetry topics, bounded in-memory queue summaries, dropped-by-bound previews, retry/backoff metadata, fanout readiness, and export-safe records with no external broker, network forwarding, filesystem-backed runtime queues, raw payload storage, or enforcement. |
 | 154 | High-Volume Storage Engine |
 | 155 | Horizontal Scaling |
 | 156 | Resource Optimization |

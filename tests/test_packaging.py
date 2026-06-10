@@ -122,6 +122,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/dynamic_application_attribution.md" in data_files["share/portmap-ai/docs"]
     assert "docs/deployment_options.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_cluster_scanning.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/distributed_telemetry_bus.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_event_propagation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_node_state_sync.md" in data_files["share/portmap-ai/docs"]
     assert "docs/distributed_review_queue.md" in data_files["share/portmap-ai/docs"]
