@@ -310,6 +310,21 @@ Candidate future work:
 - Enterprise API blueprint with auth scopes, pagination, filtering, audit, and export semantics.
 - Commercial readiness review covering packaging, security, docs, support workflows, compliance posture, and go-to-market constraints.
 
+### Future Packet Intelligence And Deep Visibility
+
+Goal:
+Add packet-level metadata visibility and TUI packet views after scalability, packaging, compliance, AI evolution, and launch-readiness groundwork is established.
+
+Candidate future work:
+
+- Packet capture framework records for operator-approved, bounded, metadata-first capture sessions.
+- Protocol intelligence for TCP, UDP, ICMP, ARP, DNS, TLS, DHCP, HTTP, FTP, and Telnet metadata.
+- Packet timeline engine for timing, latency, DNS lookup summaries, TCP handshakes, resets, and bounded replay views.
+- Packet visualization models for a future TUI Packet tab and dashboard/API-safe summaries.
+- Packet hunting and local search over packet metadata without external queries.
+- Packet intelligence integration with existing flow, topology, DNS, IOC, signature, scoring, hunting, and visualization records.
+- Safety boundaries for no TLS decryption, no credential extraction, no payload storage by default, no enforcement, and no browser UI by default.
+
 ## Completion Definition
 
 PortMap-AI is fully functioning when:
@@ -323,6 +338,7 @@ PortMap-AI is fully functioning when:
 - Install and service mode works across supported operating systems with upgrade, rollback, and validation workflows.
 - Security hardening is complete for local auth, RBAC, TLS, node enrollment, audit chains, retention, and redaction.
 - The commercial roadmap is clear for fleet management, tenant modeling, licensing, control-plane design, enterprise APIs, and readiness review.
+- Future packet intelligence has a documented metadata-first path for bounded TUI packet views without TLS decryption, credential extraction, default payload storage, enforcement, or private identifier exposure.
 
 ## Deployment Mode Definitions
 

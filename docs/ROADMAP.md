@@ -152,7 +152,8 @@ Planned remaining milestones:
 - Milestone W autonomous response and policy engine work is complete as a baseline through Phase 140. It remains dry-run, advisory-first, operator-approved, rollback-aware, and free of automatic enforcement.
 - Milestone X visual intelligence layer work is complete as a baseline through Phase 146 and summarized in `docs/MILESTONE_X_INTEGRATION.md`. It provides visualization-model-only topology graphs, historical timeline windows, asset inventory intelligence, risk dashboard cards and panels, multi-node fleet visibility, visualization operator summaries, readiness checks, source-mode preservation, bounded exports, and no browser UI, remote control, live enforcement, firewall/process/service changes, remediation execution, packet payload storage, raw DNS history, or private identifier export.
 - Milestone Y threat intelligence and detection expansion is complete as a baseline through Phase 152, summarized in `docs/MILESTONE_Y_INTEGRATION.md`, and tracked in `docs/PHASE_147_152_PLAN.md`. Phases 147-152 provide metadata-only IOC records, deterministic normalization, hash-only value export, redacted previews, bounded inventories, local matching, DNS pattern records, resolver behavior summaries, IOC match integration, DNS analytics state rollups, local signature records, deterministic signature matching, unsafe condition rejection, AI correlation evidence chains, advisory threat scoring, local hunt queries, and export-safe summaries while avoiding final threat verdicts, malicious labels, enforcement, blocking, external threat-feed lookups, external AI calls, packet payload storage, raw DNS history, and private identifiers.
-- Autonomous response, enterprise dashboard, packaging, governance, AI evolution, and commercial launch readiness work as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
+- Milestones Z through AD remain reserved for scalability and distributed infrastructure, packaging and installers, compliance and governance, AI intelligence evolution, and commercial launch readiness as tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`.
+- Milestone AE is a future Packet Intelligence and Deep Visibility milestone after AD. It is planned for packet-level metadata visibility, a future TUI Packet tab, protocol metadata, packet timelines, packet hunting, and integration with existing flow/topology/threat models while preserving no TLS decryption, no credential extraction, no payload storage by default, no enforcement, bounded records, and operator-approved capture.
 
 ## Medium-Term Work
 
@@ -160,6 +161,7 @@ Planned remaining milestones:
 - Harden service-management packaging for long-running agents.
 - Expand dashboard usability while preserving the terminal-first product direction.
 - Add operator-friendly import/export flows for telemetry and advisory packets.
+- Preserve packet intelligence as a future post-launch-readiness milestone rather than replacing scalability, packaging, governance, AI evolution, or commercial launch plans.
 - Improve enterprise workflow documentation around organizations, roles, quotas, and sync manifests.
 
 ## Long-Term Vision

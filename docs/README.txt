@@ -6,8 +6,8 @@ PortMap-AI is currently a functional local distributed network observability sta
 
 - `PORTMAP_AI_HANDOFF.md` - current system state, verified baseline, and operating notes.
 - `docs/ROADMAP.md` - concise current roadmap and next milestone direction.
-- `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, and commercial readiness.
-- `docs/PORTMAP_AI_FINAL_ROADMAP.md` - forward-looking production-launch roadmap from Milestone U through commercial launch readiness.
+- `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, commercial readiness, and future packet intelligence.
+- `docs/PORTMAP_AI_FINAL_ROADMAP.md` - forward-looking production-launch roadmap from Milestone U through commercial launch readiness and future Packet Intelligence and Deep Visibility.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
 - `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-152 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.

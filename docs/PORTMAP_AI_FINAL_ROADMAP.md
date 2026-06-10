@@ -282,6 +282,40 @@ Phases:
 | 181 | Documentation Portal |
 | 182 | Launch Candidate Stabilization |
 
+## Milestone AE - Packet Intelligence And Deep Visibility
+
+Goal: add packet-level metadata visibility and TUI packet views after scalability, packaging, compliance, AI evolution, and launch-readiness groundwork is established.
+
+This milestone is intentionally placed after Milestones Z through AD. It must not replace scalability, distributed infrastructure, packaging, governance, AI evolution, or commercial launch-readiness work. Packet intelligence should remain metadata-first, bounded, operator-approved, and safe by default.
+
+Phases:
+
+| Phase | Name |
+| --- | --- |
+| 183 | Packet Capture Framework |
+| 184 | Protocol Intelligence |
+| 185 | Packet Timeline Engine |
+| 186 | Packet Visualization Models |
+| 187 | Packet Hunting And Search |
+| 188 | Packet Intelligence Integration |
+
+Intended Packet tab capabilities:
+
+- Raw packets entering and leaving the device, represented through bounded metadata views.
+- Source and destination IP addresses.
+- Source and destination port numbers.
+- Protocol details for TCP, UDP, ICMP, ARP, DNS, TLS, and DHCP.
+- Packet timing and latency summaries.
+- DNS lookup summaries.
+- TCP handshakes and resets.
+- Unencrypted application metadata for HTTP, FTP, and Telnet.
+- Encrypted traffic metadata such as TLS version, SNI when visible, and certificate summary.
+- No TLS decryption.
+- No credential extraction.
+- No payload storage by default.
+- Metadata-first, bounded, operator-approved capture model.
+- No enforcement, blocking, firewall changes, or browser UI by default.
+
 ## Strategic Priority
 
 The primary long-term differentiator is:
