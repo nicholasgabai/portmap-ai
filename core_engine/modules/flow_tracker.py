@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from hashlib import sha256
 from typing import Any, Iterable
 
@@ -41,7 +42,7 @@ def event_to_flow_event(event: dict[str, Any]) -> FlowEvent | None:
     if not src_ip or not dst_ip:
         return None
     return FlowEvent(
-        timestamp=_as_float(metadata.get("timestamp") or event.get("timestamp")),
+        timestamp=_timestamp_float(metadata.get("timestamp"), event.get("timestamp"), event.get("generated_at")),
         src_ip=src_ip,
         dst_ip=dst_ip,
         src_port=_optional_int(metadata.get("src_port")),
@@ -290,11 +291,40 @@ def _finalize_flow(flow: dict[str, Any]) -> dict[str, Any]:
     return finalized
 
 
-def _as_float(value: Any) -> float:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
+def _timestamp_float(*values: Any) -> float:
+    for value in values:
+        timestamp = _single_timestamp_float(value)
+        if timestamp > 0:
+            return timestamp
+    return 0.0
+
+
+def _single_timestamp_float(value: Any) -> float:
+    if value is None:
         return 0.0
+    if isinstance(value, (int, float)):
+        return _normalize_epoch(float(value))
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped in {"", "-", "0"}:
+            return 0.0
+        try:
+            return _normalize_epoch(float(stripped))
+        except ValueError:
+            pass
+        try:
+            return datetime.fromisoformat(stripped.replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            return 0.0
+    return 0.0
+
+
+def _normalize_epoch(value: float) -> float:
+    if value <= 0:
+        return 0.0
+    if value > 10_000_000_000:
+        return value / 1000.0
+    return value
 
 
 def _optional_int(value: Any) -> int | None:

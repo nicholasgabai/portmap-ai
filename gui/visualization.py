@@ -174,7 +174,7 @@ def flow_rows(flows: Iterable[dict[str, Any]], *, limit: int = 12) -> list[dict[
                 "findings": ", ".join(str(item) for item in flow.get("findings") or []) or "-",
             }
         )
-    rows.sort(key=lambda item: (float(item["last_seen"] or 0) if item["last_seen"] != "-" else 0.0), reverse=True)
+    rows.sort(key=lambda item: _timestamp_float(item.get("last_seen")), reverse=True)
     return rows[: max(limit, 0)]
 
 

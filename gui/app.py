@@ -84,14 +84,47 @@ def _format_risk_score(value: Any) -> str:
 
 
 def _format_timestamp(value: Any) -> str:
-    if value in {"", "-", None}:
+    timestamp = _timestamp_to_datetime(value)
+    if timestamp is None:
         return "-"
+    return timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _timestamp_to_datetime(value: Any) -> datetime | None:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return _datetime_from_epoch(float(value))
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped in {"", "-", "0"}:
+            return None
+        try:
+            return _datetime_from_epoch(float(stripped))
+        except ValueError:
+            pass
+        try:
+            parsed = datetime.fromisoformat(stripped.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        try:
+            if parsed.timestamp() <= 0:
+                return None
+        except Exception:
+            pass
+        return parsed
+    return None
+
+
+def _datetime_from_epoch(value: float) -> datetime | None:
+    if value <= 0:
+        return None
+    if value > 10_000_000_000:
+        value = value / 1000.0
     try:
-        if isinstance(value, (int, float)):
-            return datetime.fromtimestamp(value).strftime("%Y-%m-%d %H:%M:%S")
+        return datetime.fromtimestamp(value)
     except Exception:
-        pass
-    return str(value)
+        return None
 
 
 def _scan_rows_from_telemetry(events: List[Dict[str, Any]], limit: int = 20) -> List[Dict[str, Any]]:
@@ -270,11 +303,18 @@ def _flow_events_from_master_events(events: List[Dict[str, Any]]) -> List[Dict[s
         if event.get("event_type") in {"traffic_flow", "packet_metadata", "dpi_observation"}:
             rows.append(event)
             continue
+        fallback_timestamp = event.get("timestamp") or event.get("generated_at")
         for key in ("flows", "events", "packet_events"):
             nested = event.get(key)
             if not isinstance(nested, list):
                 continue
-            rows.extend(item for item in nested if isinstance(item, dict))
+            for item in nested:
+                if not isinstance(item, dict):
+                    continue
+                row = dict(item)
+                if fallback_timestamp and not (row.get("timestamp") or row.get("generated_at")):
+                    row["generated_at"] = fallback_timestamp
+                rows.append(row)
     return rows
 
 

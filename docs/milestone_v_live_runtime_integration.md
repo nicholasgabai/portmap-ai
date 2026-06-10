@@ -84,6 +84,7 @@ Expected behavior:
 - Repeated identical current observations are deduplicated and should not create duplicate graph edges.
 - Unresolved live process/service attribution remains `Unknown` or `Unattributed`.
 - `dummy_app` and `dummy_db` remain restricted to explicit fixture or simulated source modes.
+- Missing or zero flow timestamps render as unavailable (`-`) in Traffic Flows rather than as Unix epoch dates. Nested flow rows can inherit the parent master event timestamp when no per-flow timestamp is present.
 
 ## Operator Validation
 

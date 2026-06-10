@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,11 @@ from gui import visualization
 
 def _timestamp(date, *parts):
     return f"{date}T{':'.join(parts)}Z"
+
+
+def _local_display_from_iso(value: str) -> str:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return datetime.fromtimestamp(parsed.timestamp()).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def test_compute_metrics():
@@ -46,6 +52,22 @@ def test_format_risk_score():
     assert gui_app._format_risk_score(0.91234) == "0.912"
     assert gui_app._format_risk_score("-") == "-"
     assert gui_app._format_risk_score("high") == "high"
+
+
+def test_format_timestamp_handles_iso_and_unavailable_values():
+    assert gui_app._format_timestamp("2026-06-03T12:00:00+00:00") == "2026-06-03 12:00:00"
+    assert gui_app._format_timestamp("2026-06-03T12:00:00") == "2026-06-03 12:00:00"
+    assert gui_app._format_timestamp(0) == "-"
+    assert gui_app._format_timestamp(None) == "-"
+    assert gui_app._format_timestamp("") == "-"
+
+
+def test_format_timestamp_handles_epoch_seconds_and_milliseconds():
+    seconds = datetime(2026, 6, 3, 12, 0, 0).timestamp()
+    expected = datetime.fromtimestamp(seconds).strftime("%Y-%m-%d %H:%M:%S")
+
+    assert gui_app._format_timestamp(seconds) == expected
+    assert gui_app._format_timestamp(int(seconds * 1000)) == expected
 
 
 def test_scan_rows_from_telemetry_extracts_ports_sample():
@@ -261,6 +283,83 @@ def test_visualization_builds_topology_and_flow_rows():
     assert summary["flow_count"] == 1
     assert summary["raw_payload_stored"] is False
     assert summary["automatic_changes"] is False
+
+
+def test_flow_visualization_uses_generated_at_when_event_timestamp_is_missing():
+    generated_at = "2026-06-03T12:00:00+00:00"
+    report = visualization.build_flow_visualization(
+        [
+            {
+                "generated_at": generated_at,
+                "protocol": "TCP",
+                "src_ip": "203.0.113.5",
+                "src_port": 51515,
+                "dst_ip": "203.0.113.10",
+                "dst_port": 443,
+            }
+        ]
+    )
+
+    rows = visualization.flow_rows(report["flows"])
+    assert gui_app._format_timestamp(rows[0]["first_seen"]) == _local_display_from_iso(generated_at)
+    assert gui_app._format_timestamp(rows[0]["last_seen"]) == _local_display_from_iso(generated_at)
+
+
+def test_flow_visualization_does_not_render_epoch_for_missing_or_zero_timestamps():
+    report = visualization.build_flow_visualization(
+        [
+            {
+                "timestamp": 0,
+                "protocol": "TCP",
+                "src_ip": "203.0.113.5",
+                "src_port": 51515,
+                "dst_ip": "203.0.113.10",
+                "dst_port": 443,
+            },
+            {
+                "protocol": "TCP",
+                "src_ip": "203.0.113.6",
+                "src_port": 51516,
+                "dst_ip": "203.0.113.11",
+                "dst_port": 443,
+            },
+        ]
+    )
+
+    rendered = [
+        gui_app._format_timestamp(value)
+        for row in visualization.flow_rows(report["flows"])
+        for value in (row["first_seen"], row["last_seen"])
+    ]
+    assert rendered
+    assert all(value == "-" for value in rendered)
+    assert not any(value.startswith(("1969-", "1970-")) for value in rendered)
+
+
+def test_master_event_flow_rows_inherit_parent_timestamp():
+    flow_events = gui_app._flow_events_from_master_events(
+        [
+            {
+                "event_type": "worker_telemetry",
+                "timestamp": "2026-06-03T12:00:00+00:00",
+                "flows": [
+                    {
+                        "protocol": "TCP",
+                        "src_ip": "203.0.113.5",
+                        "src_port": 51515,
+                        "dst_ip": "203.0.113.10",
+                        "dst_port": 443,
+                    }
+                ],
+            }
+        ]
+    )
+
+    report = visualization.build_flow_visualization(flow_events)
+    rows = visualization.flow_rows(report["flows"])
+    assert flow_events[0]["generated_at"] == "2026-06-03T12:00:00+00:00"
+    assert gui_app._format_timestamp(rows[0]["first_seen"]) == _local_display_from_iso("2026-06-03T12:00:00+00:00")
+    assert gui_app._format_timestamp(rows[0]["last_seen"]) == _local_display_from_iso("2026-06-03T12:00:00+00:00")
 
 
 def test_load_flow_visualization_reads_flow_events(monkeypatch, tmp_path):
