@@ -124,7 +124,7 @@ Phase 152 is complete as a baseline with local metadata-only query records, equa
 
 Phases 147-152 complete Milestone Y with metadata-only IOC intelligence, DNS threat analytics, local signatures, deterministic AI correlation, advisory threat scoring, and local threat-hunting queries without final threat verdicts, malicious labels, blocking, enforcement, external threat-feed lookups, external AI calls, payload storage, raw DNS history, or private identifiers.
 
-The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, Milestone W integration is summarized in `docs/MILESTONE_W_INTEGRATION.md`, and Milestone X integration is summarized in `docs/MILESTONE_X_INTEGRATION.md`.
+The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, and later commercial themes. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, Milestone W integration is summarized in `docs/MILESTONE_W_INTEGRATION.md`, Milestone X integration is summarized in `docs/MILESTONE_X_INTEGRATION.md`, and Milestone Y integration is summarized in `docs/MILESTONE_Y_INTEGRATION.md`.
 
 ## References
 
@@ -148,6 +148,7 @@ The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.
 - `docs/MILESTONE_V_INTEGRATION.md`
 - `docs/MILESTONE_W_INTEGRATION.md`
 - `docs/MILESTONE_X_INTEGRATION.md`
+- `docs/MILESTONE_Y_INTEGRATION.md`
 - `docs/milestone_v_live_runtime_integration.md`
 - `docs/macos_socket_collection_validation.md`
 - `docs/PHASE_99_104_PLAN.md`
