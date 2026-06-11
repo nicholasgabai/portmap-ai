@@ -47,6 +47,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/distributed_telemetry_bus.md` - Phase 153 metadata-only telemetry bus envelopes, bounded in-memory queue summaries, retry/backoff previews, fanout readiness, and no-broker/no-forwarding safety boundary.
 - `docs/high_volume_storage_engine.md` - Phase 154 metadata-only retention tiers, storage readiness summaries, utilization and pressure states, compaction previews, and no-live-database/no-delete safety boundary.
 - `docs/horizontal_scaling.md` - Phase 155 metadata-only worker groups, cluster size previews, shard and partition planning, capacity forecasts, fanout readiness, and no-provisioning safety boundary.
+- `docs/resource_optimization.md` - Phase 156 metadata-only resource budgets, utilization summaries, adaptive sampling previews, load-shedding previews, and no-runtime-modification safety boundary.
 - `docs/interactive_topology_visualization.md` - Phase 141 visualization-model-only topology nodes, edges, graph building, asset classification, bounded graph growth, and JSON/Mermaid/Cytoscape-safe exports.
 - `docs/historical_network_timeline.md` - Phase 142 replay-safe historical timeline events, bounded event windows, category/severity counts, source-mode preservation, and export-safe serialization.
 - `docs/asset_inventory_intelligence.md` - Phase 143 visualization-ready asset role inference, bounded asset inventory summaries, first-seen/last-seen windows, confidence scoring, source-mode preservation, and export-safe serialization.

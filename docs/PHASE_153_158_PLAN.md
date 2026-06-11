@@ -126,19 +126,26 @@ Acceptance:
 
 ## Phase 156 - Resource Optimization
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Add CPU, memory, storage, and telemetry budget records with adaptive sampling previews, load-shedding recommendations, and edge-safe summaries.
 
 Build:
 
-- CPU, memory, and storage budget records.
-- Adaptive sampling preview records.
-- Load-shedding recommendation summaries.
-- Resource pressure and recovery summaries.
-- Edge-safe resource summaries.
-- Export-safe optimization records.
+- `core_engine/scaling/resource_budgets.py`
+- `core_engine/scaling/resource_optimization.py`
+- `tests/test_resource_optimization.py`
+- `docs/resource_optimization.md`
+
+Features:
+
+- Resource budget records for edge, workstation, server, enterprise, and unknown deployments.
+- CPU, memory, storage, telemetry, and worker utilization summaries.
+- Adaptive sampling previews that do not change sampling or collection logic.
+- Load-shedding previews that do not throttle telemetry or modify runtime behavior.
+- Integration with Phase 153 telemetry bus summaries, Phase 154 storage summaries, and Phase 155 scaling summaries.
+- Export-safe optimization readiness records for optimized, growth-ready, constrained, degraded, unavailable, and unknown states.
 
 Acceptance:
 

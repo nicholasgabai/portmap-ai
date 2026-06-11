@@ -200,6 +200,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/raspberry_pi_deployment.md" in data_files["share/portmap-ai/docs"]
     assert "docs/real_device_validation.md" in data_files["share/portmap-ai/docs"]
     assert "docs/realtime_telemetry_dashboard.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/resource_optimization.md" in data_files["share/portmap-ai/docs"]
     assert "docs/rbac_operator_permissions.md" in data_files["share/portmap-ai/docs"]
     assert "docs/remote_operator_visibility_prep.md" in data_files["share/portmap-ai/docs"]
     assert "docs/release_candidate.md" in data_files["share/portmap-ai/docs"]
