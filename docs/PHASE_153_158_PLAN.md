@@ -156,19 +156,26 @@ Acceptance:
 
 ## Phase 157 - Edge Worker Modes
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Define edge worker profiles, offline/degraded behavior, lightweight collector mode, gateway/branch collector mode, and Raspberry Pi/Linux ARM awareness.
 
 Build:
 
-- Edge worker profile records.
-- Offline and degraded behavior summaries.
-- Lightweight collector mode records.
-- Gateway and branch collector mode records.
-- Raspberry Pi/Linux ARM resource-awareness records.
-- Export-safe edge operator summaries.
+- `core_engine/scaling/edge_profiles.py`
+- `core_engine/scaling/edge_worker_modes.py`
+- `tests/test_edge_worker_modes.py`
+- `docs/edge_worker_modes.md`
+
+Features:
+
+- Edge profile records for lightweight, workstation, gateway, branch, enterprise, and unknown collectors.
+- Device-class summaries for Raspberry Pi, Linux ARM, Linux, macOS, Windows, and unknown devices.
+- Offline and degraded operation readiness records.
+- Gateway and branch collector readiness previews.
+- Integration with Phase 153 telemetry bus summaries, Phase 154 storage summaries, Phase 155 scaling summaries, and Phase 156 optimization summaries.
+- Export-safe edge readiness records for ready, edge-ready, degraded, offline-capable, unavailable, and unknown states.
 
 Acceptance:
 
