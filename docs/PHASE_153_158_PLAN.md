@@ -186,25 +186,34 @@ Acceptance:
 
 ## Phase 158 - Cloud Relay Infrastructure
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model relay readiness, relay sessions, tenant-safe routing previews, and future enterprise relay paths without live cloud relay or SaaS control plane behavior.
 
 Build:
 
-- Relay readiness records.
-- Relay session models.
-- Tenant-safe routing preview records.
-- Relay safety and privacy summaries.
-- Relay degraded/unavailable states.
-- Export-safe relay operator summaries.
+- `core_engine/scaling/relay_sessions.py`
+- `core_engine/scaling/cloud_relay.py`
+- `tests/test_cloud_relay_infrastructure.py`
+- `docs/cloud_relay_infrastructure.md`
+
+Features:
+
+- Relay session records for local, regional, enterprise, hybrid, and unknown preview relays.
+- Tenant-safe routing scope summaries with sanitized scope labels.
+- Relay readiness summaries that consume Phase 153 telemetry bus, Phase 154 storage, Phase 155 scaling, Phase 156 optimization, and Phase 157 edge summaries.
+- Routing previews, capacity previews, tenant isolation previews, multi-site summaries, and enterprise relay readiness recommendations.
+- Export-safe relay readiness records for ready, relay-ready, capacity-constrained, degraded, unavailable, and unknown states.
 
 Acceptance:
 
 - Relay records are readiness previews only.
 - No live cloud relay is started.
 - No SaaS control plane is introduced.
+- No network connections are opened.
+- No telemetry is forwarded.
+- No cloud resources, relay infrastructure, routing changes, or provisioning actions are created.
 - No credentials, certs, keys, private identifiers, or tenant-private data are stored in public docs or exports.
 - No firewall, process, service, or enforcement action is executed.
 

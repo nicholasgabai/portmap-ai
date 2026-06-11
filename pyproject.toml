@@ -138,6 +138,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/cross_platform_runtime_detection.md",
   "docs/cross_platform_validation_summary.md",
   "docs/cluster_runtime_health.md",
+  "docs/cloud_relay_infrastructure.md",
   "docs/dashboard_data_providers.md",
   "docs/dashboard_foundation.md",
   "docs/deployment_options.md",
