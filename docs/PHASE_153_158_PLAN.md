@@ -96,19 +96,26 @@ Acceptance:
 
 ## Phase 155 - Horizontal Scaling
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model cluster scaling, worker groups, shard/partition planning, and capacity previews without cloud provisioning.
 
 Build:
 
-- Cluster scaling models.
-- Worker group summaries.
-- Shard and partition planning records.
-- Capacity preview summaries.
-- Scaling readiness and degraded-state records.
-- Export-safe scaling operator summaries.
+- `core_engine/scaling/worker_groups.py`
+- `core_engine/scaling/horizontal_scaling.py`
+- `tests/test_horizontal_scaling.py`
+- `docs/horizontal_scaling.md`
+
+Features:
+
+- Worker group records for collector, analysis, visualization, intelligence, relay-preview, and unknown groups.
+- Healthy, degraded, unavailable, and unknown group health summaries.
+- Cluster size and recommended cluster size previews.
+- Shard and partition planning previews derived from worker, storage, and telemetry bus summaries.
+- Capacity summaries, worker distribution summaries, and fanout readiness records.
+- Export-safe scaling readiness records for ready, growth-ready, capacity-pressure, degraded, unavailable, and unknown states.
 
 Acceptance:
 
