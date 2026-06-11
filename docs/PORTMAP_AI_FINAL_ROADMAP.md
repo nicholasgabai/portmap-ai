@@ -228,6 +228,8 @@ Phases:
 
 Goal: make PortMap-AI installable, updateable, and maintainable across supported operating systems.
 
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_159_164_PLAN.md`. Planned work remains readiness-model first, rollback/uninstall-preview aware, cross-platform, and non-invasive. It preserves existing `portmap stack`, `portmap tui`, and current dashboard behavior and does not add forced install actions, service changes without operator approval, admin escalation by default, driver/kernel hooks, credential storage, private identifier export, package publishing, automatic updates, or destructive install behavior. If a future phase introduces operator-visible data that cannot be clearly validated on the current dashboard, add TUI tabbed navigation before continuing that feature instead of adding crowded dashboard panels.
+
 Phases:
 
 | Phase | Name |
