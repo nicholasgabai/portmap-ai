@@ -26,6 +26,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/MILESTONE_W_INTEGRATION.md` - detailed integration summary for Phase 135-140 autonomous response and policy engine work.
 - `docs/MILESTONE_X_INTEGRATION.md` - detailed integration summary for Phase 141-146 visual intelligence layer work.
 - `docs/MILESTONE_Y_INTEGRATION.md` - detailed integration summary for Phase 147-152 threat intelligence and detection expansion work.
+- `docs/MILESTONE_Z_INTEGRATION.md` - detailed integration summary for Phase 153-158 scalability and distributed infrastructure work.
 - `docs/milestone_v_live_runtime_integration.md` - pre-Milestone W bridge from live worker socket snapshots into Milestone V flow, correlation, attribution, drift, topology, TUI, dashboard/API, and export-safe summaries.
 - `docs/macos_socket_collection_validation.md` - macOS socket collection diagnostics and non-privileged live fallback validation for the Milestone V runtime bridge.
 - `docs/PHASE_59_64_PLAN.md` - completed milestone plan for runtime pipeline and persistent topology integration.
@@ -110,6 +111,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/MILESTONE_W_INTEGRATION.md` - Milestone W connection map for policy evaluation, adaptive remediation, quarantine/isolation previews, escalation pipelines, incident candidates, safety guardrails, rollback simulation, enforcement-mode modeling, and future supervised response.
 - `docs/MILESTONE_X_INTEGRATION.md` - Milestone X connection map for topology graphs, timeline windows, asset inventory, risk dashboards, fleet visibility, visualization readiness, and future GUI/dashboard product paths.
 - `docs/MILESTONE_Y_INTEGRATION.md` - Milestone Y connection map for IOC records, DNS analytics, local signatures, AI correlation, advisory threat scoring, hunting queries, and future packet intelligence/TUI packet views.
+- `docs/MILESTONE_Z_INTEGRATION.md` - Milestone Z connection map for telemetry bus envelopes, bounded queues, storage planning, horizontal scaling, resource optimization, edge readiness, cloud relay readiness, and future packaging/installers.
 - `docs/milestone_v_live_runtime_integration.md` - runtime bridge notes for invoking Milestone V intelligence from live/default worker telemetry while preserving bounded snapshots and source-mode-safe TUI output.
 - `docs/cross_platform_runtime_detection.md` - Phase 99 runtime detection, platform family, architecture, permission, capability, and compatibility summaries.
 - `docs/windows_runtime_compatibility.md` - Phase 100 Windows path, process/socket visibility, service-preview, runtime profile, and degraded fallback summaries.

@@ -142,7 +142,7 @@ Phase 157 extends Milestone Z with metadata-only edge worker mode readiness: edg
 
 Phase 158 completes Milestone Z with metadata-only cloud relay readiness: relay session records, local/regional/enterprise/hybrid relay previews, routing previews, tenant isolation previews, relay capacity planning, upstream telemetry/storage/scaling/optimization/edge integration, source-mode preservation, and no cloud services, relay infrastructure, SaaS control plane, network connections, telemetry forwarding, provisioning, routing changes, private identifier export, or enforcement.
 
-The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, later commercial themes, and future packet intelligence. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, Milestone W integration is summarized in `docs/MILESTONE_W_INTEGRATION.md`, Milestone X integration is summarized in `docs/MILESTONE_X_INTEGRATION.md`, Milestone Y integration is summarized in `docs/MILESTONE_Y_INTEGRATION.md`, and Milestone Z planning and completion are tracked in `docs/PHASE_153_158_PLAN.md`.
+The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.md`, covering production hardening, installer/executable packaging, later commercial themes, and future packet intelligence. The extended production-launch roadmap from Milestone U onward is tracked in `docs/PORTMAP_AI_FINAL_ROADMAP.md`. Milestone R integration is summarized in `docs/MILESTONE_R_INTEGRATION.md`, Milestone S integration is summarized in `docs/MILESTONE_S_INTEGRATION.md`, Milestone T integration is summarized in `docs/MILESTONE_T_INTEGRATION.md`, Milestone U integration is summarized in `docs/MILESTONE_U_INTEGRATION.md`, Milestone V integration is summarized in `docs/MILESTONE_V_INTEGRATION.md`, Milestone W integration is summarized in `docs/MILESTONE_W_INTEGRATION.md`, Milestone X integration is summarized in `docs/MILESTONE_X_INTEGRATION.md`, Milestone Y integration is summarized in `docs/MILESTONE_Y_INTEGRATION.md`, Milestone Z integration is summarized in `docs/MILESTONE_Z_INTEGRATION.md`, and Milestone Z planning and completion are tracked in `docs/PHASE_153_158_PLAN.md`.
 
 ## References
 
@@ -167,6 +167,7 @@ The remaining end-to-end completion plan is tracked in `docs/COMPLETION_ROADMAP.
 - `docs/MILESTONE_W_INTEGRATION.md`
 - `docs/MILESTONE_X_INTEGRATION.md`
 - `docs/MILESTONE_Y_INTEGRATION.md`
+- `docs/MILESTONE_Z_INTEGRATION.md`
 - `docs/milestone_v_live_runtime_integration.md`
 - `docs/macos_socket_collection_validation.md`
 - `docs/PHASE_99_104_PLAN.md`
