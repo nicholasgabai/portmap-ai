@@ -245,6 +245,8 @@ Phases:
 
 Goal: add operator accountability, privacy controls, and compliance-ready evidence handling.
 
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_165_170_PLAN.md`. Planned work remains metadata-only, export-safe, privacy-aware, operator-controlled, and non-enforcing. Daily rotating logs and Last Export Summary are planned under Phase 165. Runtime Export Validation Panel should be added later when the TUI gains tabbed or multi-screen navigation, not forced into the current dashboard. Milestone AB does not add destructive deletion, credential storage, legal certification claims, enforcement, firewall/process/service changes, private identifier export, or current runtime/TUI behavior changes.
+
 Phases:
 
 | Phase | Name |

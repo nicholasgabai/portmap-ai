@@ -108,6 +108,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/PHASE_147_152_PLAN.md",
   "docs/PHASE_153_158_PLAN.md",
   "docs/PHASE_159_164_PLAN.md",
+  "docs/PHASE_165_170_PLAN.md",
   "docs/PHASE_HISTORY.md",
   "docs/ROADMAP.md",
   "docs/SECURITY_MODEL.md",
