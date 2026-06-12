@@ -103,19 +103,27 @@ Acceptance:
 
 ## Phase 161 - Linux Packaging
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model Linux deb/rpm/package readiness, systemd user/service previews, path/layout validation, uninstall/rollback previews, and Raspberry Pi/Linux ARM packaging notes without publishing or installing packages.
 
 Build:
 
-- deb/rpm/package readiness records.
-- systemd user and service previews.
-- Linux path and layout validation records.
+- `core_engine/packaging/linux_layouts.py`
+- `core_engine/packaging/linux_packaging.py`
+- `tests/test_linux_packaging_readiness.py`
+- `docs/linux_packaging_readiness.md`
+
+Features:
+
+- Linux layout preview records for DEB, RPM, tarball, systemd service, and CLI-only paths.
+- Linux packaging readiness records for DEB, RPM, tarball, APT repository, and CLI-only package methods.
+- systemd service previews.
+- Raspberry Pi readiness summaries.
+- Linux ARM readiness summaries.
 - Uninstall and rollback previews.
-- Raspberry Pi/Linux ARM packaging notes.
-- Export-safe Linux packaging summaries.
+- Export-safe Linux packaging validation summaries.
 
 Acceptance:
 
@@ -124,6 +132,7 @@ Acceptance:
 - No service, firewall, process, driver, or kernel-hook change is made.
 - Raspberry Pi/Linux ARM constraints are explicitly represented.
 - Uninstall and rollback previews are included.
+- No package generation, repository publishing, filesystem write, systemd write, service creation, admin escalation, credential storage, private identifier export, or runtime behavior change is performed.
 
 ## Phase 162 - Container Deployment
 
