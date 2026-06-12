@@ -204,20 +204,25 @@ Acceptance:
 
 ## Phase 164 - Deployment Wizard
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model guided deployment wizard states, setup records, environment checks, profile selection, and installation summaries without destructive install actions.
 
 Build:
 
-- Deployment wizard state models.
-- Guided setup records.
-- Environment check summaries.
-- Profile selection records.
-- Installation summary records.
-- Optional TUI screens only if needed for validation.
-- Export-safe deployment wizard summaries.
+- `core_engine/packaging/wizard_states.py`
+- `core_engine/packaging/deployment_wizard.py`
+- `tests/test_deployment_wizard.py`
+- `docs/deployment_wizard.md`
+
+Features:
+
+- Deployment wizard step records for environment checks, platform selection, install method selection, profile selection, service preview, update preview, validation, and summary.
+- Guided setup summaries that aggregate Windows, macOS, Linux, container, and updater readiness records.
+- Platform, install method, profile, environment, validation, rollback, uninstall, and recommendation summaries.
+- TUI screen/tab recommendations when wizard output would overcrowd the current dashboard.
+- Export-safe deployment wizard summaries with fixed preview-only and no-destructive-action safety fields.
 
 Acceptance:
 
@@ -226,6 +231,7 @@ Acceptance:
 - Profile selection remains advisory unless a future operator-approved installer phase explicitly enables action.
 - TUI tabbed navigation is added first if wizard data cannot be validated clearly on the current dashboard.
 - Existing `portmap stack`, `portmap tui`, and dashboard behavior remain preserved.
+- No installer execution, package creation, service creation, launchd/systemd/registry/PATH modification, container start, update download, filesystem write, admin escalation, credential storage, private identifier export, or runtime behavior change is performed.
 
 ## Safety Boundaries
 
@@ -253,4 +259,4 @@ Milestone AA must not:
 - The roadmap UI rule is followed before adding crowded operator-visible dashboard data.
 - Sensitive-data scans and artifact/private-file checks are clean before commit.
 
-Milestone AA should make PortMap-AI easier to install and maintain without crossing from readiness models into host-changing installer behavior until separate operator-approved implementation phases explicitly authorize it.
+Milestone AA is complete as a readiness baseline. It makes PortMap-AI easier to install and maintain without crossing from readiness models into host-changing installer behavior until separate operator-approved implementation phases explicitly authorize it.
