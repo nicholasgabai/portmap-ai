@@ -70,19 +70,27 @@ Acceptance:
 
 ## Phase 160 - macOS Packaging
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model macOS app/package readiness, launchd previews, signing/notarization readiness, app bundle/package layout previews, and uninstall/rollback previews without signing, notarizing, or installing packages.
 
 Build:
 
-- macOS app and package readiness records.
+- `core_engine/packaging/macos_layouts.py`
+- `core_engine/packaging/macos_packaging.py`
+- `tests/test_macos_packaging_readiness.py`
+- `docs/macos_packaging_readiness.md`
+
+Features:
+
+- macOS layout preview records for app bundle, pkg installer, launchd service, and CLI-only paths.
+- macOS packaging readiness records for app bundle, pkg, dmg, Homebrew, and CLI-only package methods.
 - launchd service previews.
-- Notarization and signing readiness records.
-- App bundle and package layout previews.
+- Signing readiness summaries.
+- Notarization readiness summaries.
 - Uninstall and rollback previews.
-- Export-safe macOS packaging summaries.
+- Export-safe macOS packaging validation summaries.
 
 Acceptance:
 
@@ -90,6 +98,7 @@ Acceptance:
 - No package is installed.
 - No launchd service is loaded, started, stopped, or changed.
 - No admin escalation is requested by default.
+- No package, app bundle, plist, filesystem, launchd, signing, notarization, driver, kernel-hook, credential, or runtime behavior change is performed.
 - Existing `portmap stack`, `portmap tui`, and dashboard behavior remain unchanged.
 
 ## Phase 161 - Linux Packaging
