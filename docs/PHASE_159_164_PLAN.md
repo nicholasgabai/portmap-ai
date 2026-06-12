@@ -170,18 +170,28 @@ Acceptance:
 
 ## Phase 163 - Secure Auto-Updater
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model update channels, version/checksum/signature readiness, rollback readiness, and staged-update previews without automatic update execution.
 
 Build:
 
-- Update channel records.
-- Version, checksum, and signature readiness records.
-- Rollback readiness records.
-- Staged-update previews.
-- Export-safe updater summaries.
+- `core_engine/packaging/update_channels.py`
+- `core_engine/packaging/auto_updater.py`
+- `tests/test_secure_auto_updater.py`
+- `docs/secure_auto_updater.md`
+
+Features:
+
+- Update channel records for stable, beta, preview, development, and offline channels.
+- Auto-updater readiness records for manual, package-manager, container, bundled-updater, and offline update methods.
+- Version validation summaries.
+- Checksum readiness summaries.
+- Signature readiness summaries.
+- Staged rollout previews.
+- Rollback and update previews.
+- Export-safe updater validation summaries.
 
 Acceptance:
 
@@ -190,6 +200,7 @@ Acceptance:
 - No credentials, private keys, signing keys, or secrets are stored.
 - Update and rollback records are preview-only until explicit future operator approval paths exist.
 - Existing secure update and rollback models remain advisory-first.
+- No update server communication, real signature verification, package change, file modification, admin escalation, credential storage, or runtime behavior change is performed.
 
 ## Phase 164 - Deployment Wizard
 

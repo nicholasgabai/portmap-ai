@@ -1,3 +1,13 @@
+from core_engine.packaging.auto_updater import (
+    AUTO_UPDATER_STATES,
+    UPDATE_METHODS,
+    AutoUpdaterReadinessRecord,
+    build_auto_updater_readiness,
+    deterministic_auto_updater_json,
+    empty_auto_updater_readiness,
+    normalize_auto_updater_state,
+    normalize_update_method,
+)
 from core_engine.packaging.container_deployment import (
     CONTAINER_DEPLOYMENT_METHODS,
     CONTAINER_DEPLOYMENT_STATES,
@@ -76,6 +86,17 @@ from core_engine.packaging.macos_packaging import (
     normalize_macos_package_method,
     normalize_macos_packaging_state,
 )
+from core_engine.packaging.update_channels import (
+    RELEASE_TIERS,
+    UPDATE_CHANNEL_TYPES,
+    UpdateChannelRecord,
+    build_update_channel,
+    deterministic_update_channel_json,
+    normalize_release_tier,
+    normalize_update_channel,
+    normalize_update_channel_type,
+    summarize_update_channels,
+)
 from core_engine.packaging.windows_installer import (
     WINDOWS_INSTALLER_METHODS,
     WINDOWS_INSTALLER_STATES,
@@ -88,6 +109,8 @@ from core_engine.packaging.windows_installer import (
 )
 
 __all__ = [
+    "AUTO_UPDATER_STATES",
+    "AutoUpdaterReadinessRecord",
     "CONTAINER_DEPLOYMENT_METHODS",
     "CONTAINER_DEPLOYMENT_STATES",
     "CONTAINER_PROFILE_TYPES",
@@ -109,9 +132,14 @@ __all__ = [
     "MACOS_PACKAGING_STATES",
     "MacOSLayoutPreviewRecord",
     "MacOSPackagingReadinessRecord",
+    "RELEASE_TIERS",
+    "UPDATE_CHANNEL_TYPES",
+    "UPDATE_METHODS",
+    "UpdateChannelRecord",
     "WINDOWS_INSTALLER_METHODS",
     "WINDOWS_INSTALLER_STATES",
     "WindowsInstallerReadinessRecord",
+    "build_auto_updater_readiness",
     "build_container_deployment_readiness",
     "build_container_profile_preview",
     "build_installer_preview",
@@ -119,7 +147,9 @@ __all__ = [
     "build_linux_packaging_readiness",
     "build_macos_layout_preview",
     "build_macos_packaging_readiness",
+    "build_update_channel",
     "build_windows_installer_readiness",
+    "deterministic_auto_updater_json",
     "deterministic_container_deployment_json",
     "deterministic_container_profile_json",
     "deterministic_installer_preview_json",
@@ -127,7 +157,9 @@ __all__ = [
     "deterministic_linux_packaging_json",
     "deterministic_macos_layout_json",
     "deterministic_macos_packaging_json",
+    "deterministic_update_channel_json",
     "deterministic_windows_installer_json",
+    "empty_auto_updater_readiness",
     "empty_container_deployment_readiness",
     "empty_linux_packaging_readiness",
     "empty_macos_packaging_readiness",
@@ -137,6 +169,7 @@ __all__ = [
     "normalize_container_profile_preview",
     "normalize_container_profile_type",
     "normalize_container_runtime",
+    "normalize_auto_updater_state",
     "normalize_install_method",
     "normalize_installer_preview",
     "normalize_installer_state",
@@ -152,6 +185,10 @@ __all__ = [
     "normalize_macos_package_method",
     "normalize_macos_packaging_state",
     "normalize_preview_type",
+    "normalize_release_tier",
+    "normalize_update_channel",
+    "normalize_update_channel_type",
+    "normalize_update_method",
     "sanitize_environment_preview",
     "sanitize_image_reference_preview",
     "sanitize_linux_path_preview",
@@ -160,4 +197,5 @@ __all__ = [
     "summarize_linux_layouts",
     "summarize_macos_layouts",
     "summarize_installer_previews",
+    "summarize_update_channels",
 ]
