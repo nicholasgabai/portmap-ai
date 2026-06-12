@@ -136,18 +136,28 @@ Acceptance:
 
 ## Phase 162 - Container Deployment
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model Docker and Compose readiness, container profile previews, volume/network/environment layout summaries, and resource-limit recommendations without publishing images or changing host/container runtime state.
 
 Build:
 
-- Docker and Compose readiness records.
-- Container profile previews.
-- Volume, network, and environment layout summaries.
+- `core_engine/packaging/container_profiles.py`
+- `core_engine/packaging/container_deployment.py`
+- `tests/test_container_deployment_readiness.py`
+- `docs/container_deployment_readiness.md`
+
+Features:
+
+- Container profile preview records for single-node, multi-service, worker-only, orchestrator, and edge deployment paths.
+- Container deployment readiness records for Docker, Compose, Podman, and containerd-preview methods.
+- Runtime readiness summaries.
+- Image build readiness summaries.
+- Compose, volume, network, and environment layout previews.
 - Resource limit recommendations.
-- Export-safe container deployment summaries.
+- Uninstall and rollback previews.
+- Export-safe container deployment validation summaries.
 
 Acceptance:
 
@@ -155,6 +165,7 @@ Acceptance:
 - No image is built, pushed, pulled, or run by default.
 - No container network, volume, environment, firewall, or service state is changed.
 - Resource limits remain advisory recommendations.
+- No Docker, Podman, or containerd API call, Compose file write, filesystem write, admin escalation, credential storage, or runtime behavior change is performed.
 - Existing runtime and TUI commands remain unchanged.
 
 ## Phase 163 - Secure Auto-Updater
