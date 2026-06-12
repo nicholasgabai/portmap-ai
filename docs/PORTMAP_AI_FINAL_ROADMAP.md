@@ -228,13 +228,13 @@ Phases:
 
 Goal: make PortMap-AI installable, updateable, and maintainable across supported operating systems.
 
-Detailed implementation planning for this milestone is tracked in `docs/PHASE_159_164_PLAN.md`. Planned work remains readiness-model first, rollback/uninstall-preview aware, cross-platform, and non-invasive. It preserves existing `portmap stack`, `portmap tui`, and current dashboard behavior and does not add forced install actions, service changes without operator approval, admin escalation by default, driver/kernel hooks, credential storage, private identifier export, package publishing, automatic updates, or destructive install behavior. If a future phase introduces operator-visible data that cannot be clearly validated on the current dashboard, add TUI tabbed navigation before continuing that feature instead of adding crowded dashboard panels.
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_159_164_PLAN.md`. Phase 159 is complete as a baseline for Windows installer readiness. Remaining planned work remains readiness-model first, rollback/uninstall-preview aware, cross-platform, and non-invasive. It preserves existing `portmap stack`, `portmap tui`, and current dashboard behavior and does not add forced install actions, service changes without operator approval, admin escalation by default, driver/kernel hooks, credential storage, private identifier export, package publishing, automatic updates, or destructive install behavior. If a future phase introduces operator-visible data that cannot be clearly validated on the current dashboard, add TUI tabbed navigation before continuing that feature instead of adding crowded dashboard panels.
 
 Phases:
 
 | Phase | Name |
 | --- | --- |
-| 159 | Windows Installer |
+| 159 | Windows Installer | Complete baseline: metadata-only installer preview records, Windows installer readiness summaries, PowerShell/MSI/ZIP/winget install plan previews, Windows service previews, Start Menu/Desktop shortcut previews, uninstall and rollback previews, validation summaries, export-safe serialization, and no installer generation, PowerShell execution, filesystem writes, service creation, registry writes, PATH modification, admin escalation, driver/kernel hooks, credential storage, or runtime behavior changes. |
 | 160 | macOS Packaging |
 | 161 | Linux Packaging |
 | 162 | Container Deployment |

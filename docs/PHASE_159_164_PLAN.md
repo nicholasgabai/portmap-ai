@@ -38,19 +38,26 @@ This rule preserves the current dashboard behavior while keeping operator valida
 
 ## Phase 159 - Windows Installer
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model Windows installer readiness, PowerShell install plan previews, Windows service install previews, shortcut previews, and uninstall/rollback previews without executing an installer.
 
 Build:
 
+- `core_engine/packaging/installer_previews.py`
+- `core_engine/packaging/windows_installer.py`
+- `tests/test_windows_installer_readiness.py`
+- `docs/windows_installer_readiness.md`
+
+Features:
+
 - Windows installer readiness records.
-- PowerShell install plan previews.
+- PowerShell, MSI, ZIP app, and winget install plan previews.
 - Windows service install previews.
 - Start Menu and Desktop shortcut previews.
 - Uninstall and rollback previews.
-- Export-safe Windows packaging summaries.
+- Export-safe Windows packaging validation summaries.
 
 Acceptance:
 
@@ -58,6 +65,7 @@ Acceptance:
 - No Windows service is installed, started, stopped, or changed.
 - No administrator escalation is requested by default.
 - No registry, firewall, process, service, driver, or kernel-hook changes are made.
+- No PATH modification, filesystem write, credential storage, or command execution is performed.
 - Uninstall and rollback previews are included before any future install action can be considered.
 
 ## Phase 160 - macOS Packaging
