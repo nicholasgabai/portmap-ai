@@ -38,19 +38,27 @@ Milestone AB should turn existing audit, export, review, and privacy boundaries 
 
 ## Phase 165 - Audit Logging
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model audit logging readiness, daily rotation, audit event summaries, export validation summaries, last export summaries, and log retention previews without destructive log deletion.
 
 Build:
 
-- Rotating daily log readiness records.
-- Audit event summary records.
-- Export validation summary records.
+- `core_engine/governance/audit_events.py`
+- `core_engine/governance/log_rotation.py`
+- `core_engine/governance/export_audit.py`
+- `tests/test_audit_logging_governance.py`
+- `docs/audit_logging_governance.md`
+
+Features:
+
+- Audit event records for runtime, export, operator action, policy review, remediation preview, configuration, packaging, security review, and unknown categories.
+- Daily log rotation readiness records for master, worker, audit, export, runtime, TUI, and unknown log families.
 - Last Export Summary records.
-- Log retention preview records.
-- Export-safe audit summaries.
+- Export validation summaries with expected, observed, and missing file summaries.
+- Schema validation, sensitive-data scan, and artifact/private-file check state summaries.
+- Retention, compression, and deletion previews that remain advisory only.
 
 Acceptance:
 
@@ -59,6 +67,7 @@ Acceptance:
 - Daily rotating logs are planned as metadata-first readiness records before runtime behavior changes are introduced.
 - Last Export Summary is planned as an export-safe record.
 - Runtime Export Validation Panel waits for future TUI tabbed or multi-screen navigation instead of crowding the current dashboard.
+- No file movement, filesystem write, compression, zip extraction, private export read, remediation execution, firewall/process/service change, credential storage, private identifier export, or runtime behavior change is performed.
 
 ## Phase 166 - Compliance Profiles
 

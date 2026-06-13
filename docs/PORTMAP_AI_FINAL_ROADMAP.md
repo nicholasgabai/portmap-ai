@@ -245,13 +245,13 @@ Phases:
 
 Goal: add operator accountability, privacy controls, and compliance-ready evidence handling.
 
-Detailed implementation planning for this milestone is tracked in `docs/PHASE_165_170_PLAN.md`. Planned work remains metadata-only, export-safe, privacy-aware, operator-controlled, and non-enforcing. Daily rotating logs and Last Export Summary are planned under Phase 165. Runtime Export Validation Panel should be added later when the TUI gains tabbed or multi-screen navigation, not forced into the current dashboard. Milestone AB does not add destructive deletion, credential storage, legal certification claims, enforcement, firewall/process/service changes, private identifier export, or current runtime/TUI behavior changes.
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_165_170_PLAN.md`. Phase 165 is complete as a baseline for metadata-only audit event records, daily log rotation readiness, Last Export Summary records, export validation summaries, expected/observed/missing file summaries, schema/sensitive-data/artifact check states, retention previews, compression previews, deletion previews, and export-safe audit views. Runtime Export Validation Panel should be added later when the TUI gains tabbed or multi-screen navigation, not forced into the current dashboard. Remaining Milestone AB work remains metadata-only, export-safe, privacy-aware, operator-controlled, and non-enforcing, and does not add destructive deletion, credential storage, legal certification claims, enforcement, firewall/process/service changes, private identifier export, or current runtime/TUI behavior changes.
 
 Phases:
 
 | Phase | Name |
 | --- | --- |
-| 165 | Audit Logging |
+| 165 | Audit Logging | Complete baseline: metadata-only audit event records, daily log rotation readiness, Last Export Summary records, export validation summaries, expected/observed/missing file summaries, schema/sensitive-data/artifact check state summaries, retention previews, compression previews, deletion previews, export-safe serialization, and no log deletion, destructive live rotation, file compression, zip extraction, private export reads by default, filesystem writes, credential storage, private identifier export, remediation execution, firewall/process/service changes, or runtime behavior changes. |
 | 166 | Compliance Profiles |
 | 167 | Data Governance Controls |
 | 168 | Operator Accountability |
