@@ -71,18 +71,25 @@ Acceptance:
 
 ## Phase 166 - Compliance Profiles
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model compliance profile records, evidence handling expectations, and audit export readiness without making legal claims or certification statements.
 
 Build:
 
-- Profile records for common compliance modes.
-- Evidence handling expectation summaries.
-- Audit export readiness records.
-- Profile compatibility summaries.
-- Export-safe governance notes.
+- `core_engine/governance/compliance_profiles.py`
+- `core_engine/governance/evidence_profiles.py`
+- `tests/test_compliance_profiles.py`
+- `docs/compliance_profiles.md`
+
+Features:
+
+- Compliance profile records for internal audit, privacy review, security review, incident review, enterprise readiness, custom, and unknown modes.
+- Evidence expectation records for audit events, runtime logs, export summaries, policy reviews, remediation previews, configuration snapshots, security reviews, and unknown evidence.
+- Audit, export, retention, and privacy expectation summaries.
+- Operator responsibility summaries.
+- Export-safe serialization with `certification_claimed` fixed to false.
 
 Acceptance:
 
@@ -90,6 +97,7 @@ Acceptance:
 - Compliance profiles remain operator guidance, not compliance guarantees.
 - Evidence handling records remain metadata-only and privacy-aware.
 - No credential storage, enforcement, destructive deletion, or private identifier export is introduced.
+- No file reads, legal analysis, legal claim creation, control enforcement, filesystem writes, or runtime behavior changes are performed.
 
 ## Phase 167 - Data Governance Controls
 
