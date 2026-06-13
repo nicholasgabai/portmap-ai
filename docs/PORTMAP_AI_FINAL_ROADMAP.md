@@ -198,8 +198,8 @@ Detailed implementation planning for this milestone is tracked in `docs/PHASE_14
 
 Phases:
 
-| Phase | Name |
-| --- | --- |
+| Phase | Name | Focus |
+| --- | --- | --- |
 | 147 | IOC Intelligence Framework | Complete baseline: metadata-only IOC records, deterministic normalization, hash-only value export, redacted previews, bounded inventories, local matching, JSON/CSV-safe summaries, and no external lookups, malicious flags, threat verdict fields, or enforcement. |
 | 148 | DNS Threat Analytics | Complete baseline: metadata-only domain pattern records, deterministic domain normalization and hashing, redacted domain previews, resolver behavior summaries, local IOC match integration, DNS analytics state rollups, source-mode preservation, and no DNS lookups, external threat feeds, raw DNS history, domain blocking, malicious flags, final threat verdicts, or enforcement. |
 | 149 | Threat Signature Framework | Complete baseline: local metadata-only signature records, required-field validation, unsafe enforcement-condition rejection, deterministic matching across IOC, DNS, flow, protocol, attribution, topology, runtime, and composite contexts, source-mode preservation, bounded severity/confidence summaries, and no external feeds, payload inspection, malicious flags, final threat verdicts, blocking, or enforcement. |
@@ -245,15 +245,15 @@ Phases:
 
 Goal: add operator accountability, privacy controls, and compliance-ready evidence handling.
 
-Detailed implementation planning for this milestone is tracked in `docs/PHASE_165_170_PLAN.md`. Phases 165-166 are complete as baselines for metadata-only audit event records, daily log rotation readiness, Last Export Summary records, export validation summaries, expected/observed/missing file summaries, schema/sensitive-data/artifact check states, retention previews, compression previews, deletion previews, export-safe audit views, compliance profile records, evidence expectation records, audit/export/retention/privacy expectation summaries, operator responsibility summaries, and fixed false certification flags. Runtime Export Validation Panel should be added later when the TUI gains tabbed or multi-screen navigation, not forced into the current dashboard. Remaining Milestone AB work remains metadata-only, export-safe, privacy-aware, operator-controlled, and non-enforcing, and does not add destructive deletion, credential storage, legal certification claims, enforcement, firewall/process/service changes, private identifier export, or current runtime/TUI behavior changes.
+Detailed implementation planning for this milestone is tracked in `docs/PHASE_165_170_PLAN.md`. Phases 165-167 are complete as baselines for metadata-only audit event records, daily log rotation readiness, Last Export Summary records, export validation summaries, expected/observed/missing file summaries, schema/sensitive-data/artifact check states, retention previews, compression previews, deletion previews, export-safe audit views, compliance profile records, evidence expectation records, audit/export/retention/privacy expectation summaries, operator responsibility summaries, fixed false certification flags, data classification records, privacy boundary summaries, retention control summaries, redaction readiness, export governance summaries, audit/compliance integration, and governance recommendations. Runtime Export Validation Panel should be added later when the TUI gains tabbed or multi-screen navigation, not forced into the current dashboard. Remaining Milestone AB work remains metadata-only, export-safe, privacy-aware, operator-controlled, and non-enforcing, and does not add destructive deletion, credential storage, legal certification claims, enforcement, firewall/process/service changes, private identifier export, private export reads by default, filesystem reads or writes, or current runtime/TUI behavior changes.
 
 Phases:
 
-| Phase | Name |
-| --- | --- |
+| Phase | Name | Focus |
+| --- | --- | --- |
 | 165 | Audit Logging | Complete baseline: metadata-only audit event records, daily log rotation readiness, Last Export Summary records, export validation summaries, expected/observed/missing file summaries, schema/sensitive-data/artifact check state summaries, retention previews, compression previews, deletion previews, export-safe serialization, and no log deletion, destructive live rotation, file compression, zip extraction, private export reads by default, filesystem writes, credential storage, private identifier export, remediation execution, firewall/process/service changes, or runtime behavior changes. |
 | 166 | Compliance Profiles | Complete baseline: metadata-only compliance profile records, evidence expectation records, internal audit/privacy review/security review/incident review/enterprise readiness/custom modes, audit/export/retention/privacy expectation summaries, operator responsibility summaries, fixed false certification flags, export-safe serialization, and no legal analysis, legal certification claims, control enforcement, file reads by default, destructive operations, credential storage, private identifier export, or runtime behavior changes. |
-| 167 | Data Governance Controls |
+| 167 | Data Governance Controls | Complete baseline: metadata-only data classification records, category/sensitivity/handling normalization, privacy boundary summaries, retention control summaries, redaction readiness, export governance summaries, audit and compliance profile integration, governance recommendations, export-safe serialization, and no governance enforcement, data deletion, private export reads by default, filesystem reads or writes, credential storage, private identifier export, or runtime behavior changes. |
 | 168 | Operator Accountability |
 | 169 | Security Review Framework |
 | 170 | Privacy And Legal Safeguards |

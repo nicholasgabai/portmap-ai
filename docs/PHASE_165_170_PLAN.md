@@ -101,18 +101,28 @@ Acceptance:
 
 ## Phase 167 - Data Governance Controls
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model data classification, privacy boundaries, retention controls, and export redaction readiness.
 
 Build:
 
-- Data classification records.
-- Privacy boundary summaries.
-- Retention control previews.
-- Export redaction readiness records.
-- Governance validation summaries.
+- `core_engine/governance/data_classification.py`
+- `core_engine/governance/data_governance.py`
+- `tests/test_data_governance_controls.py`
+- `docs/data_governance_controls.md`
+
+Complete baseline:
+
+- Data classification records for runtime, audit, export, configuration, operator action, topology, intelligence, and unknown metadata categories.
+- Sensitivity and handling state normalization for public, internal, sensitive, restricted, allowed, redaction-required, review-required, restricted, and unknown states.
+- Privacy boundary summaries that preserve private identifier export blocks.
+- Retention control summaries that preview retention expectations without deletion.
+- Redaction readiness summaries that list expected redaction categories without reading private exports.
+- Export governance summaries that preserve sensitive-data and artifact-check expectations.
+- Compliance profile and audit summary integration from Phases 165-166.
+- Export-safe serialization with fixed preview-only and non-destructive safety fields.
 
 Acceptance:
 
@@ -120,6 +130,7 @@ Acceptance:
 - No private identifiers are introduced into docs or exports.
 - No destructive retention or deletion action is performed.
 - No firewall, process, service, collection, or enforcement behavior is changed.
+- No governance enforcement, private export reads by default, filesystem reads, filesystem writes, credential storage, or runtime behavior changes are performed.
 
 ## Phase 168 - Operator Accountability
 
