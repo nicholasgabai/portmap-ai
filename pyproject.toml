@@ -279,6 +279,7 @@ dependencies = {file = ["requirements.txt"]}
   "docs/audit_logging_governance.md",
   "docs/compliance_profiles.md",
   "docs/data_governance_controls.md",
+  "docs/operator_accountability.md",
   "docs/container_deployment_readiness.md",
   "docs/secure_auto_updater.md",
   "docs/deployment_wizard.md",

@@ -134,18 +134,27 @@ Acceptance:
 
 ## Phase 168 - Operator Accountability
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model operator action records, approval summaries, role/action mapping, and review trail readiness.
 
 Build:
 
-- Operator action records.
-- Approval summary records.
-- Role/action mapping records.
-- Review trail readiness summaries.
-- Accountability export summaries.
+- `core_engine/governance/operator_actions.py`
+- `core_engine/governance/operator_accountability.py`
+- `tests/test_operator_accountability.py`
+- `docs/operator_accountability.md`
+
+Complete baseline:
+
+- Metadata-only operator action records for export, policy review, remediation preview, configuration review, packaging review, governance review, security review, compliance review, and unknown action categories.
+- Approval state summaries for approved, pending, review-required, rejected, and unknown actions.
+- Reviewer chain summaries that count sanitized reviewer references without storing real identities.
+- Role mapping summaries that infer advisory review scopes without assigning roles.
+- Accountability evidence summaries that combine action evidence, audit references, governance references, compliance profile summaries, and audit summaries.
+- Integration with Phase 165 audit summaries, Phase 166 compliance profiles, and Phase 167 data governance summaries.
+- Export-safe serialization with fixed preview-only and non-destructive safety fields.
 
 Acceptance:
 
@@ -153,6 +162,7 @@ Acceptance:
 - Role/action summaries remain metadata-only and export-safe.
 - No service, process, firewall, credential, enforcement, or runtime behavior change is made.
 - Approval records remain advisory until future operator-approved workflow phases explicitly enable action execution.
+- No authorization decisions, permissions enforcement, role assignment, identity storage, file reads, file writes, or private export reads are performed.
 
 ## Phase 169 - Security Review Framework
 
