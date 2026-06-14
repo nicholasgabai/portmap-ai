@@ -148,7 +148,67 @@ def test_operator_help_text_defines_key_terms(tmp_path):
     assert "Traffic Flows: bidirectional session summaries" in text
     assert "Firewall plugin: noop" in text
     assert "Enforcement mode: dry_run" in text
+    assert "Tab shortcuts: 1 Dashboard, 2 Risk, 3 Exports, 4 Governance, 5 Deployment, 6 AI, 7 Packet" in text
     assert str(tmp_path / "exports") in text
+
+
+def test_tui_tab_registry_and_shortcut_mapping_are_stable():
+    tabs = gui_app.serialize_tui_tab_registry()
+    labels = [tab["label"] for tab in tabs]
+    shortcuts = gui_app.tui_tab_shortcut_mapping()
+
+    assert labels == ["Dashboard", "Risk", "Exports", "Governance", "Deployment", "AI", "Packet"]
+    assert shortcuts == {
+        "1": "dashboard",
+        "2": "risk",
+        "3": "exports",
+        "4": "governance",
+        "5": "deployment",
+        "6": "ai",
+        "7": "packet",
+    }
+    assert tabs[0]["tab_id"] == gui_app.DEFAULT_TUI_TAB
+    assert all(tab["preview_only"] is True for tab in tabs)
+    assert all(tab["destructive_action"] is False for tab in tabs)
+
+
+def test_placeholder_tabs_render_safe_labels_and_serialization():
+    for tab_id in ["risk", "exports", "governance", "deployment", "ai", "packet"]:
+        rendered = gui_app.render_placeholder_tab(tab_id)
+        assert "This tab is a navigation placeholder." in rendered
+        assert "No collectors, packet capture, network calls" in rendered
+
+    assert "Last Export Summary" in gui_app.render_placeholder_tab("exports")
+    assert "Privacy Safeguards" in gui_app.render_placeholder_tab("governance")
+    assert "Deployment wizard readiness" in gui_app.render_placeholder_tab("deployment")
+    assert "Threat Prediction Models" in gui_app.render_placeholder_tab("ai")
+    assert "Packet Intelligence Integration" in gui_app.render_placeholder_tab("packet")
+    json.dumps(gui_app.serialize_tui_tab_registry(), sort_keys=True)
+
+
+def test_tab_nav_and_bindings_expose_shortcuts():
+    nav = gui_app.render_tab_nav("governance")
+    binding_keys = [binding[0] for binding in gui_app.PortMapDashboard.BINDINGS]
+
+    assert "[4 Governance]" in nav
+    assert "1 Dashboard" in nav
+    assert binding_keys[:7] == ["1", "2", "3", "4", "5", "6", "7"]
+    assert "?" in binding_keys
+    assert "e" in binding_keys
+
+
+def test_dashboard_tab_is_default_and_switching_placeholders_does_not_crash():
+    dashboard = gui_app.PortMapDashboard()
+
+    assert dashboard.active_tab == gui_app.DEFAULT_TUI_TAB
+    dashboard.action_tab_exports()
+    assert dashboard.active_tab == "exports"
+    dashboard.action_tab_governance()
+    assert dashboard.active_tab == "governance"
+    dashboard.action_tab_packet()
+    assert dashboard.active_tab == "packet"
+    dashboard.action_tab_dashboard()
+    assert dashboard.active_tab == gui_app.DEFAULT_TUI_TAB
 
 
 def test_resolve_firewall_status_defaults_safe():

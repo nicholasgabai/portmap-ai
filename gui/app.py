@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -250,6 +251,162 @@ def _panel_heading(title: str, subtitle: str) -> str:
     return f"{title}\n{subtitle}"
 
 
+@dataclass(frozen=True)
+class TuiTab:
+    tab_id: str
+    label: str
+    shortcut: str
+    summary: str
+    readiness_items: tuple[str, ...]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "tab_id": self.tab_id,
+            "label": self.label,
+            "shortcut": self.shortcut,
+            "summary": self.summary,
+            "readiness_items": list(self.readiness_items),
+            "preview_only": True,
+            "destructive_action": False,
+        }
+
+
+TUI_TAB_REGISTRY: tuple[TuiTab, ...] = (
+    TuiTab(
+        "dashboard",
+        "Dashboard",
+        "1",
+        "Current live runtime dashboard; remains the default operator surface.",
+        (
+            "Node Overview",
+            "Scan Results",
+            "Remediation Feed",
+            "Expected Services",
+            "Risk Timeline",
+            "Topology Edges",
+            "Traffic Flows",
+            "Command Outcomes",
+            "Master Log Tail",
+        ),
+    ),
+    TuiTab(
+        "risk",
+        "Risk",
+        "2",
+        "Risk and remediation readiness surface.",
+        ("Risk Timeline", "Remediation Feed", "review recommendations", "future risk panels"),
+    ),
+    TuiTab(
+        "exports",
+        "Exports",
+        "3",
+        "Export readiness and validation surface.",
+        ("Last Export Summary", "Export validation status", "Export destination", "future Runtime Export Validation Panel"),
+    ),
+    TuiTab(
+        "governance",
+        "Governance",
+        "4",
+        "Compliance and governance readiness surface.",
+        (
+            "Audit Logging",
+            "Compliance Profiles",
+            "Data Governance",
+            "Operator Accountability",
+            "Security Reviews",
+            "Privacy Safeguards",
+        ),
+    ),
+    TuiTab(
+        "deployment",
+        "Deployment",
+        "5",
+        "Packaging and deployment readiness surface.",
+        (
+            "Windows installer readiness",
+            "macOS packaging readiness",
+            "Linux packaging readiness",
+            "Container deployment readiness",
+            "Secure updater readiness",
+            "Deployment wizard readiness",
+        ),
+    ),
+    TuiTab(
+        "ai",
+        "AI",
+        "6",
+        "Future AI evolution readiness surface.",
+        (
+            "Probabilistic Application Models",
+            "Continuous Learning Profiles",
+            "Graph-Based Behavioral AI",
+            "Threat Prediction Models",
+            "Federated Intelligence",
+            "Autonomous Investigation Chains",
+        ),
+    ),
+    TuiTab(
+        "packet",
+        "Packet",
+        "7",
+        "Future packet intelligence placeholder; no packet capture is implemented here.",
+        (
+            "Packet Capture",
+            "Protocol Intelligence",
+            "Packet Timeline",
+            "Packet Visualization",
+            "Packet Hunting",
+            "Packet Intelligence Integration",
+        ),
+    ),
+)
+DEFAULT_TUI_TAB = "dashboard"
+TUI_TAB_IDS = {tab.tab_id for tab in TUI_TAB_REGISTRY}
+
+
+def tui_tab_shortcut_mapping() -> Dict[str, str]:
+    return {tab.shortcut: tab.tab_id for tab in TUI_TAB_REGISTRY}
+
+
+def serialize_tui_tab_registry() -> List[Dict[str, Any]]:
+    return [tab.to_dict() for tab in TUI_TAB_REGISTRY]
+
+
+def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
+    parts = []
+    for tab in TUI_TAB_REGISTRY:
+        label = f"{tab.shortcut} {tab.label}"
+        parts.append(f"[{label}]" if tab.tab_id == active_tab else label)
+    return "Tabs: " + " | ".join(parts)
+
+
+def render_placeholder_tab(tab_id: str) -> str:
+    tab = _tab_by_id(tab_id)
+    if tab is None:
+        return "Unknown tab\nNo readiness surface is registered for this tab."
+    rows = [f"{tab.label}", tab.summary, "", "Readiness:"]
+    rows.extend(f"- {item}" for item in tab.readiness_items)
+    rows.extend(
+        [
+            "",
+            "This tab is a navigation placeholder.",
+            "No collectors, packet capture, network calls, installers, governance enforcement, or runtime actions are started here.",
+        ]
+    )
+    return "\n".join(rows)
+
+
+def tab_shortcuts_help_text() -> str:
+    return "Tab shortcuts: " + ", ".join(f"{tab.shortcut} {tab.label}" for tab in TUI_TAB_REGISTRY)
+
+
+def _tab_by_id(tab_id: str) -> TuiTab | None:
+    for tab in TUI_TAB_REGISTRY:
+        if tab.tab_id == tab_id:
+            return tab
+    return None
+
+
 def _resolve_firewall_status(settings: Dict[str, Any]) -> Dict[str, str]:
     firewall = settings.get("firewall") or {}
     options = firewall.get("options") or {}
@@ -292,6 +449,7 @@ def _operator_help_text(export_dir: Path, firewall_status: Dict[str, str]) -> st
         "- Risk Timeline: recent score buckets for quick trend review.\n"
         "- Topology Edges: passive flow relationships from flow telemetry when available.\n"
         "- Traffic Flows: bidirectional session summaries without raw payload storage.\n\n"
+        f"{tab_shortcuts_help_text()}\n\n"
         f"Export destination: {export_dir}\n"
         "Shortcuts: ? help, e export logs"
     )
@@ -569,6 +727,14 @@ class PortMapDashboard(App):
         padding: 0 1;
         color: $text-muted;
     }
+    #tab-nav {
+        padding: 0 1;
+        background: $surface;
+        color: $accent;
+    }
+    .placeholder-tab {
+        padding: 1 2;
+    }
     #log-panel {
         height: 12;
         overflow-y: auto;
@@ -585,119 +751,140 @@ class PortMapDashboard(App):
     """
 
     BINDINGS = [
+        ("1", "tab_dashboard", "Dashboard"),
+        ("2", "tab_risk", "Risk"),
+        ("3", "tab_exports", "Exports"),
+        ("4", "tab_governance", "Governance"),
+        ("5", "tab_deployment", "Deployment"),
+        ("6", "tab_ai", "AI"),
+        ("7", "tab_packet", "Packet"),
         ("?", "show_help", "Show help"),
         ("e", "export_logs", "Export logs"),
     ]
 
     scan_interval = reactive(5)
     tail_size = reactive(10)
+    active_tab = reactive(DEFAULT_TUI_TAB)
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with Container():
-            yield Static(
-                _panel_heading(
-                    "Start Here",
-                    "Confirm worker online, press Scan Now, then review Remediation Feed and Signals. Press ? for definitions.",
-                ),
-                classes="panel-heading",
+        self.tab_nav = Static(render_tab_nav(DEFAULT_TUI_TAB), id="tab-nav")
+        yield self.tab_nav
+        with Container(id="tab-dashboard", classes="tab-panel"):
+            yield from self._compose_dashboard_tab()
+        for tab in TUI_TAB_REGISTRY:
+            if tab.tab_id == DEFAULT_TUI_TAB:
+                continue
+            yield Container(
+                Static(render_placeholder_tab(tab.tab_id)),
+                id=f"tab-{tab.tab_id}",
+                classes="tab-panel placeholder-tab",
             )
-            with Horizontal():
-                with Container():
-                    yield Static(
-                        _panel_heading("Node Overview", "Workers, role, current status, and last heartbeat"),
-                        classes="panel-heading",
-                    )
-                    self.node_table = NodeTable()
-                    yield self.node_table
-                with Container():
-                    self.metrics_panel = MetricsPanel()
-                    yield self.metrics_panel
-                    yield Static(
-                        _panel_heading(
-                            "Scan Results",
-                            "Latest sampled ports, risk scores, AI provider, and scoring signals.",
-                        ),
-                        classes="panel-heading",
-                    )
-                    self.scan_results_panel = ScanResultsPanel()
-                    yield self.scan_results_panel
-                    yield Static(
-                        _panel_heading(
-                            "Remediation Feed",
-                            "Each row is a remediation event. Enforcement shows dry-run vs active mode.",
-                        ),
-                        classes="panel-heading",
-                    )
-                    self.remediation_panel = RemediationPanel()
-                    yield self.remediation_panel
-            yield Static(
-                _panel_heading(
-                    "Expected Services",
-                    "Observed candidates are auto-detected. Add normal services to reduce noise.",
-                ),
-                classes="panel-heading",
-            )
-            self.expected_services_panel = ExpectedServicesPanel()
-            yield self.expected_services_panel
-            with Horizontal():
-                with Container():
-                    yield Static(
-                        _panel_heading(
-                            "Risk Timeline",
-                            "Recent score buckets for quick historical trend review.",
-                        ),
-                        classes="panel-heading",
-                    )
-                    self.risk_timeline_panel = RiskTimelinePanel()
-                    yield self.risk_timeline_panel
-                with Container():
-                    yield Static(
-                        _panel_heading(
-                            "Topology Edges",
-                            "Passive initiator-to-responder relationships when flow telemetry exists.",
-                        ),
-                        classes="panel-heading",
-                    )
-                    self.topology_panel = TopologyPanel()
-                    yield self.topology_panel
-            yield Static(
-                _panel_heading(
-                    "Traffic Flows",
-                    "Bidirectional flow summaries with packet and byte counts, no raw payload storage.",
-                ),
-                classes="panel-heading",
-            )
-            self.traffic_flows_panel = TrafficFlowsPanel()
-            yield self.traffic_flows_panel
-            yield Static(
-                _panel_heading(
-                    "Command Outcomes",
-                    "Recent worker command audit events: received, applied, failed, or ignored.",
-                ),
-                classes="panel-heading",
-            )
-            self.command_panel = CommandPanel()
-            yield self.command_panel
-            yield Static(
-                _panel_heading("Master Log Tail", "Most recent master-node log lines for the active stack session"),
-                classes="panel-heading",
-            )
-            self.log_panel = LogPanel(id="log-panel")
-            yield self.log_panel
-            self.command_bar = Horizontal(
-                Button("Scan Now", id="cmd-scan"),
-                Button("Toggle Autolearn", id="cmd-autolearn"),
-                Button("Detect Orchestrator", id="cmd-detect"),
-                Button("Export Logs", id="cmd-export"),
-                Button("Allowlist Selected", id="cmd-allowlist-add"),
-                Button("Remove Allowlist", id="cmd-allowlist-remove"),
-                Button("Tail: 10", id="cmd-tail"),
-                Static("", id="status-msg"),
-                id="command-bar",
-            )
-            yield self.command_bar
+        self.command_bar = Horizontal(
+            Button("Scan Now", id="cmd-scan"),
+            Button("Toggle Autolearn", id="cmd-autolearn"),
+            Button("Detect Orchestrator", id="cmd-detect"),
+            Button("Export Logs", id="cmd-export"),
+            Button("Allowlist Selected", id="cmd-allowlist-add"),
+            Button("Remove Allowlist", id="cmd-allowlist-remove"),
+            Button("Tail: 10", id="cmd-tail"),
+            Static("", id="status-msg"),
+            id="command-bar",
+        )
+        yield self.command_bar
         yield Footer()
+
+    def _compose_dashboard_tab(self) -> ComposeResult:
+        yield Static(
+            _panel_heading(
+                "Start Here",
+                "Confirm worker online, press Scan Now, then review Remediation Feed and Signals. Press ? for definitions.",
+            ),
+            classes="panel-heading",
+        )
+        with Horizontal():
+            with Container():
+                yield Static(
+                    _panel_heading("Node Overview", "Workers, role, current status, and last heartbeat"),
+                    classes="panel-heading",
+                )
+                self.node_table = NodeTable()
+                yield self.node_table
+            with Container():
+                self.metrics_panel = MetricsPanel()
+                yield self.metrics_panel
+                yield Static(
+                    _panel_heading(
+                        "Scan Results",
+                        "Latest sampled ports, risk scores, AI provider, and scoring signals.",
+                    ),
+                    classes="panel-heading",
+                )
+                self.scan_results_panel = ScanResultsPanel()
+                yield self.scan_results_panel
+                yield Static(
+                    _panel_heading(
+                        "Remediation Feed",
+                        "Each row is a remediation event. Enforcement shows dry-run vs active mode.",
+                    ),
+                    classes="panel-heading",
+                )
+                self.remediation_panel = RemediationPanel()
+                yield self.remediation_panel
+        yield Static(
+            _panel_heading(
+                "Expected Services",
+                "Observed candidates are auto-detected. Add normal services to reduce noise.",
+            ),
+            classes="panel-heading",
+        )
+        self.expected_services_panel = ExpectedServicesPanel()
+        yield self.expected_services_panel
+        with Horizontal():
+            with Container():
+                yield Static(
+                    _panel_heading(
+                        "Risk Timeline",
+                        "Recent score buckets for quick historical trend review.",
+                    ),
+                    classes="panel-heading",
+                )
+                self.risk_timeline_panel = RiskTimelinePanel()
+                yield self.risk_timeline_panel
+            with Container():
+                yield Static(
+                    _panel_heading(
+                        "Topology Edges",
+                        "Passive initiator-to-responder relationships when flow telemetry exists.",
+                    ),
+                    classes="panel-heading",
+                )
+                self.topology_panel = TopologyPanel()
+                yield self.topology_panel
+        yield Static(
+            _panel_heading(
+                "Traffic Flows",
+                "Bidirectional flow summaries with packet and byte counts, no raw payload storage.",
+            ),
+            classes="panel-heading",
+        )
+        self.traffic_flows_panel = TrafficFlowsPanel()
+        yield self.traffic_flows_panel
+        yield Static(
+            _panel_heading(
+                "Command Outcomes",
+                "Recent worker command audit events: received, applied, failed, or ignored.",
+            ),
+            classes="panel-heading",
+        )
+        self.command_panel = CommandPanel()
+        yield self.command_panel
+        yield Static(
+            _panel_heading("Master Log Tail", "Most recent master-node log lines for the active stack session"),
+            classes="panel-heading",
+        )
+        self.log_panel = LogPanel(id="log-panel")
+        yield self.log_panel
 
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
@@ -707,6 +894,7 @@ class PortMapDashboard(App):
         self._allowlist_candidates: List[Dict[str, Any]] = []
         self._expected_services: List[Dict[str, Any]] = []
         self._nodes_cache: List[Dict[str, Any]] = []
+        self._apply_active_tab()
         self.refresh_task = asyncio.create_task(self.auto_refresh())
         self._set_status(f"Export destination: {self.export_dir}")
 
@@ -933,6 +1121,52 @@ class PortMapDashboard(App):
             self.action_allowlist_selected()
         elif button_id == "cmd-allowlist-remove":
             self.action_remove_allowlist()
+
+    def switch_tab(self, tab_id: str) -> None:
+        if tab_id not in TUI_TAB_IDS:
+            self._set_status(f"Unknown tab: {tab_id}")
+            return
+        self.active_tab = tab_id
+        self._apply_active_tab()
+        tab = _tab_by_id(tab_id)
+        if tab:
+            self._set_status(f"Tab: {tab.label}")
+
+    def watch_active_tab(self, value: str) -> None:
+        self._apply_active_tab()
+
+    def _apply_active_tab(self) -> None:
+        active_tab = self.active_tab if self.active_tab in TUI_TAB_IDS else DEFAULT_TUI_TAB
+        try:
+            self.query_one("#tab-nav", Static).update(render_tab_nav(active_tab))
+        except Exception:
+            pass
+        for tab in TUI_TAB_REGISTRY:
+            try:
+                self.query_one(f"#tab-{tab.tab_id}", Container).display = tab.tab_id == active_tab
+            except Exception:
+                continue
+
+    def action_tab_dashboard(self) -> None:
+        self.switch_tab("dashboard")
+
+    def action_tab_risk(self) -> None:
+        self.switch_tab("risk")
+
+    def action_tab_exports(self) -> None:
+        self.switch_tab("exports")
+
+    def action_tab_governance(self) -> None:
+        self.switch_tab("governance")
+
+    def action_tab_deployment(self) -> None:
+        self.switch_tab("deployment")
+
+    def action_tab_ai(self) -> None:
+        self.switch_tab("ai")
+
+    def action_tab_packet(self) -> None:
+        self.switch_tab("packet")
 
     def _queue_command(self, node_id: str, command: Dict[str, Any]) -> None:
         if not self.orchestrator_url:

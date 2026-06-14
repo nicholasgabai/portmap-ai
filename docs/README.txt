@@ -9,7 +9,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, commercial readiness, and future packet intelligence.
 - `docs/PORTMAP_AI_FINAL_ROADMAP.md` - forward-looking production-launch roadmap from Milestone U through commercial launch readiness and future Packet Intelligence and Deep Visibility.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-170 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-170.5 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -272,7 +272,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/remediation_safety.md` - remediation safety gates and dry-run enforcement posture.
 - `docs/firewall_plugins.md` - firewall plugin model and safety notes.
 - `docs/logging_audit.md` - structured logging, audit events, filtering, and export.
-- `docs/tui_dashboard.md` - Textual dashboard panels, controls, data sources, and source-mode labeling.
+- `docs/tui_dashboard.md` - Textual dashboard panels, Phase 170.5 multi-tab navigation, controls, data sources, and source-mode labeling.
 - `docs/visualization_gui_platform.md` - dashboard risk timeline, topology edges, and flow visualization.
 - `docs/beginner_guide.md` - conceptual guide for local network/firewall terminology.
 - `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.
