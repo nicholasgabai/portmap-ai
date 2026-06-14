@@ -272,7 +272,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/remediation_safety.md` - remediation safety gates and dry-run enforcement posture.
 - `docs/firewall_plugins.md` - firewall plugin model and safety notes.
 - `docs/logging_audit.md` - structured logging, audit events, filtering, and export.
-- `docs/tui_dashboard.md` - Textual dashboard panels, Phase 170.5 multi-tab navigation, controls, data sources, and source-mode labeling.
+- `docs/tui_dashboard.md` - Textual dashboard panels, Phase 170.5 multi-tab navigation, Phase 170.5A Risk tab, controls, data sources, and source-mode labeling.
 - `docs/visualization_gui_platform.md` - dashboard risk timeline, topology edges, and flow visualization.
 - `docs/beginner_guide.md` - conceptual guide for local network/firewall terminology.
 - `docs/api_reference.md` - orchestrator HTTP endpoints and command payloads.

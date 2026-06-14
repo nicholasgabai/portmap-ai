@@ -173,17 +173,168 @@ def test_tui_tab_registry_and_shortcut_mapping_are_stable():
 
 
 def test_placeholder_tabs_render_safe_labels_and_serialization():
-    for tab_id in ["risk", "exports", "governance", "deployment", "ai", "packet"]:
+    for tab_id in ["exports", "governance", "deployment", "ai", "packet"]:
         rendered = gui_app.render_placeholder_tab(tab_id)
         assert "This tab is a navigation placeholder." in rendered
         assert "No collectors, packet capture, network calls" in rendered
 
+    assert "Risk and remediation readiness surface." in gui_app.render_placeholder_tab("risk")
     assert "Last Export Summary" in gui_app.render_placeholder_tab("exports")
     assert "Privacy Safeguards" in gui_app.render_placeholder_tab("governance")
     assert "Deployment wizard readiness" in gui_app.render_placeholder_tab("deployment")
     assert "Threat Prediction Models" in gui_app.render_placeholder_tab("ai")
     assert "Packet Intelligence Integration" in gui_app.render_placeholder_tab("packet")
     json.dumps(gui_app.serialize_tui_tab_registry(), sort_keys=True)
+
+
+def test_risk_tab_text_is_live_read_only_not_placeholder_only():
+    text = gui_app.build_risk_tab_text()
+
+    assert "Risk Summary" in text
+    assert "Top Risk Signals" in text
+    assert "Recent Remediation Feed" in text
+    assert "Risk Timeline" in text
+    assert "Allowlist Status" in text
+    assert "Safety Boundary" in text
+    assert "This tab is a navigation placeholder." not in text
+    assert "No enforcement, blocking, remediation execution" in text
+
+
+def test_risk_summary_formatter_handles_populated_runtime_data():
+    remediation_events = [
+        {
+            "timestamp": "2026-06-14T12:00:00+00:00",
+            "action": "prompt_operator",
+            "enforcement": "dry_run",
+            "reason": "score>=0.75",
+            "score": 0.81,
+            "score_factors": ["sensitive_port:22", "listening_socket"],
+            "ai_provider": "local_rules",
+        },
+        {
+            "timestamp": "2026-06-14T12:05:00+00:00",
+            "action": "monitor",
+            "dry_run": True,
+            "reason": "score<0.75",
+            "risk_score": 0.2,
+            "score_factors": ["unknown_service"],
+            "anomaly_count": 1,
+        },
+    ]
+    scan_results = [
+        {
+            "timestamp": "2026-06-14T12:06:00+00:00",
+            "risk_score": 0.91,
+            "score_factors": ["risky_port:22:SSH"],
+            "ai_provider": "local_rules",
+            "anomalies": ["new_service"],
+        }
+    ]
+
+    summary = gui_app._format_risk_summary(remediation_events, scan_results)
+
+    assert "Current findings: 3" in summary
+    assert "Queue counts: monitor=1 review=1 block=0" in summary
+    assert "Latest score: 0.910" in summary
+    assert "Max score: 0.910" in summary
+    assert "Average score: 0.640" in summary
+    assert "Anomalies: 2" in summary
+    assert "Providers/models: local_rules=2" in summary
+
+
+def test_risk_summary_formatter_handles_empty_runtime_data():
+    summary = gui_app._format_risk_summary([], [])
+
+    assert "Current findings: 0" in summary
+    assert "Queue counts: monitor=0 review=0 block=0" in summary
+    assert "Latest score: -" in summary
+    assert "Max score: -" in summary
+    assert "Average score: -" in summary
+    assert "Latest update: -" in summary
+    assert "Providers/models: -" in summary
+
+
+def test_risk_signal_formatter_truncates_and_sanitizes_values():
+    signal = gui_app._sanitize_risk_signal("signal\nwith\rprivate-looking-extra-details" * 3, limit=24)
+
+    assert "\n" not in signal
+    assert "\r" not in signal
+    assert len(signal) <= 24
+    assert signal.endswith("...")
+
+
+def test_top_risk_signals_formatter_handles_empty_and_populated_data():
+    assert "No risk signals available." in gui_app._format_top_risk_signals([], [])
+
+    text = gui_app._format_top_risk_signals(
+        [{"score_factors": ["sensitive_port:22", "listening_socket"]}],
+        [{"score_factors": ["sensitive_port:22", "risky_port:22:SSH"]}],
+    )
+
+    assert "sensitive_port:22 (2)" in text
+    assert "listening_socket (1)" in text
+    assert "risky_port:22:SSH (1)" in text
+
+
+def test_remediation_feed_formatter_handles_empty_and_populated_data():
+    assert "No remediation preview events yet." in gui_app._format_remediation_feed([])
+
+    text = gui_app._format_remediation_feed(
+        [
+            {
+                "action": "prompt_operator",
+                "enforcement": "dry_run",
+                "reason": "score>=0.75 and review required",
+                "score": 0.82,
+                "score_factors": ["sensitive_port:22", "listening_socket"],
+            }
+        ]
+    )
+
+    assert "prompt_operator dry_run score=0.820" in text
+    assert "reason=score>=0.75 and review required" in text
+    assert "signals=sensitive_port:22, listening_socket" in text
+
+
+def test_risk_timeline_formatter_handles_empty_and_populated_data():
+    assert "No scored events yet." in gui_app._format_risk_timeline([])
+
+    text = gui_app._format_risk_timeline(
+        [
+            {
+                "bucket_start": "2026-06-14T12:00:00+00:00",
+                "event_count": 3,
+                "average_score": 0.64,
+                "max_score": 0.91,
+                "actions": {"monitor": 1, "prompt_operator": 1, "block": 0},
+            }
+        ]
+    )
+
+    assert "events=3" in text
+    assert "avg=0.640" in text
+    assert "max=0.910" in text
+    assert "monitor=1" in text
+    assert "review=1" in text
+    assert "block=0" in text
+
+
+def test_allowlist_status_formatter_handles_empty_and_populated_data():
+    empty = gui_app._format_allowlist_status([], [])
+
+    assert "Observed candidates: 0" in empty
+    assert "Allowlisted services: 0" in empty
+    assert "Selected candidate: -" in empty
+
+    text = gui_app._format_allowlist_status(
+        [{"program": "ssh", "protocol": "tcp", "port": 22}],
+        [{"program": "nginx", "protocol": "tcp", "port": 443}],
+    )
+
+    assert "Observed candidates: 1" in text
+    assert "Allowlisted services: 1" in text
+    assert "Selected candidate: ssh tcp:22" in text
+    assert "Dashboard allowlist status: candidate selected" in text
 
 
 def test_tab_nav_and_bindings_expose_shortcuts():
@@ -201,6 +352,8 @@ def test_dashboard_tab_is_default_and_switching_placeholders_does_not_crash():
     dashboard = gui_app.PortMapDashboard()
 
     assert dashboard.active_tab == gui_app.DEFAULT_TUI_TAB
+    dashboard.action_tab_risk()
+    assert dashboard.active_tab == "risk"
     dashboard.action_tab_exports()
     assert dashboard.active_tab == "exports"
     dashboard.action_tab_governance()
@@ -209,6 +362,14 @@ def test_dashboard_tab_is_default_and_switching_placeholders_does_not_crash():
     assert dashboard.active_tab == "packet"
     dashboard.action_tab_dashboard()
     assert dashboard.active_tab == gui_app.DEFAULT_TUI_TAB
+
+
+def test_risk_tab_is_registered_and_selectable_with_shortcut_2():
+    dashboard = gui_app.PortMapDashboard()
+
+    assert gui_app.tui_tab_shortcut_mapping()["2"] == "risk"
+    dashboard.action_tab_risk()
+    assert dashboard.active_tab == "risk"
 
 
 def test_resolve_firewall_status_defaults_safe():

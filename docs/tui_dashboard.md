@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data.
 
 Run it with:
 
@@ -28,15 +28,17 @@ The Dashboard tab remains the default screen and preserves the existing live run
 
 ## Tabs
 
-The TUI provides seven tabs. Only Dashboard contains the existing live dashboard panels today; the other tabs are safe readiness placeholders for future operator surfaces.
+The TUI provides seven tabs. Dashboard remains the default live runtime view, Risk now provides read-only live risk visibility, and the remaining tabs are safe readiness placeholders for future operator surfaces.
 
 - `1` Dashboard: current live runtime dashboard and default launch screen.
-- `2` Risk: risk and remediation readiness surface.
+- `2` Risk: live read-only risk summary, top signals, remediation feed, risk timeline, allowlist status, and safety boundary.
 - `3` Exports: Last Export Summary, export validation status, export destination, and future Runtime Export Validation Panel.
 - `4` Governance: Audit Logging, Compliance Profiles, Data Governance, Operator Accountability, Security Reviews, and Privacy Safeguards.
 - `5` Deployment: Windows installer, macOS packaging, Linux packaging, container deployment, secure updater, and deployment wizard readiness.
 - `6` AI: future Milestone AC AI evolution readiness.
 - `7` Packet: future Milestone AE Packet Intelligence placeholder.
+
+The Risk tab is display-only. It uses the same sampled ports, remediation preview feed, risk timeline, and allowlist candidate data already available to Dashboard refreshes. It does not execute remediation, block traffic, mutate allowlists beyond existing footer actions, modify firewall/process/service state, add collectors, or start packet capture.
 
 The Packet tab is navigation infrastructure only until Milestone AE. It does not start packet capture, protocol inspection, collectors, or network activity.
 
@@ -62,13 +64,28 @@ Keyboard shortcuts:
 - `?` opens the help modal.
 - `e` exports logs.
 
-Switching tabs does not stop dashboard refresh loops. Existing Dashboard data continues to update while placeholder tabs are visible.
+Switching tabs does not stop dashboard refresh loops. Existing Dashboard data continues to update while Risk or placeholder tabs are visible.
 
 ## Phase 170.5 Bridge
 
 Phase 170.5 sits between Milestone AB Compliance And Governance and Milestone AC AI Intelligence Evolution. It adds the navigation foundation before new operator-visible AI, governance, export validation, deployment, or packet-intelligence views are added.
 
 The Export Validation Panel remains future work under the Exports tab. Governance, Deployment, and AI tabs are readiness surfaces until later phases attach live models. Packet remains a placeholder until future Milestone AE Packet Intelligence And Deep Visibility.
+
+## Phase 170.5A Risk Dashboard Tab
+
+Phase 170.5A replaces the Risk placeholder text with a read-only risk dashboard backed by existing runtime data already loaded by the Dashboard refresh loop.
+
+The Risk tab shows:
+
+- Risk Summary: current findings, monitor/review/block queue counts, latest/max/average score, latest update, anomaly count, and provider/model summary when available.
+- Top Risk Signals: recent sampled-port and remediation signals such as `risky_port`, `sensitive_port`, `listening_socket`, and `unknown_service`, sanitized and truncated for display.
+- Recent Remediation Feed: latest remediation preview actions, enforcement mode, reason, score, and short signal summary.
+- Risk Timeline: recent score buckets with event count, average score, max score, and monitor/review/block counts.
+- Allowlist Status: observed candidates, configured allowlisted services, selected candidate, and a reminder to use existing footer actions for mutations.
+- Safety Boundary: read-only status, no enforcement, no blocking, no remediation execution, no firewall/process/service changes, no packet capture, and no new collectors.
+
+Future 170.5B-G work can fill Exports, Governance, Deployment, AI, Packet, and related tab surfaces as dedicated views rather than crowding the Dashboard tab.
 
 Safety boundaries:
 

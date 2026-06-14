@@ -75,6 +75,15 @@ def _format_command_result(event: Dict[str, Any]) -> str:
     return ", ".join(parts[:3])
 
 
+def _short_text(value: Any, *, limit: int = 72) -> str:
+    text = " ".join(str(value or "").replace("\n", " ").replace("\r", " ").split())
+    if not text:
+        return "-"
+    if len(text) <= limit:
+        return text
+    return text[: max(limit - 3, 1)].rstrip() + "..."
+
+
 def _format_risk_score(value: Any) -> str:
     if value in {"", "-", None}:
         return "-"
@@ -394,6 +403,223 @@ def render_placeholder_tab(tab_id: str) -> str:
         ]
     )
     return "\n".join(rows)
+
+
+def _sanitize_risk_signal(value: Any, *, limit: int = 48) -> str:
+    return _short_text(value, limit=limit)
+
+
+def _numeric_risk_score(event: Dict[str, Any]) -> float | None:
+    for key in ("risk_score", "score", "confidence"):
+        try:
+            return float(event[key])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return None
+
+
+def _risk_action_counts(events: List[Dict[str, Any]]) -> Dict[str, int]:
+    counts = {"monitor": 0, "review": 0, "block": 0}
+    for event in events:
+        action = str(event.get("action") or "").lower()
+        if action == "monitor":
+            counts["monitor"] += 1
+        elif action in {"prompt_operator", "review"}:
+            counts["review"] += 1
+        elif action == "block":
+            counts["block"] += 1
+    return counts
+
+
+def _latest_risk_timestamp(events: List[Dict[str, Any]]) -> Any:
+    best: tuple[datetime, Any] | None = None
+    for event in events:
+        raw = event.get("timestamp") or event.get("generated_at")
+        parsed = _timestamp_to_datetime(raw)
+        if parsed is None:
+            continue
+        if best is None or parsed > best[0]:
+            best = (parsed, raw)
+    return best[1] if best else None
+
+
+def _provider_model_summary(events: List[Dict[str, Any]]) -> str:
+    counts: Dict[str, int] = {}
+    for event in events:
+        provider = event.get("ai_provider") or event.get("provider") or event.get("model") or event.get("model_name")
+        label = _short_text(provider, limit=32)
+        if label == "-":
+            continue
+        counts[label] = counts.get(label, 0) + 1
+    if not counts:
+        return "-"
+    rows = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    return ", ".join(f"{label}={count}" for label, count in rows[:4])
+
+
+def _anomaly_count(events: List[Dict[str, Any]]) -> int:
+    count = 0
+    for event in events:
+        try:
+            count += int(event.get("anomaly_count") or 0)
+        except (TypeError, ValueError):
+            pass
+        anomalies = event.get("anomalies")
+        if isinstance(anomalies, list):
+            count += len(anomalies)
+        elif event.get("anomaly") is True:
+            count += 1
+    return count
+
+
+def _format_risk_summary(
+    remediation_events: List[Dict[str, Any]],
+    scan_results: List[Dict[str, Any]],
+) -> str:
+    events = [*remediation_events, *scan_results]
+    scores = [score for event in events if (score := _numeric_risk_score(event)) is not None]
+    counts = _risk_action_counts(remediation_events)
+    latest_score = scores[-1] if scores else None
+    average_score = sum(scores) / len(scores) if scores else None
+    return "\n".join(
+        [
+            "Risk Summary",
+            f"- Current findings: {len(events)}",
+            f"- Queue counts: monitor={counts['monitor']} review={counts['review']} block={counts['block']}",
+            f"- Latest score: {_format_risk_score(latest_score)}",
+            f"- Max score: {_format_risk_score(max(scores) if scores else None)}",
+            f"- Average score: {_format_risk_score(average_score)}",
+            f"- Latest update: {_format_timestamp(_latest_risk_timestamp(events))}",
+            f"- Anomalies: {_anomaly_count(events)}",
+            f"- Providers/models: {_provider_model_summary(events)}",
+        ]
+    )
+
+
+def _signals_from_event(event: Dict[str, Any]) -> List[str]:
+    values: List[Any] = []
+    for key in ("score_factors", "signals", "findings"):
+        item = event.get(key)
+        if isinstance(item, list):
+            values.extend(item)
+        elif item not in {None, "", "-"}:
+            values.append(item)
+    signals = []
+    for value in values:
+        signal = _sanitize_risk_signal(value)
+        if signal != "-":
+            signals.append(signal)
+    return signals
+
+
+def _format_top_risk_signals(
+    remediation_events: List[Dict[str, Any]],
+    scan_results: List[Dict[str, Any]],
+    *,
+    limit: int = 8,
+) -> str:
+    counts: Dict[str, int] = {}
+    for event in [*remediation_events, *scan_results]:
+        for signal in _signals_from_event(event):
+            counts[signal] = counts.get(signal, 0) + 1
+    if not counts:
+        return "Top Risk Signals\n- No risk signals available."
+    rows = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[: max(limit, 0)]
+    return "\n".join(["Top Risk Signals", *[f"- {signal} ({count})" for signal, count in rows]])
+
+
+def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 6) -> str:
+    rows = ["Recent Remediation Feed"]
+    recent = list(events)[-max(limit, 0) :]
+    if not recent:
+        rows.append("- No remediation preview events yet.")
+        return "\n".join(rows)
+    for event in reversed(recent):
+        action = _short_text(event.get("action"), limit=18)
+        enforcement = _short_text(event.get("enforcement") or ("dry_run" if event.get("dry_run") else "-"), limit=18)
+        reason = _short_text(event.get("reason"), limit=44)
+        signals = _short_text(_format_score_factors(event), limit=44)
+        rows.append(
+            f"- {action} {enforcement} score={_format_risk_score(_numeric_risk_score(event))} "
+            f"reason={reason} signals={signals}"
+        )
+    return "\n".join(rows)
+
+
+def _format_risk_timeline(timeline: List[Dict[str, Any]], *, limit: int = 6) -> str:
+    rows = ["Risk Timeline"]
+    recent = list(timeline)[-max(limit, 0) :]
+    if not recent:
+        rows.append("- No scored events yet.")
+        return "\n".join(rows)
+    for bucket in reversed(recent):
+        actions = bucket.get("actions") or {}
+        review_count = actions.get("prompt_operator", actions.get("review", 0))
+        rows.append(
+            " ".join(
+                [
+                    f"- {_format_timestamp(bucket.get('bucket_start'))}",
+                    f"events={bucket.get('event_count', 0)}",
+                    f"avg={_format_risk_score(bucket.get('average_score'))}",
+                    f"max={_format_risk_score(bucket.get('max_score'))}",
+                    f"monitor={actions.get('monitor', 0)}",
+                    f"review={review_count}",
+                    f"block={actions.get('block', 0)}",
+                ]
+            )
+        )
+    return "\n".join(rows)
+
+
+def _format_allowlist_status(
+    candidates: List[Dict[str, Any]],
+    expected_services: List[Dict[str, Any]],
+    *,
+    selected_index: int = 0,
+) -> str:
+    selected = candidates[selected_index] if 0 <= selected_index < len(candidates) else None
+    status = "candidate selected" if selected else "no observed candidate selected"
+    return "\n".join(
+        [
+            "Allowlist Status",
+            f"- Observed candidates: {len(candidates)}",
+            f"- Allowlisted services: {len(expected_services)}",
+            f"- Selected candidate: {_service_label(selected)}",
+            f"- Dashboard allowlist status: {status}",
+            "- Mutations: use existing footer actions only.",
+        ]
+    )
+
+
+def build_risk_tab_text(
+    *,
+    remediation_events: List[Dict[str, Any]] | None = None,
+    scan_results: List[Dict[str, Any]] | None = None,
+    risk_timeline: List[Dict[str, Any]] | None = None,
+    allowlist_candidates: List[Dict[str, Any]] | None = None,
+    expected_services: List[Dict[str, Any]] | None = None,
+    selected_index: int = 0,
+) -> str:
+    remediation = list(remediation_events or [])
+    scans = list(scan_results or [])
+    timeline = list(risk_timeline or [])
+    candidates = list(allowlist_candidates or [])
+    expected = list(expected_services or [])
+    return "\n\n".join(
+        [
+            _format_risk_summary(remediation, scans),
+            _format_top_risk_signals(remediation, scans),
+            _format_remediation_feed(remediation),
+            _format_risk_timeline(timeline),
+            _format_allowlist_status(candidates, expected, selected_index=selected_index),
+            (
+                "Safety Boundary\n"
+                "- Read-only risk visibility only.\n"
+                "- No enforcement, blocking, remediation execution, firewall changes, process changes, "
+                "service changes, packet capture, or new collectors."
+            ),
+        ]
+    )
 
 
 def tab_shortcuts_help_text() -> str:
@@ -775,6 +1001,10 @@ class PortMapDashboard(App):
         for tab in TUI_TAB_REGISTRY:
             if tab.tab_id == DEFAULT_TUI_TAB:
                 continue
+            if tab.tab_id == "risk":
+                self.risk_tab_panel = Static(build_risk_tab_text(), id="risk-tab-panel")
+                yield Container(self.risk_tab_panel, id="tab-risk", classes="tab-panel placeholder-tab")
+                continue
             yield Container(
                 Static(render_placeholder_tab(tab.tab_id)),
                 id=f"tab-{tab.tab_id}",
@@ -933,6 +1163,17 @@ class PortMapDashboard(App):
             item for item in self.runtime_settings.get("expected_services", []) if isinstance(item, dict)
         ]
         self.expected_services_panel.update_services(self._allowlist_candidates, self._expected_services)
+        if hasattr(self, "risk_tab_panel"):
+            self.risk_tab_panel.update(
+                build_risk_tab_text(
+                    remediation_events=remediation_events,
+                    scan_results=scan_results,
+                    risk_timeline=risk_timeline,
+                    allowlist_candidates=self._allowlist_candidates,
+                    expected_services=self._expected_services,
+                    selected_index=self._selected_expected_services_row(),
+                )
+            )
         command_events = self._load_command_events(limit=self.tail_size)
         self.command_panel.update_commands(command_events)
         if hasattr(self, "metrics_panel"):
