@@ -166,24 +166,35 @@ Acceptance:
 
 ## Phase 169 - Security Review Framework
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
 Model security checklist records, package/runtime/security review summaries, and deployment review readiness.
 
 Build:
 
-- Security checklist records.
-- Package review summaries.
-- Runtime review summaries.
-- Security review summaries.
-- Deployment review readiness records.
+- `core_engine/governance/security_reviews.py`
+- `core_engine/governance/security_framework.py`
+- `tests/test_security_review_framework.py`
+- `docs/security_review_framework.md`
+
+Complete baseline:
+
+- Metadata-only security review records for runtime, packaging, deployment, governance, compliance, privacy, export, infrastructure, and unknown review categories.
+- Review state normalization for ready, review-required, incomplete, degraded, unavailable, and unknown states.
+- Checklist item records and checklist summaries with state counts and required-item counts.
+- Runtime, deployment, and packaging review summaries.
+- Governance review summaries that consume Phase 167 data governance summaries.
+- Accountability review summaries that consume Phase 168 operator accountability summaries.
+- Compliance review summaries that consume Phase 166 compliance profiles and Phase 165 audit summaries.
+- Export-safe serialization with fixed preview-only and non-destructive safety fields.
 
 Acceptance:
 
 - Reviews summarize readiness and gaps without executing remediation.
 - No installer, service, firewall, process, package, update, deletion, or enforcement action is performed.
 - Review outputs remain export-safe and free of credentials, payloads, private identifiers, and legal certification claims.
+- No security scanning, vulnerability detection, authorization decisions, file reads, file writes, system modification, or runtime behavior changes are performed.
 
 ## Phase 170 - Privacy And Legal Safeguards
 

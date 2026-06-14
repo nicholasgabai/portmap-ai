@@ -252,6 +252,7 @@ def test_pyproject_includes_local_config_and_docs_data_files():
     assert "docs/compliance_profiles.md" in data_files["share/portmap-ai/docs"]
     assert "docs/data_governance_controls.md" in data_files["share/portmap-ai/docs"]
     assert "docs/operator_accountability.md" in data_files["share/portmap-ai/docs"]
+    assert "docs/security_review_framework.md" in data_files["share/portmap-ai/docs"]
     assert "docs/container_deployment_readiness.md" in data_files["share/portmap-ai/docs"]
     assert "docs/secure_auto_updater.md" in data_files["share/portmap-ai/docs"]
     assert "docs/deployment_wizard.md" in data_files["share/portmap-ai/docs"]
