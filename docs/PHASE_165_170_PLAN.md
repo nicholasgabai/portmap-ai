@@ -198,25 +198,38 @@ Acceptance:
 
 ## Phase 170 - Privacy And Legal Safeguards
 
-Status: Planned
+Status: Complete baseline
 
 Goal:
-Model privacy-safe export summaries, consent/operator notice records, and legal safeguard notes without legal advice or certification claims.
+Model privacy reviews, redaction reviews, consent and notice readiness, export privacy summaries, legal safeguard notes, and privacy recommendations without legal advice, certification claims, enforcement, deletion, private export reads by default, file writes, or runtime behavior changes.
 
 Build:
 
-- Privacy-safe export summaries.
-- Consent/operator notice records.
-- Legal safeguard note records.
-- Privacy review readiness summaries.
-- Legal boundary summaries.
+- `core_engine/governance/privacy_reviews.py`
+- `core_engine/governance/privacy_safeguards.py`
+- `tests/test_privacy_legal_safeguards.py`
+- `docs/privacy_legal_safeguards.md`
+
+Complete baseline:
+
+- Metadata-only privacy review records for export privacy, audit privacy, governance privacy, operator privacy, deployment privacy, runtime privacy, documentation privacy, and unknown categories.
+- Privacy review state normalization for ready, review-required, incomplete, degraded, unavailable, and unknown states.
+- Redaction requirement, notice requirement, consent requirement, and export requirement summaries.
+- Privacy safeguard summaries that consume Phase 165 audit summaries, Phase 166 compliance profiles, Phase 167 governance controls, Phase 168 accountability summaries, and Phase 169 security framework summaries.
+- Privacy readiness summaries, redaction readiness summaries, export privacy summaries, consent and notice readiness summaries, legal safeguard notes, and privacy recommendations.
+- Fixed false `legal_advice_provided` and `certification_claimed` fields.
+- Export-safe serialization with fixed preview-only and non-destructive safety fields.
 
 Acceptance:
 
 - Records do not provide legal advice.
 - Records do not claim certification, compliance, authorization, or legal sufficiency.
 - Operator notice and consent records remain advisory metadata.
-- No private identifiers, credentials, raw payloads, destructive deletion, enforcement, or runtime behavior changes are introduced.
+- No private identifiers, credentials, raw payloads, destructive deletion, enforcement, private export reads by default, file reads, file writes, or runtime behavior changes are introduced.
+
+## Milestone AB Completion
+
+Milestone AB is complete as a baseline through Phase 170. It now provides audit logging readiness, compliance profiles, data governance controls, operator accountability, security review summaries, and privacy/legal safeguard readiness while remaining metadata-only, export-safe, privacy-aware, operator-controlled, and non-enforcing.
 
 ## Safety Boundaries
 

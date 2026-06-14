@@ -9,7 +9,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/COMPLETION_ROADMAP.md` - remaining end-to-end roadmap for live telemetry, active federation, gateway modes, production security, packaging, AI intelligence, commercial readiness, and future packet intelligence.
 - `docs/PORTMAP_AI_FINAL_ROADMAP.md` - forward-looking production-launch roadmap from Milestone U through commercial launch readiness and future Packet Intelligence and Deep Visibility.
 - `docs/PHASE_HISTORY.md` - concise index of completed phase groups.
-- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-158 platform modules.
+- `docs/MILESTONE_INTEGRATION.md` - active integration guide for completed Phase 44-170 platform modules.
 - `docs/MILESTONE_J_INTEGRATION.md` - detailed integration summary for Phase 59-64 runtime pipeline and persistent topology work.
 - `docs/MILESTONE_K_INTEGRATION.md` - detailed integration summary for Phase 65-70 unified runtime operations work.
 - `docs/MILESTONE_L_INTEGRATION.md` - detailed integration summary for Phase 71-76 distributed runtime intelligence work.
@@ -58,6 +58,7 @@ PortMap-AI is currently a functional local distributed network observability sta
 - `docs/data_governance_controls.md` - Phase 167 metadata-only data classifications, privacy boundaries, retention controls, redaction readiness, export governance, and no-enforcement/no-deletion safety boundary.
 - `docs/operator_accountability.md` - Phase 168 metadata-only operator actions, approval summaries, reviewer chains, role mapping, accountability evidence, and no-authorization/no-identity-storage safety boundary.
 - `docs/security_review_framework.md` - Phase 169 metadata-only security review records, checklist summaries, runtime/deployment/packaging reviews, governance/accountability/compliance integration, and no-scanning/no-enforcement safety boundary.
+- `docs/privacy_legal_safeguards.md` - Phase 170 metadata-only privacy review records, redaction/export privacy summaries, consent and notice readiness, legal safeguard notes, Milestone AB completion, and no-legal-advice/no-certification safety boundary.
 - `docs/distributed_telemetry_bus.md` - Phase 153 metadata-only telemetry bus envelopes, bounded in-memory queue summaries, retry/backoff previews, fanout readiness, and no-broker/no-forwarding safety boundary.
 - `docs/high_volume_storage_engine.md` - Phase 154 metadata-only retention tiers, storage readiness summaries, utilization and pressure states, compaction previews, and no-live-database/no-delete safety boundary.
 - `docs/horizontal_scaling.md` - Phase 155 metadata-only worker groups, cluster size previews, shard and partition planning, capacity forecasts, fanout readiness, and no-provisioning safety boundary.
