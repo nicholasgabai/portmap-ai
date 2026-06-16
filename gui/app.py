@@ -404,6 +404,12 @@ RISK_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
     "Safety Boundary",
 )
 RISK_WORKSPACE_CONTENT_CLASS = "risk-section"
+RISK_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
+    "risk-top-row",
+    "risk-active-row",
+    "risk-bottom-row",
+    "risk-footer-row",
+)
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -428,6 +434,10 @@ def risk_workspace_heading_labels() -> tuple[str, ...]:
 
 def risk_workspace_content_class() -> str:
     return RISK_WORKSPACE_CONTENT_CLASS
+
+
+def risk_workspace_layout_rows() -> tuple[str, ...]:
+    return RISK_WORKSPACE_LAYOUT_ROWS
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -625,7 +635,7 @@ def _format_active_risk_findings(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 5,
+    limit: int = 8,
 ) -> str:
     rows = ["Active Risk Findings"]
     events: List[Dict[str, Any]] = []
@@ -767,6 +777,21 @@ def _side_by_side_text(left: str, right: str, *, width: int) -> str:
     return "\n".join(rows)
 
 
+def _three_column_text(left: str, center: str, right: str, *, width: int) -> str:
+    column_width = max((width - 6) // 3, 20)
+    left_lines = left.splitlines() or ["-"]
+    center_lines = center.splitlines() or ["-"]
+    right_lines = right.splitlines() or ["-"]
+    row_count = max(len(left_lines), len(center_lines), len(right_lines))
+    rows = []
+    for index in range(row_count):
+        left_line = _short_text(left_lines[index] if index < len(left_lines) else "", limit=column_width)
+        center_line = _short_text(center_lines[index] if index < len(center_lines) else "", limit=column_width)
+        right_line = _short_text(right_lines[index] if index < len(right_lines) else "", limit=column_width)
+        rows.append(f"{left_line:<{column_width}} | {center_line:<{column_width}} | {right_line}")
+    return "\n".join(rows)
+
+
 def render_risk_workspace_layout(
     *,
     remediation_events: List[Dict[str, Any]] | None = None,
@@ -789,8 +814,12 @@ def render_risk_workspace_layout(
         [
             _side_by_side_text(sections["risk_summary"], sections["queue_summary"], width=width),
             sections["active_findings"],
-            _side_by_side_text(sections["top_signals"], sections["remediation_feed"], width=width),
-            sections["risk_timeline"],
+            _three_column_text(
+                sections["top_signals"],
+                sections["remediation_feed"],
+                sections["risk_timeline"],
+                width=width,
+            ),
             _side_by_side_text(sections["allowlist_status"], sections["safety_boundary"], width=width),
         ]
     )
@@ -1164,15 +1193,37 @@ class PortMapDashboard(App):
     .placeholder-tab {
         padding: 1 2;
     }
+    #tab-risk {
+        height: 1fr;
+    }
     .risk-workspace {
         height: 1fr;
         padding: 0 1;
     }
     .risk-row {
         width: 1fr;
-        height: auto;
+    }
+    .risk-top-row {
+        width: 1fr;
+        height: 5;
+    }
+    .risk-active-row {
+        width: 1fr;
+        height: 1fr;
+    }
+    .risk-bottom-row {
+        width: 1fr;
+        height: 8;
+    }
+    .risk-footer-row {
+        width: 1fr;
+        height: 4;
     }
     .risk-column {
+        width: 1fr;
+        margin-right: 1;
+    }
+    .risk-bottom-column {
         width: 1fr;
         margin-right: 1;
     }
@@ -1180,10 +1231,15 @@ class PortMapDashboard(App):
         padding: 0 1;
         margin: 0 1 0 0;
         width: 1fr;
+        height: auto;
         overflow-x: hidden;
+    }
+    .risk-fill-section {
+        height: 1fr;
     }
     .risk-primary-section {
         width: 1fr;
+        height: 1fr;
     }
     .risk-wide-section {
         width: 1fr;
@@ -1334,7 +1390,7 @@ class PortMapDashboard(App):
     def _compose_risk_tab(self) -> ComposeResult:
         sections = build_risk_workspace_sections()
         with Container(classes="risk-workspace"):
-            with Horizontal(classes="risk-row"):
+            with Horizontal(classes="risk-row risk-top-row"):
                 with Container(classes="risk-column"):
                     yield Static(
                         _panel_heading("Risk Summary", "Current score, findings, anomaly, provider, and update rollup."),
@@ -1349,43 +1405,45 @@ class PortMapDashboard(App):
                     )
                     self.risk_queue_panel = Static(sections["queue_summary"], classes=RISK_WORKSPACE_CONTENT_CLASS)
                     yield self.risk_queue_panel
-            yield Static(
-                _panel_heading(
-                    "Active Risk Findings",
-                    "Primary compact investigation table from sampled ports and remediation previews.",
-                ),
-                classes="panel-heading",
-            )
-            self.risk_active_findings_panel = Static(
-                sections["active_findings"],
-                classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-primary-section",
-            )
-            yield self.risk_active_findings_panel
-            with Horizontal(classes="risk-row"):
-                with Container(classes="risk-column"):
+            with Container(classes="risk-active-row"):
+                yield Static(
+                    _panel_heading(
+                        "Active Risk Findings",
+                        "Primary investigation table from sampled ports and remediation previews.",
+                    ),
+                    classes="panel-heading",
+                )
+                self.risk_active_findings_panel = Static(
+                    sections["active_findings"],
+                    classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-primary-section risk-fill-section",
+                )
+                yield self.risk_active_findings_panel
+            with Horizontal(classes="risk-row risk-bottom-row"):
+                with Container(classes="risk-bottom-column"):
                     yield Static(
                         _panel_heading("Top Risk Signals", "Frequency-counted current risk indicators."),
                         classes="panel-heading",
                     )
                     self.risk_signals_panel = Static(sections["top_signals"], classes=RISK_WORKSPACE_CONTENT_CLASS)
                     yield self.risk_signals_panel
-                with Container(classes="risk-column"):
+                with Container(classes="risk-bottom-column"):
                     yield Static(
                         _panel_heading("Recent Remediation Feed", "Latest preview decisions capped for one-screen review."),
                         classes="panel-heading",
                     )
                     self.risk_feed_panel = Static(sections["remediation_feed"], classes=RISK_WORKSPACE_CONTENT_CLASS)
                     yield self.risk_feed_panel
-            yield Static(
-                _panel_heading("Risk Timeline", "Recent score buckets and queue activity."),
-                classes="panel-heading",
-            )
-            self.risk_workspace_timeline_panel = Static(
-                sections["risk_timeline"],
-                classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-wide-section",
-            )
-            yield self.risk_workspace_timeline_panel
-            with Horizontal(classes="risk-row"):
+                with Container(classes="risk-bottom-column"):
+                    yield Static(
+                        _panel_heading("Risk Timeline", "Recent score buckets and queue activity."),
+                        classes="panel-heading",
+                    )
+                    self.risk_workspace_timeline_panel = Static(
+                        sections["risk_timeline"],
+                        classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-wide-section",
+                    )
+                    yield self.risk_workspace_timeline_panel
+            with Horizontal(classes="risk-row risk-footer-row"):
                 with Container(classes="risk-column"):
                     yield Static(
                         _panel_heading("Allowlist Status", "Observed candidates and configured expected services."),

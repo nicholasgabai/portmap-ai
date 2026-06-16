@@ -153,14 +153,14 @@ Phase 170.5A.6 restores useful Risk tab density while preserving the one-screen,
 
 Default row caps are:
 
-- Active Risk Findings: 5 rows.
+- Active Risk Findings: 8 rows in the largest center area.
 - Top Risk Signals: 4 rows.
 - Recent Remediation Feed: 5 rows.
 - Risk Timeline: 3 rows.
 - Allowlist Status: 2 lines.
 - Safety Boundary: 2 lines.
 
-The layout remains Dashboard-style and compact: Summary and Queue share the top row, Active Risk Findings stays full-width, Signals and Feed share a row, Timeline stays full-width, and Allowlist plus Safety share the footer/detail row. There is no `VerticalScroll`, no bordered report panel, no new collector, no packet capture, no enforcement, no file write, and no runtime behavior change.
+The layout remains Dashboard-style and compact: Summary and Queue share the top row, Active Risk Findings consumes the largest center area, Signals, Feed, and Timeline share the bottom row as left, center, and right columns, and Allowlist plus Safety share the footer/detail row. There is no `VerticalScroll`, no bordered report panel, no new collector, no packet capture, no enforcement, no file write, and no runtime behavior change.
 
 Safety boundaries:
 

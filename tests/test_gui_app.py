@@ -252,8 +252,17 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
     css = gui_app.PortMapDashboard.CSS
 
     assert gui_app.risk_workspace_content_class() == "risk-section"
+    assert gui_app.risk_workspace_layout_rows() == (
+        "risk-top-row",
+        "risk-active-row",
+        "risk-bottom-row",
+        "risk-footer-row",
+    )
     assert "panel-heading" in css
     assert "risk-section" in css
+    assert "risk-active-row" in css
+    assert "risk-bottom-row" in css
+    assert "risk-footer-row" in css
     assert "risk-panel" not in css
     assert "border:" not in css
     assert "VerticalScroll" not in Path(gui_app.__file__).read_text()
@@ -303,8 +312,11 @@ def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
     assert "Risk Summary" in wide.splitlines()[0]
     assert " | Queue Summary" in wide.splitlines()[0]
     assert " | Queue Summary" in narrow.splitlines()[0]
-    assert "Timestamp | Action | Mode | Score | Reason | Signals" in wide
-    assert "Timestamp | Events | Avg | Max | Monitor | Review | Block" in narrow
+    assert "Timestamp | Action | Mode | Score" in wide
+    assert "Top Risk Signals" in wide
+    assert " | Recent Remediation Feed" in wide
+    assert " | Risk Timeline" in wide
+    assert "Timestamp | Events" in narrow
     assert "Allowlist Status" in wide
     assert "Safety Boundary" in wide
     assert "Allowlist Status" in narrow
@@ -577,7 +589,7 @@ def test_risk_one_screen_layout_formatter_enforces_row_limits():
         risk_timeline=timeline,
     )
 
-    assert len(sections["active_findings"].splitlines()) == 7
+    assert len(sections["active_findings"].splitlines()) == 10
     assert len(sections["remediation_feed"].splitlines()) == 7
     assert len(sections["top_signals"].splitlines()) == 6
     assert len(sections["risk_timeline"].splitlines()) == 5
