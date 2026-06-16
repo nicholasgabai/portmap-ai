@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from urllib import error, request
 
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Horizontal, VerticalScroll
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Footer, Header, Static, Label
@@ -383,6 +383,15 @@ DASHBOARD_SECTION_LABELS: tuple[str, ...] = (
     "Command Outcomes",
     "Master Log Tail",
 )
+RISK_WORKSPACE_SECTION_ORDER: tuple[str, ...] = (
+    "risk_summary",
+    "queue_summary",
+    "top_signals",
+    "remediation_feed",
+    "risk_timeline",
+    "allowlist_status",
+    "safety_boundary",
+)
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -395,6 +404,10 @@ def serialize_tui_tab_registry() -> List[Dict[str, Any]]:
 
 def dashboard_section_labels() -> tuple[str, ...]:
     return DASHBOARD_SECTION_LABELS
+
+
+def risk_workspace_section_order() -> tuple[str, ...]:
+    return RISK_WORKSPACE_SECTION_ORDER
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -634,6 +647,83 @@ def _format_allowlist_status(
     )
 
 
+def _format_safety_boundary() -> str:
+    return (
+        "Safety Boundary\n"
+        "- Read-only risk visibility only.\n"
+        "- No enforcement, blocking, remediation execution, firewall changes, process changes, "
+        "service changes, packet capture, or new collectors."
+    )
+
+
+def build_risk_workspace_sections(
+    *,
+    remediation_events: List[Dict[str, Any]] | None = None,
+    scan_results: List[Dict[str, Any]] | None = None,
+    risk_timeline: List[Dict[str, Any]] | None = None,
+    allowlist_candidates: List[Dict[str, Any]] | None = None,
+    expected_services: List[Dict[str, Any]] | None = None,
+    selected_index: int = 0,
+) -> Dict[str, str]:
+    remediation = list(remediation_events or [])
+    scans = list(scan_results or [])
+    timeline = list(risk_timeline or [])
+    candidates = list(allowlist_candidates or [])
+    expected = list(expected_services or [])
+    return {
+        "risk_summary": _format_risk_summary(remediation, scans),
+        "queue_summary": _format_queue_summary(remediation),
+        "top_signals": _format_top_risk_signals(remediation, scans),
+        "remediation_feed": _format_remediation_feed(remediation),
+        "risk_timeline": _format_risk_timeline(timeline),
+        "allowlist_status": _format_allowlist_status(candidates, expected, selected_index=selected_index),
+        "safety_boundary": _format_safety_boundary(),
+    }
+
+
+def _side_by_side_text(left: str, right: str, *, width: int) -> str:
+    column_width = max((width - 3) // 2, 24)
+    left_lines = left.splitlines() or ["-"]
+    right_lines = right.splitlines() or ["-"]
+    row_count = max(len(left_lines), len(right_lines))
+    rows = []
+    for index in range(row_count):
+        left_line = _short_text(left_lines[index] if index < len(left_lines) else "", limit=column_width)
+        right_line = _short_text(right_lines[index] if index < len(right_lines) else "", limit=column_width)
+        rows.append(f"{left_line:<{column_width}} | {right_line}")
+    return "\n".join(rows)
+
+
+def render_risk_workspace_layout(
+    *,
+    remediation_events: List[Dict[str, Any]] | None = None,
+    scan_results: List[Dict[str, Any]] | None = None,
+    risk_timeline: List[Dict[str, Any]] | None = None,
+    allowlist_candidates: List[Dict[str, Any]] | None = None,
+    expected_services: List[Dict[str, Any]] | None = None,
+    selected_index: int = 0,
+    width: int = 100,
+) -> str:
+    sections = build_risk_workspace_sections(
+        remediation_events=remediation_events,
+        scan_results=scan_results,
+        risk_timeline=risk_timeline,
+        allowlist_candidates=allowlist_candidates,
+        expected_services=expected_services,
+        selected_index=selected_index,
+    )
+    if width < 90:
+        return "\n\n".join(sections[key] for key in RISK_WORKSPACE_SECTION_ORDER)
+    return "\n\n".join(
+        [
+            _side_by_side_text(sections["risk_summary"], sections["queue_summary"], width=width),
+            _side_by_side_text(sections["top_signals"], sections["remediation_feed"], width=width),
+            sections["risk_timeline"],
+            _side_by_side_text(sections["allowlist_status"], sections["safety_boundary"], width=width),
+        ]
+    )
+
+
 def build_risk_tab_text(
     *,
     remediation_events: List[Dict[str, Any]] | None = None,
@@ -643,26 +733,14 @@ def build_risk_tab_text(
     expected_services: List[Dict[str, Any]] | None = None,
     selected_index: int = 0,
 ) -> str:
-    remediation = list(remediation_events or [])
-    scans = list(scan_results or [])
-    timeline = list(risk_timeline or [])
-    candidates = list(allowlist_candidates or [])
-    expected = list(expected_services or [])
-    return "\n\n".join(
-        [
-            _format_risk_summary(remediation, scans),
-            _format_queue_summary(remediation),
-            _format_top_risk_signals(remediation, scans),
-            _format_remediation_feed(remediation),
-            _format_risk_timeline(timeline),
-            _format_allowlist_status(candidates, expected, selected_index=selected_index),
-            (
-                "Safety Boundary\n"
-                "- Read-only risk visibility only.\n"
-                "- No enforcement, blocking, remediation execution, firewall changes, process changes, "
-                "service changes, packet capture, or new collectors."
-            ),
-        ]
+    return render_risk_workspace_layout(
+        remediation_events=remediation_events,
+        scan_results=scan_results,
+        risk_timeline=risk_timeline,
+        allowlist_candidates=allowlist_candidates,
+        expected_services=expected_services,
+        selected_index=selected_index,
+        width=80,
     )
 
 
@@ -1014,6 +1092,27 @@ class PortMapDashboard(App):
     .placeholder-tab {
         padding: 1 2;
     }
+    .risk-workspace {
+        height: 1fr;
+        overflow-y: auto;
+        padding: 1 2;
+    }
+    .risk-row {
+        width: 1fr;
+        height: auto;
+    }
+    .risk-panel {
+        border: round $surface-lighten-1;
+        padding: 0 1;
+        margin: 0 1 1 0;
+        width: 1fr;
+        min-height: 6;
+        overflow-x: hidden;
+    }
+    .risk-wide-panel {
+        width: 1fr;
+        min-height: 8;
+    }
     #log-panel {
         height: 12;
         overflow-y: auto;
@@ -1055,8 +1154,8 @@ class PortMapDashboard(App):
             if tab.tab_id == DEFAULT_TUI_TAB:
                 continue
             if tab.tab_id == "risk":
-                self.risk_tab_panel = Static(build_risk_tab_text(), id="risk-tab-panel")
-                yield Container(self.risk_tab_panel, id="tab-risk", classes="tab-panel placeholder-tab")
+                with Container(id="tab-risk", classes="tab-panel"):
+                    yield from self._compose_risk_tab()
                 continue
             yield Container(
                 Static(render_placeholder_tab(tab.tab_id)),
@@ -1081,7 +1180,7 @@ class PortMapDashboard(App):
         yield Static(
             _panel_heading(
                 "Start Here",
-                "Confirm worker online, press Scan Now, then review Remediation Feed and Signals. Press ? for definitions.",
+                "Confirm worker online, press Scan Now, then press 2 Risk for detailed feed, timeline, and signals.",
             ),
             classes="panel-heading",
         )
@@ -1157,6 +1256,30 @@ class PortMapDashboard(App):
         self.log_panel = LogPanel(id="log-panel")
         yield self.log_panel
 
+    def _compose_risk_tab(self) -> ComposeResult:
+        sections = build_risk_workspace_sections()
+        with VerticalScroll(classes="risk-workspace"):
+            with Horizontal(classes="risk-row"):
+                self.risk_summary_panel = Static(sections["risk_summary"], classes="risk-panel")
+                yield self.risk_summary_panel
+                self.risk_queue_panel = Static(sections["queue_summary"], classes="risk-panel")
+                yield self.risk_queue_panel
+            with Horizontal(classes="risk-row"):
+                self.risk_signals_panel = Static(sections["top_signals"], classes="risk-panel")
+                yield self.risk_signals_panel
+                self.risk_feed_panel = Static(sections["remediation_feed"], classes="risk-panel")
+                yield self.risk_feed_panel
+            self.risk_workspace_timeline_panel = Static(
+                sections["risk_timeline"],
+                classes="risk-panel risk-wide-panel",
+            )
+            yield self.risk_workspace_timeline_panel
+            with Horizontal(classes="risk-row"):
+                self.risk_allowlist_panel = Static(sections["allowlist_status"], classes="risk-panel")
+                yield self.risk_allowlist_panel
+                self.risk_safety_panel = Static(sections["safety_boundary"], classes="risk-panel")
+                yield self.risk_safety_panel
+
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
         self.runtime_settings = load_settings(defaults={})
@@ -1207,17 +1330,14 @@ class PortMapDashboard(App):
             item for item in self.runtime_settings.get("expected_services", []) if isinstance(item, dict)
         ]
         self.expected_services_panel.update_services(self._allowlist_candidates, self._expected_services)
-        if hasattr(self, "risk_tab_panel"):
-            self.risk_tab_panel.update(
-                build_risk_tab_text(
-                    remediation_events=remediation_events,
-                    scan_results=scan_results,
-                    risk_timeline=risk_timeline,
-                    allowlist_candidates=self._allowlist_candidates,
-                    expected_services=self._expected_services,
-                    selected_index=self._selected_expected_services_row(),
-                )
-            )
+        self._update_risk_workspace(
+            remediation_events=remediation_events,
+            scan_results=scan_results,
+            risk_timeline=risk_timeline,
+            allowlist_candidates=self._allowlist_candidates,
+            expected_services=self._expected_services,
+            selected_index=self._selected_expected_services_row(),
+        )
         command_events = self._load_command_events(limit=self.tail_size)
         self.command_panel.update_commands(command_events)
         if hasattr(self, "metrics_panel"):
@@ -1231,6 +1351,34 @@ class PortMapDashboard(App):
                 topology=flow_visualization.get("topology"),
             )
             self.metrics_panel.update_metrics(metrics)
+
+    def _update_risk_workspace(
+        self,
+        *,
+        remediation_events: List[Dict[str, Any]],
+        scan_results: List[Dict[str, Any]],
+        risk_timeline: List[Dict[str, Any]],
+        allowlist_candidates: List[Dict[str, Any]],
+        expected_services: List[Dict[str, Any]],
+        selected_index: int,
+    ) -> None:
+        if not hasattr(self, "risk_summary_panel"):
+            return
+        sections = build_risk_workspace_sections(
+            remediation_events=remediation_events,
+            scan_results=scan_results,
+            risk_timeline=risk_timeline,
+            allowlist_candidates=allowlist_candidates,
+            expected_services=expected_services,
+            selected_index=selected_index,
+        )
+        self.risk_summary_panel.update(sections["risk_summary"])
+        self.risk_queue_panel.update(sections["queue_summary"])
+        self.risk_signals_panel.update(sections["top_signals"])
+        self.risk_feed_panel.update(sections["remediation_feed"])
+        self.risk_workspace_timeline_panel.update(sections["risk_timeline"])
+        self.risk_allowlist_panel.update(sections["allowlist_status"])
+        self.risk_safety_panel.update(sections["safety_boundary"])
 
     def _load_orchestrator_defaults(self) -> None:
         # Environment variables take precedence

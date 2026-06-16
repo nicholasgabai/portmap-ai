@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, and Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, and Phase 170.5A.2 turns Risk into a structured workspace layout.
 
 Run it with:
 
@@ -97,6 +97,21 @@ Future 170.5B-G work can fill Exports, Governance, Deployment, AI, Packet, and r
 Phase 170.5A.1 makes Risk the primary risk/remediation workspace and reduces duplicated risk detail on Dashboard. Dashboard remains shortcut `1` and the default overview with compact risk status only. Risk remains shortcut `2` and owns detailed summaries, queue counts, top signals, remediation feed, risk timeline, allowlist status, and safety text.
 
 This refinement is display-only. It does not change runtime behavior, add collectors, write files, capture packets, execute remediation, block traffic, enforce policies, or modify firewall/process/service state. It is the bridge before Phase 170.5B Exports Dashboard work.
+
+## Phase 170.5A.2 Risk Workspace Layout Refinement
+
+Phase 170.5A.2 changes Risk from a single-column text report into a full-screen operator workspace. The live data remains the same existing Dashboard refresh data; only layout and presentation changed.
+
+Risk uses this structured layout:
+
+- Top row: Risk Summary on the left and Queue Summary on the right.
+- Middle row: Top Risk Signals on the left and Recent Remediation Feed on the right.
+- Bottom row: a wide Risk Timeline panel.
+- Footer/detail row: Allowlist Status and Safety Boundary.
+
+Wide terminals use side-by-side sections. Narrow terminals fall back safely to single-column text ordering, with long values sanitized and truncated to avoid horizontal scrolling. This layout pattern is intended to inform future 170.5B-G tab work.
+
+Phase 170.5A.2 is display-only. It adds no runtime behavior changes, collectors, packet capture, enforcement, blocking, remediation execution, file writes, private data persistence, or firewall/process/service changes.
 
 Safety boundaries:
 

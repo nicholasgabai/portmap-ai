@@ -213,6 +213,74 @@ def test_risk_tab_text_is_live_read_only_not_placeholder_only():
     assert "No enforcement, blocking, remediation execution" in text
 
 
+def test_risk_workspace_sections_are_structured_for_layout():
+    sections = gui_app.build_risk_workspace_sections()
+
+    assert gui_app.risk_workspace_section_order() == (
+        "risk_summary",
+        "queue_summary",
+        "top_signals",
+        "remediation_feed",
+        "risk_timeline",
+        "allowlist_status",
+        "safety_boundary",
+    )
+    assert set(sections) == set(gui_app.risk_workspace_section_order())
+    assert sections["risk_summary"].startswith("Risk Summary")
+    assert sections["queue_summary"].startswith("Queue Summary")
+    assert sections["top_signals"].startswith("Top Risk Signals")
+    assert sections["remediation_feed"].startswith("Recent Remediation Feed")
+    assert sections["risk_timeline"].startswith("Risk Timeline")
+    assert sections["allowlist_status"].startswith("Allowlist Status")
+    assert sections["safety_boundary"].startswith("Safety Boundary")
+
+
+def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
+    remediation_events = [
+        {
+            "timestamp": "2026-06-14T12:00:00+00:00",
+            "action": "prompt_operator",
+            "enforcement": "dry_run",
+            "score": 0.82,
+            "reason": "score>=0.75 and review required",
+            "score_factors": ["sensitive_port:22", "listening_socket"],
+        }
+    ]
+    scan_results = [{"timestamp": "2026-06-14T12:05:00+00:00", "risk_score": 0.91}]
+    timeline = [
+        {
+            "bucket_start": "2026-06-14T12:00:00+00:00",
+            "event_count": 2,
+            "average_score": 0.7,
+            "max_score": 0.91,
+            "actions": {"monitor": 1, "prompt_operator": 1, "block": 0},
+        }
+    ]
+
+    wide = gui_app.render_risk_workspace_layout(
+        remediation_events=remediation_events,
+        scan_results=scan_results,
+        risk_timeline=timeline,
+        width=120,
+    )
+    narrow = gui_app.render_risk_workspace_layout(
+        remediation_events=remediation_events,
+        scan_results=scan_results,
+        risk_timeline=timeline,
+        width=72,
+    )
+
+    assert "Risk Summary" in wide
+    assert "Queue Summary" in wide
+    assert "Risk Summary" in narrow
+    assert "Queue Summary" in narrow
+    assert "Risk Summary" in wide.splitlines()[0]
+    assert " | Queue Summary" in wide.splitlines()[0]
+    assert " | Queue Summary" not in narrow.splitlines()[0]
+    assert "Timestamp | Action | Mode | Score | Reason | Signals" in wide
+    assert "Timestamp | Events | Avg | Max | Monitor | Review | Block" in narrow
+
+
 def test_risk_summary_formatter_handles_populated_runtime_data():
     remediation_events = [
         {
