@@ -141,9 +141,10 @@ def test_operator_help_text_defines_key_terms(tmp_path):
     assert "monitor: observed but not risky enough to act" in text
     assert "Signals: short explanations" in text
     assert "Scan Results: latest sampled ports" in text
+    assert "Risk Overview: compact score" in text
     assert "Expected Services: move normal services" in text
     assert "Command Outcomes: whether queued commands" in text
-    assert "Risk Timeline: recent score buckets" in text
+    assert "Risk tab: detailed remediation feed" in text
     assert "Topology Edges: passive flow relationships" in text
     assert "Traffic Flows: bidirectional session summaries" in text
     assert "Firewall plugin: noop" in text
@@ -172,6 +173,17 @@ def test_tui_tab_registry_and_shortcut_mapping_are_stable():
     assert all(tab["destructive_action"] is False for tab in tabs)
 
 
+def test_dashboard_section_labels_keep_risk_details_on_risk_tab():
+    labels = gui_app.dashboard_section_labels()
+
+    assert labels[0] == "Start Here"
+    assert "Risk Overview" in labels
+    assert "Remediation Feed" not in labels
+    assert "Risk Timeline" not in labels
+    assert "Traffic Flows" in labels
+    assert "Topology Edges" in labels
+
+
 def test_placeholder_tabs_render_safe_labels_and_serialization():
     for tab_id in ["exports", "governance", "deployment", "ai", "packet"]:
         rendered = gui_app.render_placeholder_tab(tab_id)
@@ -191,6 +203,7 @@ def test_risk_tab_text_is_live_read_only_not_placeholder_only():
     text = gui_app.build_risk_tab_text()
 
     assert "Risk Summary" in text
+    assert "Queue Summary" in text
     assert "Top Risk Signals" in text
     assert "Recent Remediation Feed" in text
     assert "Risk Timeline" in text
@@ -234,7 +247,6 @@ def test_risk_summary_formatter_handles_populated_runtime_data():
     summary = gui_app._format_risk_summary(remediation_events, scan_results)
 
     assert "Current findings: 3" in summary
-    assert "Queue counts: monitor=1 review=1 block=0" in summary
     assert "Latest score: 0.910" in summary
     assert "Max score: 0.910" in summary
     assert "Average score: 0.640" in summary
@@ -246,12 +258,54 @@ def test_risk_summary_formatter_handles_empty_runtime_data():
     summary = gui_app._format_risk_summary([], [])
 
     assert "Current findings: 0" in summary
-    assert "Queue counts: monitor=0 review=0 block=0" in summary
     assert "Latest score: -" in summary
     assert "Max score: -" in summary
     assert "Average score: -" in summary
     assert "Latest update: -" in summary
     assert "Providers/models: -" in summary
+
+
+def test_dashboard_compact_risk_summary_renders_without_detailed_sections():
+    text = gui_app._format_dashboard_risk_overview(
+        [
+            {
+                "timestamp": "2026-06-14T12:00:00+00:00",
+                "action": "prompt_operator",
+                "score": 0.8,
+            },
+            {
+                "timestamp": "2026-06-14T12:05:00+00:00",
+                "action": "monitor",
+                "risk_score": 0.2,
+            },
+        ],
+        [{"timestamp": "2026-06-14T12:06:00+00:00", "risk_score": 0.91}],
+    )
+
+    assert "Risk Overview" in text
+    assert "Latest score: 0.910" in text
+    assert "Max score: 0.910" in text
+    assert "Queues: monitor=1 review=1 block=0" in text
+    assert "Details: press 2 for the Risk workspace." in text
+    assert "Recent Remediation Feed" not in text
+    assert "Risk Timeline" not in text
+
+
+def test_queue_summary_counts_monitor_review_block_correctly():
+    text = gui_app._format_queue_summary(
+        [
+            {"action": "monitor"},
+            {"action": "prompt_operator"},
+            {"action": "review"},
+            {"action": "block"},
+            {"action": "other"},
+        ]
+    )
+
+    assert "Monitor: 1" in text
+    assert "Review: 2" in text
+    assert "Block: 1" in text
+    assert "Total events: 4" in text
 
 
 def test_risk_signal_formatter_truncates_and_sanitizes_values():
@@ -282,6 +336,7 @@ def test_remediation_feed_formatter_handles_empty_and_populated_data():
     text = gui_app._format_remediation_feed(
         [
             {
+                "timestamp": "2026-06-14T12:00:00+00:00",
                 "action": "prompt_operator",
                 "enforcement": "dry_run",
                 "reason": "score>=0.75 and review required",
@@ -291,9 +346,10 @@ def test_remediation_feed_formatter_handles_empty_and_populated_data():
         ]
     )
 
-    assert "prompt_operator dry_run score=0.820" in text
-    assert "reason=score>=0.75 and review required" in text
-    assert "signals=sensitive_port:22, listening_socket" in text
+    assert "Timestamp | Action | Mode | Score | Reason | Signals" in text
+    assert "prompt_operator | dry_run | 0.820" in text
+    assert "score>=0.75 and review required" in text
+    assert "sensitive_port:22, listening_socket" in text
 
 
 def test_risk_timeline_formatter_handles_empty_and_populated_data():
@@ -311,12 +367,8 @@ def test_risk_timeline_formatter_handles_empty_and_populated_data():
         ]
     )
 
-    assert "events=3" in text
-    assert "avg=0.640" in text
-    assert "max=0.910" in text
-    assert "monitor=1" in text
-    assert "review=1" in text
-    assert "block=0" in text
+    assert "Timestamp | Events | Avg | Max | Monitor | Review | Block" in text
+    assert "| 3 | 0.640 | 0.910 | 1 | 1 | 0" in text
 
 
 def test_allowlist_status_formatter_handles_empty_and_populated_data():

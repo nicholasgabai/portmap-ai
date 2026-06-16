@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, and Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review.
 
 Run it with:
 
@@ -20,11 +20,15 @@ The Dashboard tab remains the default screen and preserves the existing live run
 
 - Node Overview: registered nodes, role, status, and last heartbeat.
 - Metrics: node counts, last heartbeat, remediation totals, firewall mode, orchestrator health, and API counters.
+- Risk Overview: compact latest score, max score, monitor/review/block queue counts, latest update timestamp, and a shortcut reminder for the Risk tab.
 - Scan Results: latest sampled ports, source mode, risk score, AI provider, and scoring signals from worker telemetry.
-- Remediation Feed: recent remediation decisions with action, enforcement mode, reason, score, and signals.
 - Expected Services: observed candidate services and configured allowlisted services.
+- Topology Edges: passive flow relationships when flow telemetry exists.
+- Traffic Flows: bidirectional flow summaries with packet and byte counts, no raw payload storage.
 - Command Outcomes: worker command audit events such as received, applied, failed, or ignored.
 - Master Log Tail: recent master-node runtime log lines.
+
+Dashboard intentionally does not show the full remediation feed or full risk timeline when the Risk tab is available. Press `2` for detailed risk/remediation review.
 
 ## Tabs
 
@@ -76,16 +80,23 @@ The Export Validation Panel remains future work under the Exports tab. Governanc
 
 Phase 170.5A replaces the Risk placeholder text with a read-only risk dashboard backed by existing runtime data already loaded by the Dashboard refresh loop.
 
-The Risk tab shows:
+The Risk tab is the detailed risk/remediation workspace. It shows:
 
-- Risk Summary: current findings, monitor/review/block queue counts, latest/max/average score, latest update, anomaly count, and provider/model summary when available.
+- Risk Summary: current findings, latest/max/average score, latest update, anomaly count, and provider/model summary when available.
+- Queue Summary: monitor, review, block, and total queue/event counts.
 - Top Risk Signals: recent sampled-port and remediation signals such as `risky_port`, `sensitive_port`, `listening_socket`, and `unknown_service`, sanitized and truncated for display.
-- Recent Remediation Feed: latest remediation preview actions, enforcement mode, reason, score, and short signal summary.
-- Risk Timeline: recent score buckets with event count, average score, max score, and monitor/review/block counts.
+- Recent Remediation Feed: up to 10 table-like rows with timestamp, action, enforcement mode, score, short reason, and signal summary.
+- Risk Timeline: up to 10 table-like score buckets with event count, average score, max score, and monitor/review/block counts.
 - Allowlist Status: observed candidates, configured allowlisted services, selected candidate, and a reminder to use existing footer actions for mutations.
 - Safety Boundary: read-only status, no enforcement, no blocking, no remediation execution, no firewall/process/service changes, no packet capture, and no new collectors.
 
 Future 170.5B-G work can fill Exports, Governance, Deployment, AI, Packet, and related tab surfaces as dedicated views rather than crowding the Dashboard tab.
+
+## Phase 170.5A.1 Risk Dashboard Refinement
+
+Phase 170.5A.1 makes Risk the primary risk/remediation workspace and reduces duplicated risk detail on Dashboard. Dashboard remains shortcut `1` and the default overview with compact risk status only. Risk remains shortcut `2` and owns detailed summaries, queue counts, top signals, remediation feed, risk timeline, allowlist status, and safety text.
+
+This refinement is display-only. It does not change runtime behavior, add collectors, write files, capture packets, execute remediation, block traffic, enforce policies, or modify firewall/process/service state. It is the bridge before Phase 170.5B Exports Dashboard work.
 
 Safety boundaries:
 

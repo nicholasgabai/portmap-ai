@@ -371,6 +371,18 @@ TUI_TAB_REGISTRY: tuple[TuiTab, ...] = (
 )
 DEFAULT_TUI_TAB = "dashboard"
 TUI_TAB_IDS = {tab.tab_id for tab in TUI_TAB_REGISTRY}
+DASHBOARD_SECTION_LABELS: tuple[str, ...] = (
+    "Start Here",
+    "Node Overview",
+    "Metrics",
+    "Risk Overview",
+    "Scan Results",
+    "Expected Services",
+    "Topology Edges",
+    "Traffic Flows",
+    "Command Outcomes",
+    "Master Log Tail",
+)
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -379,6 +391,10 @@ def tui_tab_shortcut_mapping() -> Dict[str, str]:
 
 def serialize_tui_tab_registry() -> List[Dict[str, Any]]:
     return [tab.to_dict() for tab in TUI_TAB_REGISTRY]
+
+
+def dashboard_section_labels() -> tuple[str, ...]:
+    return DASHBOARD_SECTION_LABELS
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -478,20 +494,52 @@ def _format_risk_summary(
 ) -> str:
     events = [*remediation_events, *scan_results]
     scores = [score for event in events if (score := _numeric_risk_score(event)) is not None]
-    counts = _risk_action_counts(remediation_events)
     latest_score = scores[-1] if scores else None
     average_score = sum(scores) / len(scores) if scores else None
     return "\n".join(
         [
             "Risk Summary",
             f"- Current findings: {len(events)}",
-            f"- Queue counts: monitor={counts['monitor']} review={counts['review']} block={counts['block']}",
             f"- Latest score: {_format_risk_score(latest_score)}",
             f"- Max score: {_format_risk_score(max(scores) if scores else None)}",
             f"- Average score: {_format_risk_score(average_score)}",
             f"- Latest update: {_format_timestamp(_latest_risk_timestamp(events))}",
             f"- Anomalies: {_anomaly_count(events)}",
             f"- Providers/models: {_provider_model_summary(events)}",
+        ]
+    )
+
+
+def _format_queue_summary(events: List[Dict[str, Any]]) -> str:
+    counts = _risk_action_counts(events)
+    total = counts["monitor"] + counts["review"] + counts["block"]
+    return "\n".join(
+        [
+            "Queue Summary",
+            f"- Monitor: {counts['monitor']}",
+            f"- Review: {counts['review']}",
+            f"- Block: {counts['block']}",
+            f"- Total events: {total}",
+        ]
+    )
+
+
+def _format_dashboard_risk_overview(
+    remediation_events: List[Dict[str, Any]],
+    scan_results: List[Dict[str, Any]],
+) -> str:
+    events = [*remediation_events, *scan_results]
+    scores = [score for event in events if (score := _numeric_risk_score(event)) is not None]
+    counts = _risk_action_counts(remediation_events)
+    latest_score = scores[-1] if scores else None
+    return "\n".join(
+        [
+            "Risk Overview",
+            f"Latest score: {_format_risk_score(latest_score)}",
+            f"Max score: {_format_risk_score(max(scores) if scores else None)}",
+            f"Queues: monitor={counts['monitor']} review={counts['review']} block={counts['block']}",
+            f"Latest update: {_format_timestamp(_latest_risk_timestamp(events))}",
+            "Details: press 2 for the Risk workspace.",
         ]
     )
 
@@ -516,7 +564,7 @@ def _format_top_risk_signals(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 8,
+    limit: int = 10,
 ) -> str:
     counts: Dict[str, int] = {}
     for event in [*remediation_events, *scan_results]:
@@ -528,45 +576,40 @@ def _format_top_risk_signals(
     return "\n".join(["Top Risk Signals", *[f"- {signal} ({count})" for signal, count in rows]])
 
 
-def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 6) -> str:
+def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 10) -> str:
     rows = ["Recent Remediation Feed"]
     recent = list(events)[-max(limit, 0) :]
     if not recent:
         rows.append("- No remediation preview events yet.")
         return "\n".join(rows)
+    rows.append("Timestamp | Action | Mode | Score | Reason | Signals")
     for event in reversed(recent):
+        timestamp = _format_timestamp(event.get("timestamp") or event.get("generated_at"))
         action = _short_text(event.get("action"), limit=18)
         enforcement = _short_text(event.get("enforcement") or ("dry_run" if event.get("dry_run") else "-"), limit=18)
         reason = _short_text(event.get("reason"), limit=44)
         signals = _short_text(_format_score_factors(event), limit=44)
         rows.append(
-            f"- {action} {enforcement} score={_format_risk_score(_numeric_risk_score(event))} "
-            f"reason={reason} signals={signals}"
+            f"{timestamp} | {action} | {enforcement} | {_format_risk_score(_numeric_risk_score(event))} | "
+            f"{reason} | {signals}"
         )
     return "\n".join(rows)
 
 
-def _format_risk_timeline(timeline: List[Dict[str, Any]], *, limit: int = 6) -> str:
+def _format_risk_timeline(timeline: List[Dict[str, Any]], *, limit: int = 10) -> str:
     rows = ["Risk Timeline"]
     recent = list(timeline)[-max(limit, 0) :]
     if not recent:
         rows.append("- No scored events yet.")
         return "\n".join(rows)
+    rows.append("Timestamp | Events | Avg | Max | Monitor | Review | Block")
     for bucket in reversed(recent):
         actions = bucket.get("actions") or {}
         review_count = actions.get("prompt_operator", actions.get("review", 0))
         rows.append(
-            " ".join(
-                [
-                    f"- {_format_timestamp(bucket.get('bucket_start'))}",
-                    f"events={bucket.get('event_count', 0)}",
-                    f"avg={_format_risk_score(bucket.get('average_score'))}",
-                    f"max={_format_risk_score(bucket.get('max_score'))}",
-                    f"monitor={actions.get('monitor', 0)}",
-                    f"review={review_count}",
-                    f"block={actions.get('block', 0)}",
-                ]
-            )
+            f"{_format_timestamp(bucket.get('bucket_start'))} | {bucket.get('event_count', 0)} | "
+            f"{_format_risk_score(bucket.get('average_score'))} | {_format_risk_score(bucket.get('max_score'))} | "
+            f"{actions.get('monitor', 0)} | {review_count} | {actions.get('block', 0)}"
         )
     return "\n".join(rows)
 
@@ -608,6 +651,7 @@ def build_risk_tab_text(
     return "\n\n".join(
         [
             _format_risk_summary(remediation, scans),
+            _format_queue_summary(remediation),
             _format_top_risk_signals(remediation, scans),
             _format_remediation_feed(remediation),
             _format_risk_timeline(timeline),
@@ -653,7 +697,7 @@ def _operator_help_text(export_dir: Path, firewall_status: Dict[str, str]) -> st
         "Start here:\n"
         "1. Confirm a worker is online in Node Overview.\n"
         "2. Press Scan Now to ask that worker to scan immediately.\n"
-        "3. Review Remediation Feed for the decision and Signals.\n\n"
+        "3. Press 2 Risk for detailed remediation feed, timeline, and signals.\n\n"
         "Terms:\n"
         "- monitor: observed but not risky enough to act.\n"
         "- prompt_operator: score crossed the threshold; human review is needed.\n"
@@ -667,12 +711,12 @@ def _operator_help_text(export_dir: Path, firewall_status: Dict[str, str]) -> st
         "Panels:\n"
         "- Node Overview: registered workers and last heartbeat.\n"
         "- Scan Results: latest sampled ports with risk scores, provider, and signals.\n"
-        "- Remediation Feed: recent decisions for scanned connections.\n"
+        "- Risk Overview: compact score, queue, and update summary; press 2 for detail.\n"
         "- Expected Services: move normal services into the allowlist so scoring explains them as expected.\n"
         "- Command Outcomes: whether queued commands were received, applied, failed, or ignored.\n"
         "- Master Log Tail: most recent master-node runtime lines.\n\n"
         "Visualization:\n"
-        "- Risk Timeline: recent score buckets for quick trend review.\n"
+        "- Risk tab: detailed remediation feed, risk timeline, queue summary, and top signals.\n"
         "- Topology Edges: passive flow relationships from flow telemetry when available.\n"
         "- Traffic Flows: bidirectional session summaries without raw payload storage.\n\n"
         f"{tab_shortcuts_help_text()}\n\n"
@@ -779,6 +823,15 @@ class MetricsPanel(Static):
                 f"latest max score: {_format_risk_score(visualization.get('latest_max_score'))}"
             )
         self.update(text)
+
+
+class CompactRiskPanel(Static):
+    def update_risk(
+        self,
+        remediation_events: List[Dict[str, Any]],
+        scan_results: List[Dict[str, Any]],
+    ) -> None:
+        self.update(_format_dashboard_risk_overview(remediation_events, scan_results))
 
 
 class LogPanel(Static):
@@ -1045,6 +1098,15 @@ class PortMapDashboard(App):
                 yield self.metrics_panel
                 yield Static(
                     _panel_heading(
+                        "Risk Overview",
+                        "Compact risk status. Press 2 for detailed remediation feed and timeline.",
+                    ),
+                    classes="panel-heading",
+                )
+                self.compact_risk_panel = CompactRiskPanel()
+                yield self.compact_risk_panel
+                yield Static(
+                    _panel_heading(
                         "Scan Results",
                         "Latest sampled ports, risk scores, AI provider, and scoring signals.",
                     ),
@@ -1052,15 +1114,6 @@ class PortMapDashboard(App):
                 )
                 self.scan_results_panel = ScanResultsPanel()
                 yield self.scan_results_panel
-                yield Static(
-                    _panel_heading(
-                        "Remediation Feed",
-                        "Each row is a remediation event. Enforcement shows dry-run vs active mode.",
-                    ),
-                    classes="panel-heading",
-                )
-                self.remediation_panel = RemediationPanel()
-                yield self.remediation_panel
         yield Static(
             _panel_heading(
                 "Expected Services",
@@ -1070,27 +1123,15 @@ class PortMapDashboard(App):
         )
         self.expected_services_panel = ExpectedServicesPanel()
         yield self.expected_services_panel
-        with Horizontal():
-            with Container():
-                yield Static(
-                    _panel_heading(
-                        "Risk Timeline",
-                        "Recent score buckets for quick historical trend review.",
-                    ),
-                    classes="panel-heading",
-                )
-                self.risk_timeline_panel = RiskTimelinePanel()
-                yield self.risk_timeline_panel
-            with Container():
-                yield Static(
-                    _panel_heading(
-                        "Topology Edges",
-                        "Passive initiator-to-responder relationships when flow telemetry exists.",
-                    ),
-                    classes="panel-heading",
-                )
-                self.topology_panel = TopologyPanel()
-                yield self.topology_panel
+        yield Static(
+            _panel_heading(
+                "Topology Edges",
+                "Passive initiator-to-responder relationships when flow telemetry exists.",
+            ),
+            classes="panel-heading",
+        )
+        self.topology_panel = TopologyPanel()
+        yield self.topology_panel
         yield Static(
             _panel_heading(
                 "Traffic Flows",
@@ -1147,13 +1188,16 @@ class PortMapDashboard(App):
         logs = self._tail_log()
         self.log_panel.update_log(logs)
         remediation_events = self._load_remediation_events(limit=self.tail_size)
-        self.remediation_panel.update_events(remediation_events)
+        if hasattr(self, "remediation_panel"):
+            self.remediation_panel.update_events(remediation_events)
         scan_results = self._load_scan_results(remediation_events, limit=self.tail_size)
         self.scan_results_panel.update_results(scan_results)
         risk_timeline = build_risk_timeline([*remediation_events, *scan_results], limit=self.tail_size)
         flow_visualization = self._load_flow_visualization(limit=max(self.tail_size * 4, 20))
         if hasattr(self, "risk_timeline_panel"):
             self.risk_timeline_panel.update_timeline(risk_timeline)
+        if hasattr(self, "compact_risk_panel"):
+            self.compact_risk_panel.update_risk(remediation_events, scan_results)
         if hasattr(self, "topology_panel"):
             self.topology_panel.update_topology(topology_edge_rows(flow_visualization.get("topology"), limit=self.tail_size))
         if hasattr(self, "traffic_flows_panel"):
