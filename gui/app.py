@@ -390,7 +390,8 @@ RISK_WORKSPACE_SECTION_ORDER: tuple[str, ...] = (
     "top_signals",
     "remediation_feed",
     "risk_timeline",
-    "allowlist_safety",
+    "allowlist_status",
+    "safety_boundary",
 )
 RISK_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
     "Risk Summary",
@@ -399,7 +400,8 @@ RISK_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
     "Top Risk Signals",
     "Recent Remediation Feed",
     "Risk Timeline",
-    "Allowlist/Safety",
+    "Allowlist Status",
+    "Safety Boundary",
 )
 RISK_WORKSPACE_CONTENT_CLASS = "risk-section"
 
@@ -600,7 +602,7 @@ def _format_top_risk_signals(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 5,
+    limit: int = 4,
 ) -> str:
     counts: Dict[str, int] = {}
     for event in [*remediation_events, *scan_results]:
@@ -609,7 +611,7 @@ def _format_top_risk_signals(
     if not counts:
         return "Top Risk Signals\n- No risk signals available."
     rows = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[: max(limit, 0)]
-    return "\n".join(["Top Risk Signals", *[f"- {signal} ({count})" for signal, count in rows]])
+    return "\n".join(["Top Risk Signals", "Signal | Count", *[f"{signal} | {count}" for signal, count in rows]])
 
 
 def _risk_finding_sort_key(event: Dict[str, Any]) -> tuple[float, float]:
@@ -623,7 +625,7 @@ def _format_active_risk_findings(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 6,
+    limit: int = 5,
 ) -> str:
     rows = ["Active Risk Findings"]
     events: List[Dict[str, Any]] = []
@@ -715,7 +717,6 @@ def _format_allowlist_status(
         [
             "Allowlist Status",
             f"Observed: {len(candidates)} | Allowlisted: {len(expected_services)} | Selected: {_service_label(selected)} | Status: {status}",
-            "Mutations: existing footer actions only.",
         ]
     )
 
@@ -723,25 +724,7 @@ def _format_allowlist_status(
 def _format_safety_boundary() -> str:
     return (
         "Safety Boundary\n"
-        "Read-only risk visibility; no enforcement, blocking, remediation execution, firewall/process/service changes, "
-        "packet capture, new collectors, or runtime actions."
-    )
-
-
-def _format_allowlist_safety_footer(
-    candidates: List[Dict[str, Any]],
-    expected_services: List[Dict[str, Any]],
-    *,
-    selected_index: int = 0,
-) -> str:
-    allowlist_lines = _format_allowlist_status(candidates, expected_services, selected_index=selected_index).splitlines()
-    safety_lines = _format_safety_boundary().splitlines()
-    return "\n".join(
-        [
-            "Allowlist/Safety",
-            allowlist_lines[1] if len(allowlist_lines) > 1 else "Observed: 0 | Allowlisted: 0 | Selected: -",
-            safety_lines[1] if len(safety_lines) > 1 else "Read-only risk visibility; no runtime actions.",
-        ]
+        "Read-only; no enforcement, blocking, remediation execution, firewall/process/service changes, packet capture, collectors, or runtime actions."
     )
 
 
@@ -766,7 +749,8 @@ def build_risk_workspace_sections(
         "top_signals": _format_top_risk_signals(remediation, scans),
         "remediation_feed": _format_remediation_feed(remediation),
         "risk_timeline": _format_risk_timeline(timeline),
-        "allowlist_safety": _format_allowlist_safety_footer(candidates, expected, selected_index=selected_index),
+        "allowlist_status": _format_allowlist_status(candidates, expected, selected_index=selected_index),
+        "safety_boundary": _format_safety_boundary(),
     }
 
 
@@ -807,7 +791,7 @@ def render_risk_workspace_layout(
             sections["active_findings"],
             _side_by_side_text(sections["top_signals"], sections["remediation_feed"], width=width),
             sections["risk_timeline"],
-            sections["allowlist_safety"],
+            _side_by_side_text(sections["allowlist_status"], sections["safety_boundary"], width=width),
         ]
     )
 
@@ -1401,15 +1385,21 @@ class PortMapDashboard(App):
                 classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-wide-section",
             )
             yield self.risk_workspace_timeline_panel
-            yield Static(
-                _panel_heading("Allowlist/Safety", "Footer-only status; existing footer actions handle mutations."),
-                classes="panel-heading",
-            )
-            self.risk_allowlist_safety_panel = Static(
-                sections["allowlist_safety"],
-                classes=RISK_WORKSPACE_CONTENT_CLASS,
-            )
-            yield self.risk_allowlist_safety_panel
+            with Horizontal(classes="risk-row"):
+                with Container(classes="risk-column"):
+                    yield Static(
+                        _panel_heading("Allowlist Status", "Observed candidates and configured expected services."),
+                        classes="panel-heading",
+                    )
+                    self.risk_allowlist_panel = Static(sections["allowlist_status"], classes=RISK_WORKSPACE_CONTENT_CLASS)
+                    yield self.risk_allowlist_panel
+                with Container(classes="risk-column"):
+                    yield Static(
+                        _panel_heading("Safety Boundary", "Read-only risk visibility; no runtime actions."),
+                        classes="panel-heading",
+                    )
+                    self.risk_safety_panel = Static(sections["safety_boundary"], classes=RISK_WORKSPACE_CONTENT_CLASS)
+                    yield self.risk_safety_panel
 
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
@@ -1509,7 +1499,8 @@ class PortMapDashboard(App):
         self.risk_signals_panel.update(sections["top_signals"])
         self.risk_feed_panel.update(sections["remediation_feed"])
         self.risk_workspace_timeline_panel.update(sections["risk_timeline"])
-        self.risk_allowlist_safety_panel.update(sections["allowlist_safety"])
+        self.risk_allowlist_panel.update(sections["allowlist_status"])
+        self.risk_safety_panel.update(sections["safety_boundary"])
 
     def _load_orchestrator_defaults(self) -> None:
         # Environment variables take precedence

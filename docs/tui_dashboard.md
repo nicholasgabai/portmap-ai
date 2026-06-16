@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation, and Phase 170.5A.5 keeps Risk compact enough for a one-screen operator view.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation, Phase 170.5A.5 keeps Risk compact enough for a one-screen operator view, and Phase 170.5A.6 restores useful data density inside that no-scroll layout.
 
 Run it with:
 
@@ -35,7 +35,7 @@ Dashboard intentionally does not show the full remediation feed or full risk tim
 The TUI provides seven tabs. Dashboard remains the default live runtime view, Risk now provides read-only live risk visibility, and the remaining tabs are safe readiness placeholders for future operator surfaces.
 
 - `1` Dashboard: current live runtime dashboard and default launch screen.
-- `2` Risk: one-screen live read-only risk investigation dashboard with summary, queue counts, active findings, top signals, remediation feed, risk timeline, and allowlist/safety footer.
+- `2` Risk: one-screen live read-only risk investigation dashboard with summary, queue counts, active findings, top signals, remediation feed, risk timeline, allowlist status, and safety boundary.
 - `3` Exports: Last Export Summary, export validation status, export destination, and future Runtime Export Validation Panel.
 - `4` Governance: Audit Logging, Compliance Profiles, Data Governance, Operator Accountability, Security Reviews, and Privacy Safeguards.
 - `5` Deployment: Windows installer, macOS packaging, Linux packaging, container deployment, secure updater, and deployment wizard readiness.
@@ -138,14 +138,29 @@ Phase 170.5A.5 changes Risk from a scroll-heavy investigation report into a one-
 The Risk screen now uses this visible structure:
 
 - Top row: compact Risk Summary plus Queue Summary.
-- Main table: Active Risk Findings with `Time`, `Source`, `Node`, `Port/Target`, `Score`, `State`, and `Signal` columns, capped at 6 rows.
-- Supporting row: Top Risk Signals capped at 5 rows plus Recent Remediation Feed capped at 5 rows.
+- Main table: Active Risk Findings with `Time`, `Source`, `Node`, `Port/Target`, `Score`, `State`, and `Signal` columns.
+- Supporting row: Top Risk Signals plus Recent Remediation Feed.
 - Bottom table: Risk Timeline capped at 3 rows.
-- Footer note: Allowlist/Safety in 2-3 lines total.
+- Footer/detail row: Allowlist Status plus Safety Boundary.
 
 The default Risk tab should remain compact. Full historical or detail-heavy views can be added later as separate operator surfaces if needed, but the default Risk tab should not become a vertical report.
 
 Phase 170.5A.5 is display-only. It adds no runtime behavior changes, collectors, packet capture, enforcement, blocking, remediation execution, file writes, private data persistence, or firewall/process/service changes.
+
+## Phase 170.5A.6 Risk Compact Data Restoration
+
+Phase 170.5A.6 restores useful Risk tab density while preserving the one-screen, no-scroll layout. It keeps separate visible sections for Risk Summary, Queue Summary, Active Risk Findings, Top Risk Signals, Recent Remediation Feed, Risk Timeline, Allowlist Status, and Safety Boundary.
+
+Default row caps are:
+
+- Active Risk Findings: 5 rows.
+- Top Risk Signals: 4 rows.
+- Recent Remediation Feed: 5 rows.
+- Risk Timeline: 3 rows.
+- Allowlist Status: 2 lines.
+- Safety Boundary: 2 lines.
+
+The layout remains Dashboard-style and compact: Summary and Queue share the top row, Active Risk Findings stays full-width, Signals and Feed share a row, Timeline stays full-width, and Allowlist plus Safety share the footer/detail row. There is no `VerticalScroll`, no bordered report panel, no new collector, no packet capture, no enforcement, no file write, and no runtime behavior change.
 
 Safety boundaries:
 
