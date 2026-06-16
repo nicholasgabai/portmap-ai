@@ -208,10 +208,9 @@ def test_risk_tab_text_is_live_read_only_not_placeholder_only():
     assert "Top Risk Signals" in text
     assert "Recent Remediation Feed" in text
     assert "Risk Timeline" in text
-    assert "Allowlist Status" in text
-    assert "Safety Boundary" in text
+    assert "Allowlist/Safety" in text
     assert "This tab is a navigation placeholder." not in text
-    assert "No enforcement, blocking, remediation execution" in text
+    assert "no enforcement, blocking, remediation execution" in text
 
 
 def test_risk_workspace_sections_are_structured_for_layout():
@@ -224,8 +223,7 @@ def test_risk_workspace_sections_are_structured_for_layout():
         "Top Risk Signals",
         "Recent Remediation Feed",
         "Risk Timeline",
-        "Allowlist Status",
-        "Safety Boundary",
+        "Allowlist/Safety",
     )
     assert gui_app.risk_workspace_section_order() == (
         "risk_summary",
@@ -234,8 +232,7 @@ def test_risk_workspace_sections_are_structured_for_layout():
         "top_signals",
         "remediation_feed",
         "risk_timeline",
-        "allowlist_status",
-        "safety_boundary",
+        "allowlist_safety",
     )
     assert set(sections) == set(gui_app.risk_workspace_section_order())
     assert sections["risk_summary"].startswith("Risk Summary")
@@ -244,8 +241,7 @@ def test_risk_workspace_sections_are_structured_for_layout():
     assert sections["top_signals"].startswith("Top Risk Signals")
     assert sections["remediation_feed"].startswith("Recent Remediation Feed")
     assert sections["risk_timeline"].startswith("Risk Timeline")
-    assert sections["allowlist_status"].startswith("Allowlist Status")
-    assert sections["safety_boundary"].startswith("Safety Boundary")
+    assert sections["allowlist_safety"].startswith("Allowlist/Safety")
 
 
 def test_risk_workspace_uses_dashboard_style_dense_sections():
@@ -256,6 +252,7 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
     assert "risk-section" in css
     assert "risk-panel" not in css
     assert "border:" not in css
+    assert "VerticalScroll" not in Path(gui_app.__file__).read_text()
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
@@ -301,9 +298,11 @@ def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
     assert "Active Risk Findings" in narrow
     assert "Risk Summary" in wide.splitlines()[0]
     assert " | Queue Summary" in wide.splitlines()[0]
-    assert " | Queue Summary" not in narrow.splitlines()[0]
+    assert " | Queue Summary" in narrow.splitlines()[0]
     assert "Timestamp | Action | Mode | Score | Reason | Signals" in wide
     assert "Timestamp | Events | Avg | Max | Monitor | Review | Block" in narrow
+    assert "Allowlist/Safety" in wide
+    assert "Allowlist/Safety" in narrow
 
 
 def test_active_risk_findings_formatter_handles_empty_and_populated_data():
@@ -333,7 +332,7 @@ def test_active_risk_findings_formatter_handles_empty_and_populated_data():
     )
 
     assert "Active Risk Findings" in text
-    assert "Source | Timestamp | Score | State | Target | Signals" in text
+    assert "Time | Source | Node | Port/Target | Score | State | Signal" in text
     assert "sampled_port" in text
     assert "0.910" in text
     assert "ssh tcp 22" in text
@@ -477,7 +476,8 @@ def test_remediation_feed_formatter_handles_empty_and_populated_data():
     assert "Timestamp | Action | Mode | Score | Reason | Signals" in text
     assert "prompt_operator | dry_run | 0.820" in text
     assert "score>=0.75 and review required" in text
-    assert "sensitive_port:22, listening_socket" in text
+    assert "sensitive_port:22" in text
+    assert "..." in text
 
 
 def test_risk_timeline_formatter_handles_empty_and_populated_data():
@@ -502,19 +502,76 @@ def test_risk_timeline_formatter_handles_empty_and_populated_data():
 def test_allowlist_status_formatter_handles_empty_and_populated_data():
     empty = gui_app._format_allowlist_status([], [])
 
-    assert "Observed candidates: 0" in empty
-    assert "Allowlisted services: 0" in empty
-    assert "Selected candidate: -" in empty
+    assert "Observed: 0" in empty
+    assert "Allowlisted: 0" in empty
+    assert "Selected: -" in empty
 
     text = gui_app._format_allowlist_status(
         [{"program": "ssh", "protocol": "tcp", "port": 22}],
         [{"program": "nginx", "protocol": "tcp", "port": 443}],
     )
 
-    assert "Observed candidates: 1" in text
-    assert "Allowlisted services: 1" in text
-    assert "Selected candidate: ssh tcp:22" in text
-    assert "Dashboard allowlist status: candidate selected" in text
+    assert "Observed: 1" in text
+    assert "Allowlisted: 1" in text
+    assert "Selected: ssh tcp:22" in text
+    assert "Status: candidate selected" in text
+
+
+def test_allowlist_safety_footer_stays_short_for_one_screen_layout():
+    text = gui_app._format_allowlist_safety_footer(
+        [{"program": "ssh", "protocol": "tcp", "port": 22}],
+        [{"program": "nginx", "protocol": "tcp", "port": 443}],
+    )
+
+    assert text.splitlines()[0] == "Allowlist/Safety"
+    assert len(text.splitlines()) == 3
+    assert "Read-only risk visibility" in text
+
+
+def test_risk_one_screen_layout_formatter_enforces_row_limits():
+    remediation_events = [
+        {
+            "timestamp": f"2026-06-14T12:{index:02d}:00+00:00",
+            "node_id": f"worker-{index}",
+            "action": "prompt_operator" if index % 2 else "monitor",
+            "score": 0.5 + index / 100,
+            "score_factors": [f"signal-{index}", "shared-signal"],
+        }
+        for index in range(9)
+    ]
+    scan_results = [
+        {
+            "timestamp": f"2026-06-14T13:{index:02d}:00+00:00",
+            "program": "svc",
+            "protocol": "tcp",
+            "port": 8000 + index,
+            "risk_score": 0.7 + index / 100,
+            "score_factors": [f"scan-signal-{index}"],
+        }
+        for index in range(4)
+    ]
+    timeline = [
+        {
+            "bucket_start": f"2026-06-14T14:{index:02d}:00+00:00",
+            "event_count": index,
+            "average_score": 0.2,
+            "max_score": 0.9,
+            "actions": {"monitor": 1, "prompt_operator": 1, "block": 0},
+        }
+        for index in range(6)
+    ]
+
+    sections = gui_app.build_risk_workspace_sections(
+        remediation_events=remediation_events,
+        scan_results=scan_results,
+        risk_timeline=timeline,
+    )
+
+    assert len(sections["active_findings"].splitlines()) == 8
+    assert len(sections["remediation_feed"].splitlines()) == 7
+    assert len(sections["top_signals"].splitlines()) == 6
+    assert len(sections["risk_timeline"].splitlines()) == 5
+    assert len(sections["allowlist_safety"].splitlines()) == 3
 
 
 def test_tab_nav_and_bindings_expose_shortcuts():

@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from urllib import error, request
 
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, VerticalScroll
+from textual.containers import Container, Horizontal
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Footer, Header, Static, Label
@@ -390,8 +390,7 @@ RISK_WORKSPACE_SECTION_ORDER: tuple[str, ...] = (
     "top_signals",
     "remediation_feed",
     "risk_timeline",
-    "allowlist_status",
-    "safety_boundary",
+    "allowlist_safety",
 )
 RISK_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
     "Risk Summary",
@@ -400,8 +399,7 @@ RISK_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
     "Top Risk Signals",
     "Recent Remediation Feed",
     "Risk Timeline",
-    "Allowlist Status",
-    "Safety Boundary",
+    "Allowlist/Safety",
 )
 RISK_WORKSPACE_CONTENT_CLASS = "risk-section"
 
@@ -532,13 +530,21 @@ def _format_risk_summary(
     return "\n".join(
         [
             "Risk Summary",
-            f"- Current findings: {len(events)}",
-            f"- Latest score: {_format_risk_score(latest_score)}",
-            f"- Max score: {_format_risk_score(max(scores) if scores else None)}",
-            f"- Average score: {_format_risk_score(average_score)}",
-            f"- Latest update: {_format_timestamp(_latest_risk_timestamp(events))}",
-            f"- Anomalies: {_anomaly_count(events)}",
-            f"- Providers/models: {_provider_model_summary(events)}",
+            " | ".join(
+                [
+                    f"Current findings: {len(events)}",
+                    f"Latest score: {_format_risk_score(latest_score)}",
+                    f"Max score: {_format_risk_score(max(scores) if scores else None)}",
+                    f"Average score: {_format_risk_score(average_score)}",
+                ]
+            ),
+            " | ".join(
+                [
+                    f"Latest update: {_format_timestamp(_latest_risk_timestamp(events))}",
+                    f"Anomalies: {_anomaly_count(events)}",
+                    f"Providers/models: {_provider_model_summary(events)}",
+                ]
+            ),
         ]
     )
 
@@ -549,10 +555,7 @@ def _format_queue_summary(events: List[Dict[str, Any]]) -> str:
     return "\n".join(
         [
             "Queue Summary",
-            f"- Monitor: {counts['monitor']}",
-            f"- Review: {counts['review']}",
-            f"- Block: {counts['block']}",
-            f"- Total events: {total}",
+            f"Monitor: {counts['monitor']} | Review: {counts['review']} | Block: {counts['block']} | Total events: {total}",
         ]
     )
 
@@ -597,7 +600,7 @@ def _format_top_risk_signals(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 10,
+    limit: int = 5,
 ) -> str:
     counts: Dict[str, int] = {}
     for event in [*remediation_events, *scan_results]:
@@ -620,7 +623,7 @@ def _format_active_risk_findings(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 12,
+    limit: int = 6,
 ) -> str:
     rows = ["Active Risk Findings"]
     events: List[Dict[str, Any]] = []
@@ -635,12 +638,13 @@ def _format_active_risk_findings(
     if not events:
         rows.append("- No active risk findings available.")
         return "\n".join(rows)
-    rows.append("Source | Timestamp | Score | State | Target | Signals")
+    rows.append("Time | Source | Node | Port/Target | Score | State | Signal")
     for event in sorted(events, key=_risk_finding_sort_key, reverse=True)[: max(limit, 0)]:
-        source = _short_text(event.get("_finding_source"), limit=14)
-        timestamp = _format_timestamp(event.get("timestamp") or event.get("generated_at"))
+        source = _short_text(event.get("_finding_source"), limit=12)
+        timestamp = _short_text(_format_timestamp(event.get("timestamp") or event.get("generated_at")), limit=16)
         score = _format_risk_score(_numeric_risk_score(event))
-        state = _short_text(event.get("action") or event.get("status") or event.get("reason"), limit=18)
+        state = _short_text(event.get("action") or event.get("status") or event.get("reason"), limit=12)
+        node = _short_text(event.get("node_id") or event.get("node") or "-", limit=12)
         if event.get("_finding_source") == "sampled_port":
             target = _short_text(
                 " ".join(
@@ -652,16 +656,16 @@ def _format_active_risk_findings(
                     ]
                     if part
                 ),
-                limit=28,
+                limit=18,
             )
         else:
-            target = _short_text(event.get("node_id") or event.get("target") or event.get("program"), limit=28)
-        signals = _short_text(_format_score_factors(event), limit=44)
-        rows.append(f"{source} | {timestamp} | {score} | {state} | {target} | {signals}")
+            target = _short_text(event.get("target") or event.get("program") or "-", limit=18)
+        signals = _short_text(_format_score_factors(event), limit=28)
+        rows.append(f"{timestamp} | {source} | {node} | {target} | {score} | {state} | {signals}")
     return "\n".join(rows)
 
 
-def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 10) -> str:
+def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 5) -> str:
     rows = ["Recent Remediation Feed"]
     recent = list(events)[-max(limit, 0) :]
     if not recent:
@@ -669,11 +673,11 @@ def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 10) -
         return "\n".join(rows)
     rows.append("Timestamp | Action | Mode | Score | Reason | Signals")
     for event in reversed(recent):
-        timestamp = _format_timestamp(event.get("timestamp") or event.get("generated_at"))
-        action = _short_text(event.get("action"), limit=18)
-        enforcement = _short_text(event.get("enforcement") or ("dry_run" if event.get("dry_run") else "-"), limit=18)
-        reason = _short_text(event.get("reason"), limit=44)
-        signals = _short_text(_format_score_factors(event), limit=44)
+        timestamp = _short_text(_format_timestamp(event.get("timestamp") or event.get("generated_at")), limit=16)
+        action = _short_text(event.get("action"), limit=16)
+        enforcement = _short_text(event.get("enforcement") or ("dry_run" if event.get("dry_run") else "-"), limit=12)
+        reason = _short_text(event.get("reason"), limit=34)
+        signals = _short_text(_format_score_factors(event), limit=24)
         rows.append(
             f"{timestamp} | {action} | {enforcement} | {_format_risk_score(_numeric_risk_score(event))} | "
             f"{reason} | {signals}"
@@ -681,7 +685,7 @@ def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 10) -
     return "\n".join(rows)
 
 
-def _format_risk_timeline(timeline: List[Dict[str, Any]], *, limit: int = 10) -> str:
+def _format_risk_timeline(timeline: List[Dict[str, Any]], *, limit: int = 3) -> str:
     rows = ["Risk Timeline"]
     recent = list(timeline)[-max(limit, 0) :]
     if not recent:
@@ -692,7 +696,7 @@ def _format_risk_timeline(timeline: List[Dict[str, Any]], *, limit: int = 10) ->
         actions = bucket.get("actions") or {}
         review_count = actions.get("prompt_operator", actions.get("review", 0))
         rows.append(
-            f"{_format_timestamp(bucket.get('bucket_start'))} | {bucket.get('event_count', 0)} | "
+            f"{_short_text(_format_timestamp(bucket.get('bucket_start')), limit=16)} | {bucket.get('event_count', 0)} | "
             f"{_format_risk_score(bucket.get('average_score'))} | {_format_risk_score(bucket.get('max_score'))} | "
             f"{actions.get('monitor', 0)} | {review_count} | {actions.get('block', 0)}"
         )
@@ -710,11 +714,8 @@ def _format_allowlist_status(
     return "\n".join(
         [
             "Allowlist Status",
-            f"- Observed candidates: {len(candidates)}",
-            f"- Allowlisted services: {len(expected_services)}",
-            f"- Selected candidate: {_service_label(selected)}",
-            f"- Dashboard allowlist status: {status}",
-            "- Mutations: use existing footer actions only.",
+            f"Observed: {len(candidates)} | Allowlisted: {len(expected_services)} | Selected: {_service_label(selected)} | Status: {status}",
+            "Mutations: existing footer actions only.",
         ]
     )
 
@@ -722,9 +723,25 @@ def _format_allowlist_status(
 def _format_safety_boundary() -> str:
     return (
         "Safety Boundary\n"
-        "- Read-only risk visibility only.\n"
-        "- No enforcement, blocking, remediation execution, firewall changes, process changes, "
-        "service changes, packet capture, or new collectors."
+        "Read-only risk visibility; no enforcement, blocking, remediation execution, firewall/process/service changes, "
+        "packet capture, new collectors, or runtime actions."
+    )
+
+
+def _format_allowlist_safety_footer(
+    candidates: List[Dict[str, Any]],
+    expected_services: List[Dict[str, Any]],
+    *,
+    selected_index: int = 0,
+) -> str:
+    allowlist_lines = _format_allowlist_status(candidates, expected_services, selected_index=selected_index).splitlines()
+    safety_lines = _format_safety_boundary().splitlines()
+    return "\n".join(
+        [
+            "Allowlist/Safety",
+            allowlist_lines[1] if len(allowlist_lines) > 1 else "Observed: 0 | Allowlisted: 0 | Selected: -",
+            safety_lines[1] if len(safety_lines) > 1 else "Read-only risk visibility; no runtime actions.",
+        ]
     )
 
 
@@ -749,8 +766,7 @@ def build_risk_workspace_sections(
         "top_signals": _format_top_risk_signals(remediation, scans),
         "remediation_feed": _format_remediation_feed(remediation),
         "risk_timeline": _format_risk_timeline(timeline),
-        "allowlist_status": _format_allowlist_status(candidates, expected, selected_index=selected_index),
-        "safety_boundary": _format_safety_boundary(),
+        "allowlist_safety": _format_allowlist_safety_footer(candidates, expected, selected_index=selected_index),
     }
 
 
@@ -785,15 +801,13 @@ def render_risk_workspace_layout(
         expected_services=expected_services,
         selected_index=selected_index,
     )
-    if width < 90:
-        return "\n\n".join(sections[key] for key in RISK_WORKSPACE_SECTION_ORDER)
     return "\n\n".join(
         [
             _side_by_side_text(sections["risk_summary"], sections["queue_summary"], width=width),
             sections["active_findings"],
             _side_by_side_text(sections["top_signals"], sections["remediation_feed"], width=width),
             sections["risk_timeline"],
-            _side_by_side_text(sections["allowlist_status"], sections["safety_boundary"], width=width),
+            sections["allowlist_safety"],
         ]
     )
 
@@ -1168,7 +1182,6 @@ class PortMapDashboard(App):
     }
     .risk-workspace {
         height: 1fr;
-        overflow-y: auto;
         padding: 0 1;
     }
     .risk-row {
@@ -1181,17 +1194,15 @@ class PortMapDashboard(App):
     }
     .risk-section {
         padding: 0 1;
-        margin: 0 1 1 0;
+        margin: 0 1 0 0;
         width: 1fr;
         overflow-x: hidden;
     }
     .risk-primary-section {
         width: 1fr;
-        min-height: 10;
     }
     .risk-wide-section {
         width: 1fr;
-        min-height: 7;
     }
     #log-panel {
         height: 12;
@@ -1338,18 +1349,18 @@ class PortMapDashboard(App):
 
     def _compose_risk_tab(self) -> ComposeResult:
         sections = build_risk_workspace_sections()
-        with VerticalScroll(classes="risk-workspace"):
+        with Container(classes="risk-workspace"):
             with Horizontal(classes="risk-row"):
                 with Container(classes="risk-column"):
                     yield Static(
-                        _panel_heading("Risk Summary", "Current risk score, findings, anomaly, and provider rollup."),
+                        _panel_heading("Risk Summary", "Current score, findings, anomaly, provider, and update rollup."),
                         classes="panel-heading",
                     )
                     self.risk_summary_panel = Static(sections["risk_summary"], classes=RISK_WORKSPACE_CONTENT_CLASS)
                     yield self.risk_summary_panel
                 with Container(classes="risk-column"):
                     yield Static(
-                        _panel_heading("Queue Summary", "Monitor, review, and block queue counts."),
+                        _panel_heading("Queue Summary", "Monitor, review, block, and total preview events."),
                         classes="panel-heading",
                     )
                     self.risk_queue_panel = Static(sections["queue_summary"], classes=RISK_WORKSPACE_CONTENT_CLASS)
@@ -1357,7 +1368,7 @@ class PortMapDashboard(App):
             yield Static(
                 _panel_heading(
                     "Active Risk Findings",
-                    "Primary investigation view from sampled ports and remediation previews.",
+                    "Primary compact investigation table from sampled ports and remediation previews.",
                 ),
                 classes="panel-heading",
             )
@@ -1376,7 +1387,7 @@ class PortMapDashboard(App):
                     yield self.risk_signals_panel
                 with Container(classes="risk-column"):
                     yield Static(
-                        _panel_heading("Recent Remediation Feed", "Latest preview decisions, mode, score, reason, and signals."),
+                        _panel_heading("Recent Remediation Feed", "Latest preview decisions capped for one-screen review."),
                         classes="panel-heading",
                     )
                     self.risk_feed_panel = Static(sections["remediation_feed"], classes=RISK_WORKSPACE_CONTENT_CLASS)
@@ -1390,21 +1401,15 @@ class PortMapDashboard(App):
                 classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-wide-section",
             )
             yield self.risk_workspace_timeline_panel
-            with Horizontal(classes="risk-row"):
-                with Container(classes="risk-column"):
-                    yield Static(
-                        _panel_heading("Allowlist Status", "Observed candidates and configured expected services."),
-                        classes="panel-heading",
-                    )
-                    self.risk_allowlist_panel = Static(sections["allowlist_status"], classes=RISK_WORKSPACE_CONTENT_CLASS)
-                    yield self.risk_allowlist_panel
-                with Container(classes="risk-column"):
-                    yield Static(
-                        _panel_heading("Safety Boundary", "Read-only risk visibility; no enforcement actions."),
-                        classes="panel-heading",
-                    )
-                    self.risk_safety_panel = Static(sections["safety_boundary"], classes=RISK_WORKSPACE_CONTENT_CLASS)
-                    yield self.risk_safety_panel
+            yield Static(
+                _panel_heading("Allowlist/Safety", "Footer-only status; existing footer actions handle mutations."),
+                classes="panel-heading",
+            )
+            self.risk_allowlist_safety_panel = Static(
+                sections["allowlist_safety"],
+                classes=RISK_WORKSPACE_CONTENT_CLASS,
+            )
+            yield self.risk_allowlist_safety_panel
 
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
@@ -1504,8 +1509,7 @@ class PortMapDashboard(App):
         self.risk_signals_panel.update(sections["top_signals"])
         self.risk_feed_panel.update(sections["remediation_feed"])
         self.risk_workspace_timeline_panel.update(sections["risk_timeline"])
-        self.risk_allowlist_panel.update(sections["allowlist_status"])
-        self.risk_safety_panel.update(sections["safety_boundary"])
+        self.risk_allowlist_safety_panel.update(sections["allowlist_safety"])
 
     def _load_orchestrator_defaults(self) -> None:
         # Environment variables take precedence
