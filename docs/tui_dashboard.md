@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, and Phase 170.5A.2 turns Risk into a structured workspace layout.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, and Phase 170.5A.3 makes Risk an investigation workspace centered on active findings.
 
 Run it with:
 
@@ -84,6 +84,7 @@ The Risk tab is the detailed risk/remediation workspace. It shows:
 
 - Risk Summary: current findings, latest/max/average score, latest update, anomaly count, and provider/model summary when available.
 - Queue Summary: monitor, review, block, and total queue/event counts.
+- Active Risk Findings: primary investigation panel combining current sampled-port and remediation findings from existing runtime data, sorted by score and recency.
 - Top Risk Signals: recent sampled-port and remediation signals such as `risky_port`, `sensitive_port`, `listening_socket`, and `unknown_service`, sanitized and truncated for display.
 - Recent Remediation Feed: up to 10 table-like rows with timestamp, action, enforcement mode, score, short reason, and signal summary.
 - Risk Timeline: up to 10 table-like score buckets with event count, average score, max score, and monitor/review/block counts.
@@ -105,13 +106,22 @@ Phase 170.5A.2 changes Risk from a single-column text report into a full-screen 
 Risk uses this structured layout:
 
 - Top row: Risk Summary on the left and Queue Summary on the right.
-- Middle row: Top Risk Signals on the left and Recent Remediation Feed on the right.
+- Primary center: Active Risk Findings as the main investigation panel.
+- Supporting row: Top Risk Signals on the left and Recent Remediation Feed on the right.
 - Bottom row: a wide Risk Timeline panel.
 - Footer/detail row: Allowlist Status and Safety Boundary.
 
 Wide terminals use side-by-side sections. Narrow terminals fall back safely to single-column text ordering, with long values sanitized and truncated to avoid horizontal scrolling. This layout pattern is intended to inform future 170.5B-G tab work.
 
 Phase 170.5A.2 is display-only. It adds no runtime behavior changes, collectors, packet capture, enforcement, blocking, remediation execution, file writes, private data persistence, or firewall/process/service changes.
+
+## Phase 170.5A.3 Risk Investigation Workspace
+
+Phase 170.5A.3 converts Risk from a summary workspace into an investigation workspace. Risk Summary and Queue Summary stay in the top row, Active Risk Findings becomes the large primary center panel, and Timeline plus Remediation Feed remain supporting panels for context.
+
+Active Risk Findings uses only the same existing runtime data already shown by Dashboard and Risk: sampled port rows and remediation preview events. It does not add collectors, scanners, packet capture, enforcement, filesystem writes, network activity, new runtime actions, or private data persistence.
+
+Dashboard remains the operational overview screen with compact Risk Overview only.
 
 Safety boundaries:
 

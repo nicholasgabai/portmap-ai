@@ -204,6 +204,7 @@ def test_risk_tab_text_is_live_read_only_not_placeholder_only():
 
     assert "Risk Summary" in text
     assert "Queue Summary" in text
+    assert "Active Risk Findings" in text
     assert "Top Risk Signals" in text
     assert "Recent Remediation Feed" in text
     assert "Risk Timeline" in text
@@ -219,6 +220,7 @@ def test_risk_workspace_sections_are_structured_for_layout():
     assert gui_app.risk_workspace_section_order() == (
         "risk_summary",
         "queue_summary",
+        "active_findings",
         "top_signals",
         "remediation_feed",
         "risk_timeline",
@@ -228,6 +230,7 @@ def test_risk_workspace_sections_are_structured_for_layout():
     assert set(sections) == set(gui_app.risk_workspace_section_order())
     assert sections["risk_summary"].startswith("Risk Summary")
     assert sections["queue_summary"].startswith("Queue Summary")
+    assert sections["active_findings"].startswith("Active Risk Findings")
     assert sections["top_signals"].startswith("Top Risk Signals")
     assert sections["remediation_feed"].startswith("Recent Remediation Feed")
     assert sections["risk_timeline"].startswith("Risk Timeline")
@@ -272,13 +275,50 @@ def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
 
     assert "Risk Summary" in wide
     assert "Queue Summary" in wide
+    assert "Active Risk Findings" in wide
     assert "Risk Summary" in narrow
     assert "Queue Summary" in narrow
+    assert "Active Risk Findings" in narrow
     assert "Risk Summary" in wide.splitlines()[0]
     assert " | Queue Summary" in wide.splitlines()[0]
     assert " | Queue Summary" not in narrow.splitlines()[0]
     assert "Timestamp | Action | Mode | Score | Reason | Signals" in wide
     assert "Timestamp | Events | Avg | Max | Monitor | Review | Block" in narrow
+
+
+def test_active_risk_findings_formatter_handles_empty_and_populated_data():
+    assert "No active risk findings available." in gui_app._format_active_risk_findings([], [])
+
+    text = gui_app._format_active_risk_findings(
+        [
+            {
+                "timestamp": "2026-06-14T12:00:00+00:00",
+                "node_id": "worker-1",
+                "action": "prompt_operator",
+                "score": 0.82,
+                "score_factors": ["sensitive_port:22", "listening_socket"],
+            }
+        ],
+        [
+            {
+                "timestamp": "2026-06-14T12:05:00+00:00",
+                "program": "ssh",
+                "protocol": "tcp",
+                "port": 22,
+                "status": "LISTEN",
+                "risk_score": 0.91,
+                "score_factors": ["risky_port:22:SSH"],
+            }
+        ],
+    )
+
+    assert "Active Risk Findings" in text
+    assert "Source | Timestamp | Score | State | Target | Signals" in text
+    assert "sampled_port" in text
+    assert "0.910" in text
+    assert "ssh tcp 22" in text
+    assert "remediation" in text
+    assert "worker-1" in text
 
 
 def test_risk_summary_formatter_handles_populated_runtime_data():

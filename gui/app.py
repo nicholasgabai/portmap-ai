@@ -386,6 +386,7 @@ DASHBOARD_SECTION_LABELS: tuple[str, ...] = (
 RISK_WORKSPACE_SECTION_ORDER: tuple[str, ...] = (
     "risk_summary",
     "queue_summary",
+    "active_findings",
     "top_signals",
     "remediation_feed",
     "risk_timeline",
@@ -589,6 +590,58 @@ def _format_top_risk_signals(
     return "\n".join(["Top Risk Signals", *[f"- {signal} ({count})" for signal, count in rows]])
 
 
+def _risk_finding_sort_key(event: Dict[str, Any]) -> tuple[float, float]:
+    score = _numeric_risk_score(event)
+    parsed = _timestamp_to_datetime(event.get("timestamp") or event.get("generated_at"))
+    timestamp = parsed.timestamp() if parsed else 0.0
+    return (score if score is not None else -1.0, timestamp)
+
+
+def _format_active_risk_findings(
+    remediation_events: List[Dict[str, Any]],
+    scan_results: List[Dict[str, Any]],
+    *,
+    limit: int = 12,
+) -> str:
+    rows = ["Active Risk Findings"]
+    events: List[Dict[str, Any]] = []
+    for event in remediation_events:
+        enriched = dict(event)
+        enriched.setdefault("_finding_source", "remediation")
+        events.append(enriched)
+    for event in scan_results:
+        enriched = dict(event)
+        enriched.setdefault("_finding_source", "sampled_port")
+        events.append(enriched)
+    if not events:
+        rows.append("- No active risk findings available.")
+        return "\n".join(rows)
+    rows.append("Source | Timestamp | Score | State | Target | Signals")
+    for event in sorted(events, key=_risk_finding_sort_key, reverse=True)[: max(limit, 0)]:
+        source = _short_text(event.get("_finding_source"), limit=14)
+        timestamp = _format_timestamp(event.get("timestamp") or event.get("generated_at"))
+        score = _format_risk_score(_numeric_risk_score(event))
+        state = _short_text(event.get("action") or event.get("status") or event.get("reason"), limit=18)
+        if event.get("_finding_source") == "sampled_port":
+            target = _short_text(
+                " ".join(
+                    part
+                    for part in [
+                        str(event.get("program") or "").strip(),
+                        str(event.get("protocol") or "").strip(),
+                        str(event.get("port") or "").strip(),
+                    ]
+                    if part
+                ),
+                limit=28,
+            )
+        else:
+            target = _short_text(event.get("node_id") or event.get("target") or event.get("program"), limit=28)
+        signals = _short_text(_format_score_factors(event), limit=44)
+        rows.append(f"{source} | {timestamp} | {score} | {state} | {target} | {signals}")
+    return "\n".join(rows)
+
+
 def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 10) -> str:
     rows = ["Recent Remediation Feed"]
     recent = list(events)[-max(limit, 0) :]
@@ -673,6 +726,7 @@ def build_risk_workspace_sections(
     return {
         "risk_summary": _format_risk_summary(remediation, scans),
         "queue_summary": _format_queue_summary(remediation),
+        "active_findings": _format_active_risk_findings(remediation, scans),
         "top_signals": _format_top_risk_signals(remediation, scans),
         "remediation_feed": _format_remediation_feed(remediation),
         "risk_timeline": _format_risk_timeline(timeline),
@@ -717,6 +771,7 @@ def render_risk_workspace_layout(
     return "\n\n".join(
         [
             _side_by_side_text(sections["risk_summary"], sections["queue_summary"], width=width),
+            sections["active_findings"],
             _side_by_side_text(sections["top_signals"], sections["remediation_feed"], width=width),
             sections["risk_timeline"],
             _side_by_side_text(sections["allowlist_status"], sections["safety_boundary"], width=width),
@@ -1113,6 +1168,10 @@ class PortMapDashboard(App):
         width: 1fr;
         min-height: 8;
     }
+    .risk-primary-panel {
+        width: 1fr;
+        min-height: 12;
+    }
     #log-panel {
         height: 12;
         overflow-y: auto;
@@ -1264,6 +1323,11 @@ class PortMapDashboard(App):
                 yield self.risk_summary_panel
                 self.risk_queue_panel = Static(sections["queue_summary"], classes="risk-panel")
                 yield self.risk_queue_panel
+            self.risk_active_findings_panel = Static(
+                sections["active_findings"],
+                classes="risk-panel risk-primary-panel",
+            )
+            yield self.risk_active_findings_panel
             with Horizontal(classes="risk-row"):
                 self.risk_signals_panel = Static(sections["top_signals"], classes="risk-panel")
                 yield self.risk_signals_panel
@@ -1374,6 +1438,7 @@ class PortMapDashboard(App):
         )
         self.risk_summary_panel.update(sections["risk_summary"])
         self.risk_queue_panel.update(sections["queue_summary"])
+        self.risk_active_findings_panel.update(sections["active_findings"])
         self.risk_signals_panel.update(sections["top_signals"])
         self.risk_feed_panel.update(sections["remediation_feed"])
         self.risk_workspace_timeline_panel.update(sections["risk_timeline"])
