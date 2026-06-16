@@ -217,6 +217,16 @@ def test_risk_tab_text_is_live_read_only_not_placeholder_only():
 def test_risk_workspace_sections_are_structured_for_layout():
     sections = gui_app.build_risk_workspace_sections()
 
+    assert gui_app.risk_workspace_heading_labels() == (
+        "Risk Summary",
+        "Queue Summary",
+        "Active Risk Findings",
+        "Top Risk Signals",
+        "Recent Remediation Feed",
+        "Risk Timeline",
+        "Allowlist Status",
+        "Safety Boundary",
+    )
     assert gui_app.risk_workspace_section_order() == (
         "risk_summary",
         "queue_summary",
@@ -236,6 +246,16 @@ def test_risk_workspace_sections_are_structured_for_layout():
     assert sections["risk_timeline"].startswith("Risk Timeline")
     assert sections["allowlist_status"].startswith("Allowlist Status")
     assert sections["safety_boundary"].startswith("Safety Boundary")
+
+
+def test_risk_workspace_uses_dashboard_style_dense_sections():
+    css = gui_app.PortMapDashboard.CSS
+
+    assert gui_app.risk_workspace_content_class() == "risk-section"
+    assert "panel-heading" in css
+    assert "risk-section" in css
+    assert "risk-panel" not in css
+    assert "border:" not in css
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():

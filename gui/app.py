@@ -393,6 +393,17 @@ RISK_WORKSPACE_SECTION_ORDER: tuple[str, ...] = (
     "allowlist_status",
     "safety_boundary",
 )
+RISK_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
+    "Risk Summary",
+    "Queue Summary",
+    "Active Risk Findings",
+    "Top Risk Signals",
+    "Recent Remediation Feed",
+    "Risk Timeline",
+    "Allowlist Status",
+    "Safety Boundary",
+)
+RISK_WORKSPACE_CONTENT_CLASS = "risk-section"
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -409,6 +420,14 @@ def dashboard_section_labels() -> tuple[str, ...]:
 
 def risk_workspace_section_order() -> tuple[str, ...]:
     return RISK_WORKSPACE_SECTION_ORDER
+
+
+def risk_workspace_heading_labels() -> tuple[str, ...]:
+    return RISK_WORKSPACE_HEADING_LABELS
+
+
+def risk_workspace_content_class() -> str:
+    return RISK_WORKSPACE_CONTENT_CLASS
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -1150,27 +1169,29 @@ class PortMapDashboard(App):
     .risk-workspace {
         height: 1fr;
         overflow-y: auto;
-        padding: 1 2;
+        padding: 0 1;
     }
     .risk-row {
         width: 1fr;
         height: auto;
     }
-    .risk-panel {
-        border: round $surface-lighten-1;
+    .risk-column {
+        width: 1fr;
+        margin-right: 1;
+    }
+    .risk-section {
         padding: 0 1;
         margin: 0 1 1 0;
         width: 1fr;
-        min-height: 6;
         overflow-x: hidden;
     }
-    .risk-wide-panel {
+    .risk-primary-section {
         width: 1fr;
-        min-height: 8;
+        min-height: 10;
     }
-    .risk-primary-panel {
+    .risk-wide-section {
         width: 1fr;
-        min-height: 12;
+        min-height: 7;
     }
     #log-panel {
         height: 12;
@@ -1319,30 +1340,71 @@ class PortMapDashboard(App):
         sections = build_risk_workspace_sections()
         with VerticalScroll(classes="risk-workspace"):
             with Horizontal(classes="risk-row"):
-                self.risk_summary_panel = Static(sections["risk_summary"], classes="risk-panel")
-                yield self.risk_summary_panel
-                self.risk_queue_panel = Static(sections["queue_summary"], classes="risk-panel")
-                yield self.risk_queue_panel
+                with Container(classes="risk-column"):
+                    yield Static(
+                        _panel_heading("Risk Summary", "Current risk score, findings, anomaly, and provider rollup."),
+                        classes="panel-heading",
+                    )
+                    self.risk_summary_panel = Static(sections["risk_summary"], classes=RISK_WORKSPACE_CONTENT_CLASS)
+                    yield self.risk_summary_panel
+                with Container(classes="risk-column"):
+                    yield Static(
+                        _panel_heading("Queue Summary", "Monitor, review, and block queue counts."),
+                        classes="panel-heading",
+                    )
+                    self.risk_queue_panel = Static(sections["queue_summary"], classes=RISK_WORKSPACE_CONTENT_CLASS)
+                    yield self.risk_queue_panel
+            yield Static(
+                _panel_heading(
+                    "Active Risk Findings",
+                    "Primary investigation view from sampled ports and remediation previews.",
+                ),
+                classes="panel-heading",
+            )
             self.risk_active_findings_panel = Static(
                 sections["active_findings"],
-                classes="risk-panel risk-primary-panel",
+                classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-primary-section",
             )
             yield self.risk_active_findings_panel
             with Horizontal(classes="risk-row"):
-                self.risk_signals_panel = Static(sections["top_signals"], classes="risk-panel")
-                yield self.risk_signals_panel
-                self.risk_feed_panel = Static(sections["remediation_feed"], classes="risk-panel")
-                yield self.risk_feed_panel
+                with Container(classes="risk-column"):
+                    yield Static(
+                        _panel_heading("Top Risk Signals", "Frequency-counted current risk indicators."),
+                        classes="panel-heading",
+                    )
+                    self.risk_signals_panel = Static(sections["top_signals"], classes=RISK_WORKSPACE_CONTENT_CLASS)
+                    yield self.risk_signals_panel
+                with Container(classes="risk-column"):
+                    yield Static(
+                        _panel_heading("Recent Remediation Feed", "Latest preview decisions, mode, score, reason, and signals."),
+                        classes="panel-heading",
+                    )
+                    self.risk_feed_panel = Static(sections["remediation_feed"], classes=RISK_WORKSPACE_CONTENT_CLASS)
+                    yield self.risk_feed_panel
+            yield Static(
+                _panel_heading("Risk Timeline", "Recent score buckets and queue activity."),
+                classes="panel-heading",
+            )
             self.risk_workspace_timeline_panel = Static(
                 sections["risk_timeline"],
-                classes="risk-panel risk-wide-panel",
+                classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-wide-section",
             )
             yield self.risk_workspace_timeline_panel
             with Horizontal(classes="risk-row"):
-                self.risk_allowlist_panel = Static(sections["allowlist_status"], classes="risk-panel")
-                yield self.risk_allowlist_panel
-                self.risk_safety_panel = Static(sections["safety_boundary"], classes="risk-panel")
-                yield self.risk_safety_panel
+                with Container(classes="risk-column"):
+                    yield Static(
+                        _panel_heading("Allowlist Status", "Observed candidates and configured expected services."),
+                        classes="panel-heading",
+                    )
+                    self.risk_allowlist_panel = Static(sections["allowlist_status"], classes=RISK_WORKSPACE_CONTENT_CLASS)
+                    yield self.risk_allowlist_panel
+                with Container(classes="risk-column"):
+                    yield Static(
+                        _panel_heading("Safety Boundary", "Read-only risk visibility; no enforcement actions."),
+                        classes="panel-heading",
+                    )
+                    self.risk_safety_panel = Static(sections["safety_boundary"], classes=RISK_WORKSPACE_CONTENT_CLASS)
+                    yield self.risk_safety_panel
 
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()

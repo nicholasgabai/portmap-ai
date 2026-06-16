@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, and Phase 170.5A.3 makes Risk an investigation workspace centered on active findings.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, and Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation.
 
 Run it with:
 
@@ -122,6 +122,14 @@ Phase 170.5A.3 converts Risk from a summary workspace into an investigation work
 Active Risk Findings uses only the same existing runtime data already shown by Dashboard and Risk: sampled port rows and remediation preview events. It does not add collectors, scanners, packet capture, enforcement, filesystem writes, network activity, new runtime actions, or private data persistence.
 
 Dashboard remains the operational overview screen with compact Risk Overview only.
+
+## Phase 170.5A.4 Risk Dashboard Styling Parity
+
+Phase 170.5A.4 restyles Risk to visually match Dashboard. Risk keeps the same investigation responsibilities and existing runtime data, but uses Dashboard-style section headers, dense unbordered content sections, compact table-like rows, and less empty space instead of large bordered boxes.
+
+This dense operator layout becomes the style template for future 170.5B-G tabs. Dashboard styling and Dashboard's compact Risk Overview remain unchanged.
+
+Phase 170.5A.4 is presentation-only. It adds no runtime behavior changes, collectors, packet capture, enforcement, blocking, remediation execution, file writes, private data persistence, or firewall/process/service changes.
 
 Safety boundaries:
 
