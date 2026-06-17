@@ -93,11 +93,31 @@ def _format_risk_score(value: Any) -> str:
         return str(value)
 
 
+def _format_compact_risk_score(value: Any) -> str:
+    if value in {"", "-", None}:
+        return "-"
+    try:
+        score = float(value)
+    except Exception:
+        return _short_text(value, limit=6)
+    formatted = f"{score:.2f}"
+    if 0 <= score < 1:
+        return formatted[1:]
+    return formatted
+
+
 def _format_timestamp(value: Any) -> str:
     timestamp = _timestamp_to_datetime(value)
     if timestamp is None:
         return "-"
     return timestamp.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _format_time(value: Any) -> str:
+    timestamp = _timestamp_to_datetime(value)
+    if timestamp is None:
+        return "-"
+    return timestamp.strftime("%H:%M")
 
 
 def _timestamp_to_datetime(value: Any) -> datetime | None:
@@ -541,20 +561,19 @@ def _format_risk_summary(
     average_score = sum(scores) / len(scores) if scores else None
     return "\n".join(
         [
-            "Risk Summary",
             " | ".join(
                 [
-                    f"Current findings: {len(events)}",
-                    f"Latest score: {_format_risk_score(latest_score)}",
-                    f"Max score: {_format_risk_score(max(scores) if scores else None)}",
-                    f"Average score: {_format_risk_score(average_score)}",
+                    f"Current:{len(events)}",
+                    f"Latest:{_format_compact_risk_score(latest_score)}",
+                    f"Max:{_format_compact_risk_score(max(scores) if scores else None)}",
+                    f"Avg:{_format_compact_risk_score(average_score)}",
                 ]
             ),
             " | ".join(
                 [
-                    f"Latest update: {_format_timestamp(_latest_risk_timestamp(events))}",
-                    f"Anomalies: {_anomaly_count(events)}",
-                    f"Providers/models: {_provider_model_summary(events)}",
+                    f"Updated:{_format_time(_latest_risk_timestamp(events))}",
+                    f"Anom:{_anomaly_count(events)}",
+                    f"Providers:{_provider_model_summary(events)}",
                 ]
             ),
         ]
@@ -566,8 +585,8 @@ def _format_queue_summary(events: List[Dict[str, Any]]) -> str:
     total = counts["monitor"] + counts["review"] + counts["block"]
     return "\n".join(
         [
-            "Queue Summary",
-            f"Monitor: {counts['monitor']} | Review: {counts['review']} | Block: {counts['block']} | Total events: {total}",
+            f"Monitor:{counts['monitor']} | Review:{counts['review']} | Block:{counts['block']} | Total:{total}",
+            "Mode: preview only | Actions: disabled",
         ]
     )
 
@@ -612,16 +631,16 @@ def _format_top_risk_signals(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 4,
+    limit: int = 9,
 ) -> str:
     counts: Dict[str, int] = {}
     for event in [*remediation_events, *scan_results]:
         for signal in _signals_from_event(event):
             counts[signal] = counts.get(signal, 0) + 1
     if not counts:
-        return "Top Risk Signals\n- No risk signals available."
+        return "- No risk signals available."
     rows = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[: max(limit, 0)]
-    return "\n".join(["Top Risk Signals", "Signal | Count", *[f"{signal} | {count}" for signal, count in rows]])
+    return "\n".join(["Signal | Count", *[f"{_short_text(signal, limit=22):<22} {count}" for signal, count in rows]])
 
 
 def _risk_finding_sort_key(event: Dict[str, Any]) -> tuple[float, float]:
@@ -631,13 +650,31 @@ def _risk_finding_sort_key(event: Dict[str, Any]) -> tuple[float, float]:
     return (score if score is not None else -1.0, timestamp)
 
 
+def _risk_severity_label(score: float | None) -> str:
+    if score is None:
+        return "-"
+    if score >= 0.75:
+        return "HIGH"
+    if score >= 0.4:
+        return "MED"
+    if score > 0:
+        return "LOW"
+    return "INFO"
+
+
+def _risk_finding_target(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("node_id") or event.get("node") or event.get("target") or event.get("program") or "-",
+        limit=16,
+    )
+
+
 def _format_active_risk_findings(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 8,
+    limit: int = 12,
 ) -> str:
-    rows = ["Active Risk Findings"]
     events: List[Dict[str, Any]] = []
     for event in remediation_events:
         enriched = dict(event)
@@ -648,70 +685,59 @@ def _format_active_risk_findings(
         enriched.setdefault("_finding_source", "sampled_port")
         events.append(enriched)
     if not events:
-        rows.append("- No active risk findings available.")
-        return "\n".join(rows)
-    rows.append("Time | Source | Node | Port/Target | Score | State | Signal")
+        return "- No active risk findings available."
+    rows = ["Severity | Target | Port | Proto | Signal | Score | Action | Time"]
     for event in sorted(events, key=_risk_finding_sort_key, reverse=True)[: max(limit, 0)]:
-        source = _short_text(event.get("_finding_source"), limit=12)
-        timestamp = _short_text(_format_timestamp(event.get("timestamp") or event.get("generated_at")), limit=16)
-        score = _format_risk_score(_numeric_risk_score(event))
-        state = _short_text(event.get("action") or event.get("status") or event.get("reason"), limit=12)
-        node = _short_text(event.get("node_id") or event.get("node") or "-", limit=12)
-        if event.get("_finding_source") == "sampled_port":
-            target = _short_text(
-                " ".join(
-                    part
-                    for part in [
-                        str(event.get("program") or "").strip(),
-                        str(event.get("protocol") or "").strip(),
-                        str(event.get("port") or "").strip(),
-                    ]
-                    if part
-                ),
-                limit=18,
-            )
-        else:
-            target = _short_text(event.get("target") or event.get("program") or "-", limit=18)
-        signals = _short_text(_format_score_factors(event), limit=28)
-        rows.append(f"{timestamp} | {source} | {node} | {target} | {score} | {state} | {signals}")
+        score_value = _numeric_risk_score(event)
+        severity = _risk_severity_label(score_value)
+        target = _risk_finding_target(event)
+        port = _short_text(event.get("port") or "-", limit=7)
+        protocol = _short_text(str(event.get("protocol") or "-").upper(), limit=5)
+        signal = _short_text(_format_score_factors(event, limit=1), limit=20)
+        score = _format_compact_risk_score(score_value)
+        action = _short_text(event.get("action") or event.get("status") or event.get("reason"), limit=12)
+        timestamp = _format_time(event.get("timestamp") or event.get("generated_at"))
+        rows.append(f"{severity:<4} | {target:<16} | {port:<7} | {protocol:<5} | {signal:<20} | {score:<5} | {action:<12} | {timestamp}")
     return "\n".join(rows)
 
 
-def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 5) -> str:
-    rows = ["Recent Remediation Feed"]
+def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 9) -> str:
     recent = list(events)[-max(limit, 0) :]
     if not recent:
-        rows.append("- No remediation preview events yet.")
-        return "\n".join(rows)
-    rows.append("Timestamp | Action | Mode | Score | Reason | Signals")
+        return "- No remediation preview events yet."
+    rows = ["Time | Action | Score | Signal"]
     for event in reversed(recent):
-        timestamp = _short_text(_format_timestamp(event.get("timestamp") or event.get("generated_at")), limit=16)
-        action = _short_text(event.get("action"), limit=16)
-        enforcement = _short_text(event.get("enforcement") or ("dry_run" if event.get("dry_run") else "-"), limit=12)
-        reason = _short_text(event.get("reason"), limit=34)
-        signals = _short_text(_format_score_factors(event), limit=24)
-        rows.append(
-            f"{timestamp} | {action} | {enforcement} | {_format_risk_score(_numeric_risk_score(event))} | "
-            f"{reason} | {signals}"
-        )
+        timestamp = _format_time(event.get("timestamp") or event.get("generated_at"))
+        action = _short_text(event.get("action"), limit=14)
+        signals = _short_text(_format_score_factors(event, limit=1), limit=24)
+        rows.append(f"{timestamp} | {action:<14} | {_format_compact_risk_score(_numeric_risk_score(event)):<5} | {signals}")
     return "\n".join(rows)
 
 
-def _format_risk_timeline(timeline: List[Dict[str, Any]], *, limit: int = 3) -> str:
-    rows = ["Risk Timeline"]
+def _format_risk_timeline(timeline: List[Dict[str, Any]], *, limit: int = 9) -> str:
     recent = list(timeline)[-max(limit, 0) :]
     if not recent:
-        rows.append("- No scored events yet.")
-        return "\n".join(rows)
-    rows.append("Timestamp | Events | Avg | Max | Monitor | Review | Block")
-    for bucket in reversed(recent):
-        actions = bucket.get("actions") or {}
-        review_count = actions.get("prompt_operator", actions.get("review", 0))
+        return "- No scored events yet."
+    rows = ["Time | Avg | Max | N | Trend"]
+    previous_average: float | None = None
+    for bucket in recent:
+        try:
+            average = float(bucket.get("average_score"))
+        except (TypeError, ValueError):
+            average = None
+        if average is None or previous_average is None:
+            trend = "-"
+        elif average > previous_average:
+            trend = "up"
+        elif average < previous_average:
+            trend = "down"
+        else:
+            trend = "flat"
         rows.append(
-            f"{_short_text(_format_timestamp(bucket.get('bucket_start')), limit=16)} | {bucket.get('event_count', 0)} | "
-            f"{_format_risk_score(bucket.get('average_score'))} | {_format_risk_score(bucket.get('max_score'))} | "
-            f"{actions.get('monitor', 0)} | {review_count} | {actions.get('block', 0)}"
+            f"{_format_time(bucket.get('bucket_start'))} | {_format_compact_risk_score(bucket.get('average_score')):<5} | "
+            f"{_format_compact_risk_score(bucket.get('max_score')):<5} | {bucket.get('event_count', 0):<2} | {trend}"
         )
+        previous_average = average
     return "\n".join(rows)
 
 
@@ -723,19 +749,11 @@ def _format_allowlist_status(
 ) -> str:
     selected = candidates[selected_index] if 0 <= selected_index < len(candidates) else None
     status = "candidate selected" if selected else "no observed candidate selected"
-    return "\n".join(
-        [
-            "Allowlist Status",
-            f"Observed: {len(candidates)} | Allowlisted: {len(expected_services)} | Selected: {_service_label(selected)} | Status: {status}",
-        ]
-    )
+    return f"Observed:{len(candidates)} | Allowlisted:{len(expected_services)} | Selected:{_service_label(selected)} | Status:{status}"
 
 
 def _format_safety_boundary() -> str:
-    return (
-        "Safety Boundary\n"
-        "Read-only; no enforcement, blocking, remediation execution, firewall/process/service changes, packet capture, collectors, or runtime actions."
-    )
+    return "Read-only; no enforcement, blocking, remediation execution, packet capture, collectors, or runtime actions."
 
 
 def build_risk_workspace_sections(
@@ -812,15 +830,23 @@ def render_risk_workspace_layout(
     )
     return "\n\n".join(
         [
-            _side_by_side_text(sections["risk_summary"], sections["queue_summary"], width=width),
-            sections["active_findings"],
-            _three_column_text(
-                sections["top_signals"],
-                sections["remediation_feed"],
-                sections["risk_timeline"],
+            _side_by_side_text(
+                f"Risk Summary\n{sections['risk_summary']}",
+                f"Queue Summary\n{sections['queue_summary']}",
                 width=width,
             ),
-            _side_by_side_text(sections["allowlist_status"], sections["safety_boundary"], width=width),
+            f"Active Risk Findings\n{sections['active_findings']}",
+            _three_column_text(
+                f"Top Risk Signals\n{sections['top_signals']}",
+                f"Recent Remediation Feed\n{sections['remediation_feed']}",
+                f"Risk Timeline\n{sections['risk_timeline']}",
+                width=width,
+            ),
+            _side_by_side_text(
+                f"Allowlist Status\n{sections['allowlist_status']}",
+                f"Safety Boundary\n{sections['safety_boundary']}",
+                width=width,
+            ),
         ]
     )
 
@@ -1205,7 +1231,7 @@ class PortMapDashboard(App):
     }
     .risk-top-row {
         width: 1fr;
-        height: 5;
+        height: 4;
     }
     .risk-active-row {
         width: 1fr;
@@ -1213,11 +1239,11 @@ class PortMapDashboard(App):
     }
     .risk-bottom-row {
         width: 1fr;
-        height: 8;
+        height: 12;
     }
     .risk-footer-row {
         width: 1fr;
-        height: 4;
+        height: 3;
     }
     .risk-column {
         width: 1fr;
@@ -1231,7 +1257,7 @@ class PortMapDashboard(App):
         padding: 0 1;
         margin: 0 1 0 0;
         width: 1fr;
-        height: auto;
+        height: 1fr;
         overflow-x: hidden;
     }
     .risk-fill-section {

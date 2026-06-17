@@ -238,14 +238,14 @@ def test_risk_workspace_sections_are_structured_for_layout():
         "safety_boundary",
     )
     assert set(sections) == set(gui_app.risk_workspace_section_order())
-    assert sections["risk_summary"].startswith("Risk Summary")
-    assert sections["queue_summary"].startswith("Queue Summary")
-    assert sections["active_findings"].startswith("Active Risk Findings")
-    assert sections["top_signals"].startswith("Top Risk Signals")
-    assert sections["remediation_feed"].startswith("Recent Remediation Feed")
-    assert sections["risk_timeline"].startswith("Risk Timeline")
-    assert sections["allowlist_status"].startswith("Allowlist Status")
-    assert sections["safety_boundary"].startswith("Safety Boundary")
+    assert sections["risk_summary"].startswith("Current:")
+    assert sections["queue_summary"].startswith("Monitor:")
+    assert sections["active_findings"].startswith("- No active risk findings available.")
+    assert sections["top_signals"].startswith("- No risk signals available.")
+    assert sections["remediation_feed"].startswith("- No remediation preview events yet.")
+    assert sections["risk_timeline"].startswith("- No scored events yet.")
+    assert sections["allowlist_status"].startswith("Observed:")
+    assert sections["safety_boundary"].startswith("Read-only;")
 
 
 def test_risk_workspace_uses_dashboard_style_dense_sections():
@@ -312,11 +312,12 @@ def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
     assert "Risk Summary" in wide.splitlines()[0]
     assert " | Queue Summary" in wide.splitlines()[0]
     assert " | Queue Summary" in narrow.splitlines()[0]
-    assert "Timestamp | Action | Mode | Score" in wide
+    assert "Time | Action | Score | Signal" in wide
     assert "Top Risk Signals" in wide
     assert " | Recent Remediation Feed" in wide
     assert " | Risk Timeline" in wide
-    assert "Timestamp | Events" in narrow
+    assert "Time | Avg | Max | N | Trend" in wide
+    assert "Time | Avg" in narrow
     assert "Allowlist Status" in wide
     assert "Safety Boundary" in wide
     assert "Allowlist Status" in narrow
@@ -349,13 +350,20 @@ def test_active_risk_findings_formatter_handles_empty_and_populated_data():
         ],
     )
 
-    assert "Active Risk Findings" in text
-    assert "Time | Source | Node | Port/Target | Score | State | Signal" in text
-    assert "sampled_port" in text
-    assert "0.910" in text
-    assert "ssh tcp 22" in text
-    assert "remediation" in text
+    assert "Severity | Target | Port | Proto | Signal | Score | Action | Time" in text
+    assert "HIGH" in text
+    assert ".91" in text
+    assert "22" in text
+    assert "TCP" in text
     assert "worker-1" in text
+
+
+def test_risk_severity_labels_are_score_only_presentation():
+    assert gui_app._risk_severity_label(0.88) == "HIGH"
+    assert gui_app._risk_severity_label(0.52) == "MED"
+    assert gui_app._risk_severity_label(0.05) == "LOW"
+    assert gui_app._risk_severity_label(0) == "INFO"
+    assert gui_app._risk_severity_label(None) == "-"
 
 
 def test_risk_summary_formatter_handles_populated_runtime_data():
@@ -391,23 +399,23 @@ def test_risk_summary_formatter_handles_populated_runtime_data():
 
     summary = gui_app._format_risk_summary(remediation_events, scan_results)
 
-    assert "Current findings: 3" in summary
-    assert "Latest score: 0.910" in summary
-    assert "Max score: 0.910" in summary
-    assert "Average score: 0.640" in summary
-    assert "Anomalies: 2" in summary
-    assert "Providers/models: local_rules=2" in summary
+    assert "Current:3" in summary
+    assert "Latest:.91" in summary
+    assert "Max:.91" in summary
+    assert "Avg:.64" in summary
+    assert "Anom:2" in summary
+    assert "Providers:local_rules=2" in summary
 
 
 def test_risk_summary_formatter_handles_empty_runtime_data():
     summary = gui_app._format_risk_summary([], [])
 
-    assert "Current findings: 0" in summary
-    assert "Latest score: -" in summary
-    assert "Max score: -" in summary
-    assert "Average score: -" in summary
-    assert "Latest update: -" in summary
-    assert "Providers/models: -" in summary
+    assert "Current:0" in summary
+    assert "Latest:-" in summary
+    assert "Max:-" in summary
+    assert "Avg:-" in summary
+    assert "Updated:-" in summary
+    assert "Providers:-" in summary
 
 
 def test_dashboard_compact_risk_summary_renders_without_detailed_sections():
@@ -447,10 +455,10 @@ def test_queue_summary_counts_monitor_review_block_correctly():
         ]
     )
 
-    assert "Monitor: 1" in text
-    assert "Review: 2" in text
-    assert "Block: 1" in text
-    assert "Total events: 4" in text
+    assert "Monitor:1" in text
+    assert "Review:2" in text
+    assert "Block:1" in text
+    assert "Total:4" in text
 
 
 def test_risk_signal_formatter_truncates_and_sanitizes_values():
@@ -471,9 +479,10 @@ def test_top_risk_signals_formatter_handles_empty_and_populated_data():
     )
 
     assert "Signal | Count" in text
-    assert "sensitive_port:22 | 2" in text
-    assert "listening_socket | 1" in text
-    assert "risky_port:22:SSH | 1" in text
+    assert "sensitive_port:22" in text
+    assert "2" in text
+    assert "listening_socket" in text
+    assert "risky_port:22:SSH" in text
 
 
 def test_remediation_feed_formatter_handles_empty_and_populated_data():
@@ -492,9 +501,9 @@ def test_remediation_feed_formatter_handles_empty_and_populated_data():
         ]
     )
 
-    assert "Timestamp | Action | Mode | Score | Reason | Signals" in text
-    assert "prompt_operator | dry_run | 0.820" in text
-    assert "score>=0.75 and review required" in text
+    assert "Time | Action | Score | Signal" in text
+    assert "prompt_oper..." in text
+    assert ".82" in text
     assert "sensitive_port:22" in text
     assert "..." in text
 
@@ -510,30 +519,39 @@ def test_risk_timeline_formatter_handles_empty_and_populated_data():
                 "average_score": 0.64,
                 "max_score": 0.91,
                 "actions": {"monitor": 1, "prompt_operator": 1, "block": 0},
-            }
+            },
+            {
+                "bucket_start": "2026-06-14T12:01:00+00:00",
+                "event_count": 4,
+                "average_score": 0.70,
+                "max_score": 0.92,
+                "actions": {"monitor": 2, "prompt_operator": 1, "block": 0},
+            },
         ]
     )
 
-    assert "Timestamp | Events | Avg | Max | Monitor | Review | Block" in text
-    assert "| 3 | 0.640 | 0.910 | 1 | 1 | 0" in text
+    assert "Time | Avg | Max | N | Trend" in text
+    assert "12:00 | .64" in text
+    assert "12:01 | .70" in text
+    assert "up" in text
 
 
 def test_allowlist_status_formatter_handles_empty_and_populated_data():
     empty = gui_app._format_allowlist_status([], [])
 
-    assert "Observed: 0" in empty
-    assert "Allowlisted: 0" in empty
-    assert "Selected: -" in empty
+    assert "Observed:0" in empty
+    assert "Allowlisted:0" in empty
+    assert "Selected:-" in empty
 
     text = gui_app._format_allowlist_status(
         [{"program": "ssh", "protocol": "tcp", "port": 22}],
         [{"program": "nginx", "protocol": "tcp", "port": 443}],
     )
 
-    assert "Observed: 1" in text
-    assert "Allowlisted: 1" in text
-    assert "Selected: ssh tcp:22" in text
-    assert "Status: candidate selected" in text
+    assert "Observed:1" in text
+    assert "Allowlisted:1" in text
+    assert "Selected:ssh tcp:22" in text
+    assert "Status:candidate selected" in text
 
 
 def test_allowlist_and_safety_footers_stay_short_for_one_screen_layout():
@@ -543,10 +561,10 @@ def test_allowlist_and_safety_footers_stay_short_for_one_screen_layout():
     )
     safety = gui_app._format_safety_boundary()
 
-    assert allowlist.splitlines()[0] == "Allowlist Status"
-    assert safety.splitlines()[0] == "Safety Boundary"
-    assert len(allowlist.splitlines()) <= 2
-    assert len(safety.splitlines()) <= 2
+    assert allowlist.splitlines()[0].startswith("Observed:")
+    assert safety.splitlines()[0].startswith("Read-only;")
+    assert len(allowlist.splitlines()) <= 1
+    assert len(safety.splitlines()) <= 1
     assert "Read-only" in safety
 
 
@@ -580,7 +598,7 @@ def test_risk_one_screen_layout_formatter_enforces_row_limits():
             "max_score": 0.9,
             "actions": {"monitor": 1, "prompt_operator": 1, "block": 0},
         }
-        for index in range(6)
+        for index in range(12)
     ]
 
     sections = gui_app.build_risk_workspace_sections(
@@ -589,12 +607,12 @@ def test_risk_one_screen_layout_formatter_enforces_row_limits():
         risk_timeline=timeline,
     )
 
-    assert len(sections["active_findings"].splitlines()) == 10
-    assert len(sections["remediation_feed"].splitlines()) == 7
-    assert len(sections["top_signals"].splitlines()) == 6
-    assert len(sections["risk_timeline"].splitlines()) == 5
-    assert len(sections["allowlist_status"].splitlines()) <= 2
-    assert len(sections["safety_boundary"].splitlines()) <= 2
+    assert len(sections["active_findings"].splitlines()) == 13
+    assert len(sections["remediation_feed"].splitlines()) == 10
+    assert len(sections["top_signals"].splitlines()) == 10
+    assert len(sections["risk_timeline"].splitlines()) == 10
+    assert len(sections["allowlist_status"].splitlines()) <= 1
+    assert len(sections["safety_boundary"].splitlines()) <= 1
 
 
 def test_tab_nav_and_bindings_expose_shortcuts():

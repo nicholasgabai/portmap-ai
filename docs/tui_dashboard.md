@@ -149,18 +149,20 @@ Phase 170.5A.5 is display-only. It adds no runtime behavior changes, collectors,
 
 ## Phase 170.5A.6 Risk Compact Data Restoration
 
-Phase 170.5A.6 restores useful Risk tab density while preserving the one-screen, no-scroll layout. It keeps separate visible sections for Risk Summary, Queue Summary, Active Risk Findings, Top Risk Signals, Recent Remediation Feed, Risk Timeline, Allowlist Status, and Safety Boundary.
+Phase 170.5A.6 optimizes the Risk workspace for analyst density while preserving the one-screen, no-scroll layout. It keeps separate visible sections for Risk Summary, Queue Summary, Active Risk Findings, Top Risk Signals, Recent Remediation Feed, Risk Timeline, Allowlist Status, and Safety Boundary, and uses the main center area for the Active Risk Findings table.
 
 Default row caps are:
 
-- Active Risk Findings: 8 rows in the largest center area.
-- Top Risk Signals: 4 rows.
-- Recent Remediation Feed: 5 rows.
-- Risk Timeline: 3 rows.
-- Allowlist Status: 2 lines.
-- Safety Boundary: 2 lines.
+- Active Risk Findings: up to 12 rows in the largest center area.
+- Top Risk Signals: up to 9 rows.
+- Recent Remediation Feed: up to 9 rows.
+- Risk Timeline: up to 9 oldest-to-newest buckets with compact trend labels.
+- Allowlist Status: 1 compact line.
+- Safety Boundary: 1 compact line.
 
-The layout remains Dashboard-style and compact: Summary and Queue share the top row, Active Risk Findings consumes the largest center area, Signals, Feed, and Timeline share the bottom row as left, center, and right columns, and Allowlist plus Safety share the footer/detail row. There is no `VerticalScroll`, no bordered report panel, no new collector, no packet capture, no enforcement, no file write, and no runtime behavior change.
+The layout remains Dashboard-style and compact: Summary and Queue share the top row, Active Risk Findings consumes the largest center area with `Severity`, `Target`, `Port`, `Proto`, `Signal`, `Score`, `Action`, and `Time` columns, Signals, Feed, and Timeline share the bottom analyst workspace as left, center, and right columns, and Allowlist plus Safety share the footer/status row. The severity label is display-only and derived from existing score values; no new scoring model is introduced.
+
+This SOC-style one-screen operator layout is the density template for future 170.5B-G tabs. Full historical or detail-heavy views can be added later as separate operator surfaces if needed, but the default Risk tab should remain compact and visible without scrolling. There is no `VerticalScroll`, no bordered report panel, no new collector, no packet capture, no enforcement, no file write, and no runtime behavior change.
 
 Safety boundaries:
 
