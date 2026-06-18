@@ -414,12 +414,11 @@ RISK_WORKSPACE_SECTION_ORDER: tuple[str, ...] = (
     "safety_boundary",
 )
 RISK_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
-    "Risk Status",
+    "Risk Summary",
     "Active Risk Findings",
     "Top Risk Signals",
     "Recent Remediation Feed",
     "Risk Timeline",
-    "Footer Status",
 )
 RISK_WORKSPACE_CONTENT_CLASS = "risk-section"
 RISK_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
@@ -863,7 +862,7 @@ def render_risk_workspace_layout(
     )
     return "\n\n".join(
         [
-            f"Risk Status\n{_format_risk_status_strip(sections['risk_summary'], sections['queue_summary'])}",
+            f"Risk Summary\n{_format_risk_status_strip(sections['risk_summary'], sections['queue_summary'])}",
             f"Active Risk Findings\n{sections['active_findings']}",
             _three_column_text(
                 f"Top Risk Signals\n{sections['top_signals']}",
@@ -871,7 +870,7 @@ def render_risk_workspace_layout(
                 f"Risk Timeline\n{sections['risk_timeline']}",
                 width=width,
             ),
-            f"Footer Status\n{_format_footer_status(sections['allowlist_status'], sections['safety_boundary'])}",
+            _format_footer_status(sections["allowlist_status"], sections["safety_boundary"]),
         ]
     )
 
@@ -1443,7 +1442,7 @@ class PortMapDashboard(App):
         with Container(classes="risk-workspace"):
             with Container(classes="risk-row risk-top-row"):
                 yield Static(
-                    _panel_heading("Risk Status", "Summary and queue status from the current refresh."),
+                    _panel_heading("Risk Summary", "Summary and queue status from the current refresh."),
                     classes="panel-heading",
                 )
                 self.risk_status_panel = Static(

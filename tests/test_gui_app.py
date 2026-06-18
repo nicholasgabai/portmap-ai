@@ -202,14 +202,13 @@ def test_placeholder_tabs_render_safe_labels_and_serialization():
 def test_risk_tab_text_is_live_read_only_not_placeholder_only():
     text = gui_app.build_risk_tab_text()
 
-    assert "Risk Status" in text
+    assert "Risk Summary" in text
     assert "Current:" in text
     assert "Monitor:" in text
     assert "Active Risk Findings" in text
     assert "Top Risk Signals" in text
     assert "Recent Remediation Feed" in text
     assert "Risk Timeline" in text
-    assert "Footer Status" in text
     assert "Allowlist:" in text
     assert "Safety:" in text
     assert "This tab is a navigation placeholder." not in text
@@ -220,12 +219,11 @@ def test_risk_workspace_sections_are_structured_for_layout():
     sections = gui_app.build_risk_workspace_sections()
 
     assert gui_app.risk_workspace_heading_labels() == (
-        "Risk Status",
+        "Risk Summary",
         "Active Risk Findings",
         "Top Risk Signals",
         "Recent Remediation Feed",
         "Risk Timeline",
-        "Footer Status",
     )
     assert gui_app.risk_workspace_section_order() == (
         "risk_summary",
@@ -265,9 +263,16 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
     assert "risk-footer-row" in css
     assert "risk-panel" not in css
     assert "border:" not in css
-    assert "VerticalScroll" not in Path(gui_app.__file__).read_text()
-    assert "risk_allowlist_panel" not in Path(gui_app.__file__).read_text()
-    assert "risk_safety_panel" not in Path(gui_app.__file__).read_text()
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "VerticalScroll" not in source
+    assert "risk_allowlist_panel" not in source
+    assert "risk_safety_panel" not in source
+    assert '_panel_heading("RiskSummary"' in compact_source
+    assert '_panel_heading("ActiveRiskFindings"' in compact_source
+    assert '_panel_heading("TopRiskSignals"' in compact_source
+    assert '_panel_heading("RecentRemediationFeed"' in compact_source
+    assert '_panel_heading("RiskTimeline"' in compact_source
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
@@ -305,26 +310,26 @@ def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
         width=72,
     )
 
-    assert "Risk Status" in wide
+    assert "Risk Summary" in wide
     assert "Current:" in wide
     assert "Monitor:" in wide
     assert "Active Risk Findings" in wide
-    assert "Risk Status" in narrow
+    assert "Risk Summary" in narrow
     assert "Current:" in narrow
     assert "Monitor:" in narrow
     assert "Active Risk Findings" in narrow
-    assert "Risk Status" in wide.splitlines()[0]
-    assert "Risk Status" in narrow.splitlines()[0]
+    assert "Risk Summary" in wide.splitlines()[0]
+    assert "Risk Summary" in narrow.splitlines()[0]
     assert "Time | Action | Score | Signal" in wide
     assert "Top Risk Signals" in wide
     assert " | Recent Remediation Feed" in wide
     assert " | Risk Timeline" in wide
     assert "Time | Avg | Max | N | Trend" in wide
     assert "Time | Avg" in narrow
-    assert "Footer Status" in wide
     assert "Allowlist:" in wide
     assert "Safety:" in wide
-    assert "Footer Status" in narrow
+    assert "Footer Status" not in wide
+    assert "Footer Status" not in narrow
 
 
 def test_active_risk_findings_formatter_handles_empty_and_populated_data():

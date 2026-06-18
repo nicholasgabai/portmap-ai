@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation, Phase 170.5A.5 keeps Risk compact enough for a one-screen operator view, Phase 170.5A.6 restores useful data density inside that no-scroll layout, and Phase 170.5A.X refines the workspace into a compact SOC analyst surface.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation, Phase 170.5A.5 keeps Risk compact enough for a one-screen operator view, Phase 170.5A.6 restores useful data density inside that no-scroll layout, Phase 170.5A.X refines the workspace into a compact SOC analyst surface, and Phase 170.5A.X+1 aligns Risk visual hierarchy with Dashboard section headers.
 
 Run it with:
 
@@ -172,7 +172,7 @@ Safety boundaries:
 
 ## Phase 170.5A.X SOC Analyst Workspace Refinement
 
-Phase 170.5A.X keeps the Risk tab single-screen and no-scroll while reducing fragmentation. Risk now uses a single compact Risk Status strip for summary and queue counts, a dominant Active Risk Findings table, a three-column bottom analyst workspace, and one Footer Status line for allowlist and safety state.
+Phase 170.5A.X keeps the Risk tab single-screen and no-scroll while reducing fragmentation. Risk now uses a single compact Risk Status strip for summary and queue counts, a dominant Active Risk Findings table, a three-column bottom analyst workspace, and one footer status line for allowlist and safety state.
 
 Active Risk Findings uses these columns:
 
@@ -185,10 +185,24 @@ Active Risk Findings uses these columns:
 
 The table still uses only existing sampled-port and remediation preview data from the existing refresh path. Severity remains display-only and derived from existing score values. The `Asset`, `Service`, and `Finding` fields are compact presentation labels over existing node, target, program, protocol, port, reason, status, and score-factor fields. The bottom row keeps Top Risk Signals, Recent Remediation Feed, and Risk Timeline visible simultaneously.
 
-Phase 170.5A.X removes dedicated Allowlist Status and Safety Boundary panels from the live Risk layout. Their data remains visible in the compact Footer Status line, and existing footer actions remain unchanged. This is presentation-only: no Dashboard change, no refresh logic change, no new collector, no packet capture, no file write, no enforcement, no blocking, and no remediation execution.
+Phase 170.5A.X removes dedicated Allowlist Status and Safety Boundary panels from the live Risk layout. Their data remains visible in the compact footer status line, and existing footer actions remain unchanged. This is presentation-only: no Dashboard change, no refresh logic change, no new collector, no packet capture, no file write, no enforcement, no blocking, and no remediation execution.
 - No new network behavior.
 - No new export file writes beyond the existing Export Logs action.
 - No governance enforcement.
+
+## Phase 170.5A.X+1 Dashboard Visual Hierarchy Parity
+
+Phase 170.5A.X+1 keeps the current no-scroll Risk layout and reuses the exact Dashboard heading helper and `panel-heading` class for Risk section headers. It does not introduce a Risk-specific heading system.
+
+Risk now presents Dashboard-style section headers for:
+
+- Risk Summary
+- Active Risk Findings
+- Top Risk Signals
+- Recent Remediation Feed
+- Risk Timeline
+
+The footer remains a compact status line with Allowlist and Safety state, without a separate footer heading. Dashboard layout and styling are unchanged. This phase is display-only: no refresh logic change, no new data source, no collector change, no backend change, no packet capture, no enforcement, and no remediation execution.
 - No installer or deployment execution.
 - No runtime stack behavior changes.
 
