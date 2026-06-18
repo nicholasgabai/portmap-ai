@@ -202,9 +202,8 @@ def test_placeholder_tabs_render_safe_labels_and_serialization():
 def test_risk_tab_text_is_live_read_only_not_placeholder_only():
     text = gui_app.build_risk_tab_text()
 
-    assert "Risk Summary" in text
-    assert "Current:" in text
-    assert "Monitor:" in text
+    assert "Risk Status" in text
+    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block" in text
     assert "Active Risk Findings" in text
     assert "Top Risk Signals" in text
     assert "Recent Remediation Feed" in text
@@ -219,7 +218,7 @@ def test_risk_workspace_sections_are_structured_for_layout():
     sections = gui_app.build_risk_workspace_sections()
 
     assert gui_app.risk_workspace_heading_labels() == (
-        "Risk Summary",
+        "Risk Status",
         "Active Risk Findings",
         "Top Risk Signals",
         "Recent Remediation Feed",
@@ -268,11 +267,29 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
     assert "VerticalScroll" not in source
     assert "risk_allowlist_panel" not in source
     assert "risk_safety_panel" not in source
-    assert '_panel_heading("RiskSummary"' in compact_source
+    assert '_panel_heading("RiskStatus"' in compact_source
     assert '_panel_heading("ActiveRiskFindings"' in compact_source
     assert '_panel_heading("TopRiskSignals"' in compact_source
     assert '_panel_heading("RecentRemediationFeed"' in compact_source
     assert '_panel_heading("RiskTimeline"' in compact_source
+
+
+def test_risk_workspace_uses_dashboard_style_data_tables():
+    assert issubclass(gui_app.RiskStatusTable, gui_app.DataTable)
+    assert issubclass(gui_app.RiskActiveFindingsTable, gui_app.DataTable)
+    assert issubclass(gui_app.RiskSignalsTable, gui_app.DataTable)
+    assert issubclass(gui_app.RiskFeedTable, gui_app.DataTable)
+    assert issubclass(gui_app.RiskTimelineTable, gui_app.DataTable)
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "self.risk_status_panel=RiskStatusTable(" in compact_source
+    assert "self.risk_active_findings_panel=RiskActiveFindingsTable(" in compact_source
+    assert "self.risk_signals_panel=RiskSignalsTable(" in compact_source
+    assert "self.risk_feed_panel=RiskFeedTable(" in compact_source
+    assert "self.risk_workspace_timeline_panel=RiskTimelineTable(" in compact_source
+    assert "self.risk_status_panel=Static(" not in compact_source
+    assert "self.risk_active_findings_panel=Static(" not in compact_source
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
@@ -310,21 +327,19 @@ def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
         width=72,
     )
 
-    assert "Risk Summary" in wide
-    assert "Current:" in wide
-    assert "Monitor:" in wide
+    assert "Risk Status" in wide
+    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block" in wide
     assert "Active Risk Findings" in wide
-    assert "Risk Summary" in narrow
-    assert "Current:" in narrow
-    assert "Monitor:" in narrow
+    assert "Risk Status" in narrow
+    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block" in narrow
     assert "Active Risk Findings" in narrow
-    assert "Risk Summary" in wide.splitlines()[0]
-    assert "Risk Summary" in narrow.splitlines()[0]
+    assert "Risk Status" in wide.splitlines()[0]
+    assert "Risk Status" in narrow.splitlines()[0]
     assert "Time | Action | Score | Signal" in wide
     assert "Top Risk Signals" in wide
     assert " | Recent Remediation Feed" in wide
     assert " | Risk Timeline" in wide
-    assert "Time | Avg | Max | N | Trend" in wide
+    assert "Time | Avg | Max | Events | Trend" in wide
     assert "Time | Avg" in narrow
     assert "Allowlist:" in wide
     assert "Safety:" in wide
@@ -358,7 +373,7 @@ def test_active_risk_findings_formatter_handles_empty_and_populated_data():
         ],
     )
 
-    assert "Severity | Asset | Service | Finding | Score | Action" in text
+    assert "Severity | Asset | Service | Finding | Score | Action | Time" in text
     assert "HIGH" in text
     assert ".91" in text
     assert "22" in text
@@ -538,7 +553,7 @@ def test_risk_timeline_formatter_handles_empty_and_populated_data():
         ]
     )
 
-    assert "Time | Avg | Max | N | Trend" in text
+    assert "Time | Avg | Max | Events | Trend" in text
     assert "12:00 | .64" in text
     assert "12:01 | .70" in text
     assert "up" in text

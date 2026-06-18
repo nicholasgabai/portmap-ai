@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation, Phase 170.5A.5 keeps Risk compact enough for a one-screen operator view, Phase 170.5A.6 restores useful data density inside that no-scroll layout, Phase 170.5A.X refines the workspace into a compact SOC analyst surface, and Phase 170.5A.X+1 aligns Risk visual hierarchy with Dashboard section headers.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation, Phase 170.5A.5 keeps Risk compact enough for a one-screen operator view, Phase 170.5A.6 restores useful data density inside that no-scroll layout, Phase 170.5A.X refines the workspace into a compact SOC analyst surface, Phase 170.5A.X+1 aligns Risk visual hierarchy with Dashboard section headers, and Phase 170.5A.X+2 replaces Risk plain-text regions with Dashboard-style table widgets.
 
 Run it with:
 
@@ -205,6 +205,20 @@ Risk now presents Dashboard-style section headers for:
 The footer remains a compact status line with Allowlist and Safety state, without a separate footer heading. Dashboard layout and styling are unchanged. This phase is display-only: no refresh logic change, no new data source, no collector change, no backend change, no packet capture, no enforcement, and no remediation execution.
 - No installer or deployment execution.
 - No runtime stack behavior changes.
+
+## Phase 170.5A.X+2 Risk Dashboard Table Parity
+
+Phase 170.5A.X+2 keeps the same no-scroll Risk workspace and reuses the Dashboard rendering pattern more directly: each Risk section uses the existing Dashboard `_panel_heading` helper followed by a bounded `DataTable` region.
+
+The live Risk tab now renders:
+
+- Risk Status: `Current`, `Latest`, `Max`, `Avg`, `Updated`, `Provider`, `Monitor`, `Review`, and `Block`.
+- Active Risk Findings: `Severity`, `Asset`, `Service`, `Finding`, `Score`, `Action`, and `Time`.
+- Top Risk Signals: `Signal` and `Count`.
+- Recent Remediation Feed: `Time`, `Action`, `Score`, and `Signal`.
+- Risk Timeline: `Time`, `Avg`, `Max`, `Events`, and `Trend`.
+
+The footer remains one compact Allowlist/Safety status line. Dashboard layout and behavior are unchanged. This phase is display-only: no refresh logic change, no new data source, no collector change, no backend change, no packet capture, no enforcement, no file write, and no remediation execution.
 
 ## Data Sources
 
