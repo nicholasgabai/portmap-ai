@@ -1,6 +1,6 @@
 # TUI Dashboard
 
-Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation, Phase 170.5A.5 keeps Risk compact enough for a one-screen operator view, and Phase 170.5A.6 restores useful data density inside that no-scroll layout.
+Phase 10 made the Textual dashboard usable as the primary local operator surface. Phase 170.5 adds multi-tab navigation so future operator-visible systems can be validated without overcrowding the existing dashboard. Phase 170.5A fills the Risk tab with read-only risk and remediation status from existing dashboard runtime data, Phase 170.5A.1 refines the split so Dashboard stays high-level while Risk owns detailed risk/remediation review, Phase 170.5A.2 turns Risk into a structured workspace layout, Phase 170.5A.3 makes Risk an investigation workspace centered on active findings, Phase 170.5A.4 aligns Risk styling with the dense Dashboard presentation, Phase 170.5A.5 keeps Risk compact enough for a one-screen operator view, Phase 170.5A.6 restores useful data density inside that no-scroll layout, and Phase 170.5A.X refines the workspace into a compact SOC analyst surface.
 
 Run it with:
 
@@ -35,7 +35,7 @@ Dashboard intentionally does not show the full remediation feed or full risk tim
 The TUI provides seven tabs. Dashboard remains the default live runtime view, Risk now provides read-only live risk visibility, and the remaining tabs are safe readiness placeholders for future operator surfaces.
 
 - `1` Dashboard: current live runtime dashboard and default launch screen.
-- `2` Risk: one-screen live read-only risk investigation dashboard with summary, queue counts, active findings, top signals, remediation feed, risk timeline, allowlist status, and safety boundary.
+- `2` Risk: one-screen live read-only risk investigation dashboard with a merged status strip, active findings, top signals, remediation feed, risk timeline, and compact allowlist/safety footer status.
 - `3` Exports: Last Export Summary, export validation status, export destination, and future Runtime Export Validation Panel.
 - `4` Governance: Audit Logging, Compliance Profiles, Data Governance, Operator Accountability, Security Reviews, and Privacy Safeguards.
 - `5` Deployment: Windows installer, macOS packaging, Linux packaging, container deployment, secure updater, and deployment wizard readiness.
@@ -168,6 +168,24 @@ Safety boundaries:
 
 - No packet capture implementation.
 - No new runtime collectors.
+- No enforcement or remediation execution.
+
+## Phase 170.5A.X SOC Analyst Workspace Refinement
+
+Phase 170.5A.X keeps the Risk tab single-screen and no-scroll while reducing fragmentation. Risk now uses a single compact Risk Status strip for summary and queue counts, a dominant Active Risk Findings table, a three-column bottom analyst workspace, and one Footer Status line for allowlist and safety state.
+
+Active Risk Findings uses these columns:
+
+- `Severity`
+- `Asset`
+- `Service`
+- `Finding`
+- `Score`
+- `Action`
+
+The table still uses only existing sampled-port and remediation preview data from the existing refresh path. Severity remains display-only and derived from existing score values. The `Asset`, `Service`, and `Finding` fields are compact presentation labels over existing node, target, program, protocol, port, reason, status, and score-factor fields. The bottom row keeps Top Risk Signals, Recent Remediation Feed, and Risk Timeline visible simultaneously.
+
+Phase 170.5A.X removes dedicated Allowlist Status and Safety Boundary panels from the live Risk layout. Their data remains visible in the compact Footer Status line, and existing footer actions remain unchanged. This is presentation-only: no Dashboard change, no refresh logic change, no new collector, no packet capture, no file write, no enforcement, no blocking, and no remediation execution.
 - No new network behavior.
 - No new export file writes beyond the existing Export Logs action.
 - No governance enforcement.

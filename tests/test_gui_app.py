@@ -202,14 +202,16 @@ def test_placeholder_tabs_render_safe_labels_and_serialization():
 def test_risk_tab_text_is_live_read_only_not_placeholder_only():
     text = gui_app.build_risk_tab_text()
 
-    assert "Risk Summary" in text
-    assert "Queue Summary" in text
+    assert "Risk Status" in text
+    assert "Current:" in text
+    assert "Monitor:" in text
     assert "Active Risk Findings" in text
     assert "Top Risk Signals" in text
     assert "Recent Remediation Feed" in text
     assert "Risk Timeline" in text
-    assert "Allowlist Status" in text
-    assert "Safety Boundary" in text
+    assert "Footer Status" in text
+    assert "Allowlist:" in text
+    assert "Safety:" in text
     assert "This tab is a navigation placeholder." not in text
     assert "no enforcement" in text
 
@@ -218,14 +220,12 @@ def test_risk_workspace_sections_are_structured_for_layout():
     sections = gui_app.build_risk_workspace_sections()
 
     assert gui_app.risk_workspace_heading_labels() == (
-        "Risk Summary",
-        "Queue Summary",
+        "Risk Status",
         "Active Risk Findings",
         "Top Risk Signals",
         "Recent Remediation Feed",
         "Risk Timeline",
-        "Allowlist Status",
-        "Safety Boundary",
+        "Footer Status",
     )
     assert gui_app.risk_workspace_section_order() == (
         "risk_summary",
@@ -266,6 +266,8 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
     assert "risk-panel" not in css
     assert "border:" not in css
     assert "VerticalScroll" not in Path(gui_app.__file__).read_text()
+    assert "risk_allowlist_panel" not in Path(gui_app.__file__).read_text()
+    assert "risk_safety_panel" not in Path(gui_app.__file__).read_text()
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
@@ -303,25 +305,26 @@ def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
         width=72,
     )
 
-    assert "Risk Summary" in wide
-    assert "Queue Summary" in wide
+    assert "Risk Status" in wide
+    assert "Current:" in wide
+    assert "Monitor:" in wide
     assert "Active Risk Findings" in wide
-    assert "Risk Summary" in narrow
-    assert "Queue Summary" in narrow
+    assert "Risk Status" in narrow
+    assert "Current:" in narrow
+    assert "Monitor:" in narrow
     assert "Active Risk Findings" in narrow
-    assert "Risk Summary" in wide.splitlines()[0]
-    assert " | Queue Summary" in wide.splitlines()[0]
-    assert " | Queue Summary" in narrow.splitlines()[0]
+    assert "Risk Status" in wide.splitlines()[0]
+    assert "Risk Status" in narrow.splitlines()[0]
     assert "Time | Action | Score | Signal" in wide
     assert "Top Risk Signals" in wide
     assert " | Recent Remediation Feed" in wide
     assert " | Risk Timeline" in wide
     assert "Time | Avg | Max | N | Trend" in wide
     assert "Time | Avg" in narrow
-    assert "Allowlist Status" in wide
-    assert "Safety Boundary" in wide
-    assert "Allowlist Status" in narrow
-    assert "Safety Boundary" in narrow
+    assert "Footer Status" in wide
+    assert "Allowlist:" in wide
+    assert "Safety:" in wide
+    assert "Footer Status" in narrow
 
 
 def test_active_risk_findings_formatter_handles_empty_and_populated_data():
@@ -350,7 +353,7 @@ def test_active_risk_findings_formatter_handles_empty_and_populated_data():
         ],
     )
 
-    assert "Severity | Target | Port | Proto | Signal | Score | Action | Time" in text
+    assert "Severity | Asset | Service | Finding | Score | Action" in text
     assert "HIGH" in text
     assert ".91" in text
     assert "22" in text
@@ -613,6 +616,12 @@ def test_risk_one_screen_layout_formatter_enforces_row_limits():
     assert len(sections["risk_timeline"].splitlines()) == 10
     assert len(sections["allowlist_status"].splitlines()) <= 1
     assert len(sections["safety_boundary"].splitlines()) <= 1
+    footer = gui_app._format_footer_status(sections["allowlist_status"], sections["safety_boundary"])
+    status = gui_app._format_risk_status_strip(sections["risk_summary"], sections["queue_summary"])
+    assert len(footer.splitlines()) == 1
+    assert len(status.splitlines()) == 1
+    assert "Allowlist:" in footer
+    assert "Safety:" in footer
 
 
 def test_tab_nav_and_bindings_expose_shortcuts():
