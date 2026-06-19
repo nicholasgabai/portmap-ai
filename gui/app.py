@@ -1367,6 +1367,59 @@ def _flow_events_from_master_events(events: List[Dict[str, Any]]) -> List[Dict[s
     return rows
 
 
+def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
+    row_index = table.cursor_row if isinstance(table.cursor_row, int) else 0
+    selection: Dict[str, Any] = {"row_index": row_index, "row_key": None}
+    try:
+        if table.row_count > 0 and 0 <= row_index < table.row_count:
+            cell_key = table.coordinate_to_cell_key(table.cursor_coordinate)
+            selection["row_key"] = getattr(cell_key.row_key, "value", None)
+    except Exception:
+        pass
+    return selection
+
+
+def _restore_table_selection(table: DataTable, selection: Dict[str, Any]) -> None:
+    try:
+        row_count = table.row_count
+    except Exception:
+        return
+    if row_count <= 0:
+        return
+
+    row_index = None
+    row_key = selection.get("row_key")
+    if row_key not in {"", "-", None}:
+        try:
+            row_index = table.get_row_index(str(row_key))
+        except Exception:
+            row_index = None
+
+    if row_index is None:
+        previous_index = selection.get("row_index", 0)
+        if not isinstance(previous_index, int):
+            previous_index = 0
+        row_index = min(max(previous_index, 0), row_count - 1)
+
+    try:
+        table.move_cursor(row=row_index, column=0, animate=False, scroll=True)
+    except Exception:
+        pass
+
+
+def _unique_table_key(base: Any, seen: set[str]) -> str:
+    text = _short_text(base, limit=120)
+    if text == "-":
+        text = "row"
+    candidate = text
+    suffix = 2
+    while candidate in seen:
+        candidate = f"{text}#{suffix}"
+        suffix += 1
+    seen.add(candidate)
+    return candidate
+
+
 class NodeTable(DataTable):
     def on_mount(self) -> None:
         self.add_column("Node ID")
@@ -1375,15 +1428,19 @@ class NodeTable(DataTable):
         self.add_column("Last Seen")
 
     def update_nodes(self, nodes: List[Dict[str, Any]]):
+        selection = _capture_table_selection(self)
         self.clear()
+        seen: set[str] = set()
         for node in nodes:
+            node_id = str(node.get("node_id", "-"))
             self.add_row(
-                node.get("node_id", "-"),
+                node_id,
                 node.get("role", "-"),
                 node.get("status", "-"),
                 str(node.get("last_seen", "-")),
-                key=node.get("node_id", "-"),
+                key=_unique_table_key(node_id, seen),
             )
+        _restore_table_selection(self, selection)
 
 
 def _compute_metrics(nodes: List[Dict[str, Any]], events: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -1487,7 +1544,9 @@ class RemediationPanel(DataTable):
         self.add_column("Signals")
 
     def update_events(self, events: List[Dict[str, Any]]) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
+        seen: set[str] = set()
         for event in events:
             self.add_row(
                 event.get("timestamp", "-"),
@@ -1497,7 +1556,19 @@ class RemediationPanel(DataTable):
                 event.get("reason", "-"),
                 f"{event.get('score', '-')}",
                 _format_score_factors(event),
+                key=_unique_table_key(
+                    "|".join(
+                        [
+                            str(event.get("timestamp", "-")),
+                            str(event.get("node_id", "-")),
+                            str(event.get("action", "-")),
+                            str(event.get("port", "-")),
+                        ]
+                    ),
+                    seen,
+                ),
             )
+        _restore_table_selection(self, selection)
 
 
 class ScanResultsPanel(DataTable):
@@ -1514,8 +1585,20 @@ class ScanResultsPanel(DataTable):
         self.add_column("Signals")
 
     def update_results(self, rows: List[Dict[str, Any]]) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
+        seen: set[str] = set()
         for row in rows:
+            row_key = "|".join(
+                [
+                    str(row.get("timestamp", "-")),
+                    str(row.get("node_id", "-")),
+                    str(row.get("program", "-")),
+                    str(row.get("port", "-")),
+                    str(row.get("protocol", "-")),
+                    str(row.get("source_mode", "unknown")),
+                ]
+            )
             self.add_row(
                 _format_timestamp(row.get("timestamp")),
                 str(row.get("node_id", "-")),
@@ -1527,7 +1610,9 @@ class ScanResultsPanel(DataTable):
                 _format_risk_score(row.get("score")),
                 str(row.get("ai_provider", "-")),
                 _format_score_factors(row),
+                key=_unique_table_key(row_key, seen),
             )
+        _restore_table_selection(self, selection)
 
 
 class CommandPanel(DataTable):
@@ -1539,7 +1624,9 @@ class CommandPanel(DataTable):
         self.add_column("Result")
 
     def update_commands(self, events: List[Dict[str, Any]]) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
+        seen: set[str] = set()
         for event in events:
             self.add_row(
                 event.get("timestamp", "-"),
@@ -1547,7 +1634,19 @@ class CommandPanel(DataTable):
                 event.get("command_type", "-"),
                 event.get("status", "-"),
                 _format_command_result(event),
+                key=_unique_table_key(
+                    "|".join(
+                        [
+                            str(event.get("timestamp", "-")),
+                            str(event.get("node_id", "-")),
+                            str(event.get("command_type", "-")),
+                            str(event.get("status", "-")),
+                        ]
+                    ),
+                    seen,
+                ),
             )
+        _restore_table_selection(self, selection)
 
 
 class ExpectedServicesPanel(DataTable):
@@ -1560,12 +1659,21 @@ class ExpectedServicesPanel(DataTable):
         candidates: List[Dict[str, Any]],
         expected_services: List[Dict[str, Any]],
     ) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
+        seen: set[str] = set()
         rows = max(len(candidates), len(expected_services), 1)
         for index in range(rows):
             candidate = candidates[index] if index < len(candidates) else None
             expected = expected_services[index] if index < len(expected_services) else None
-            self.add_row(_service_label(candidate), _service_label(expected), key=str(index))
+            candidate_label = _service_label(candidate)
+            expected_label = _service_label(expected)
+            self.add_row(
+                candidate_label,
+                expected_label,
+                key=_unique_table_key(f"{candidate_label}|{expected_label}", seen),
+            )
+        _restore_table_selection(self, selection)
 
 
 class RiskTimelinePanel(Static):
@@ -1593,6 +1701,7 @@ class RiskStatusTable(DataTable):
         remediation_events: List[Dict[str, Any]],
         scan_results: List[Dict[str, Any]],
     ) -> None:
+        selection = _capture_table_selection(self)
         row = _risk_status_table_row(remediation_events, scan_results)
         self.clear()
         self.add_row(
@@ -1607,7 +1716,9 @@ class RiskStatusTable(DataTable):
             row["block"],
             row["total"],
             row["mode"],
+            key="risk-status",
         )
+        _restore_table_selection(self, selection)
 
 
 class RiskActiveFindingsTable(DataTable):
@@ -1628,14 +1739,17 @@ class RiskActiveFindingsTable(DataTable):
         scan_results: List[Dict[str, Any]],
         new_keys: set[str] | None = None,
     ) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
         rows = _active_risk_finding_rows(remediation_events, scan_results)
         self.finding_rows = rows
         if not rows:
-            self.add_row("-", "-", "-", "No active risk findings available.", "-", "-", "-")
+            self.add_row("-", "-", "-", "No active risk findings available.", "-", "-", "-", key="empty")
+            _restore_table_selection(self, selection)
             return
         new_keys = new_keys or set()
-        for index, row in enumerate(rows):
+        seen: set[str] = set()
+        for row in rows:
             severity = f"NEW {row['severity']}" if row["key"] in new_keys else row["severity"]
             self.add_row(
                 severity,
@@ -1645,8 +1759,9 @@ class RiskActiveFindingsTable(DataTable):
                 row["score"],
                 row["action"],
                 row["time"],
-                key=f"{index}:{row['key']}",
+                key=_unique_table_key(row["key"], seen),
             )
+        _restore_table_selection(self, selection)
 
     def selected_finding(self, row_index: int | None = None) -> Dict[str, str] | None:
         if not self.finding_rows:
@@ -1664,9 +1779,11 @@ class FindingDetailsTable(DataTable):
         self.update_details(None)
 
     def update_details(self, finding: Dict[str, str] | None) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
         for field, value in _finding_detail_rows(finding):
-            self.add_row(field, value)
+            self.add_row(field, value, key=field)
+        _restore_table_selection(self, selection)
 
 
 class RiskSignalsTable(DataTable):
@@ -1680,13 +1797,17 @@ class RiskSignalsTable(DataTable):
         remediation_events: List[Dict[str, Any]],
         scan_results: List[Dict[str, Any]],
     ) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
         rows = _top_risk_signal_rows(remediation_events, scan_results)
         if not rows:
-            self.add_row("No risk signals available.", "-")
+            self.add_row("No risk signals available.", "-", key="empty")
+            _restore_table_selection(self, selection)
             return
+        seen: set[str] = set()
         for row in rows:
-            self.add_row(row["signal"], row["count"])
+            self.add_row(row["signal"], row["count"], key=_unique_table_key(row["signal"], seen))
+        _restore_table_selection(self, selection)
 
 
 class RiskFeedTable(DataTable):
@@ -1703,12 +1824,15 @@ class RiskFeedTable(DataTable):
         new_keys: set[str] | None = None,
         selected_finding: Dict[str, str] | None = None,
     ) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
         rows = _remediation_feed_rows(events)
         if not rows:
-            self.add_row("-", "-", "-", "No remediation preview events yet.")
+            self.add_row("-", "-", "-", "No remediation preview events yet.", key="empty")
+            _restore_table_selection(self, selection)
             return
         new_keys = new_keys or set()
+        seen: set[str] = set()
         for row in rows:
             markers = []
             if row["key"] in new_keys:
@@ -1716,7 +1840,8 @@ class RiskFeedTable(DataTable):
             if _row_matches_selected_finding(selected_finding, row):
                 markers.append("MATCH")
             signal = " ".join([*markers, row["signal"]]) if markers else row["signal"]
-            self.add_row(row["time"], row["action"], row["score"], signal)
+            self.add_row(row["time"], row["action"], row["score"], signal, key=_unique_table_key(row["key"], seen))
+        _restore_table_selection(self, selection)
 
 
 class RiskTimelineTable(DataTable):
@@ -1734,17 +1859,28 @@ class RiskTimelineTable(DataTable):
         new_keys: set[str] | None = None,
         selected_finding: Dict[str, str] | None = None,
     ) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
         rows = _risk_timeline_rows(timeline)
         if not rows:
-            self.add_row("-", "-", "-", "0", "No scored events yet.")
+            self.add_row("-", "-", "-", "0", "No scored events yet.", key="empty")
+            _restore_table_selection(self, selection)
             return
         new_keys = new_keys or set()
+        seen: set[str] = set()
         for row in rows:
             trend = "new" if row["key"] in new_keys else row["trend"]
             if _row_matches_selected_finding(selected_finding, row):
                 trend = "match" if trend == "-" else f"{trend}+match"
-            self.add_row(row["time"], row["avg"], row["max"], row["events"], trend)
+            self.add_row(
+                row["time"],
+                row["avg"],
+                row["max"],
+                row["events"],
+                trend,
+                key=_unique_table_key(row["key"], seen),
+            )
+        _restore_table_selection(self, selection)
 
 
 class TopologyPanel(DataTable):
@@ -1758,8 +1894,18 @@ class TopologyPanel(DataTable):
         self.add_column("Application")
 
     def update_topology(self, rows: List[Dict[str, Any]]) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
+        seen: set[str] = set()
         for row in rows:
+            row_key = "|".join(
+                [
+                    str(row.get("src_ip", "-")),
+                    str(row.get("dst_ip", "-")),
+                    str(row.get("protocols", "-")),
+                    str(row.get("application_protocols", "-")),
+                ]
+            )
             self.add_row(
                 str(row.get("src_ip", "-")),
                 str(row.get("dst_ip", "-")),
@@ -1768,7 +1914,9 @@ class TopologyPanel(DataTable):
                 str(row.get("payload_bytes", 0)),
                 str(row.get("protocols", "-")),
                 str(row.get("application_protocols", "-")),
+                key=_unique_table_key(row_key, seen),
             )
+        _restore_table_selection(self, selection)
 
 
 class TrafficFlowsPanel(DataTable):
@@ -1782,8 +1930,18 @@ class TrafficFlowsPanel(DataTable):
         self.add_column("Findings")
 
     def update_flows(self, rows: List[Dict[str, Any]]) -> None:
+        selection = _capture_table_selection(self)
         self.clear()
+        seen: set[str] = set()
         for row in rows:
+            row_key = "|".join(
+                [
+                    str(row.get("first_seen", "-")),
+                    str(row.get("last_seen", "-")),
+                    str(row.get("flow", "-")),
+                    str(row.get("application_protocols", "-")),
+                ]
+            )
             self.add_row(
                 _format_timestamp(row.get("first_seen")),
                 _format_timestamp(row.get("last_seen")),
@@ -1792,7 +1950,9 @@ class TrafficFlowsPanel(DataTable):
                 str(row.get("packet_count", 0)),
                 str(row.get("payload_bytes", 0)),
                 str(row.get("findings", "-")),
+                key=_unique_table_key(row_key, seen),
             )
+        _restore_table_selection(self, selection)
 
 
 class PortMapDashboard(App):

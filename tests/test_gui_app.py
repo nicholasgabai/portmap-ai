@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime
 from pathlib import Path
@@ -494,6 +495,114 @@ def test_risk_finding_correlation_marks_related_feed_and_timeline_rows():
     assert not gui_app._row_matches_selected_finding(selected, feed_rows[0])
     assert gui_app._row_matches_selected_finding(selected, timeline_rows[0])
     assert not gui_app._row_matches_selected_finding(selected, timeline_rows[1])
+
+
+def test_risk_active_findings_selection_survives_refresh_when_row_still_exists():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.RiskActiveFindingsTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.RiskActiveFindingsTable)
+            table.update_findings(
+                [
+                    {"timestamp": "2026-06-14T12:03:00+00:00", "node_id": "worker-3", "score": 0.95},
+                    {"timestamp": "2026-06-14T12:02:00+00:00", "node_id": "worker-2", "score": 0.85},
+                    {"timestamp": "2026-06-14T12:01:00+00:00", "node_id": "worker-1", "score": 0.70},
+                ],
+                [],
+            )
+            table.move_cursor(row=1, column=0)
+            await pilot.pause()
+            assert table.selected_finding()["asset"] == "worker-2"
+
+            table.update_findings(
+                [
+                    {"timestamp": "2026-06-14T12:04:00+00:00", "node_id": "worker-4", "score": 0.99},
+                    {"timestamp": "2026-06-14T12:03:00+00:00", "node_id": "worker-3", "score": 0.95},
+                    {"timestamp": "2026-06-14T12:02:00+00:00", "node_id": "worker-2", "score": 0.85},
+                    {"timestamp": "2026-06-14T12:01:00+00:00", "node_id": "worker-1", "score": 0.70},
+                ],
+                [],
+            )
+            await pilot.pause()
+            assert table.selected_finding()["asset"] == "worker-2"
+            assert table.cursor_row == 2
+
+    asyncio.run(run_case())
+
+
+def test_risk_active_findings_selection_falls_back_when_selected_row_removed():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.RiskActiveFindingsTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.RiskActiveFindingsTable)
+            table.update_findings(
+                [
+                    {"timestamp": "2026-06-14T12:03:00+00:00", "node_id": "worker-3", "score": 0.95},
+                    {"timestamp": "2026-06-14T12:02:00+00:00", "node_id": "worker-2", "score": 0.85},
+                    {"timestamp": "2026-06-14T12:01:00+00:00", "node_id": "worker-1", "score": 0.70},
+                ],
+                [],
+            )
+            table.move_cursor(row=2, column=0)
+            await pilot.pause()
+            assert table.selected_finding()["asset"] == "worker-1"
+
+            table.update_findings(
+                [
+                    {"timestamp": "2026-06-14T12:03:00+00:00", "node_id": "worker-3", "score": 0.95},
+                    {"timestamp": "2026-06-14T12:02:00+00:00", "node_id": "worker-2", "score": 0.85},
+                ],
+                [],
+            )
+            await pilot.pause()
+            assert table.cursor_row == 1
+            assert table.selected_finding()["asset"] == "worker-2"
+
+    asyncio.run(run_case())
+
+
+def test_dashboard_node_table_selection_survives_refresh_when_row_still_exists():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.NodeTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.NodeTable)
+            table.update_nodes(
+                [
+                    {"node_id": "node-a", "role": "worker", "status": "online", "last_seen": 1},
+                    {"node_id": "node-b", "role": "worker", "status": "online", "last_seen": 2},
+                ]
+            )
+            table.move_cursor(row=1, column=0)
+            await pilot.pause()
+            assert table.get_row_at(table.cursor_row)[0] == "node-b"
+
+            table.update_nodes(
+                [
+                    {"node_id": "node-x", "role": "worker", "status": "online", "last_seen": 3},
+                    {"node_id": "node-a", "role": "worker", "status": "online", "last_seen": 1},
+                    {"node_id": "node-b", "role": "worker", "status": "online", "last_seen": 4},
+                ]
+            )
+            await pilot.pause()
+            assert table.cursor_row == 2
+            assert table.get_row_at(table.cursor_row)[0] == "node-b"
+
+    asyncio.run(run_case())
 
 
 def test_risk_severity_labels_are_score_only_presentation():
