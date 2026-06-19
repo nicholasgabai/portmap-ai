@@ -567,8 +567,8 @@ def test_governance_workspace_uses_dashboard_style_data_tables():
 
 def test_deployment_workspace_layout_mounts_correctly():
     assert gui_app.deployment_workspace_heading_labels() == (
-        "Deployment Status",
-        "Deployment Readiness",
+        "Deployment Readiness Catalog",
+        "Deployment Targets / Readiness Records",
         "Deployment Details",
         "Platform Types",
         "Recent Deployment Events",
@@ -594,8 +594,10 @@ def test_deployment_workspace_layout_mounts_correctly():
     compact_source = "".join(source.split())
     assert "VerticalScroll" not in source
     assert "withGrid(id=\"deployment-screen\"):" in compact_source
-    assert '_panel_heading("DeploymentStatus"' in compact_source
-    assert '_panel_heading("DeploymentReadiness"' in compact_source
+    assert '_panel_heading("DeploymentReadinessCatalog"' in compact_source
+    assert "Metadata-onlyreadinesscatalog.Notaliveinstall/testresult." in compact_source
+    assert '_panel_heading("DeploymentTargets/ReadinessRecords"' in compact_source
+    assert "notproofoflocalvalidation" in compact_source
     assert '_panel_heading("DeploymentDetails"' in compact_source
     assert '_panel_heading("PlatformTypes"' in compact_source
     assert '_panel_heading("RecentDeploymentEvents"' in compact_source
@@ -657,6 +659,10 @@ def _sample_deployment_rows():
             "blocker_details": "-",
             "safety_mode": "preview",
             "notes": "metadata only",
+            "scope": "metadata_only",
+            "local_platform": "macos",
+            "tested_locally": "unknown",
+            "execution": "not performed",
             "preview_only": "True",
             "destructive_action": "False",
             "key": "windows|powershell_preview",
@@ -674,6 +680,10 @@ def _sample_deployment_rows():
             "blocker_details": "-",
             "safety_mode": "preview",
             "notes": "review package metadata",
+            "scope": "metadata_only",
+            "local_platform": "macos",
+            "tested_locally": "unknown",
+            "execution": "not performed",
             "preview_only": "True",
             "destructive_action": "False",
             "key": "linux|deb_preview",
@@ -691,6 +701,10 @@ def _sample_deployment_rows():
             "blocker_details": "runtime unavailable",
             "safety_mode": "preview",
             "notes": "no containers started",
+            "scope": "metadata_only",
+            "local_platform": "macos",
+            "tested_locally": "unknown",
+            "execution": "not performed",
             "preview_only": "True",
             "destructive_action": "False",
             "key": "container|compose_preview",
@@ -734,6 +748,10 @@ def test_deployment_details_rows_use_selected_readiness_with_placeholders():
     assert details["Method"] == "deb_preview"
     assert details["Status"] == "warning"
     assert details["Readiness"] == "degraded"
+    assert details["Scope"] == "metadata_only"
+    assert details["Local Platform"] == "macos"
+    assert details["Tested Locally"] == "unknown"
+    assert details["Execution"] == "not performed"
     assert details["Required Steps"] == "operator_review, future_admin_if_operator_approved"
     assert details["Warnings"] == "future admin context, signing missing"
     assert details["Blockers"] == "-"
@@ -755,7 +773,23 @@ def test_default_deployment_rows_use_existing_preview_only_readiness_sources():
     assert rows
     assert all(row["safety_mode"] in {"dry_run", "preview", "read_only"} for row in rows)
     assert all(row["destructive_action"] == "False" for row in rows)
+    assert all(row["scope"] == "metadata_only" for row in rows)
+    assert all(row["tested_locally"] == "unknown" for row in rows)
+    assert all(row["execution"] == "not performed" for row in rows)
     assert all(row["key"] for row in rows)
+
+
+def test_deployment_workspace_semantics_do_not_imply_local_install_or_execution():
+    rows = _sample_deployment_rows()
+    details = dict(gui_app._deployment_detail_rows(rows[0]))
+
+    assert details["Scope"] == "metadata_only"
+    assert details["Tested Locally"] == "unknown"
+    assert details["Execution"] == "not performed"
+
+    source = Path(gui_app.__file__).read_text()
+    assert "Deployment tab is read-only; Scan Now is a global orchestrator action." in source
+    assert "Not a live install/test result." in source
 
 
 def test_deployment_tables_handle_empty_readiness_data_without_crashing():

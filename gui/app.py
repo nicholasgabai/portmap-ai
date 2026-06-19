@@ -472,8 +472,8 @@ GOVERNANCE_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
 )
 GOVERNANCE_EVIDENCE_LIMIT = 24
 DEPLOYMENT_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
-    "Deployment Status",
-    "Deployment Readiness",
+    "Deployment Readiness Catalog",
+    "Deployment Targets / Readiness Records",
     "Deployment Details",
     "Platform Types",
     "Recent Deployment Events",
@@ -1944,6 +1944,20 @@ def _deployment_safety_mode(record: Dict[str, Any]) -> str:
     return "read_only"
 
 
+def _deployment_local_platform() -> str:
+    try:
+        system = os.uname().sysname.lower()
+    except Exception:
+        return "-"
+    if system == "darwin":
+        return "macos"
+    if system == "linux":
+        return "linux"
+    if system.startswith("win"):
+        return "windows"
+    return _short_text(system, limit=16)
+
+
 def _deployment_int(value: Any) -> int:
     try:
         return int(value or 0)
@@ -1974,6 +1988,10 @@ def _deployment_row_from_manifest(manifest: Dict[str, Any]) -> Dict[str, str]:
         "blocker_details": _deployment_list_text(blockers),
         "safety_mode": _deployment_safety_mode(manifest),
         "notes": _deployment_list_text(notes),
+        "scope": "metadata_only",
+        "local_platform": _deployment_local_platform(),
+        "tested_locally": "unknown",
+        "execution": "not performed",
         "preview_only": str(bool(manifest.get("preview_only", True))),
         "destructive_action": str(bool(manifest.get("destructive_action", False))),
         "key": "|".join(["manifest", method, platform, updated]),
@@ -2010,6 +2028,10 @@ def _deployment_row_from_package(record: Dict[str, Any]) -> Dict[str, str]:
         "blocker_details": _deployment_list_text(blockers),
         "safety_mode": _deployment_safety_mode(record),
         "notes": _deployment_list_text(notes),
+        "scope": "metadata_only",
+        "local_platform": _deployment_local_platform(),
+        "tested_locally": "unknown",
+        "execution": "not performed",
         "preview_only": str(bool(record.get("preview_only", True))),
         "destructive_action": str(bool(record.get("destructive_action", False))),
         "key": "|".join(["package", str(record.get("record_type") or "readiness"), platform, method]),
@@ -2074,6 +2096,10 @@ def _deployment_detail_rows(deployment_row: Dict[str, str] | None) -> List[tuple
         ("Method", row.get("method", "-")),
         ("Status", row.get("status", "-")),
         ("Readiness", row.get("readiness", "-")),
+        ("Scope", row.get("scope", "-")),
+        ("Local Platform", row.get("local_platform", "-")),
+        ("Tested Locally", row.get("tested_locally", "-")),
+        ("Execution", row.get("execution", "-")),
         ("Required Steps", row.get("required_steps", "-")),
         ("Warnings", row.get("warning_details", "-")),
         ("Blockers", row.get("blocker_details", "-")),
@@ -3761,7 +3787,10 @@ class PortMapDashboard(App):
         with Grid(id="deployment-screen"):
             with Container(classes="deployment-grid-cell deployment-grid-span-3"):
                 yield Static(
-                    _panel_heading("Deployment Status", "Platform readiness, warnings, blockers, and read-only mode."),
+                    _panel_heading(
+                        "Deployment Readiness Catalog",
+                        "Metadata-only readiness catalog. Not a live install/test result.",
+                    ),
                     classes="panel-heading deployment-grid-heading",
                 )
                 self.deployment_status_panel = DeploymentStatusTable(
@@ -3770,8 +3799,8 @@ class PortMapDashboard(App):
                 yield self.deployment_status_panel
             yield Static(
                 _panel_heading(
-                    "Deployment Readiness",
-                    "Read-only readiness from existing deployment manifest and packaging metadata.",
+                    "Deployment Targets / Readiness Records",
+                    "Target records for supported package/deployment families, not proof of local validation.",
                 ),
                 classes="panel-heading deployment-grid-heading deployment-grid-span-2",
             )
@@ -4242,7 +4271,9 @@ class PortMapDashboard(App):
         self.active_tab = tab_id
         self._apply_active_tab()
         tab = _tab_by_id(tab_id)
-        if tab:
+        if tab_id == "deployment":
+            self._set_status("Deployment tab is read-only; Scan Now is a global orchestrator action.")
+        elif tab:
             self._set_status(f"Tab: {tab.label}")
 
     def watch_active_tab(self, value: str) -> None:
