@@ -430,6 +430,22 @@ RISK_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
     "risk-footer-status-row",
 )
 RISK_ACTIVE_FINDING_LIMIT = 24
+EXPORT_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
+    "Export Status",
+    "Recent Exports",
+    "Export Details",
+    "Export Types",
+    "Recent Export Events",
+    "Validation Timeline",
+)
+EXPORT_WORKSPACE_CONTENT_CLASS = "export-section"
+EXPORT_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
+    "export-status-row",
+    "export-active-heading-row",
+    "export-active-table-row",
+    "export-support-tables-row",
+)
+EXPORT_ACTIVITY_LIMIT = 24
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -458,6 +474,18 @@ def risk_workspace_content_class() -> str:
 
 def risk_workspace_layout_rows() -> tuple[str, ...]:
     return RISK_WORKSPACE_LAYOUT_ROWS
+
+
+def export_workspace_heading_labels() -> tuple[str, ...]:
+    return EXPORT_WORKSPACE_HEADING_LABELS
+
+
+def export_workspace_content_class() -> str:
+    return EXPORT_WORKSPACE_CONTENT_CLASS
+
+
+def export_workspace_layout_rows() -> tuple[str, ...]:
+    return EXPORT_WORKSPACE_LAYOUT_ROWS
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -1367,6 +1395,168 @@ def _flow_events_from_master_events(events: List[Dict[str, Any]]) -> List[Dict[s
     return rows
 
 
+def _format_export_size(value: Any) -> str:
+    try:
+        size = int(value)
+    except (TypeError, ValueError):
+        return "-"
+    if size < 0:
+        return "-"
+    units = ("B", "KB", "MB", "GB")
+    amount = float(size)
+    for unit in units:
+        if amount < 1024 or unit == units[-1]:
+            if unit == "B":
+                return f"{int(amount)} B"
+            return f"{amount:.1f} {unit}"
+        amount /= 1024
+    return f"{size} B"
+
+
+def _export_type_from_path(path: Path) -> str:
+    name = path.name.lower()
+    if name.startswith("portmap-logs-"):
+        return "logs"
+    for label in ("topology", "findings", "snapshots", "reports", "risk", "flows"):
+        if label in name:
+            return label
+    suffixes = "".join(path.suffixes).lstrip(".")
+    return suffixes or "file"
+
+
+def _export_rows_from_dir(export_dir: Path, *, limit: int = EXPORT_ACTIVITY_LIMIT) -> List[Dict[str, str]]:
+    if not export_dir.exists():
+        return []
+    rows: List[Dict[str, str]] = []
+    try:
+        paths = [path for path in export_dir.iterdir() if path.is_file() and not path.name.startswith(".")]
+    except Exception:
+        return []
+    for path in paths:
+        try:
+            stat = path.stat()
+        except Exception:
+            rows.append(
+                {
+                    "export_id": path.name,
+                    "timestamp": "-",
+                    "export_type": _export_type_from_path(path),
+                    "status": "unreadable",
+                    "destination": str(path.parent),
+                    "files": "-",
+                    "size": "-",
+                    "duration": "-",
+                    "started": "-",
+                    "completed": "-",
+                    "validation_result": "unreadable",
+                    "key": path.name,
+                    "_mtime": "0",
+                }
+            )
+            continue
+        completed = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        validation = "valid" if stat.st_size > 0 else "empty"
+        rows.append(
+            {
+                "export_id": path.name,
+                "timestamp": completed,
+                "export_type": _export_type_from_path(path),
+                "status": "available" if validation == "valid" else "empty",
+                "destination": str(path.parent),
+                "files": "1",
+                "size": _format_export_size(stat.st_size),
+                "duration": "-",
+                "started": "-",
+                "completed": completed,
+                "validation_result": validation,
+                "key": path.name,
+                "_mtime": str(stat.st_mtime),
+            }
+        )
+    rows.sort(key=lambda row: float(row.get("_mtime") or 0), reverse=True)
+    return rows[: max(limit, 0)]
+
+
+def _export_status_table_row(export_rows: List[Dict[str, str]], export_dir: Path) -> Dict[str, str]:
+    successes = sum(1 for row in export_rows if row.get("validation_result") == "valid")
+    failures = sum(1 for row in export_rows if row.get("validation_result") not in {"valid", None})
+    if not export_rows:
+        validation = "no_exports"
+        last_export = "-"
+    elif failures:
+        validation = "attention"
+        last_export = export_rows[0].get("timestamp", "-")
+    else:
+        validation = "ready"
+        last_export = export_rows[0].get("timestamp", "-")
+    return {
+        "last_export": last_export,
+        "export_count": str(len(export_rows)),
+        "success_count": str(successes),
+        "failure_count": str(failures),
+        "destination": str(export_dir),
+        "validation_state": validation,
+    }
+
+
+def _export_detail_rows(export_row: Dict[str, str] | None) -> List[tuple[str, str]]:
+    row = export_row or {}
+    return [
+        ("Export ID", row.get("export_id", "-")),
+        ("Export Type", row.get("export_type", "-")),
+        ("Started", row.get("started", "-")),
+        ("Completed", row.get("completed", "-")),
+        ("Destination", row.get("destination", "-")),
+        ("Files Generated", row.get("files", "-")),
+        ("Validation Result", row.get("validation_result", "-")),
+        ("Status", row.get("status", "-")),
+        ("Duration", row.get("duration", "-")),
+        ("Size", row.get("size", "-")),
+    ]
+
+
+def _export_type_rows(export_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    counts: Dict[str, int] = {}
+    for row in export_rows:
+        export_type = row.get("export_type") or "-"
+        counts[export_type] = counts.get(export_type, 0) + 1
+    return [
+        {"export_type": _short_text(export_type, limit=24), "count": str(count)}
+        for export_type, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[: max(limit, 0)]
+    ]
+
+
+def _export_event_rows(export_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    recent = list(export_rows)[: max(limit, 0)]
+    return [
+        {
+            "time": row.get("timestamp", "-"),
+            "export_type": row.get("export_type", "-"),
+            "status": row.get("status", "-"),
+            "result": row.get("validation_result", "-"),
+            "key": row.get("key", row.get("export_id", "-")),
+        }
+        for row in reversed(recent)
+    ]
+
+
+def _export_validation_timeline_rows(export_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    buckets: Dict[str, Dict[str, int]] = {}
+    for row in export_rows:
+        timestamp = row.get("timestamp") or "-"
+        bucket = timestamp[:10] if timestamp != "-" else "-"
+        item = buckets.setdefault(bucket, {"valid": 0, "failed": 0, "total": 0})
+        item["total"] += 1
+        if row.get("validation_result") == "valid":
+            item["valid"] += 1
+        else:
+            item["failed"] += 1
+    return [
+        {"time": bucket, "valid": str(values["valid"]), "failed": str(values["failed"]), "total": str(values["total"])}
+        for bucket, values in sorted(buckets.items(), reverse=True)[: max(limit, 0)]
+    ]
+
+
 def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     row_index = table.cursor_row if isinstance(table.cursor_row, int) else 0
     selection: Dict[str, Any] = {"row_index": row_index, "row_key": None}
@@ -1883,6 +2073,169 @@ class RiskTimelineTable(DataTable):
         _restore_table_selection(self, selection)
 
 
+class ExportStatusTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Last Export")
+        self.add_column("Exports")
+        self.add_column("Success")
+        self.add_column("Failure")
+        self.add_column("Destination")
+        self.add_column("Validation")
+        self.update_status([], Path("-"))
+
+    def update_status(self, export_rows: List[Dict[str, str]], export_dir: Path) -> None:
+        selection = _capture_table_selection(self)
+        row = _export_status_table_row(export_rows, export_dir)
+        self.clear()
+        self.add_row(
+            row["last_export"],
+            row["export_count"],
+            row["success_count"],
+            row["failure_count"],
+            row["destination"],
+            row["validation_state"],
+            key="export-status",
+        )
+        _restore_table_selection(self, selection)
+
+
+class ExportActivityTable(DataTable):
+    def on_mount(self) -> None:
+        self.export_rows: List[Dict[str, str]] = []
+        self.add_column("Timestamp")
+        self.add_column("Export Type")
+        self.add_column("Status")
+        self.add_column("Destination")
+        self.add_column("Files")
+        self.add_column("Size")
+        self.add_column("Duration")
+        self.update_exports([])
+
+    def update_exports(self, export_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        self.export_rows = export_rows
+        if not export_rows:
+            self.add_row("-", "-", "No exports available.", "-", "-", "-", "-", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in export_rows:
+            self.add_row(
+                row.get("timestamp", "-"),
+                row.get("export_type", "-"),
+                row.get("status", "-"),
+                row.get("destination", "-"),
+                row.get("files", "-"),
+                row.get("size", "-"),
+                row.get("duration", "-"),
+                key=_unique_table_key(row.get("key") or row.get("export_id"), seen),
+            )
+        _restore_table_selection(self, selection)
+
+    def selected_export(self, row_index: int | None = None) -> Dict[str, str] | None:
+        if not self.export_rows:
+            return None
+        index = self.cursor_row if row_index is None else row_index
+        if not isinstance(index, int) or index < 0 or index >= len(self.export_rows):
+            index = 0
+        return self.export_rows[index]
+
+
+class ExportDetailsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Field")
+        self.add_column("Value")
+        self.update_details(None)
+
+    def update_details(self, export_row: Dict[str, str] | None) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        for field, value in _export_detail_rows(export_row):
+            self.add_row(field, value, key=field)
+        _restore_table_selection(self, selection)
+
+
+class ExportTypesTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Export Type")
+        self.add_column("Count")
+        self.update_types([])
+
+    def update_types(self, export_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _export_type_rows(export_rows)
+        if not rows:
+            self.add_row("No export types available.", "-", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["export_type"],
+                row["count"],
+                key=_unique_table_key(row["export_type"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
+class ExportEventsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Export Type")
+        self.add_column("Status")
+        self.add_column("Result")
+        self.update_events([])
+
+    def update_events(self, export_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _export_event_rows(export_rows)
+        if not rows:
+            self.add_row("-", "-", "-", "No export events available.", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["export_type"],
+                row["status"],
+                row["result"],
+                key=_unique_table_key(row["key"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
+class ExportValidationTimelineTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Valid")
+        self.add_column("Failed")
+        self.add_column("Total")
+        self.update_timeline([])
+
+    def update_timeline(self, export_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _export_validation_timeline_rows(export_rows)
+        if not rows:
+            self.add_row("-", "0", "0", "0", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["valid"],
+                row["failed"],
+                row["total"],
+                key=_unique_table_key(row["time"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
 class TopologyPanel(DataTable):
     def on_mount(self) -> None:
         self.add_column("Source")
@@ -1972,6 +2325,9 @@ class PortMapDashboard(App):
     #tab-risk {
         height: 1fr;
     }
+    #tab-exports {
+        height: 1fr;
+    }
     #risk-screen {
         layout: grid;
         grid-size: 3 5;
@@ -2024,6 +2380,54 @@ class PortMapDashboard(App):
         height: 1fr;
         overflow-x: hidden;
     }
+    #exports-screen {
+        layout: grid;
+        grid-size: 3 4;
+        grid-columns: 2fr 5fr 3fr;
+        grid-rows: 3 1 13fr 7fr;
+        overflow: hidden;
+        height: 1fr;
+        padding: 0 1;
+    }
+    .exports-grid-cell {
+        width: 1fr;
+        height: 1fr;
+        overflow: hidden;
+    }
+    .exports-grid-span-2 {
+        column-span: 2;
+    }
+    .exports-grid-span-3 {
+        column-span: 3;
+    }
+    .exports-grid-heading {
+        height: 1;
+        max-height: 1;
+        overflow: hidden;
+    }
+    .exports-status-table {
+        height: 2;
+        max-height: 2;
+    }
+    .exports-active-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .exports-details-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .exports-support-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .export-section {
+        padding: 0 1;
+        margin: 0 1 0 0;
+        width: 1fr;
+        height: 1fr;
+        overflow-x: hidden;
+    }
     #log-panel {
         height: 12;
         overflow-y: auto;
@@ -2067,6 +2471,10 @@ class PortMapDashboard(App):
             if tab.tab_id == "risk":
                 with Container(id="tab-risk", classes="tab-panel"):
                     yield from self._compose_risk_tab()
+                continue
+            if tab.tab_id == "exports":
+                with Container(id="tab-exports", classes="tab-panel"):
+                    yield from self._compose_exports_tab()
                 continue
             yield Container(
                 Static(render_placeholder_tab(tab.tab_id)),
@@ -2229,6 +2637,64 @@ class PortMapDashboard(App):
             )
             yield self.risk_footer_status_panel
 
+    def _compose_exports_tab(self) -> ComposeResult:
+        with Grid(id="exports-screen"):
+            with Container(classes="exports-grid-cell exports-grid-span-3"):
+                yield Static(
+                    _panel_heading("Export Status", "Last export, totals, destination, and validation state."),
+                    classes="panel-heading exports-grid-heading",
+                )
+                self.exports_status_panel = ExportStatusTable(
+                    classes=f"{EXPORT_WORKSPACE_CONTENT_CLASS} exports-status-table"
+                )
+                yield self.exports_status_panel
+            yield Static(
+                _panel_heading(
+                    "Recent Exports",
+                    "Read-only export activity from the configured export destination.",
+                ),
+                classes="panel-heading exports-grid-heading exports-grid-span-2",
+            )
+            yield Static(
+                _panel_heading("Export Details", "Selected export validation context."),
+                classes="panel-heading exports-grid-heading",
+            )
+            self.export_activity_panel = ExportActivityTable(
+                classes=f"{EXPORT_WORKSPACE_CONTENT_CLASS} exports-active-table exports-grid-span-2"
+            )
+            yield self.export_activity_panel
+            self.export_details_panel = ExportDetailsTable(
+                classes=f"{EXPORT_WORKSPACE_CONTENT_CLASS} exports-details-table"
+            )
+            yield self.export_details_panel
+            with Container(classes="exports-grid-cell"):
+                yield Static(
+                    _panel_heading("Export Types", "Count by export category."),
+                    classes="panel-heading exports-grid-heading",
+                )
+                self.export_types_panel = ExportTypesTable(
+                    classes=f"{EXPORT_WORKSPACE_CONTENT_CLASS} exports-support-table"
+                )
+                yield self.export_types_panel
+            with Container(classes="exports-grid-cell"):
+                yield Static(
+                    _panel_heading("Recent Export Events", "Chronological validation feed."),
+                    classes="panel-heading exports-grid-heading",
+                )
+                self.export_events_panel = ExportEventsTable(
+                    classes=f"{EXPORT_WORKSPACE_CONTENT_CLASS} exports-support-table"
+                )
+                yield self.export_events_panel
+            with Container(classes="exports-grid-cell"):
+                yield Static(
+                    _panel_heading("Validation Timeline", "Bucketed export validation history."),
+                    classes="panel-heading exports-grid-heading",
+                )
+                self.export_validation_timeline_panel = ExportValidationTimelineTable(
+                    classes=f"{EXPORT_WORKSPACE_CONTENT_CLASS} exports-support-table",
+                )
+                yield self.export_validation_timeline_panel
+
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
         self.runtime_settings = load_settings(defaults={})
@@ -2277,6 +2743,8 @@ class PortMapDashboard(App):
             self.risk_timeline_panel.update_timeline(risk_timeline)
         if hasattr(self, "compact_risk_panel"):
             self.compact_risk_panel.update_risk(remediation_events, scan_results)
+        if hasattr(self, "exports_status_panel"):
+            self._update_exports_workspace(self._load_export_rows(limit=max(self.tail_size * 4, EXPORT_ACTIVITY_LIMIT)))
         if hasattr(self, "topology_panel"):
             self.topology_panel.update_topology(topology_edge_rows(flow_visualization.get("topology"), limit=self.tail_size))
         if hasattr(self, "traffic_flows_panel"):
@@ -2307,6 +2775,21 @@ class PortMapDashboard(App):
                 topology=flow_visualization.get("topology"),
             )
             self.metrics_panel.update_metrics(metrics)
+
+    def _load_export_rows(self, limit: int = EXPORT_ACTIVITY_LIMIT) -> List[Dict[str, str]]:
+        return _export_rows_from_dir(getattr(self, "export_dir", resolve_export_dir()), limit=limit)
+
+    def _update_exports_workspace(self, export_rows: List[Dict[str, str]]) -> None:
+        if not hasattr(self, "exports_status_panel"):
+            return
+        export_dir = getattr(self, "export_dir", resolve_export_dir())
+        self.exports_status_panel.update_status(export_rows, export_dir)
+        self.export_activity_panel.update_exports(export_rows)
+        selected_export = self.export_activity_panel.selected_export()
+        self.export_details_panel.update_details(selected_export)
+        self.export_types_panel.update_types(export_rows)
+        self.export_events_panel.update_events(export_rows)
+        self.export_validation_timeline_panel.update_timeline(export_rows)
 
     def _update_risk_workspace(
         self,
@@ -2366,6 +2849,12 @@ class PortMapDashboard(App):
         self.risk_footer_status_panel.update(_format_footer_status(sections["allowlist_status"], sections["safety_boundary"]))
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if getattr(self, "export_activity_panel", None) is event.data_table:
+            if hasattr(self, "export_details_panel"):
+                self.export_details_panel.update_details(
+                    self.export_activity_panel.selected_export(event.cursor_row)
+                )
+            return
         if getattr(self, "risk_active_findings_panel", None) is not event.data_table:
             return
         if not hasattr(self, "risk_finding_details_panel"):

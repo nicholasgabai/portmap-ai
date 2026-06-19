@@ -186,7 +186,7 @@ def test_dashboard_section_labels_keep_risk_details_on_risk_tab():
 
 
 def test_placeholder_tabs_render_safe_labels_and_serialization():
-    for tab_id in ["exports", "governance", "deployment", "ai", "packet"]:
+    for tab_id in ["governance", "deployment", "ai", "packet"]:
         rendered = gui_app.render_placeholder_tab(tab_id)
         assert "This tab is a navigation placeholder." in rendered
         assert "No collectors, packet capture, network calls" in rendered
@@ -306,6 +306,188 @@ def test_risk_workspace_uses_dashboard_style_data_tables():
     assert "self.risk_queue_panel" not in compact_source
     assert "self.risk_active_findings_panel=Static(" not in compact_source
     assert "self.risk_finding_details_panel=Static(" not in compact_source
+
+
+def test_exports_workspace_layout_mounts_correctly():
+    assert gui_app.export_workspace_heading_labels() == (
+        "Export Status",
+        "Recent Exports",
+        "Export Details",
+        "Export Types",
+        "Recent Export Events",
+        "Validation Timeline",
+    )
+    assert gui_app.export_workspace_layout_rows() == (
+        "export-status-row",
+        "export-active-heading-row",
+        "export-active-table-row",
+        "export-support-tables-row",
+    )
+    assert gui_app.export_workspace_content_class() == "export-section"
+
+    css = gui_app.PortMapDashboard.CSS
+    assert "#exports-screen" in css
+    assert "layout: grid;" in css
+    assert "grid-size: 3 4;" in css
+    assert "grid-columns: 2fr 5fr 3fr;" in css
+    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "export-section" in css
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "VerticalScroll" not in source
+    assert "withGrid(id=\"exports-screen\"):" in compact_source
+    assert '_panel_heading("ExportStatus"' in compact_source
+    assert '_panel_heading("RecentExports"' in compact_source
+    assert '_panel_heading("ExportDetails"' in compact_source
+    assert '_panel_heading("ExportTypes"' in compact_source
+    assert '_panel_heading("RecentExportEvents"' in compact_source
+    assert '_panel_heading("ValidationTimeline"' in compact_source
+
+    class Harness(gui_app.PortMapDashboard):
+        def compose(self):
+            yield from self._compose_exports_tab()
+
+        async def on_mount(self):
+            pass
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test():
+            assert app.query_one("#exports-screen", gui_app.Grid)
+            assert app.query_one(gui_app.ExportStatusTable)
+            assert app.query_one(gui_app.ExportActivityTable)
+            assert app.query_one(gui_app.ExportDetailsTable)
+            assert app.query_one(gui_app.ExportTypesTable)
+            assert app.query_one(gui_app.ExportEventsTable)
+            assert app.query_one(gui_app.ExportValidationTimelineTable)
+
+    asyncio.run(run_case())
+
+
+def test_exports_workspace_uses_dashboard_style_data_tables():
+    assert issubclass(gui_app.ExportStatusTable, gui_app.DataTable)
+    assert issubclass(gui_app.ExportActivityTable, gui_app.DataTable)
+    assert issubclass(gui_app.ExportDetailsTable, gui_app.DataTable)
+    assert issubclass(gui_app.ExportTypesTable, gui_app.DataTable)
+    assert issubclass(gui_app.ExportEventsTable, gui_app.DataTable)
+    assert issubclass(gui_app.ExportValidationTimelineTable, gui_app.DataTable)
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "self.exports_status_panel=ExportStatusTable(" in compact_source
+    assert "self.export_activity_panel=ExportActivityTable(" in compact_source
+    assert "self.export_details_panel=ExportDetailsTable(" in compact_source
+    assert "self.export_types_panel=ExportTypesTable(" in compact_source
+    assert "self.export_events_panel=ExportEventsTable(" in compact_source
+    assert "self.export_validation_timeline_panel=ExportValidationTimelineTable(" in compact_source
+    assert "self.export_activity_panel=Static(" not in compact_source
+    assert "self.export_details_panel=Static(" not in compact_source
+
+
+def _sample_export_rows():
+    return [
+        {
+            "export_id": "portmap-logs-20260614-120300.zip",
+            "timestamp": "2026-06-14 12:03:00",
+            "export_type": "logs",
+            "status": "available",
+            "destination": "/tmp/exports",
+            "files": "1",
+            "size": "4.0 KB",
+            "duration": "-",
+            "started": "-",
+            "completed": "2026-06-14 12:03:00",
+            "validation_result": "valid",
+            "key": "portmap-logs-20260614-120300.zip",
+        },
+        {
+            "export_id": "topology-20260614-120200.zip",
+            "timestamp": "2026-06-14 12:02:00",
+            "export_type": "topology",
+            "status": "available",
+            "destination": "/tmp/exports",
+            "files": "1",
+            "size": "2.0 KB",
+            "duration": "-",
+            "started": "-",
+            "completed": "2026-06-14 12:02:00",
+            "validation_result": "valid",
+            "key": "topology-20260614-120200.zip",
+        },
+        {
+            "export_id": "reports-empty.zip",
+            "timestamp": "2026-06-13 09:00:00",
+            "export_type": "reports",
+            "status": "empty",
+            "destination": "/tmp/exports",
+            "files": "1",
+            "size": "0 B",
+            "duration": "-",
+            "started": "-",
+            "completed": "2026-06-13 09:00:00",
+            "validation_result": "empty",
+            "key": "reports-empty.zip",
+        },
+    ]
+
+
+def test_exports_status_strip_population():
+    row = gui_app._export_status_table_row(_sample_export_rows(), Path("/tmp/exports"))
+
+    assert row == {
+        "last_export": "2026-06-14 12:03:00",
+        "export_count": "3",
+        "success_count": "2",
+        "failure_count": "1",
+        "destination": "/tmp/exports",
+        "validation_state": "attention",
+    }
+
+    empty = gui_app._export_status_table_row([], Path("/tmp/exports"))
+    assert empty["last_export"] == "-"
+    assert empty["export_count"] == "0"
+    assert empty["validation_state"] == "no_exports"
+
+
+def test_exports_analytics_panels_population():
+    rows = _sample_export_rows()
+
+    assert gui_app._export_type_rows(rows) == [
+        {"export_type": "logs", "count": "1"},
+        {"export_type": "reports", "count": "1"},
+        {"export_type": "topology", "count": "1"},
+    ]
+
+    events = gui_app._export_event_rows(rows, limit=2)
+    assert [event["export_id"] if "export_id" in event else event["export_type"] for event in events] == [
+        "topology",
+        "logs",
+    ]
+    assert events[0]["time"] == "2026-06-14 12:02:00"
+    assert events[1]["result"] == "valid"
+
+    timeline = gui_app._export_validation_timeline_rows(rows)
+    assert timeline == [
+        {"time": "2026-06-14", "valid": "2", "failed": "0", "total": "2"},
+        {"time": "2026-06-13", "valid": "0", "failed": "1", "total": "1"},
+    ]
+
+
+def test_export_rows_from_dir_reads_archive_metadata(tmp_path):
+    archive = tmp_path / "portmap-logs-20260614-120300.zip"
+    archive.write_bytes(b"export")
+
+    rows = gui_app._export_rows_from_dir(tmp_path)
+
+    assert len(rows) == 1
+    assert rows[0]["export_id"] == archive.name
+    assert rows[0]["export_type"] == "logs"
+    assert rows[0]["status"] == "available"
+    assert rows[0]["destination"] == str(tmp_path)
+    assert rows[0]["files"] == "1"
+    assert rows[0]["size"] == "6 B"
+    assert rows[0]["validation_result"] == "valid"
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
@@ -601,6 +783,100 @@ def test_dashboard_node_table_selection_survives_refresh_when_row_still_exists()
             await pilot.pause()
             assert table.cursor_row == 2
             assert table.get_row_at(table.cursor_row)[0] == "node-b"
+
+    asyncio.run(run_case())
+
+
+def test_export_activity_selection_survives_refresh_when_row_still_exists():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.ExportActivityTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.ExportActivityTable)
+            table.update_exports(_sample_export_rows())
+            table.move_cursor(row=1, column=0)
+            await pilot.pause()
+            assert table.selected_export()["export_id"] == "topology-20260614-120200.zip"
+
+            table.update_exports(
+                [
+                    {
+                        "export_id": "snapshots-20260614-120400.zip",
+                        "timestamp": "2026-06-14 12:04:00",
+                        "export_type": "snapshots",
+                        "status": "available",
+                        "destination": "/tmp/exports",
+                        "files": "1",
+                        "size": "8.0 KB",
+                        "duration": "-",
+                        "started": "-",
+                        "completed": "2026-06-14 12:04:00",
+                        "validation_result": "valid",
+                        "key": "snapshots-20260614-120400.zip",
+                    },
+                    *_sample_export_rows(),
+                ]
+            )
+            await pilot.pause()
+            assert table.cursor_row == 2
+            assert table.selected_export()["export_id"] == "topology-20260614-120200.zip"
+
+    asyncio.run(run_case())
+
+
+def test_export_activity_selection_falls_back_when_selected_row_removed():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.ExportActivityTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.ExportActivityTable)
+            table.update_exports(_sample_export_rows())
+            table.move_cursor(row=2, column=0)
+            await pilot.pause()
+            assert table.selected_export()["export_id"] == "reports-empty.zip"
+
+            table.update_exports(_sample_export_rows()[:2])
+            await pilot.pause()
+            assert table.cursor_row == 1
+            assert table.selected_export()["export_id"] == "topology-20260614-120200.zip"
+
+    asyncio.run(run_case())
+
+
+def test_export_details_update_when_selection_changes():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.activity = gui_app.ExportActivityTable()
+            self.details = gui_app.ExportDetailsTable()
+            yield self.activity
+            yield self.details
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            activity = app.query_one(gui_app.ExportActivityTable)
+            details = app.query_one(gui_app.ExportDetailsTable)
+            activity.update_exports(_sample_export_rows())
+            details.update_details(activity.selected_export())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Export ID"] == (
+                "portmap-logs-20260614-120300.zip"
+            )
+
+            activity.move_cursor(row=1, column=0)
+            details.update_details(activity.selected_export())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Export ID"] == (
+                "topology-20260614-120200.zip"
+            )
 
     asyncio.run(run_case())
 
