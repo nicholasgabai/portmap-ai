@@ -203,7 +203,8 @@ def test_risk_tab_text_is_live_read_only_not_placeholder_only():
     text = gui_app.build_risk_tab_text()
 
     assert "Risk Status" in text
-    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block" in text
+    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block | Total | Mode" in text
+    assert "Queue Status" not in text
     assert "Active Risk Findings" in text
     assert "Top Risk Signals" in text
     assert "Recent Remediation Feed" in text
@@ -220,6 +221,7 @@ def test_risk_workspace_sections_are_structured_for_layout():
     assert gui_app.risk_workspace_heading_labels() == (
         "Risk Status",
         "Active Risk Findings",
+        "Finding Details",
         "Top Risk Signals",
         "Recent Remediation Feed",
         "Risk Timeline",
@@ -250,25 +252,34 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
 
     assert gui_app.risk_workspace_content_class() == "risk-section"
     assert gui_app.risk_workspace_layout_rows() == (
-        "risk-top-row",
-        "risk-active-row",
-        "risk-bottom-row",
-        "risk-footer-row",
+        "risk-status-row",
+        "risk-active-heading-row",
+        "risk-active-table-row",
+        "risk-support-tables-row",
+        "risk-footer-status-row",
     )
     assert "panel-heading" in css
+    assert "#risk-screen" in css
+    assert "layout: grid;" in css
+    assert "grid-size: 3 5;" in css
+    assert "grid-columns: 2fr 5fr 3fr;" in css
+    assert "grid-rows: 3 1 13fr 7fr 2;" in css
     assert "risk-section" in css
-    assert "risk-active-row" in css
-    assert "risk-bottom-row" in css
-    assert "risk-footer-row" in css
+    assert "risk-active-row" not in css
+    assert "risk-bottom-row" not in css
+    assert "risk-top-row" not in css
     assert "risk-panel" not in css
     assert "border:" not in css
     source = Path(gui_app.__file__).read_text()
     compact_source = "".join(source.split())
     assert "VerticalScroll" not in source
+    assert "withGrid(id=\"risk-screen\"):" in compact_source
     assert "risk_allowlist_panel" not in source
     assert "risk_safety_panel" not in source
     assert '_panel_heading("RiskStatus"' in compact_source
+    assert '_panel_heading("QueueStatus"' not in compact_source
     assert '_panel_heading("ActiveRiskFindings"' in compact_source
+    assert '_panel_heading("FindingDetails"' in compact_source
     assert '_panel_heading("TopRiskSignals"' in compact_source
     assert '_panel_heading("RecentRemediationFeed"' in compact_source
     assert '_panel_heading("RiskTimeline"' in compact_source
@@ -277,6 +288,7 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
 def test_risk_workspace_uses_dashboard_style_data_tables():
     assert issubclass(gui_app.RiskStatusTable, gui_app.DataTable)
     assert issubclass(gui_app.RiskActiveFindingsTable, gui_app.DataTable)
+    assert issubclass(gui_app.FindingDetailsTable, gui_app.DataTable)
     assert issubclass(gui_app.RiskSignalsTable, gui_app.DataTable)
     assert issubclass(gui_app.RiskFeedTable, gui_app.DataTable)
     assert issubclass(gui_app.RiskTimelineTable, gui_app.DataTable)
@@ -285,11 +297,14 @@ def test_risk_workspace_uses_dashboard_style_data_tables():
     compact_source = "".join(source.split())
     assert "self.risk_status_panel=RiskStatusTable(" in compact_source
     assert "self.risk_active_findings_panel=RiskActiveFindingsTable(" in compact_source
+    assert "self.risk_finding_details_panel=FindingDetailsTable(" in compact_source
     assert "self.risk_signals_panel=RiskSignalsTable(" in compact_source
     assert "self.risk_feed_panel=RiskFeedTable(" in compact_source
     assert "self.risk_workspace_timeline_panel=RiskTimelineTable(" in compact_source
     assert "self.risk_status_panel=Static(" not in compact_source
+    assert "self.risk_queue_panel" not in compact_source
     assert "self.risk_active_findings_panel=Static(" not in compact_source
+    assert "self.risk_finding_details_panel=Static(" not in compact_source
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
@@ -328,11 +343,15 @@ def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
     )
 
     assert "Risk Status" in wide
-    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block" in wide
+    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block | Total | Mode" in wide
+    assert "Queue Status" not in wide
     assert "Active Risk Findings" in wide
+    assert "Finding Details" in wide
     assert "Risk Status" in narrow
-    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block" in narrow
+    assert "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block | Total | Mode" in narrow
+    assert "Queue Status" not in narrow
     assert "Active Risk Findings" in narrow
+    assert "Finding Details" in narrow
     assert "Risk Status" in wide.splitlines()[0]
     assert "Risk Status" in narrow.splitlines()[0]
     assert "Time | Action | Score | Signal" in wide
@@ -379,6 +398,40 @@ def test_active_risk_findings_formatter_handles_empty_and_populated_data():
     assert "22" in text
     assert "TCP" in text
     assert "worker-1" in text
+
+
+def test_finding_details_rows_use_selected_finding_with_placeholders():
+    rows = gui_app._active_risk_finding_rows(
+        [
+            {
+                "timestamp": "2026-06-14T12:00:00+00:00",
+                "node_id": "worker-1",
+                "action": "prompt_operator",
+                "score": 0.82,
+                "score_factors": ["sensitive_port:22"],
+                "ai_provider": "local_rules",
+                "first_seen": "2026-06-14T11:00:00+00:00",
+                "last_seen": "2026-06-14T12:00:00+00:00",
+                "count": 3,
+            }
+        ],
+        [],
+    )
+
+    details = dict(gui_app._finding_detail_rows(rows[0]))
+
+    assert details["Asset"] == "worker-1"
+    assert details["Finding"] == "sensitive_port:22"
+    assert details["Provider"] == "local_rules"
+    assert details["Score"] == ".82"
+    assert details["Action"] == "prompt_op..."
+    assert details["State"] == "remediation"
+    assert details["First Seen"] == "2026-06-14 11:00:00"
+    assert details["Last Seen"] == "2026-06-14 12:00:00"
+    assert details["Count"] == "3"
+
+    placeholders = dict(gui_app._finding_detail_rows(None))
+    assert all(value == "-" for value in placeholders.values())
 
 
 def test_risk_severity_labels_are_score_only_presentation():
@@ -630,7 +683,8 @@ def test_risk_one_screen_layout_formatter_enforces_row_limits():
         risk_timeline=timeline,
     )
 
-    assert len(sections["active_findings"].splitlines()) == 13
+    assert gui_app.RISK_ACTIVE_FINDING_LIMIT == 24
+    assert len(sections["active_findings"].splitlines()) == 14
     assert len(sections["remediation_feed"].splitlines()) == 10
     assert len(sections["top_signals"].splitlines()) == 10
     assert len(sections["risk_timeline"].splitlines()) == 10
@@ -642,6 +696,35 @@ def test_risk_one_screen_layout_formatter_enforces_row_limits():
     assert len(status.splitlines()) == 1
     assert "Allowlist:" in footer
     assert "Safety:" in footer
+
+
+def test_risk_refresh_change_awareness_uses_existing_snapshot_keys():
+    first = [
+        {
+            "timestamp": "2026-06-14T12:00:00+00:00",
+            "node_id": "worker-1",
+            "action": "monitor",
+            "score": 0.5,
+            "score_factors": ["listening_socket"],
+        }
+    ]
+    second = [
+        *first,
+        {
+            "timestamp": "2026-06-14T12:01:00+00:00",
+            "node_id": "worker-2",
+            "action": "prompt_operator",
+            "score": 0.9,
+            "score_factors": ["sensitive_port:22"],
+        },
+    ]
+
+    first_keys = {row["key"] for row in gui_app._active_risk_finding_rows(first, [])}
+    second_rows = gui_app._active_risk_finding_rows(second, [])
+    second_keys = {row["key"] for row in second_rows}
+
+    assert len(second_keys - first_keys) == 1
+    assert all(row["key"] for row in second_rows)
 
 
 def test_tab_nav_and_bindings_expose_shortcuts():

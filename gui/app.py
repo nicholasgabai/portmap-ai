@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from urllib import error, request
 
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Grid, Horizontal
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Footer, Header, Static, Label
@@ -416,17 +416,20 @@ RISK_WORKSPACE_SECTION_ORDER: tuple[str, ...] = (
 RISK_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
     "Risk Status",
     "Active Risk Findings",
+    "Finding Details",
     "Top Risk Signals",
     "Recent Remediation Feed",
     "Risk Timeline",
 )
 RISK_WORKSPACE_CONTENT_CLASS = "risk-section"
 RISK_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
-    "risk-top-row",
-    "risk-active-row",
-    "risk-bottom-row",
-    "risk-footer-row",
+    "risk-status-row",
+    "risk-active-heading-row",
+    "risk-active-table-row",
+    "risk-support-tables-row",
+    "risk-footer-status-row",
 )
+RISK_ACTIVE_FINDING_LIMIT = 24
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -600,7 +603,7 @@ def _risk_status_table_row(
 ) -> Dict[str, str]:
     events = [*remediation_events, *scan_results]
     scores = [score for event in events if (score := _numeric_risk_score(event)) is not None]
-    counts = _risk_action_counts(remediation_events)
+    queue = _queue_status_table_row(remediation_events)
     latest_score = scores[-1] if scores else None
     average_score = sum(scores) / len(scores) if scores else None
     return {
@@ -610,9 +613,22 @@ def _risk_status_table_row(
         "avg": _format_compact_risk_score(average_score),
         "updated": _format_time(_latest_risk_timestamp(events)),
         "provider": _provider_model_summary(events),
+        "monitor": queue["monitor"],
+        "review": queue["review"],
+        "block": queue["block"],
+        "total": queue["total"],
+        "mode": "preview",
+    }
+
+
+def _queue_status_table_row(events: List[Dict[str, Any]]) -> Dict[str, str]:
+    counts = _risk_action_counts(events)
+    total = counts["monitor"] + counts["review"] + counts["block"]
+    return {
         "monitor": str(counts["monitor"]),
         "review": str(counts["review"]),
         "block": str(counts["block"]),
+        "total": str(total),
     }
 
 
@@ -623,10 +639,10 @@ def _format_risk_status_table(
     row = _risk_status_table_row(remediation_events, scan_results)
     return "\n".join(
         [
-            "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block",
+            "Current | Latest | Max | Avg | Updated | Provider | Monitor | Review | Block | Total | Mode",
             (
                 f"{row['current']} | {row['latest']} | {row['max']} | {row['avg']} | {row['updated']} | "
-                f"{row['provider']} | {row['monitor']} | {row['review']} | {row['block']}"
+                f"{row['provider']} | {row['monitor']} | {row['review']} | {row['block']} | {row['total']} | {row['mode']}"
             ),
         ]
     )
@@ -745,11 +761,56 @@ def _risk_finding_summary(event: Dict[str, Any]) -> str:
     return _short_text(event.get("risk_explanation") or event.get("reason") or event.get("status") or "-", limit=28)
 
 
+def _risk_finding_provider(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("ai_provider") or event.get("provider") or event.get("model") or event.get("model_name") or "-",
+        limit=24,
+    )
+
+
+def _risk_finding_state(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("state")
+        or event.get("status")
+        or event.get("source_mode")
+        or event.get("data_source")
+        or event.get("_finding_source")
+        or "-",
+        limit=24,
+    )
+
+
+def _risk_finding_count(event: Dict[str, Any]) -> str:
+    for key in ("count", "event_count", "seen_count", "occurrences"):
+        value = event.get(key)
+        if value not in {"", "-", None}:
+            return _short_text(value, limit=12)
+    return "-"
+
+
+def _format_optional_timestamp(value: Any) -> str:
+    formatted = _format_timestamp(value)
+    return formatted if formatted != "-" else "-"
+
+
+def _risk_finding_key(event: Dict[str, Any]) -> str:
+    score = _format_compact_risk_score(_numeric_risk_score(event))
+    return "|".join(
+        [
+            _risk_finding_target(event),
+            _risk_finding_service(event),
+            _risk_finding_summary(event),
+            score,
+            _format_time(event.get("timestamp") or event.get("generated_at")),
+        ]
+    )
+
+
 def _format_active_risk_findings(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 12,
+    limit: int = RISK_ACTIVE_FINDING_LIMIT,
 ) -> str:
     findings = _active_risk_finding_rows(remediation_events, scan_results, limit=limit)
     if not findings:
@@ -767,7 +828,7 @@ def _active_risk_finding_rows(
     remediation_events: List[Dict[str, Any]],
     scan_results: List[Dict[str, Any]],
     *,
-    limit: int = 12,
+    limit: int = RISK_ACTIVE_FINDING_LIMIT,
 ) -> List[Dict[str, str]]:
     events: List[Dict[str, Any]] = []
     for event in remediation_events:
@@ -790,9 +851,32 @@ def _active_risk_finding_rows(
                 "score": _format_compact_risk_score(score_value),
                 "action": _short_text(event.get("action") or event.get("status") or event.get("reason"), limit=12),
                 "time": _format_time(event.get("timestamp") or event.get("generated_at")),
+                "provider": _risk_finding_provider(event),
+                "state": _risk_finding_state(event),
+                "first_seen": _format_optional_timestamp(event.get("first_seen")),
+                "last_seen": _format_optional_timestamp(event.get("last_seen")),
+                "count": _risk_finding_count(event),
+                "key": _risk_finding_key(event),
             }
         )
     return rows
+
+
+def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]]:
+    row = finding or {}
+    return [
+        ("Asset", row.get("asset", "-")),
+        ("Service", row.get("service", "-")),
+        ("Finding", row.get("finding", "-")),
+        ("Provider", row.get("provider", "-")),
+        ("Score", row.get("score", "-")),
+        ("Action", row.get("action", "-")),
+        ("Time", row.get("time", "-")),
+        ("State", row.get("state", "-")),
+        ("First Seen", row.get("first_seen", "-")),
+        ("Last Seen", row.get("last_seen", "-")),
+        ("Count", row.get("count", "-")),
+    ]
 
 
 def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 9) -> str:
@@ -814,6 +898,14 @@ def _remediation_feed_rows(events: List[Dict[str, Any]], *, limit: int = 9) -> L
                 "action": _short_text(event.get("action"), limit=14),
                 "score": _format_compact_risk_score(_numeric_risk_score(event)),
                 "signal": _short_text(_format_score_factors(event, limit=1), limit=24),
+                "key": "|".join(
+                    [
+                        _format_time(event.get("timestamp") or event.get("generated_at")),
+                        _short_text(event.get("action"), limit=14),
+                        _format_compact_risk_score(_numeric_risk_score(event)),
+                        _short_text(_format_score_factors(event, limit=1), limit=24),
+                    ]
+                ),
             }
         )
     return rows
@@ -855,6 +947,14 @@ def _risk_timeline_rows(timeline: List[Dict[str, Any]], *, limit: int = 9) -> Li
                 "max": _format_compact_risk_score(bucket.get("max_score")),
                 "events": str(bucket.get("event_count", 0)),
                 "trend": trend,
+                "key": "|".join(
+                    [
+                        _format_time(bucket.get("bucket_start")),
+                        _format_compact_risk_score(bucket.get("average_score")),
+                        _format_compact_risk_score(bucket.get("max_score")),
+                        str(bucket.get("event_count", 0)),
+                    ]
+                ),
             }
         )
         previous_average = average
@@ -960,6 +1060,13 @@ def render_risk_workspace_layout(
         [
             f"Risk Status\n{_format_risk_status_table(remediation, scans)}",
             f"Active Risk Findings\n{sections['active_findings']}",
+            "Finding Details\n"
+            + "\n".join(
+                f"{field}: {value}"
+                for field, value in _finding_detail_rows(
+                    (_active_risk_finding_rows(remediation, scans, limit=1) or [None])[0]
+                )
+            ),
             _three_column_text(
                 f"Top Risk Signals\n{sections['top_signals']}",
                 f"Recent Remediation Feed\n{sections['remediation_feed']}",
@@ -1288,6 +1395,8 @@ class RiskStatusTable(DataTable):
         self.add_column("Monitor")
         self.add_column("Review")
         self.add_column("Block")
+        self.add_column("Total")
+        self.add_column("Mode")
         self.update_status([], [])
 
     def update_status(
@@ -1307,11 +1416,14 @@ class RiskStatusTable(DataTable):
             row["monitor"],
             row["review"],
             row["block"],
+            row["total"],
+            row["mode"],
         )
 
 
 class RiskActiveFindingsTable(DataTable):
     def on_mount(self) -> None:
+        self.finding_rows: List[Dict[str, str]] = []
         self.add_column("Severity")
         self.add_column("Asset")
         self.add_column("Service")
@@ -1325,22 +1437,47 @@ class RiskActiveFindingsTable(DataTable):
         self,
         remediation_events: List[Dict[str, Any]],
         scan_results: List[Dict[str, Any]],
+        new_keys: set[str] | None = None,
     ) -> None:
         self.clear()
         rows = _active_risk_finding_rows(remediation_events, scan_results)
+        self.finding_rows = rows
         if not rows:
             self.add_row("-", "-", "-", "No active risk findings available.", "-", "-", "-")
             return
-        for row in rows:
+        new_keys = new_keys or set()
+        for index, row in enumerate(rows):
+            severity = f"NEW {row['severity']}" if row["key"] in new_keys else row["severity"]
             self.add_row(
-                row["severity"],
+                severity,
                 row["asset"],
                 row["service"],
                 row["finding"],
                 row["score"],
                 row["action"],
                 row["time"],
+                key=f"{index}:{row['key']}",
             )
+
+    def selected_finding(self, row_index: int | None = None) -> Dict[str, str] | None:
+        if not self.finding_rows:
+            return None
+        index = self.cursor_row if row_index is None else row_index
+        if not isinstance(index, int) or index < 0 or index >= len(self.finding_rows):
+            index = 0
+        return self.finding_rows[index]
+
+
+class FindingDetailsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Field")
+        self.add_column("Value")
+        self.update_details(None)
+
+    def update_details(self, finding: Dict[str, str] | None) -> None:
+        self.clear()
+        for field, value in _finding_detail_rows(finding):
+            self.add_row(field, value)
 
 
 class RiskSignalsTable(DataTable):
@@ -1371,14 +1508,16 @@ class RiskFeedTable(DataTable):
         self.add_column("Signal")
         self.update_feed([])
 
-    def update_feed(self, events: List[Dict[str, Any]]) -> None:
+    def update_feed(self, events: List[Dict[str, Any]], new_keys: set[str] | None = None) -> None:
         self.clear()
         rows = _remediation_feed_rows(events)
         if not rows:
             self.add_row("-", "-", "-", "No remediation preview events yet.")
             return
+        new_keys = new_keys or set()
         for row in rows:
-            self.add_row(row["time"], row["action"], row["score"], row["signal"])
+            signal = f"NEW {row['signal']}" if row["key"] in new_keys else row["signal"]
+            self.add_row(row["time"], row["action"], row["score"], signal)
 
 
 class RiskTimelineTable(DataTable):
@@ -1390,14 +1529,16 @@ class RiskTimelineTable(DataTable):
         self.add_column("Trend")
         self.update_timeline_rows([])
 
-    def update_timeline_rows(self, timeline: List[Dict[str, Any]]) -> None:
+    def update_timeline_rows(self, timeline: List[Dict[str, Any]], new_keys: set[str] | None = None) -> None:
         self.clear()
         rows = _risk_timeline_rows(timeline)
         if not rows:
             self.add_row("-", "-", "-", "0", "No scored events yet.")
             return
+        new_keys = new_keys or set()
         for row in rows:
-            self.add_row(row["time"], row["avg"], row["max"], row["events"], row["trend"])
+            trend = "new" if row["key"] in new_keys else row["trend"]
+            self.add_row(row["time"], row["avg"], row["max"], row["events"], trend)
 
 
 class TopologyPanel(DataTable):
@@ -1465,36 +1606,50 @@ class PortMapDashboard(App):
     #tab-risk {
         height: 1fr;
     }
-    .risk-workspace {
+    #risk-screen {
+        layout: grid;
+        grid-size: 3 5;
+        grid-columns: 2fr 5fr 3fr;
+        grid-rows: 3 1 13fr 7fr 2;
+        overflow: hidden;
         height: 1fr;
         padding: 0 1;
     }
-    .risk-row {
-        width: 1fr;
-    }
-    .risk-top-row {
-        width: 1fr;
-        height: 3;
-    }
-    .risk-active-row {
+    .risk-grid-cell {
         width: 1fr;
         height: 1fr;
+        overflow: hidden;
     }
-    .risk-bottom-row {
-        width: 1fr;
-        height: 10;
+    .risk-grid-span-2 {
+        column-span: 2;
     }
-    .risk-footer-row {
-        width: 1fr;
+    .risk-grid-span-3 {
+        column-span: 3;
+    }
+    .risk-grid-heading {
+        height: 1;
+        max-height: 1;
+        overflow: hidden;
+    }
+    .risk-status-table {
         height: 2;
+        max-height: 2;
     }
-    .risk-column {
-        width: 1fr;
-        margin-right: 1;
+    .risk-active-table {
+        height: 1fr;
+        max-height: 1fr;
     }
-    .risk-bottom-column {
-        width: 1fr;
-        margin-right: 1;
+    .risk-details-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .risk-support-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .risk-footer-status {
+        height: 2;
+        max-height: 2;
     }
     .risk-section {
         padding: 0 1;
@@ -1502,16 +1657,6 @@ class PortMapDashboard(App):
         width: 1fr;
         height: 1fr;
         overflow-x: hidden;
-    }
-    .risk-fill-section {
-        height: 1fr;
-    }
-    .risk-primary-section {
-        width: 1fr;
-        height: 1fr;
-    }
-    .risk-wide-section {
-        width: 1fr;
     }
     #log-panel {
         height: 12;
@@ -1657,57 +1802,66 @@ class PortMapDashboard(App):
         yield self.log_panel
 
     def _compose_risk_tab(self) -> ComposeResult:
-        with Container(classes="risk-workspace"):
-            with Container(classes="risk-row risk-top-row"):
+        with Grid(id="risk-screen"):
+            with Container(classes="risk-grid-cell risk-grid-span-3"):
                 yield Static(
-                    _panel_heading("Risk Status", "Summary and queue status from the current refresh."),
-                    classes="panel-heading",
+                    _panel_heading("Risk Status", "Score, queue, provider, and mode from the current refresh."),
+                    classes="panel-heading risk-grid-heading",
                 )
-                self.risk_status_panel = RiskStatusTable(classes=RISK_WORKSPACE_CONTENT_CLASS)
+                self.risk_status_panel = RiskStatusTable(
+                    classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-status-table"
+                )
                 yield self.risk_status_panel
-            with Container(classes="risk-active-row"):
+            yield Static(
+                _panel_heading(
+                    "Active Risk Findings",
+                    "Primary investigation table from sampled ports and remediation previews.",
+                ),
+                classes="panel-heading risk-grid-heading risk-grid-span-2",
+            )
+            yield Static(
+                _panel_heading("Finding Details", "Selected finding investigation context."),
+                classes="panel-heading risk-grid-heading",
+            )
+            self.risk_active_findings_panel = RiskActiveFindingsTable(
+                classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-active-table risk-grid-span-2"
+            )
+            yield self.risk_active_findings_panel
+            self.risk_finding_details_panel = FindingDetailsTable(
+                classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-details-table"
+            )
+            yield self.risk_finding_details_panel
+            with Container(classes="risk-grid-cell"):
                 yield Static(
-                    _panel_heading(
-                        "Active Risk Findings",
-                        "Primary investigation table from sampled ports and remediation previews.",
-                    ),
-                    classes="panel-heading",
+                    _panel_heading("Top Risk Signals", "Frequency-counted current risk indicators."),
+                    classes="panel-heading risk-grid-heading",
                 )
-                self.risk_active_findings_panel = RiskActiveFindingsTable(
-                    classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-primary-section risk-fill-section"
+                self.risk_signals_panel = RiskSignalsTable(
+                    classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-support-table"
                 )
-                yield self.risk_active_findings_panel
-            with Horizontal(classes="risk-row risk-bottom-row"):
-                with Container(classes="risk-bottom-column"):
-                    yield Static(
-                        _panel_heading("Top Risk Signals", "Frequency-counted current risk indicators."),
-                        classes="panel-heading",
-                    )
-                    self.risk_signals_panel = RiskSignalsTable(classes=RISK_WORKSPACE_CONTENT_CLASS)
-                    yield self.risk_signals_panel
-                with Container(classes="risk-bottom-column"):
-                    yield Static(
-                        _panel_heading("Recent Remediation Feed", "Latest preview decisions capped for one-screen review."),
-                        classes="panel-heading",
-                    )
-                    self.risk_feed_panel = RiskFeedTable(classes=RISK_WORKSPACE_CONTENT_CLASS)
-                    yield self.risk_feed_panel
-                with Container(classes="risk-bottom-column"):
-                    yield Static(
-                        _panel_heading("Risk Timeline", "Recent score buckets and queue activity."),
-                        classes="panel-heading",
-                    )
-                    self.risk_workspace_timeline_panel = RiskTimelineTable(
-                        classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-wide-section",
-                    )
-                    yield self.risk_workspace_timeline_panel
-            with Container(classes="risk-row risk-footer-row"):
-                sections = build_risk_workspace_sections()
-                self.risk_footer_status_panel = Static(
-                    _format_footer_status(sections["allowlist_status"], sections["safety_boundary"]),
-                    classes=RISK_WORKSPACE_CONTENT_CLASS,
+                yield self.risk_signals_panel
+            with Container(classes="risk-grid-cell"):
+                yield Static(
+                    _panel_heading("Recent Remediation Feed", "Latest preview decisions capped for one-screen review."),
+                    classes="panel-heading risk-grid-heading",
                 )
-                yield self.risk_footer_status_panel
+                self.risk_feed_panel = RiskFeedTable(classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-support-table")
+                yield self.risk_feed_panel
+            with Container(classes="risk-grid-cell"):
+                yield Static(
+                    _panel_heading("Risk Timeline", "Recent score buckets and queue activity."),
+                    classes="panel-heading risk-grid-heading",
+                )
+                self.risk_workspace_timeline_panel = RiskTimelineTable(
+                    classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-support-table",
+                )
+                yield self.risk_workspace_timeline_panel
+            sections = build_risk_workspace_sections()
+            self.risk_footer_status_panel = Static(
+                _format_footer_status(sections["allowlist_status"], sections["safety_boundary"]),
+                classes=f"{RISK_WORKSPACE_CONTENT_CLASS} risk-footer-status risk-grid-span-3",
+            )
+            yield self.risk_footer_status_panel
 
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
@@ -1717,6 +1871,9 @@ class PortMapDashboard(App):
         self._allowlist_candidates: List[Dict[str, Any]] = []
         self._expected_services: List[Dict[str, Any]] = []
         self._nodes_cache: List[Dict[str, Any]] = []
+        self._risk_finding_keys: set[str] | None = None
+        self._risk_feed_keys: set[str] | None = None
+        self._risk_timeline_keys: set[str] | None = None
         self._apply_active_tab()
         self.refresh_task = asyncio.create_task(self.auto_refresh())
         self._set_status(f"Export destination: {self.export_dir}")
@@ -1801,12 +1958,38 @@ class PortMapDashboard(App):
             expected_services=expected_services,
             selected_index=selected_index,
         )
+        finding_keys = {row["key"] for row in _active_risk_finding_rows(remediation_events, scan_results)}
+        feed_keys = {row["key"] for row in _remediation_feed_rows(remediation_events)}
+        timeline_keys = {row["key"] for row in _risk_timeline_rows(risk_timeline)}
+        previous_finding_keys = getattr(self, "_risk_finding_keys", None)
+        previous_feed_keys = getattr(self, "_risk_feed_keys", None)
+        previous_timeline_keys = getattr(self, "_risk_timeline_keys", None)
+        new_finding_keys = finding_keys - previous_finding_keys if previous_finding_keys is not None else set()
+        new_feed_keys = feed_keys - previous_feed_keys if previous_feed_keys is not None else set()
+        new_timeline_keys = timeline_keys - previous_timeline_keys if previous_timeline_keys is not None else set()
+        self._risk_finding_keys = finding_keys
+        self._risk_feed_keys = feed_keys
+        self._risk_timeline_keys = timeline_keys
         self.risk_status_panel.update_status(remediation_events, scan_results)
-        self.risk_active_findings_panel.update_findings(remediation_events, scan_results)
+        self.risk_active_findings_panel.update_findings(
+            remediation_events,
+            scan_results,
+            new_keys=new_finding_keys,
+        )
+        self.risk_finding_details_panel.update_details(self.risk_active_findings_panel.selected_finding())
         self.risk_signals_panel.update_signals(remediation_events, scan_results)
-        self.risk_feed_panel.update_feed(remediation_events)
-        self.risk_workspace_timeline_panel.update_timeline_rows(risk_timeline)
+        self.risk_feed_panel.update_feed(remediation_events, new_keys=new_feed_keys)
+        self.risk_workspace_timeline_panel.update_timeline_rows(risk_timeline, new_keys=new_timeline_keys)
         self.risk_footer_status_panel.update(_format_footer_status(sections["allowlist_status"], sections["safety_boundary"]))
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if getattr(self, "risk_active_findings_panel", None) is not event.data_table:
+            return
+        if not hasattr(self, "risk_finding_details_panel"):
+            return
+        self.risk_finding_details_panel.update_details(
+            self.risk_active_findings_panel.selected_finding(event.cursor_row)
+        )
 
     def _load_orchestrator_defaults(self) -> None:
         # Environment variables take precedence
