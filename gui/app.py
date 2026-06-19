@@ -16,7 +16,15 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Footer, Header, Static, Label
 
 from core_engine.config_loader import load_settings, save_settings
+from core_engine.deployment import build_deployment_manifest_catalog
 from core_engine.log_exporter import export_logs, resolve_export_dir
+from core_engine.packaging import (
+    build_auto_updater_readiness,
+    build_container_deployment_readiness,
+    build_linux_packaging_readiness,
+    build_macos_packaging_readiness,
+    build_windows_installer_readiness,
+)
 from gui.visualization import (
     build_flow_visualization,
     build_risk_timeline,
@@ -463,6 +471,22 @@ GOVERNANCE_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
     "governance-support-tables-row",
 )
 GOVERNANCE_EVIDENCE_LIMIT = 24
+DEPLOYMENT_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
+    "Deployment Status",
+    "Deployment Readiness",
+    "Deployment Details",
+    "Platform Types",
+    "Recent Deployment Events",
+    "Deployment Timeline",
+)
+DEPLOYMENT_WORKSPACE_CONTENT_CLASS = "deployment-section"
+DEPLOYMENT_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
+    "deployment-status-row",
+    "deployment-active-heading-row",
+    "deployment-active-table-row",
+    "deployment-support-tables-row",
+)
+DEPLOYMENT_READINESS_LIMIT = 24
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -515,6 +539,18 @@ def governance_workspace_content_class() -> str:
 
 def governance_workspace_layout_rows() -> tuple[str, ...]:
     return GOVERNANCE_WORKSPACE_LAYOUT_ROWS
+
+
+def deployment_workspace_heading_labels() -> tuple[str, ...]:
+    return DEPLOYMENT_WORKSPACE_HEADING_LABELS
+
+
+def deployment_workspace_content_class() -> str:
+    return DEPLOYMENT_WORKSPACE_CONTENT_CLASS
+
+
+def deployment_workspace_layout_rows() -> tuple[str, ...]:
+    return DEPLOYMENT_WORKSPACE_LAYOUT_ROWS
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -1791,6 +1827,310 @@ def _governance_timeline_rows(governance_rows: List[Dict[str, str]], *, limit: i
     ]
 
 
+def _deployment_list_text(values: Any, *, limit: int = 4, text_limit: int = 72) -> str:
+    if values is None:
+        return "-"
+    if not isinstance(values, (dict, list)) and values in {"", "-"}:
+        return "-"
+    if isinstance(values, dict):
+        items = [f"{key}={value}" for key, value in values.items()]
+    elif isinstance(values, list):
+        items = []
+        for value in values:
+            if isinstance(value, dict):
+                label = value.get("action_summary") or value.get("step_id") or value.get("record_type")
+                items.append(str(label or value))
+            else:
+                items.append(str(value))
+    else:
+        items = [str(values)]
+    items = [_short_text(item, limit=text_limit) for item in items if _short_text(item, limit=text_limit) != "-"]
+    if not items:
+        return "-"
+    suffix = "..." if len(items) > limit else ""
+    return ", ".join(items[:limit]) + suffix
+
+
+def _deployment_platform_type(value: Any) -> str:
+    text = str(value or "").lower()
+    if "windows" in text or "powershell" in text or "winget" in text or "msi" in text:
+        return "windows"
+    if "macos" in text or "darwin" in text or "launchd" in text or "app_bundle" in text:
+        return "macos"
+    if "container" in text or "docker" in text or "podman" in text or "compose" in text:
+        return "container"
+    if "updater" in text or "update" in text or "channel" in text:
+        return "updater"
+    if "linux" in text or "raspberry" in text or "debian" in text or "systemd" in text or "arm" in text:
+        return "linux"
+    return "linux"
+
+
+def _deployment_status_from_state(value: Any) -> str:
+    state = str(value or "").strip().lower()
+    if state in {"ready", "supported", "available", "valid"}:
+        return "ready"
+    if state in {"degraded", "warning", "attention", "partial"}:
+        return "warning"
+    if state in {"blocked", "unsupported", "unavailable", "failed", "invalid"}:
+        return "blocker"
+    return state or "unknown"
+
+
+def _deployment_state_value(record: Dict[str, Any]) -> str:
+    for key in ("installer_state", "packaging_state", "deployment_state", "updater_state", "state", "status"):
+        value = record.get(key)
+        if value not in {"", "-", None}:
+            return str(value)
+    readiness = record.get("deployment_readiness")
+    if isinstance(readiness, dict):
+        return str(readiness.get("state") or "unknown")
+    return "unknown"
+
+
+def _deployment_method_value(record: Dict[str, Any]) -> str:
+    for key in ("install_method", "package_method", "deployment_method", "update_method", "deployment_mode", "method"):
+        value = record.get(key)
+        if value not in {"", "-", None}:
+            return str(value)
+    return "readiness"
+
+
+def _deployment_validation_notes(record: Dict[str, Any], keys: tuple[str, ...]) -> List[str]:
+    notes: List[str] = []
+    validation = record.get("validation_summary")
+    if isinstance(validation, dict):
+        for key in keys:
+            value = validation.get(key)
+            if isinstance(value, list):
+                notes.extend(str(item) for item in value)
+            elif value not in {"", "-", None}:
+                notes.append(str(value))
+    for key in keys:
+        value = record.get(key)
+        if isinstance(value, list):
+            notes.extend(str(item) for item in value)
+        elif value not in {"", "-", None}:
+            notes.append(str(value))
+    deduped: List[str] = []
+    for note in notes:
+        if note and note not in deduped:
+            deduped.append(note)
+    return deduped
+
+
+def _deployment_warning_items(record: Dict[str, Any], state: str) -> List[str]:
+    warnings = _deployment_validation_notes(record, ("advisory_notes", "safety_warnings", "warnings"))
+    validation = record.get("validation_summary")
+    if isinstance(validation, dict) and validation.get("admin_required") is True:
+        warnings.append("future_admin_if_operator_approved")
+    if _deployment_status_from_state(state) == "warning" and not warnings:
+        warnings.append(state)
+    return warnings
+
+
+def _deployment_blocker_items(record: Dict[str, Any], state: str) -> List[str]:
+    blockers = _deployment_validation_notes(record, ("blockers", "missing_requirements", "failed_checks"))
+    if _deployment_status_from_state(state) == "blocker" and not blockers:
+        blockers.append(state)
+    return blockers
+
+
+def _deployment_safety_mode(record: Dict[str, Any]) -> str:
+    if record.get("dry_run_only") is True or record.get("dry_run") is True:
+        return "dry_run"
+    if record.get("preview_only") is True:
+        return "preview"
+    return "read_only"
+
+
+def _deployment_int(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _deployment_row_from_manifest(manifest: Dict[str, Any]) -> Dict[str, str]:
+    readiness = manifest.get("deployment_readiness") if isinstance(manifest.get("deployment_readiness"), dict) else {}
+    state = str(readiness.get("state") or manifest.get("state") or "unknown")
+    checks = readiness.get("check_states") if isinstance(readiness.get("check_states"), dict) else {}
+    blockers = [f"{key}:{value}" for key, value in checks.items() if value in {"unsupported", "unavailable", "blocked"}]
+    warnings = [f"{key}:{value}" for key, value in checks.items() if value in {"degraded", "unknown"}]
+    platform = _deployment_platform_type(" ".join(str(item) for item in manifest.get("supported_platforms") or []))
+    method = _deployment_method_value(manifest)
+    updated = _format_timestamp(manifest.get("generated_at"))
+    notes = manifest.get("advisory_notes") or []
+    return {
+        "platform": platform,
+        "method": _short_text(method, limit=24),
+        "status": _deployment_status_from_state(state),
+        "readiness": _short_text(state, limit=24),
+        "warnings": str(len(warnings)),
+        "blockers": str(len(blockers)),
+        "updated": updated,
+        "required_steps": _deployment_list_text(manifest.get("required_components")),
+        "warning_details": _deployment_list_text(warnings),
+        "blocker_details": _deployment_list_text(blockers),
+        "safety_mode": _deployment_safety_mode(manifest),
+        "notes": _deployment_list_text(notes),
+        "preview_only": str(bool(manifest.get("preview_only", True))),
+        "destructive_action": str(bool(manifest.get("destructive_action", False))),
+        "key": "|".join(["manifest", method, platform, updated]),
+    }
+
+
+def _deployment_row_from_package(record: Dict[str, Any]) -> Dict[str, str]:
+    state = _deployment_state_value(record)
+    method = _deployment_method_value(record)
+    platform = _deployment_platform_type(
+        " ".join(
+            [
+                str(record.get("target_platform") or ""),
+                str(record.get("record_type") or ""),
+                method,
+            ]
+        )
+    )
+    warnings = _deployment_warning_items(record, state)
+    blockers = _deployment_blocker_items(record, state)
+    updated = _format_timestamp(record.get("generated_at"))
+    required_steps = record.get("install_steps") or record.get("required_permissions") or []
+    notes = warnings or _deployment_validation_notes(record, ("advisory_notes",))
+    return {
+        "platform": platform,
+        "method": _short_text(method, limit=24),
+        "status": _deployment_status_from_state(state),
+        "readiness": _short_text(state, limit=24),
+        "warnings": str(len(warnings)),
+        "blockers": str(len(blockers)),
+        "updated": updated,
+        "required_steps": _deployment_list_text(required_steps),
+        "warning_details": _deployment_list_text(warnings),
+        "blocker_details": _deployment_list_text(blockers),
+        "safety_mode": _deployment_safety_mode(record),
+        "notes": _deployment_list_text(notes),
+        "preview_only": str(bool(record.get("preview_only", True))),
+        "destructive_action": str(bool(record.get("destructive_action", False))),
+        "key": "|".join(["package", str(record.get("record_type") or "readiness"), platform, method]),
+    }
+
+
+def _default_deployment_generated_at() -> str:
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def _build_default_deployment_readiness_rows(
+    *,
+    generated_at: str | None = None,
+    limit: int = DEPLOYMENT_READINESS_LIMIT,
+) -> List[Dict[str, str]]:
+    timestamp = generated_at or _default_deployment_generated_at()
+    rows: List[Dict[str, str]] = []
+    try:
+        catalog = build_deployment_manifest_catalog(generated_at=timestamp)
+        for manifest in catalog.get("manifests") or []:
+            if isinstance(manifest, dict):
+                rows.append(_deployment_row_from_manifest(manifest))
+    except Exception:
+        pass
+    for builder in (
+        build_windows_installer_readiness,
+        build_macos_packaging_readiness,
+        build_linux_packaging_readiness,
+        build_container_deployment_readiness,
+        build_auto_updater_readiness,
+    ):
+        try:
+            record = builder(generated_at=timestamp)
+            payload = record.to_dict() if hasattr(record, "to_dict") else record
+            if isinstance(payload, dict):
+                rows.append(_deployment_row_from_package(payload))
+        except Exception:
+            continue
+    rows.sort(key=lambda row: (row.get("platform", ""), row.get("method", "")))
+    return rows[: max(limit, 0)]
+
+
+def _deployment_status_table_row(deployment_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    ready = sum(1 for row in deployment_rows if row.get("status") == "ready")
+    warnings = sum(_deployment_int(row.get("warnings")) for row in deployment_rows)
+    blockers = sum(_deployment_int(row.get("blockers")) for row in deployment_rows)
+    latest = max((row.get("updated") for row in deployment_rows if row.get("updated") not in {"", "-", None}), default="-")
+    return {
+        "platforms": str(len({row.get("platform") for row in deployment_rows if row.get("platform")})),
+        "ready": str(ready),
+        "warnings": str(warnings),
+        "blockers": str(blockers),
+        "last_updated": latest,
+        "mode": "read_only",
+    }
+
+
+def _deployment_detail_rows(deployment_row: Dict[str, str] | None) -> List[tuple[str, str]]:
+    row = deployment_row or {}
+    return [
+        ("Platform", row.get("platform", "-")),
+        ("Method", row.get("method", "-")),
+        ("Status", row.get("status", "-")),
+        ("Readiness", row.get("readiness", "-")),
+        ("Required Steps", row.get("required_steps", "-")),
+        ("Warnings", row.get("warning_details", "-")),
+        ("Blockers", row.get("blocker_details", "-")),
+        ("Safety Mode", row.get("safety_mode", "-")),
+        ("Notes", row.get("notes", "-")),
+    ]
+
+
+def _deployment_platform_type_rows(deployment_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    platform_order = ("windows", "macos", "linux", "container", "updater")
+    counts = {platform: 0 for platform in platform_order}
+    for row in deployment_rows:
+        platform = row.get("platform") or "linux"
+        counts[platform] = counts.get(platform, 0) + 1
+    return [
+        {"platform": platform, "count": str(count)}
+        for platform, count in [(platform, counts[platform]) for platform in platform_order][: max(limit, 0)]
+    ]
+
+
+def _deployment_recent_event_rows(deployment_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    recent = sorted(deployment_rows, key=lambda row: row.get("updated") or "", reverse=True)[: max(limit, 0)]
+    return [
+        {
+            "updated": row.get("updated", "-"),
+            "platform": row.get("platform", "-"),
+            "status": row.get("status", "-"),
+            "method": row.get("method", "-"),
+            "key": row.get("key", "-"),
+        }
+        for row in reversed(recent)
+    ]
+
+
+def _deployment_timeline_rows(deployment_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    buckets: Dict[str, Dict[str, int]] = {}
+    for row in deployment_rows:
+        updated = row.get("updated") or "-"
+        bucket = updated[:10] if updated != "-" else "-"
+        item = buckets.setdefault(bucket, {"ready": 0, "warnings": 0, "blockers": 0, "total": 0})
+        item["total"] += 1
+        if row.get("status") == "ready":
+            item["ready"] += 1
+        item["warnings"] += _deployment_int(row.get("warnings"))
+        item["blockers"] += _deployment_int(row.get("blockers"))
+    return [
+        {
+            "time": bucket,
+            "ready": str(values["ready"]),
+            "warnings": str(values["warnings"]),
+            "blockers": str(values["blockers"]),
+            "total": str(values["total"]),
+        }
+        for bucket, values in sorted(buckets.items(), reverse=True)[: max(limit, 0)]
+    ]
+
+
 def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     row_index = table.cursor_row if isinstance(table.cursor_row, int) else 0
     selection: Dict[str, Any] = {"row_index": row_index, "row_key": None}
@@ -2629,6 +2969,167 @@ class GovernanceTimelineTable(DataTable):
         _restore_table_selection(self, selection)
 
 
+class DeploymentStatusTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Platforms")
+        self.add_column("Ready")
+        self.add_column("Warnings")
+        self.add_column("Blockers")
+        self.add_column("Last Updated")
+        self.add_column("Mode")
+        self.update_status([])
+
+    def update_status(self, deployment_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        row = _deployment_status_table_row(deployment_rows)
+        self.clear()
+        self.add_row(
+            row["platforms"],
+            row["ready"],
+            row["warnings"],
+            row["blockers"],
+            row["last_updated"],
+            row["mode"],
+            key="deployment-status",
+        )
+        _restore_table_selection(self, selection)
+
+
+class DeploymentReadinessTable(DataTable):
+    def on_mount(self) -> None:
+        self.deployment_rows: List[Dict[str, str]] = []
+        self.add_column("Platform")
+        self.add_column("Method")
+        self.add_column("Status")
+        self.add_column("Readiness")
+        self.add_column("Warnings")
+        self.add_column("Blockers")
+        self.add_column("Updated")
+        self.update_deployments([])
+
+    def update_deployments(self, deployment_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        self.deployment_rows = deployment_rows
+        if not deployment_rows:
+            self.add_row("-", "-", "No deployment readiness available.", "-", "0", "0", "-", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in deployment_rows:
+            self.add_row(
+                row.get("platform", "-"),
+                row.get("method", "-"),
+                row.get("status", "-"),
+                row.get("readiness", "-"),
+                row.get("warnings", "0"),
+                row.get("blockers", "0"),
+                row.get("updated", "-"),
+                key=_unique_table_key(row.get("key"), seen),
+            )
+        _restore_table_selection(self, selection)
+
+    def selected_deployment(self, row_index: int | None = None) -> Dict[str, str] | None:
+        if not self.deployment_rows:
+            return None
+        index = self.cursor_row if row_index is None else row_index
+        if not isinstance(index, int) or index < 0 or index >= len(self.deployment_rows):
+            index = 0
+        return self.deployment_rows[index]
+
+
+class DeploymentDetailsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Field")
+        self.add_column("Value")
+        self.update_details(None)
+
+    def update_details(self, deployment_row: Dict[str, str] | None) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        for field, value in _deployment_detail_rows(deployment_row):
+            self.add_row(field, value, key=field)
+        _restore_table_selection(self, selection)
+
+
+class DeploymentPlatformTypesTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Platform Type")
+        self.add_column("Count")
+        self.update_platforms([])
+
+    def update_platforms(self, deployment_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _deployment_platform_type_rows(deployment_rows)
+        if not rows:
+            self.add_row("No platform types available.", "-", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(row["platform"], row["count"], key=_unique_table_key(row["platform"], seen))
+        _restore_table_selection(self, selection)
+
+
+class DeploymentEventsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Updated")
+        self.add_column("Platform")
+        self.add_column("Status")
+        self.add_column("Method")
+        self.update_events([])
+
+    def update_events(self, deployment_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _deployment_recent_event_rows(deployment_rows)
+        if not rows:
+            self.add_row("-", "-", "-", "No deployment events available.", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["updated"],
+                row["platform"],
+                row["status"],
+                row["method"],
+                key=_unique_table_key(row["key"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
+class DeploymentTimelineTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Ready")
+        self.add_column("Warnings")
+        self.add_column("Blockers")
+        self.add_column("Total")
+        self.update_timeline([])
+
+    def update_timeline(self, deployment_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _deployment_timeline_rows(deployment_rows)
+        if not rows:
+            self.add_row("-", "0", "0", "0", "0", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["ready"],
+                row["warnings"],
+                row["blockers"],
+                row["total"],
+                key=_unique_table_key(row["time"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
 class TopologyPanel(DataTable):
     def on_mount(self) -> None:
         self.add_column("Source")
@@ -2722,6 +3223,9 @@ class PortMapDashboard(App):
         height: 1fr;
     }
     #tab-governance {
+        height: 1fr;
+    }
+    #tab-deployment {
         height: 1fr;
     }
     #risk-screen {
@@ -2872,6 +3376,54 @@ class PortMapDashboard(App):
         height: 1fr;
         overflow-x: hidden;
     }
+    #deployment-screen {
+        layout: grid;
+        grid-size: 3 4;
+        grid-columns: 2fr 5fr 3fr;
+        grid-rows: 3 1 13fr 7fr;
+        overflow: hidden;
+        height: 1fr;
+        padding: 0 1;
+    }
+    .deployment-grid-cell {
+        width: 1fr;
+        height: 1fr;
+        overflow: hidden;
+    }
+    .deployment-grid-span-2 {
+        column-span: 2;
+    }
+    .deployment-grid-span-3 {
+        column-span: 3;
+    }
+    .deployment-grid-heading {
+        height: 1;
+        max-height: 1;
+        overflow: hidden;
+    }
+    .deployment-status-table {
+        height: 2;
+        max-height: 2;
+    }
+    .deployment-active-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .deployment-details-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .deployment-support-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .deployment-section {
+        padding: 0 1;
+        margin: 0 1 0 0;
+        width: 1fr;
+        height: 1fr;
+        overflow-x: hidden;
+    }
     #log-panel {
         height: 12;
         overflow-y: auto;
@@ -2923,6 +3475,10 @@ class PortMapDashboard(App):
             if tab.tab_id == "governance":
                 with Container(id="tab-governance", classes="tab-panel"):
                     yield from self._compose_governance_tab()
+                continue
+            if tab.tab_id == "deployment":
+                with Container(id="tab-deployment", classes="tab-panel"):
+                    yield from self._compose_deployment_tab()
                 continue
             yield Container(
                 Static(render_placeholder_tab(tab.tab_id)),
@@ -3201,6 +3757,64 @@ class PortMapDashboard(App):
                 )
                 yield self.governance_timeline_panel
 
+    def _compose_deployment_tab(self) -> ComposeResult:
+        with Grid(id="deployment-screen"):
+            with Container(classes="deployment-grid-cell deployment-grid-span-3"):
+                yield Static(
+                    _panel_heading("Deployment Status", "Platform readiness, warnings, blockers, and read-only mode."),
+                    classes="panel-heading deployment-grid-heading",
+                )
+                self.deployment_status_panel = DeploymentStatusTable(
+                    classes=f"{DEPLOYMENT_WORKSPACE_CONTENT_CLASS} deployment-status-table"
+                )
+                yield self.deployment_status_panel
+            yield Static(
+                _panel_heading(
+                    "Deployment Readiness",
+                    "Read-only readiness from existing deployment manifest and packaging metadata.",
+                ),
+                classes="panel-heading deployment-grid-heading deployment-grid-span-2",
+            )
+            yield Static(
+                _panel_heading("Deployment Details", "Selected deployment readiness context."),
+                classes="panel-heading deployment-grid-heading",
+            )
+            self.deployment_readiness_panel = DeploymentReadinessTable(
+                classes=f"{DEPLOYMENT_WORKSPACE_CONTENT_CLASS} deployment-active-table deployment-grid-span-2"
+            )
+            yield self.deployment_readiness_panel
+            self.deployment_details_panel = DeploymentDetailsTable(
+                classes=f"{DEPLOYMENT_WORKSPACE_CONTENT_CLASS} deployment-details-table"
+            )
+            yield self.deployment_details_panel
+            with Container(classes="deployment-grid-cell"):
+                yield Static(
+                    _panel_heading("Platform Types", "Readiness records by platform family."),
+                    classes="panel-heading deployment-grid-heading",
+                )
+                self.deployment_platform_types_panel = DeploymentPlatformTypesTable(
+                    classes=f"{DEPLOYMENT_WORKSPACE_CONTENT_CLASS} deployment-support-table"
+                )
+                yield self.deployment_platform_types_panel
+            with Container(classes="deployment-grid-cell"):
+                yield Static(
+                    _panel_heading("Recent Deployment Events", "Chronological readiness record feed."),
+                    classes="panel-heading deployment-grid-heading",
+                )
+                self.deployment_events_panel = DeploymentEventsTable(
+                    classes=f"{DEPLOYMENT_WORKSPACE_CONTENT_CLASS} deployment-support-table"
+                )
+                yield self.deployment_events_panel
+            with Container(classes="deployment-grid-cell"):
+                yield Static(
+                    _panel_heading("Deployment Timeline", "Bucketed readiness, warning, and blocker history."),
+                    classes="panel-heading deployment-grid-heading",
+                )
+                self.deployment_timeline_panel = DeploymentTimelineTable(
+                    classes=f"{DEPLOYMENT_WORKSPACE_CONTENT_CLASS} deployment-support-table",
+                )
+                yield self.deployment_timeline_panel
+
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
         self.runtime_settings = load_settings(defaults={})
@@ -3258,6 +3872,10 @@ class PortMapDashboard(App):
                     export_rows=self._load_export_rows(limit=max(self.tail_size * 4, EXPORT_ACTIVITY_LIMIT)),
                     limit=max(self.tail_size * 4, GOVERNANCE_EVIDENCE_LIMIT),
                 )
+            )
+        if hasattr(self, "deployment_status_panel"):
+            self._update_deployment_workspace(
+                self._load_deployment_rows(limit=max(self.tail_size * 4, DEPLOYMENT_READINESS_LIMIT))
             )
         if hasattr(self, "topology_panel"):
             self.topology_panel.update_topology(topology_edge_rows(flow_visualization.get("topology"), limit=self.tail_size))
@@ -3333,6 +3951,20 @@ class PortMapDashboard(App):
         self.governance_recent_events_panel.update_events(governance_rows)
         self.governance_timeline_panel.update_timeline(governance_rows)
 
+    def _load_deployment_rows(self, limit: int = DEPLOYMENT_READINESS_LIMIT) -> List[Dict[str, str]]:
+        return _build_default_deployment_readiness_rows(limit=limit)
+
+    def _update_deployment_workspace(self, deployment_rows: List[Dict[str, str]]) -> None:
+        if not hasattr(self, "deployment_status_panel"):
+            return
+        self.deployment_status_panel.update_status(deployment_rows)
+        self.deployment_readiness_panel.update_deployments(deployment_rows)
+        selected_deployment = self.deployment_readiness_panel.selected_deployment()
+        self.deployment_details_panel.update_details(selected_deployment)
+        self.deployment_platform_types_panel.update_platforms(deployment_rows)
+        self.deployment_events_panel.update_events(deployment_rows)
+        self.deployment_timeline_panel.update_timeline(deployment_rows)
+
     def _update_risk_workspace(
         self,
         *,
@@ -3391,6 +4023,12 @@ class PortMapDashboard(App):
         self.risk_footer_status_panel.update(_format_footer_status(sections["allowlist_status"], sections["safety_boundary"]))
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if getattr(self, "deployment_readiness_panel", None) is event.data_table:
+            if hasattr(self, "deployment_details_panel"):
+                self.deployment_details_panel.update_details(
+                    self.deployment_readiness_panel.selected_deployment(event.cursor_row)
+                )
+            return
         if getattr(self, "governance_evidence_panel", None) is event.data_table:
             if hasattr(self, "governance_details_panel"):
                 self.governance_details_panel.update_details(

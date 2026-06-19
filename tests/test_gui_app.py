@@ -186,14 +186,13 @@ def test_dashboard_section_labels_keep_risk_details_on_risk_tab():
 
 
 def test_placeholder_tabs_render_safe_labels_and_serialization():
-    for tab_id in ["deployment", "ai", "packet"]:
+    for tab_id in ["ai", "packet"]:
         rendered = gui_app.render_placeholder_tab(tab_id)
         assert "This tab is a navigation placeholder." in rendered
         assert "No collectors, packet capture, network calls" in rendered
 
     assert "Risk and remediation readiness surface." in gui_app.render_placeholder_tab("risk")
     assert "Last Export Summary" in gui_app.render_placeholder_tab("exports")
-    assert "Deployment wizard readiness" in gui_app.render_placeholder_tab("deployment")
     assert "Threat Prediction Models" in gui_app.render_placeholder_tab("ai")
     assert "Packet Intelligence Integration" in gui_app.render_placeholder_tab("packet")
     json.dumps(gui_app.serialize_tui_tab_registry(), sort_keys=True)
@@ -564,6 +563,232 @@ def test_governance_workspace_uses_dashboard_style_data_tables():
     assert "self.governance_timeline_panel=GovernanceTimelineTable(" in compact_source
     assert "self.governance_evidence_panel=Static(" not in compact_source
     assert "self.governance_details_panel=Static(" not in compact_source
+
+
+def test_deployment_workspace_layout_mounts_correctly():
+    assert gui_app.deployment_workspace_heading_labels() == (
+        "Deployment Status",
+        "Deployment Readiness",
+        "Deployment Details",
+        "Platform Types",
+        "Recent Deployment Events",
+        "Deployment Timeline",
+    )
+    assert gui_app.deployment_workspace_layout_rows() == (
+        "deployment-status-row",
+        "deployment-active-heading-row",
+        "deployment-active-table-row",
+        "deployment-support-tables-row",
+    )
+    assert gui_app.deployment_workspace_content_class() == "deployment-section"
+
+    css = gui_app.PortMapDashboard.CSS
+    assert "#deployment-screen" in css
+    assert "layout: grid;" in css
+    assert "grid-size: 3 4;" in css
+    assert "grid-columns: 2fr 5fr 3fr;" in css
+    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "deployment-section" in css
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "VerticalScroll" not in source
+    assert "withGrid(id=\"deployment-screen\"):" in compact_source
+    assert '_panel_heading("DeploymentStatus"' in compact_source
+    assert '_panel_heading("DeploymentReadiness"' in compact_source
+    assert '_panel_heading("DeploymentDetails"' in compact_source
+    assert '_panel_heading("PlatformTypes"' in compact_source
+    assert '_panel_heading("RecentDeploymentEvents"' in compact_source
+    assert '_panel_heading("DeploymentTimeline"' in compact_source
+
+    class Harness(gui_app.PortMapDashboard):
+        def compose(self):
+            yield from self._compose_deployment_tab()
+
+        async def on_mount(self):
+            pass
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test():
+            assert app.query_one("#deployment-screen", gui_app.Grid)
+            assert app.query_one(gui_app.DeploymentStatusTable)
+            assert app.query_one(gui_app.DeploymentReadinessTable)
+            assert app.query_one(gui_app.DeploymentDetailsTable)
+            assert app.query_one(gui_app.DeploymentPlatformTypesTable)
+            assert app.query_one(gui_app.DeploymentEventsTable)
+            assert app.query_one(gui_app.DeploymentTimelineTable)
+
+    asyncio.run(run_case())
+
+
+def test_deployment_workspace_uses_dashboard_style_data_tables():
+    assert issubclass(gui_app.DeploymentStatusTable, gui_app.DataTable)
+    assert issubclass(gui_app.DeploymentReadinessTable, gui_app.DataTable)
+    assert issubclass(gui_app.DeploymentDetailsTable, gui_app.DataTable)
+    assert issubclass(gui_app.DeploymentPlatformTypesTable, gui_app.DataTable)
+    assert issubclass(gui_app.DeploymentEventsTable, gui_app.DataTable)
+    assert issubclass(gui_app.DeploymentTimelineTable, gui_app.DataTable)
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "self.deployment_status_panel=DeploymentStatusTable(" in compact_source
+    assert "self.deployment_readiness_panel=DeploymentReadinessTable(" in compact_source
+    assert "self.deployment_details_panel=DeploymentDetailsTable(" in compact_source
+    assert "self.deployment_platform_types_panel=DeploymentPlatformTypesTable(" in compact_source
+    assert "self.deployment_events_panel=DeploymentEventsTable(" in compact_source
+    assert "self.deployment_timeline_panel=DeploymentTimelineTable(" in compact_source
+    assert "self.deployment_readiness_panel=Static(" not in compact_source
+    assert "self.deployment_details_panel=Static(" not in compact_source
+
+
+def _sample_deployment_rows():
+    return [
+        {
+            "platform": "windows",
+            "method": "powershell_preview",
+            "status": "ready",
+            "readiness": "ready",
+            "warnings": "0",
+            "blockers": "0",
+            "updated": "2026-06-14 12:03:00",
+            "required_steps": "operator_review",
+            "warning_details": "-",
+            "blocker_details": "-",
+            "safety_mode": "preview",
+            "notes": "metadata only",
+            "preview_only": "True",
+            "destructive_action": "False",
+            "key": "windows|powershell_preview",
+        },
+        {
+            "platform": "linux",
+            "method": "deb_preview",
+            "status": "warning",
+            "readiness": "degraded",
+            "warnings": "2",
+            "blockers": "0",
+            "updated": "2026-06-14 12:02:00",
+            "required_steps": "operator_review, future_admin_if_operator_approved",
+            "warning_details": "future admin context, signing missing",
+            "blocker_details": "-",
+            "safety_mode": "preview",
+            "notes": "review package metadata",
+            "preview_only": "True",
+            "destructive_action": "False",
+            "key": "linux|deb_preview",
+        },
+        {
+            "platform": "container",
+            "method": "compose_preview",
+            "status": "blocker",
+            "readiness": "blocked",
+            "warnings": "1",
+            "blockers": "1",
+            "updated": "2026-06-13 09:00:00",
+            "required_steps": "operator_review",
+            "warning_details": "runtime review",
+            "blocker_details": "runtime unavailable",
+            "safety_mode": "preview",
+            "notes": "no containers started",
+            "preview_only": "True",
+            "destructive_action": "False",
+            "key": "container|compose_preview",
+        },
+    ]
+
+
+def test_deployment_status_and_analytics_population():
+    rows = _sample_deployment_rows()
+    status = gui_app._deployment_status_table_row(rows)
+
+    assert status == {
+        "platforms": "3",
+        "ready": "1",
+        "warnings": "3",
+        "blockers": "1",
+        "last_updated": "2026-06-14 12:03:00",
+        "mode": "read_only",
+    }
+    assert gui_app._deployment_platform_type_rows(rows) == [
+        {"platform": "windows", "count": "1"},
+        {"platform": "macos", "count": "0"},
+        {"platform": "linux", "count": "1"},
+        {"platform": "container", "count": "1"},
+        {"platform": "updater", "count": "0"},
+    ]
+
+    events = gui_app._deployment_recent_event_rows(rows, limit=2)
+    assert [event["method"] for event in events] == ["deb_preview", "powershell_preview"]
+    assert gui_app._deployment_timeline_rows(rows) == [
+        {"time": "2026-06-14", "ready": "1", "warnings": "2", "blockers": "0", "total": "2"},
+        {"time": "2026-06-13", "ready": "0", "warnings": "1", "blockers": "1", "total": "1"},
+    ]
+
+
+def test_deployment_details_rows_use_selected_readiness_with_placeholders():
+    rows = _sample_deployment_rows()
+    details = dict(gui_app._deployment_detail_rows(rows[1]))
+
+    assert details["Platform"] == "linux"
+    assert details["Method"] == "deb_preview"
+    assert details["Status"] == "warning"
+    assert details["Readiness"] == "degraded"
+    assert details["Required Steps"] == "operator_review, future_admin_if_operator_approved"
+    assert details["Warnings"] == "future admin context, signing missing"
+    assert details["Blockers"] == "-"
+    assert details["Safety Mode"] == "preview"
+    assert details["Notes"] == "review package metadata"
+
+    placeholders = dict(gui_app._deployment_detail_rows(None))
+    assert all(value == "-" for value in placeholders.values())
+
+
+def test_default_deployment_rows_use_existing_preview_only_readiness_sources():
+    rows = gui_app._build_default_deployment_readiness_rows(
+        generated_at="2026-06-14T12:00:00+00:00",
+        limit=24,
+    )
+    platforms = {row["platform"] for row in rows}
+
+    assert {"windows", "macos", "linux", "container", "updater"}.issubset(platforms)
+    assert rows
+    assert all(row["safety_mode"] in {"dry_run", "preview", "read_only"} for row in rows)
+    assert all(row["destructive_action"] == "False" for row in rows)
+    assert all(row["key"] for row in rows)
+
+
+def test_deployment_tables_handle_empty_readiness_data_without_crashing():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.status = gui_app.DeploymentStatusTable()
+            self.readiness = gui_app.DeploymentReadinessTable()
+            self.details = gui_app.DeploymentDetailsTable()
+            self.platforms = gui_app.DeploymentPlatformTypesTable()
+            self.events = gui_app.DeploymentEventsTable()
+            self.timeline = gui_app.DeploymentTimelineTable()
+            yield self.status
+            yield self.readiness
+            yield self.details
+            yield self.platforms
+            yield self.events
+            yield self.timeline
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            app.status.update_status([])
+            app.readiness.update_deployments([])
+            app.details.update_details(app.readiness.selected_deployment())
+            app.platforms.update_platforms([])
+            app.events.update_events([])
+            app.timeline.update_timeline([])
+            await pilot.pause()
+            assert app.readiness.row_count == 1
+            assert app.readiness.selected_deployment() is None
+            assert dict(app.details.get_row_at(index) for index in range(app.details.row_count))["Platform"] == "-"
+
+    asyncio.run(run_case())
 
 
 def _sample_governance_rows():
@@ -1144,6 +1369,103 @@ def test_governance_details_update_when_selection_changes():
             assert dict(details.get_row_at(index) for index in range(details.row_count))["Event Type"] == (
                 "export_created"
             )
+
+    asyncio.run(run_case())
+
+
+def test_deployment_readiness_selection_survives_refresh_when_row_still_exists():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.DeploymentReadinessTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.DeploymentReadinessTable)
+            rows = _sample_deployment_rows()
+            table.update_deployments(rows)
+            table.move_cursor(row=1, column=0)
+            await pilot.pause()
+            assert table.selected_deployment()["method"] == "deb_preview"
+
+            table.update_deployments(
+                [
+                    {
+                        "platform": "updater",
+                        "method": "secure_update_preview",
+                        "status": "ready",
+                        "readiness": "ready",
+                        "warnings": "0",
+                        "blockers": "0",
+                        "updated": "2026-06-14 12:05:00",
+                        "required_steps": "operator_review",
+                        "warning_details": "-",
+                        "blocker_details": "-",
+                        "safety_mode": "preview",
+                        "notes": "metadata only",
+                        "preview_only": "True",
+                        "destructive_action": "False",
+                        "key": "updater|secure_update_preview",
+                    },
+                    *rows,
+                ]
+            )
+            await pilot.pause()
+            assert table.cursor_row == 2
+            assert table.selected_deployment()["method"] == "deb_preview"
+
+    asyncio.run(run_case())
+
+
+def test_deployment_readiness_selection_falls_back_when_selected_row_removed():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.DeploymentReadinessTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.DeploymentReadinessTable)
+            rows = _sample_deployment_rows()
+            table.update_deployments(rows)
+            table.move_cursor(row=2, column=0)
+            await pilot.pause()
+            assert table.selected_deployment()["method"] == "compose_preview"
+
+            table.update_deployments([rows[0], rows[1]])
+            await pilot.pause()
+            assert table.cursor_row == 1
+            assert table.selected_deployment()["method"] == "deb_preview"
+
+    asyncio.run(run_case())
+
+
+def test_deployment_details_update_when_selection_changes():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.readiness = gui_app.DeploymentReadinessTable()
+            self.details = gui_app.DeploymentDetailsTable()
+            yield self.readiness
+            yield self.details
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            readiness = app.query_one(gui_app.DeploymentReadinessTable)
+            details = app.query_one(gui_app.DeploymentDetailsTable)
+            readiness.update_deployments(_sample_deployment_rows())
+            details.update_details(readiness.selected_deployment())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Method"] == (
+                "powershell_preview"
+            )
+
+            readiness.move_cursor(row=1, column=0)
+            details.update_details(readiness.selected_deployment())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Method"] == "deb_preview"
 
     asyncio.run(run_case())
 
