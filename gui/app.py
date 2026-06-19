@@ -387,14 +387,14 @@ TUI_TAB_REGISTRY: tuple[TuiTab, ...] = (
         "packet",
         "Packet",
         "7",
-        "Future packet intelligence placeholder; no packet capture is implemented here.",
+        "Read-only packet metadata workspace shell; no packet capture is implemented here.",
         (
-            "Packet Capture",
-            "Protocol Intelligence",
+            "Packet Summary",
+            "Packet Activity",
+            "Packet Details",
+            "Recent Packet Activity",
             "Packet Timeline",
-            "Packet Visualization",
-            "Packet Hunting",
-            "Packet Intelligence Integration",
+            "future Milestone AE packet intelligence",
         ),
     ),
 )
@@ -503,6 +503,22 @@ AI_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
     "ai-support-tables-row",
 )
 AI_ACTIVITY_LIMIT = 24
+PACKET_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
+    "Packet Summary",
+    "Packet Activity",
+    "Packet Details",
+    "Packet Summary",
+    "Recent Packet Activity",
+    "Packet Timeline",
+)
+PACKET_WORKSPACE_CONTENT_CLASS = "packet-section"
+PACKET_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
+    "packet-status-row",
+    "packet-active-heading-row",
+    "packet-active-table-row",
+    "packet-support-tables-row",
+)
+PACKET_ACTIVITY_LIMIT = 24
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -579,6 +595,18 @@ def ai_workspace_content_class() -> str:
 
 def ai_workspace_layout_rows() -> tuple[str, ...]:
     return AI_WORKSPACE_LAYOUT_ROWS
+
+
+def packet_workspace_heading_labels() -> tuple[str, ...]:
+    return PACKET_WORKSPACE_HEADING_LABELS
+
+
+def packet_workspace_content_class() -> str:
+    return PACKET_WORKSPACE_CONTENT_CLASS
+
+
+def packet_workspace_layout_rows() -> tuple[str, ...]:
+    return PACKET_WORKSPACE_LAYOUT_ROWS
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -2429,6 +2457,187 @@ def _ai_timeline_rows(events: List[Dict[str, Any]], *, limit: int = 9) -> List[D
     ]
 
 
+def _packet_endpoint_label(endpoint: Dict[str, Any]) -> str:
+    ip = endpoint.get("ip") or "?"
+    port = endpoint.get("port")
+    return f"{ip}:{port}" if port not in {"", None} else str(ip)
+
+
+def _packet_list_text(values: Any, *, limit: int = 4, text_limit: int = 40) -> str:
+    if values is None:
+        return "-"
+    if not isinstance(values, (dict, list, set, tuple)) and values in {"", "-"}:
+        return "-"
+    if isinstance(values, list):
+        items = [str(item) for item in values if item not in {"", "-", None}]
+    elif isinstance(values, tuple):
+        items = [str(item) for item in values if item not in {"", "-", None}]
+    elif isinstance(values, set):
+        items = [str(item) for item in sorted(values) if item not in {"", "-", None}]
+    elif isinstance(values, dict):
+        items = [f"{key}={value}" for key, value in values.items()]
+    else:
+        items = [str(values)]
+    items = [_short_text(item, limit=text_limit) for item in items if _short_text(item, limit=text_limit) != "-"]
+    if not items:
+        return "-"
+    suffix = "..." if len(items) > limit else ""
+    return ", ".join(items[:limit]) + suffix
+
+
+def _packet_flow_label(flow: Dict[str, Any]) -> str:
+    existing = flow.get("flow")
+    if existing not in {"", "-", None}:
+        return _short_text(existing, limit=48)
+    initiator = flow.get("initiator") if isinstance(flow.get("initiator"), dict) else {}
+    responder = flow.get("responder") if isinstance(flow.get("responder"), dict) else {}
+    return _short_text(f"{_packet_endpoint_label(initiator)} -> {_packet_endpoint_label(responder)}", limit=48)
+
+
+def _packet_transport_value(flow: Dict[str, Any]) -> str:
+    transport = _packet_list_text(flow.get("transports") or flow.get("protocols"), limit=3, text_limit=16)
+    if transport != "-":
+        return transport.upper()
+    application = _packet_list_text(flow.get("application_protocols"), limit=3, text_limit=16)
+    return application.upper() if application != "-" else "-"
+
+
+def _packet_status_value(flow: Dict[str, Any]) -> str:
+    findings = _packet_list_text(flow.get("findings"), limit=2, text_limit=28)
+    if findings != "-":
+        return findings
+    evidence = _packet_list_text(flow.get("evidence"), limit=2, text_limit=28)
+    return evidence if evidence != "-" else "observed"
+
+
+def _packet_activity_rows(
+    flows: List[Dict[str, Any]] | None,
+    *,
+    limit: int = PACKET_ACTIVITY_LIMIT,
+) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for flow in flows or []:
+        if not isinstance(flow, dict):
+            continue
+        first_seen = _format_timestamp(flow.get("first_seen"))
+        last_seen = _format_timestamp(flow.get("last_seen"))
+        flow_label = _packet_flow_label(flow)
+        transport = _packet_transport_value(flow)
+        packets = str(_deployment_int(flow.get("packet_count")))
+        payload_bytes = str(_deployment_int(flow.get("payload_bytes")))
+        status = _packet_status_value(flow)
+        row_key = flow.get("flow_id") or flow.get("flow_key") or "|".join([first_seen, last_seen, flow_label, transport])
+        rows.append(
+            {
+                "time": last_seen,
+                "flow": flow_label,
+                "transport": transport,
+                "packets": packets,
+                "bytes": payload_bytes,
+                "status": status,
+                "first_seen": first_seen,
+                "last_seen": last_seen,
+                "source": "flow_metadata",
+                "mode": "read_only",
+                "execution": "not performed",
+                "key": _short_text(row_key, limit=120),
+                "_sort_time": f"{_packet_sort_time(flow):020.6f}",
+            }
+        )
+    rows.sort(key=lambda row: row.get("_sort_time", ""), reverse=True)
+    return rows[: max(limit, 0)]
+
+
+def _packet_sort_time(flow: Dict[str, Any]) -> float:
+    parsed = _timestamp_to_datetime(flow.get("last_seen") or flow.get("first_seen"))
+    return parsed.timestamp() if parsed else 0.0
+
+
+def _packet_status_table_row(packet_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    packets = sum(_deployment_int(row.get("packets")) for row in packet_rows)
+    protocols = {row.get("transport") for row in packet_rows if row.get("transport") not in {"", "-", None}}
+    latest = max((row.get("last_seen") for row in packet_rows if row.get("last_seen") not in {"", "-", None}), default="-")
+    return {
+        "packets": str(packets),
+        "flows": str(len(packet_rows)),
+        "protocols": str(len(protocols)),
+        "updated": latest,
+        "mode": "read_only",
+    }
+
+
+def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, str]]:
+    row = packet_row or {}
+    return [
+        ("Flow", row.get("flow", "-")),
+        ("Transport", row.get("transport", "-")),
+        ("Packets", row.get("packets", "-")),
+        ("Bytes", row.get("bytes", "-")),
+        ("First Seen", row.get("first_seen", "-")),
+        ("Last Seen", row.get("last_seen", "-")),
+        ("Status", row.get("status", "-")),
+        ("Source", row.get("source", "-")),
+        ("Mode", row.get("mode", "-")),
+        ("Execution", row.get("execution", "-")),
+    ]
+
+
+def _packet_summary_rows(packet_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    grouped: Dict[str, Dict[str, int]] = {}
+    for row in packet_rows:
+        protocol = row.get("transport") or "-"
+        item = grouped.setdefault(protocol, {"flows": 0, "packets": 0, "bytes": 0})
+        item["flows"] += 1
+        item["packets"] += _deployment_int(row.get("packets"))
+        item["bytes"] += _deployment_int(row.get("bytes"))
+    return [
+        {
+            "protocol": protocol,
+            "flows": str(values["flows"]),
+            "packets": str(values["packets"]),
+            "bytes": str(values["bytes"]),
+        }
+        for protocol, values in sorted(
+            grouped.items(),
+            key=lambda item: (-item[1]["packets"], item[0]),
+        )[: max(limit, 0)]
+    ]
+
+
+def _packet_recent_activity_rows(packet_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    recent = list(packet_rows)[: max(limit, 0)]
+    return [
+        {
+            "time": row.get("time", "-"),
+            "flow": row.get("flow", "-"),
+            "packets": row.get("packets", "0"),
+            "status": row.get("status", "-"),
+            "key": row.get("key", "-"),
+        }
+        for row in reversed(recent)
+    ]
+
+
+def _packet_timeline_rows(packet_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    buckets: Dict[str, Dict[str, int]] = {}
+    for row in packet_rows:
+        time = row.get("last_seen") or row.get("time") or "-"
+        bucket = time[:10] if time != "-" else "-"
+        item = buckets.setdefault(bucket, {"flows": 0, "packets": 0, "bytes": 0})
+        item["flows"] += 1
+        item["packets"] += _deployment_int(row.get("packets"))
+        item["bytes"] += _deployment_int(row.get("bytes"))
+    return [
+        {
+            "time": bucket,
+            "flows": str(values["flows"]),
+            "packets": str(values["packets"]),
+            "bytes": str(values["bytes"]),
+        }
+        for bucket, values in sorted(buckets.items(), reverse=True)[: max(limit, 0)]
+    ]
+
+
 def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     row_index = table.cursor_row if isinstance(table.cursor_row, int) else 0
     selection: Dict[str, Any] = {"row_index": row_index, "row_key": None}
@@ -3587,6 +3796,169 @@ class AITimelineTable(DataTable):
         _restore_table_selection(self, selection)
 
 
+class PacketStatusTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Packets")
+        self.add_column("Flows")
+        self.add_column("Protocols")
+        self.add_column("Updated")
+        self.add_column("Mode")
+        self.update_status([])
+
+    def update_status(self, packet_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        row = _packet_status_table_row(packet_rows)
+        self.clear()
+        self.add_row(
+            row["packets"],
+            row["flows"],
+            row["protocols"],
+            row["updated"],
+            row["mode"],
+            key="packet-status",
+        )
+        _restore_table_selection(self, selection)
+
+
+class PacketActivityTable(DataTable):
+    def on_mount(self) -> None:
+        self.packet_rows: List[Dict[str, str]] = []
+        self.add_column("Time")
+        self.add_column("Flow")
+        self.add_column("Transport")
+        self.add_column("Packets")
+        self.add_column("Bytes")
+        self.add_column("Status")
+        self.update_packets([])
+
+    def update_packets(self, packet_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        self.packet_rows = packet_rows
+        if not packet_rows:
+            self.add_row("-", "No packet metadata available.", "-", "0", "0", "-", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in packet_rows:
+            self.add_row(
+                row.get("time", "-"),
+                row.get("flow", "-"),
+                row.get("transport", "-"),
+                row.get("packets", "0"),
+                row.get("bytes", "0"),
+                row.get("status", "-"),
+                key=_unique_table_key(row.get("key"), seen),
+            )
+        _restore_table_selection(self, selection)
+
+    def selected_packet(self, row_index: int | None = None) -> Dict[str, str] | None:
+        if not self.packet_rows:
+            return None
+        index = self.cursor_row if row_index is None else row_index
+        if not isinstance(index, int) or index < 0 or index >= len(self.packet_rows):
+            index = 0
+        return self.packet_rows[index]
+
+
+class PacketDetailsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Field")
+        self.add_column("Value")
+        self.update_details(None)
+
+    def update_details(self, packet_row: Dict[str, str] | None) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        for field, value in _packet_detail_rows(packet_row):
+            self.add_row(field, value, key=field)
+        _restore_table_selection(self, selection)
+
+
+class PacketSummaryTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Protocol")
+        self.add_column("Flows")
+        self.add_column("Packets")
+        self.add_column("Bytes")
+        self.update_summary([])
+
+    def update_summary(self, packet_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _packet_summary_rows(packet_rows)
+        if not rows:
+            self.add_row("No packet protocols available.", "0", "0", "0", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["protocol"],
+                row["flows"],
+                row["packets"],
+                row["bytes"],
+                key=_unique_table_key(row["protocol"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
+class PacketRecentActivityTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Flow")
+        self.add_column("Packets")
+        self.add_column("Status")
+        self.update_activity([])
+
+    def update_activity(self, packet_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _packet_recent_activity_rows(packet_rows)
+        if not rows:
+            self.add_row("-", "-", "0", "No packet activity available.", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["flow"],
+                row["packets"],
+                row["status"],
+                key=_unique_table_key(row["key"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
+class PacketTimelineTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Flows")
+        self.add_column("Packets")
+        self.add_column("Bytes")
+        self.update_timeline([])
+
+    def update_timeline(self, packet_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _packet_timeline_rows(packet_rows)
+        if not rows:
+            self.add_row("-", "0", "0", "0", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["flows"],
+                row["packets"],
+                row["bytes"],
+                key=_unique_table_key(row["time"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
 class TopologyPanel(DataTable):
     def on_mount(self) -> None:
         self.add_column("Source")
@@ -3686,6 +4058,9 @@ class PortMapDashboard(App):
         height: 1fr;
     }
     #tab-ai {
+        height: 1fr;
+    }
+    #tab-packet {
         height: 1fr;
     }
     #risk-screen {
@@ -3932,6 +4307,54 @@ class PortMapDashboard(App):
         height: 1fr;
         overflow-x: hidden;
     }
+    #packet-screen {
+        layout: grid;
+        grid-size: 3 4;
+        grid-columns: 2fr 5fr 3fr;
+        grid-rows: 3 1 13fr 7fr;
+        overflow: hidden;
+        height: 1fr;
+        padding: 0 1;
+    }
+    .packet-grid-cell {
+        width: 1fr;
+        height: 1fr;
+        overflow: hidden;
+    }
+    .packet-grid-span-2 {
+        column-span: 2;
+    }
+    .packet-grid-span-3 {
+        column-span: 3;
+    }
+    .packet-grid-heading {
+        height: 1;
+        max-height: 1;
+        overflow: hidden;
+    }
+    .packet-status-table {
+        height: 2;
+        max-height: 2;
+    }
+    .packet-active-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .packet-details-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .packet-support-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .packet-section {
+        padding: 0 1;
+        margin: 0 1 0 0;
+        width: 1fr;
+        height: 1fr;
+        overflow-x: hidden;
+    }
     #log-panel {
         height: 12;
         overflow-y: auto;
@@ -3991,6 +4414,10 @@ class PortMapDashboard(App):
             if tab.tab_id == "ai":
                 with Container(id="tab-ai", classes="tab-panel"):
                     yield from self._compose_ai_tab()
+                continue
+            if tab.tab_id == "packet":
+                with Container(id="tab-packet", classes="tab-panel"):
+                    yield from self._compose_packet_tab()
                 continue
             yield Container(
                 Static(render_placeholder_tab(tab.tab_id)),
@@ -4383,6 +4810,67 @@ class PortMapDashboard(App):
                 self.ai_timeline_panel = AITimelineTable(classes=f"{AI_WORKSPACE_CONTENT_CLASS} ai-support-table")
                 yield self.ai_timeline_panel
 
+    def _compose_packet_tab(self) -> ComposeResult:
+        with Grid(id="packet-screen"):
+            with Container(classes="packet-grid-cell packet-grid-span-3"):
+                yield Static(
+                    _panel_heading(
+                        "Packet Summary",
+                        "Read-only packet metadata from existing flow summaries; no capture or inspection.",
+                    ),
+                    classes="panel-heading packet-grid-heading",
+                )
+                self.packet_status_panel = PacketStatusTable(
+                    classes=f"{PACKET_WORKSPACE_CONTENT_CLASS} packet-status-table"
+                )
+                yield self.packet_status_panel
+            yield Static(
+                _panel_heading(
+                    "Packet Activity",
+                    "Existing flow packet counters only; no packet capture, decoding, or payload handling.",
+                ),
+                classes="panel-heading packet-grid-heading packet-grid-span-2",
+            )
+            yield Static(
+                _panel_heading("Packet Details", "Selected packet metadata context."),
+                classes="panel-heading packet-grid-heading",
+            )
+            self.packet_activity_panel = PacketActivityTable(
+                classes=f"{PACKET_WORKSPACE_CONTENT_CLASS} packet-active-table packet-grid-span-2"
+            )
+            yield self.packet_activity_panel
+            self.packet_details_panel = PacketDetailsTable(
+                classes=f"{PACKET_WORKSPACE_CONTENT_CLASS} packet-details-table"
+            )
+            yield self.packet_details_panel
+            with Container(classes="packet-grid-cell"):
+                yield Static(
+                    _panel_heading("Packet Summary", "Aggregate packet counters by observed protocol."),
+                    classes="panel-heading packet-grid-heading",
+                )
+                self.packet_summary_panel = PacketSummaryTable(
+                    classes=f"{PACKET_WORKSPACE_CONTENT_CLASS} packet-support-table"
+                )
+                yield self.packet_summary_panel
+            with Container(classes="packet-grid-cell"):
+                yield Static(
+                    _panel_heading("Recent Packet Activity", "Recent packet counter updates from flow metadata."),
+                    classes="panel-heading packet-grid-heading",
+                )
+                self.packet_recent_activity_panel = PacketRecentActivityTable(
+                    classes=f"{PACKET_WORKSPACE_CONTENT_CLASS} packet-support-table"
+                )
+                yield self.packet_recent_activity_panel
+            with Container(classes="packet-grid-cell"):
+                yield Static(
+                    _panel_heading("Packet Timeline", "Bucketed packet counters from existing flow metadata."),
+                    classes="panel-heading packet-grid-heading",
+                )
+                self.packet_timeline_panel = PacketTimelineTable(
+                    classes=f"{PACKET_WORKSPACE_CONTENT_CLASS} packet-support-table"
+                )
+                yield self.packet_timeline_panel
+
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
         self.runtime_settings = load_settings(defaults={})
@@ -4453,6 +4941,8 @@ class PortMapDashboard(App):
                     limit=max(self.tail_size * 4, AI_ACTIVITY_LIMIT),
                 )
             )
+        if hasattr(self, "packet_status_panel"):
+            self._update_packet_workspace(flow_visualization)
         if hasattr(self, "topology_panel"):
             self.topology_panel.update_topology(topology_edge_rows(flow_visualization.get("topology"), limit=self.tail_size))
         if hasattr(self, "traffic_flows_panel"):
@@ -4567,6 +5057,18 @@ class PortMapDashboard(App):
         self.ai_activity_panel.update_activity(ai_events)
         self.ai_timeline_panel.update_timeline(ai_events)
 
+    def _update_packet_workspace(self, flow_visualization: Dict[str, Any]) -> None:
+        if not hasattr(self, "packet_status_panel"):
+            return
+        packet_rows = _packet_activity_rows(flow_visualization.get("flows") or [], limit=PACKET_ACTIVITY_LIMIT)
+        self.packet_status_panel.update_status(packet_rows)
+        self.packet_activity_panel.update_packets(packet_rows)
+        selected_packet = self.packet_activity_panel.selected_packet()
+        self.packet_details_panel.update_details(selected_packet)
+        self.packet_summary_panel.update_summary(packet_rows)
+        self.packet_recent_activity_panel.update_activity(packet_rows)
+        self.packet_timeline_panel.update_timeline(packet_rows)
+
     def _update_risk_workspace(
         self,
         *,
@@ -4625,6 +5127,10 @@ class PortMapDashboard(App):
         self.risk_footer_status_panel.update(_format_footer_status(sections["allowlist_status"], sections["safety_boundary"]))
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if getattr(self, "packet_activity_panel", None) is event.data_table:
+            if hasattr(self, "packet_details_panel"):
+                self.packet_details_panel.update_details(self.packet_activity_panel.selected_packet(event.cursor_row))
+            return
         if getattr(self, "ai_provider_model_panel", None) is event.data_table:
             if hasattr(self, "ai_details_panel"):
                 self.ai_details_panel.update_details(self.ai_provider_model_panel.selected_ai(event.cursor_row))

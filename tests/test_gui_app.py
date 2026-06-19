@@ -186,14 +186,12 @@ def test_dashboard_section_labels_keep_risk_details_on_risk_tab():
 
 
 def test_placeholder_tabs_render_safe_labels_and_serialization():
-    for tab_id in ["packet"]:
-        rendered = gui_app.render_placeholder_tab(tab_id)
-        assert "This tab is a navigation placeholder." in rendered
-        assert "No collectors, packet capture, network calls" in rendered
+    rendered = gui_app.render_placeholder_tab("unknown")
+    assert "Unknown tab" in rendered
+    assert "No readiness surface is registered" in rendered
 
     assert "Risk and remediation readiness surface." in gui_app.render_placeholder_tab("risk")
     assert "Last Export Summary" in gui_app.render_placeholder_tab("exports")
-    assert "Packet Intelligence Integration" in gui_app.render_placeholder_tab("packet")
     json.dumps(gui_app.serialize_tui_tab_registry(), sort_keys=True)
 
 
@@ -1045,6 +1043,229 @@ def test_ai_table_and_timeline_populate_from_existing_ai_data():
     asyncio.run(run_case())
 
 
+def test_packet_workspace_layout_mounts_correctly():
+    assert gui_app.packet_workspace_heading_labels() == (
+        "Packet Summary",
+        "Packet Activity",
+        "Packet Details",
+        "Packet Summary",
+        "Recent Packet Activity",
+        "Packet Timeline",
+    )
+    assert gui_app.packet_workspace_layout_rows() == (
+        "packet-status-row",
+        "packet-active-heading-row",
+        "packet-active-table-row",
+        "packet-support-tables-row",
+    )
+    assert gui_app.packet_workspace_content_class() == "packet-section"
+
+    css = gui_app.PortMapDashboard.CSS
+    assert "#packet-screen" in css
+    assert "layout: grid;" in css
+    assert "grid-size: 3 4;" in css
+    assert "grid-columns: 2fr 5fr 3fr;" in css
+    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "packet-section" in css
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "VerticalScroll" not in source
+    assert "withGrid(id=\"packet-screen\"):" in compact_source
+    assert '_panel_heading("PacketSummary"' in compact_source
+    assert "nocaptureorinspection" in compact_source
+    assert '_panel_heading("PacketActivity"' in compact_source
+    assert "nopacketcapture,decoding,orpayloadhandling" in compact_source
+    assert '_panel_heading("PacketDetails"' in compact_source
+    assert '_panel_heading("RecentPacketActivity"' in compact_source
+    assert '_panel_heading("PacketTimeline"' in compact_source
+
+    class Harness(gui_app.PortMapDashboard):
+        def compose(self):
+            yield from self._compose_packet_tab()
+
+        async def on_mount(self):
+            pass
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test():
+            assert app.query_one("#packet-screen", gui_app.Grid)
+            assert app.query_one(gui_app.PacketStatusTable)
+            assert app.query_one(gui_app.PacketActivityTable)
+            assert app.query_one(gui_app.PacketDetailsTable)
+            assert app.query_one(gui_app.PacketSummaryTable)
+            assert app.query_one(gui_app.PacketRecentActivityTable)
+            assert app.query_one(gui_app.PacketTimelineTable)
+
+    asyncio.run(run_case())
+
+
+def test_packet_workspace_uses_dashboard_style_data_tables():
+    assert issubclass(gui_app.PacketStatusTable, gui_app.DataTable)
+    assert issubclass(gui_app.PacketActivityTable, gui_app.DataTable)
+    assert issubclass(gui_app.PacketDetailsTable, gui_app.DataTable)
+    assert issubclass(gui_app.PacketSummaryTable, gui_app.DataTable)
+    assert issubclass(gui_app.PacketRecentActivityTable, gui_app.DataTable)
+    assert issubclass(gui_app.PacketTimelineTable, gui_app.DataTable)
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "self.packet_status_panel=PacketStatusTable(" in compact_source
+    assert "self.packet_activity_panel=PacketActivityTable(" in compact_source
+    assert "self.packet_details_panel=PacketDetailsTable(" in compact_source
+    assert "self.packet_summary_panel=PacketSummaryTable(" in compact_source
+    assert "self.packet_recent_activity_panel=PacketRecentActivityTable(" in compact_source
+    assert "self.packet_timeline_panel=PacketTimelineTable(" in compact_source
+    assert "self.packet_activity_panel=Static(" not in compact_source
+    assert "self.packet_details_panel=Static(" not in compact_source
+
+
+def _sample_packet_flows():
+    return [
+        {
+            "flow_id": "flow-1",
+            "initiator": {"ip": "203.0.113.5", "port": 51515},
+            "responder": {"ip": "203.0.113.10", "port": 443},
+            "first_seen": "2026-06-14T12:00:00+00:00",
+            "last_seen": "2026-06-14T12:03:00+00:00",
+            "packet_count": 3,
+            "payload_bytes": 420,
+            "transports": ["TCP"],
+            "application_protocols": ["TLS"],
+            "findings": [],
+        },
+        {
+            "flow_id": "flow-2",
+            "initiator": {"ip": "203.0.113.20", "port": 53000},
+            "responder": {"ip": "203.0.113.53", "port": 53},
+            "first_seen": "2026-06-14T12:01:00+00:00",
+            "last_seen": "2026-06-14T12:02:00+00:00",
+            "packet_count": 2,
+            "payload_bytes": 120,
+            "transports": ["UDP"],
+            "application_protocols": ["DNS"],
+            "findings": ["dns_metadata"],
+        },
+        {
+            "flow_id": "flow-3",
+            "initiator": {"ip": "203.0.113.30", "port": 50000},
+            "responder": {"ip": "203.0.113.1", "port": 22},
+            "first_seen": "2026-06-13T09:00:00+00:00",
+            "last_seen": "2026-06-13T09:01:00+00:00",
+            "packet_count": 1,
+            "payload_bytes": 80,
+            "transports": ["TCP"],
+            "application_protocols": ["SSH"],
+            "findings": [],
+        },
+    ]
+
+
+def test_packet_activity_rows_and_analytics_population():
+    rows = gui_app._packet_activity_rows(_sample_packet_flows())
+    status = gui_app._packet_status_table_row(rows)
+
+    assert status == {
+        "packets": "6",
+        "flows": "3",
+        "protocols": "2",
+        "updated": "2026-06-14 12:03:00",
+        "mode": "read_only",
+    }
+    assert rows[0]["flow"] == "203.0.113.5:51515 -> 203.0.113.10:443"
+    assert rows[0]["transport"] == "TCP"
+    assert rows[0]["packets"] == "3"
+    assert rows[0]["mode"] == "read_only"
+    assert rows[0]["execution"] == "not performed"
+    assert gui_app._packet_summary_rows(rows) == [
+        {"protocol": "TCP", "flows": "2", "packets": "4", "bytes": "500"},
+        {"protocol": "UDP", "flows": "1", "packets": "2", "bytes": "120"},
+    ]
+    assert gui_app._packet_timeline_rows(rows) == [
+        {"time": "2026-06-14", "flows": "2", "packets": "5", "bytes": "540"},
+        {"time": "2026-06-13", "flows": "1", "packets": "1", "bytes": "80"},
+    ]
+    assert [row["status"] for row in gui_app._packet_recent_activity_rows(rows, limit=2)] == [
+        "dns_metadata",
+        "observed",
+    ]
+
+
+def test_packet_details_rows_use_selected_activity_with_placeholders():
+    rows = gui_app._packet_activity_rows(_sample_packet_flows())
+    details = dict(gui_app._packet_detail_rows(rows[0]))
+
+    assert details["Flow"] == "203.0.113.5:51515 -> 203.0.113.10:443"
+    assert details["Transport"] == "TCP"
+    assert details["Packets"] == "3"
+    assert details["Bytes"] == "420"
+    assert details["First Seen"] == "2026-06-14 12:00:00"
+    assert details["Last Seen"] == "2026-06-14 12:03:00"
+    assert details["Source"] == "flow_metadata"
+    assert details["Mode"] == "read_only"
+    assert details["Execution"] == "not performed"
+
+    placeholders = dict(gui_app._packet_detail_rows(None))
+    assert all(value == "-" for value in placeholders.values())
+
+
+def test_packet_tables_handle_empty_metadata_without_crashing():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.status = gui_app.PacketStatusTable()
+            self.activity = gui_app.PacketActivityTable()
+            self.details = gui_app.PacketDetailsTable()
+            self.summary = gui_app.PacketSummaryTable()
+            self.recent = gui_app.PacketRecentActivityTable()
+            self.timeline = gui_app.PacketTimelineTable()
+            yield self.status
+            yield self.activity
+            yield self.details
+            yield self.summary
+            yield self.recent
+            yield self.timeline
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            app.status.update_status([])
+            app.activity.update_packets([])
+            app.details.update_details(app.activity.selected_packet())
+            app.summary.update_summary([])
+            app.recent.update_activity([])
+            app.timeline.update_timeline([])
+            await pilot.pause()
+            assert app.activity.row_count == 1
+            assert app.activity.selected_packet() is None
+            assert dict(app.details.get_row_at(index) for index in range(app.details.row_count))["Flow"] == "-"
+
+    asyncio.run(run_case())
+
+
+def test_packet_table_and_timeline_populate_from_existing_flow_data():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.activity = gui_app.PacketActivityTable()
+            self.timeline = gui_app.PacketTimelineTable()
+            yield self.activity
+            yield self.timeline
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            rows = gui_app._packet_activity_rows(_sample_packet_flows())
+            app.activity.update_packets(rows)
+            app.timeline.update_timeline(rows)
+            await pilot.pause()
+            assert app.activity.row_count == 3
+            assert app.activity.get_row_at(0)[1] == "203.0.113.5:51515 -> 203.0.113.10:443"
+            assert app.timeline.row_count == 2
+            assert app.timeline.get_row_at(0)[0] == "2026-06-14"
+
+    asyncio.run(run_case())
+
+
 def _sample_governance_rows():
     return gui_app._governance_rows_from_sources(
         audit_events=[
@@ -1810,6 +2031,98 @@ def test_ai_details_update_when_selection_changes():
             details.update_details(providers.selected_ai())
             await pilot.pause()
             assert dict(details.get_row_at(index) for index in range(details.row_count))["Model"] == "port-score"
+
+    asyncio.run(run_case())
+
+
+def test_packet_activity_selection_survives_refresh_when_row_still_exists():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.PacketActivityTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.PacketActivityTable)
+            rows = gui_app._packet_activity_rows(_sample_packet_flows())
+            table.update_packets(rows)
+            table.move_cursor(row=1, column=0)
+            await pilot.pause()
+            assert table.selected_packet()["transport"] == "UDP"
+
+            table.update_packets(
+                [
+                    {
+                        "time": "2026-06-14 12:05:00",
+                        "flow": "203.0.113.40:50000 -> 203.0.113.41:443",
+                        "transport": "TCP",
+                        "packets": "1",
+                        "bytes": "60",
+                        "status": "observed",
+                        "first_seen": "2026-06-14 12:05:00",
+                        "last_seen": "2026-06-14 12:05:00",
+                        "source": "flow_metadata",
+                        "mode": "read_only",
+                        "execution": "not performed",
+                        "key": "flow-4",
+                    },
+                    *rows,
+                ]
+            )
+            await pilot.pause()
+            assert table.cursor_row == 2
+            assert table.selected_packet()["transport"] == "UDP"
+
+    asyncio.run(run_case())
+
+
+def test_packet_activity_selection_falls_back_when_selected_row_removed():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.PacketActivityTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.PacketActivityTable)
+            rows = gui_app._packet_activity_rows(_sample_packet_flows())
+            table.update_packets(rows)
+            table.move_cursor(row=2, column=0)
+            await pilot.pause()
+            assert table.selected_packet()["flow"] == "203.0.113.30:50000 -> 203.0.113.1:22"
+
+            table.update_packets([rows[0], rows[1]])
+            await pilot.pause()
+            assert table.cursor_row == 1
+            assert table.selected_packet()["transport"] == "UDP"
+
+    asyncio.run(run_case())
+
+
+def test_packet_details_update_when_selection_changes():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.activity = gui_app.PacketActivityTable()
+            self.details = gui_app.PacketDetailsTable()
+            yield self.activity
+            yield self.details
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            activity = app.query_one(gui_app.PacketActivityTable)
+            details = app.query_one(gui_app.PacketDetailsTable)
+            activity.update_packets(gui_app._packet_activity_rows(_sample_packet_flows()))
+            details.update_details(activity.selected_packet())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Transport"] == "TCP"
+
+            activity.move_cursor(row=1, column=0)
+            details.update_details(activity.selected_packet())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Transport"] == "UDP"
 
     asyncio.run(run_case())
 
