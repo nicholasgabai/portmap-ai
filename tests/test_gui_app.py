@@ -186,14 +186,13 @@ def test_dashboard_section_labels_keep_risk_details_on_risk_tab():
 
 
 def test_placeholder_tabs_render_safe_labels_and_serialization():
-    for tab_id in ["ai", "packet"]:
+    for tab_id in ["packet"]:
         rendered = gui_app.render_placeholder_tab(tab_id)
         assert "This tab is a navigation placeholder." in rendered
         assert "No collectors, packet capture, network calls" in rendered
 
     assert "Risk and remediation readiness surface." in gui_app.render_placeholder_tab("risk")
     assert "Last Export Summary" in gui_app.render_placeholder_tab("exports")
-    assert "Threat Prediction Models" in gui_app.render_placeholder_tab("ai")
     assert "Packet Intelligence Integration" in gui_app.render_placeholder_tab("packet")
     json.dumps(gui_app.serialize_tui_tab_registry(), sort_keys=True)
 
@@ -821,6 +820,227 @@ def test_deployment_tables_handle_empty_readiness_data_without_crashing():
             assert app.readiness.row_count == 1
             assert app.readiness.selected_deployment() is None
             assert dict(app.details.get_row_at(index) for index in range(app.details.row_count))["Platform"] == "-"
+
+    asyncio.run(run_case())
+
+
+def test_ai_workspace_layout_mounts_correctly():
+    assert gui_app.ai_workspace_heading_labels() == (
+        "AI Summary",
+        "AI Provider / Model",
+        "AI Details",
+        "Provider Summary",
+        "Recent AI Activity",
+        "AI Timeline",
+    )
+    assert gui_app.ai_workspace_layout_rows() == (
+        "ai-status-row",
+        "ai-active-heading-row",
+        "ai-active-table-row",
+        "ai-support-tables-row",
+    )
+    assert gui_app.ai_workspace_content_class() == "ai-section"
+
+    css = gui_app.PortMapDashboard.CSS
+    assert "#ai-screen" in css
+    assert "layout: grid;" in css
+    assert "grid-size: 3 4;" in css
+    assert "grid-columns: 2fr 5fr 3fr;" in css
+    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "ai-section" in css
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "VerticalScroll" not in source
+    assert "withGrid(id=\"ai-screen\"):" in compact_source
+    assert '_panel_heading("AISummary"' in compact_source
+    assert "noinferenceormodelloading" in compact_source
+    assert '_panel_heading("AIProvider/Model"' in compact_source
+    assert '_panel_heading("AIDetails"' in compact_source
+    assert '_panel_heading("ProviderSummary"' in compact_source
+    assert '_panel_heading("RecentAIActivity"' in compact_source
+    assert '_panel_heading("AITimeline"' in compact_source
+
+    class Harness(gui_app.PortMapDashboard):
+        def compose(self):
+            yield from self._compose_ai_tab()
+
+        async def on_mount(self):
+            pass
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test():
+            assert app.query_one("#ai-screen", gui_app.Grid)
+            assert app.query_one(gui_app.AIStatusTable)
+            assert app.query_one(gui_app.AIProviderModelTable)
+            assert app.query_one(gui_app.AIDetailsTable)
+            assert app.query_one(gui_app.AIProviderSummaryTable)
+            assert app.query_one(gui_app.AIActivityTable)
+            assert app.query_one(gui_app.AITimelineTable)
+
+    asyncio.run(run_case())
+
+
+def test_ai_workspace_uses_dashboard_style_data_tables():
+    assert issubclass(gui_app.AIStatusTable, gui_app.DataTable)
+    assert issubclass(gui_app.AIProviderModelTable, gui_app.DataTable)
+    assert issubclass(gui_app.AIDetailsTable, gui_app.DataTable)
+    assert issubclass(gui_app.AIProviderSummaryTable, gui_app.DataTable)
+    assert issubclass(gui_app.AIActivityTable, gui_app.DataTable)
+    assert issubclass(gui_app.AITimelineTable, gui_app.DataTable)
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "self.ai_status_panel=AIStatusTable(" in compact_source
+    assert "self.ai_provider_model_panel=AIProviderModelTable(" in compact_source
+    assert "self.ai_details_panel=AIDetailsTable(" in compact_source
+    assert "self.ai_provider_summary_panel=AIProviderSummaryTable(" in compact_source
+    assert "self.ai_activity_panel=AIActivityTable(" in compact_source
+    assert "self.ai_timeline_panel=AITimelineTable(" in compact_source
+    assert "self.ai_provider_model_panel=Static(" not in compact_source
+    assert "self.ai_details_panel=Static(" not in compact_source
+
+
+def _sample_ai_events():
+    return gui_app._ai_events_from_sources(
+        remediation_events=[
+            {
+                "timestamp": "2026-06-14T12:03:00+00:00",
+                "ai_provider": "heuristic",
+                "model": "risk-v1",
+                "action": "prompt_operator",
+                "status": "preview",
+            },
+            {
+                "timestamp": "2026-06-14T12:01:00+00:00",
+                "ai_provider": "heuristic",
+                "model": "risk-v1",
+                "action": "monitor",
+                "status": "preview",
+            },
+        ],
+        scan_results=[
+            {
+                "timestamp": "2026-06-14T12:02:00+00:00",
+                "ai_provider": "local_rules",
+                "model_name": "port-score",
+                "status": "LISTEN",
+            }
+        ],
+        master_events=[
+            {
+                "timestamp": "2026-06-13T09:00:00+00:00",
+                "event_type": "ai_decision",
+                "provider": "heuristic",
+                "model_name": "risk-v2",
+                "decision": "review",
+            }
+        ],
+    )
+
+
+def test_ai_provider_model_rows_and_analytics_population():
+    events = _sample_ai_events()
+    rows = gui_app._ai_provider_model_rows(events)
+    status = gui_app._ai_status_table_row(rows)
+
+    assert status == {
+        "providers": "2",
+        "models": "3",
+        "decisions": "4",
+        "last_updated": "2026-06-14 12:03:00",
+        "mode": "read_only",
+    }
+    assert rows[0]["provider"] == "heuristic"
+    assert rows[0]["model"] == "risk-v1"
+    assert rows[0]["decisions"] == "2"
+    assert rows[0]["mode"] == "read_only"
+    assert rows[0]["execution"] == "not performed"
+    assert gui_app._ai_provider_summary_rows(rows) == [
+        {"provider": "heuristic", "models": "2", "decisions": "3"},
+        {"provider": "local_rules", "models": "1", "decisions": "1"},
+    ]
+    assert gui_app._ai_timeline_rows(events) == [
+        {"time": "2026-06-14", "providers": "2", "decisions": "3", "events": "3"},
+        {"time": "2026-06-13", "providers": "1", "decisions": "1", "events": "1"},
+    ]
+    assert [row["activity"] for row in gui_app._ai_recent_activity_rows(events, limit=2)] == [
+        "LISTEN",
+        "prompt_operator",
+    ]
+
+
+def test_ai_details_rows_use_selected_provider_model_with_placeholders():
+    rows = gui_app._ai_provider_model_rows(_sample_ai_events())
+    details = dict(gui_app._ai_detail_rows(rows[0]))
+
+    assert details["Provider"] == "heuristic"
+    assert details["Model"] == "risk-v1"
+    assert details["Status"] == "preview"
+    assert details["Decisions"] == "2"
+    assert details["Updated"] == "2026-06-14 12:03:00"
+    assert details["Mode"] == "read_only"
+    assert details["Execution"] == "not performed"
+
+    placeholders = dict(gui_app._ai_detail_rows(None))
+    assert all(value == "-" for value in placeholders.values())
+
+
+def test_ai_tables_handle_empty_metadata_without_crashing():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.status = gui_app.AIStatusTable()
+            self.providers = gui_app.AIProviderModelTable()
+            self.details = gui_app.AIDetailsTable()
+            self.summary = gui_app.AIProviderSummaryTable()
+            self.activity = gui_app.AIActivityTable()
+            self.timeline = gui_app.AITimelineTable()
+            yield self.status
+            yield self.providers
+            yield self.details
+            yield self.summary
+            yield self.activity
+            yield self.timeline
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            app.status.update_status([])
+            app.providers.update_ai([])
+            app.details.update_details(app.providers.selected_ai())
+            app.summary.update_providers([])
+            app.activity.update_activity([])
+            app.timeline.update_timeline([])
+            await pilot.pause()
+            assert app.providers.row_count == 1
+            assert app.providers.selected_ai() is None
+            assert dict(app.details.get_row_at(index) for index in range(app.details.row_count))["Provider"] == "-"
+
+    asyncio.run(run_case())
+
+
+def test_ai_table_and_timeline_populate_from_existing_ai_data():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.providers = gui_app.AIProviderModelTable()
+            self.timeline = gui_app.AITimelineTable()
+            yield self.providers
+            yield self.timeline
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            events = _sample_ai_events()
+            rows = gui_app._ai_provider_model_rows(events)
+            app.providers.update_ai(rows)
+            app.timeline.update_timeline(events)
+            await pilot.pause()
+            assert app.providers.row_count == 3
+            assert app.providers.get_row_at(0)[0] == "heuristic"
+            assert app.providers.get_row_at(0)[1] == "risk-v1"
+            assert app.timeline.row_count == 2
+            assert app.timeline.get_row_at(0)[0] == "2026-06-14"
 
     asyncio.run(run_case())
 
@@ -1500,6 +1720,96 @@ def test_deployment_details_update_when_selection_changes():
             details.update_details(readiness.selected_deployment())
             await pilot.pause()
             assert dict(details.get_row_at(index) for index in range(details.row_count))["Method"] == "deb_preview"
+
+    asyncio.run(run_case())
+
+
+def test_ai_provider_model_selection_survives_refresh_when_row_still_exists():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.AIProviderModelTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.AIProviderModelTable)
+            rows = gui_app._ai_provider_model_rows(_sample_ai_events())
+            table.update_ai(rows)
+            table.move_cursor(row=1, column=0)
+            await pilot.pause()
+            assert table.selected_ai()["provider"] == "local_rules"
+
+            table.update_ai(
+                [
+                    {
+                        "provider": "heuristic",
+                        "model": "risk-v0",
+                        "status": "observed",
+                        "decisions": "1",
+                        "updated": "2026-06-14 12:05:00",
+                        "source": "master_event",
+                        "latest_activity": "metadata",
+                        "mode": "read_only",
+                        "execution": "not performed",
+                        "key": "heuristic|risk-v0",
+                    },
+                    *rows,
+                ]
+            )
+            await pilot.pause()
+            assert table.cursor_row == 2
+            assert table.selected_ai()["provider"] == "local_rules"
+
+    asyncio.run(run_case())
+
+
+def test_ai_provider_model_selection_falls_back_when_selected_row_removed():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.AIProviderModelTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.AIProviderModelTable)
+            rows = gui_app._ai_provider_model_rows(_sample_ai_events())
+            table.update_ai(rows)
+            table.move_cursor(row=2, column=0)
+            await pilot.pause()
+            assert table.selected_ai()["model"] == "risk-v2"
+
+            table.update_ai([rows[0], rows[1]])
+            await pilot.pause()
+            assert table.cursor_row == 1
+            assert table.selected_ai()["provider"] == "local_rules"
+
+    asyncio.run(run_case())
+
+
+def test_ai_details_update_when_selection_changes():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.providers = gui_app.AIProviderModelTable()
+            self.details = gui_app.AIDetailsTable()
+            yield self.providers
+            yield self.details
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            providers = app.query_one(gui_app.AIProviderModelTable)
+            details = app.query_one(gui_app.AIDetailsTable)
+            providers.update_ai(gui_app._ai_provider_model_rows(_sample_ai_events()))
+            details.update_details(providers.selected_ai())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Model"] == "risk-v1"
+
+            providers.move_cursor(row=1, column=0)
+            details.update_details(providers.selected_ai())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Model"] == "port-score"
 
     asyncio.run(run_case())
 

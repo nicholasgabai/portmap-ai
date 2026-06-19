@@ -487,6 +487,22 @@ DEPLOYMENT_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
     "deployment-support-tables-row",
 )
 DEPLOYMENT_READINESS_LIMIT = 24
+AI_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
+    "AI Summary",
+    "AI Provider / Model",
+    "AI Details",
+    "Provider Summary",
+    "Recent AI Activity",
+    "AI Timeline",
+)
+AI_WORKSPACE_CONTENT_CLASS = "ai-section"
+AI_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
+    "ai-status-row",
+    "ai-active-heading-row",
+    "ai-active-table-row",
+    "ai-support-tables-row",
+)
+AI_ACTIVITY_LIMIT = 24
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -551,6 +567,18 @@ def deployment_workspace_content_class() -> str:
 
 def deployment_workspace_layout_rows() -> tuple[str, ...]:
     return DEPLOYMENT_WORKSPACE_LAYOUT_ROWS
+
+
+def ai_workspace_heading_labels() -> tuple[str, ...]:
+    return AI_WORKSPACE_HEADING_LABELS
+
+
+def ai_workspace_content_class() -> str:
+    return AI_WORKSPACE_CONTENT_CLASS
+
+
+def ai_workspace_layout_rows() -> tuple[str, ...]:
+    return AI_WORKSPACE_LAYOUT_ROWS
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -2157,6 +2185,250 @@ def _deployment_timeline_rows(deployment_rows: List[Dict[str, str]], *, limit: i
     ]
 
 
+def _ai_raw_time(event: Dict[str, Any]) -> Any:
+    return event.get("created_at") or event.get("timestamp") or event.get("generated_at")
+
+
+def _ai_event_time(event: Dict[str, Any]) -> str:
+    return _format_timestamp(_ai_raw_time(event))
+
+
+def _ai_sort_time(event: Dict[str, Any]) -> float:
+    parsed = _timestamp_to_datetime(_ai_raw_time(event))
+    return parsed.timestamp() if parsed else 0.0
+
+
+def _ai_provider_value(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("ai_provider")
+        or event.get("provider")
+        or event.get("model_provider")
+        or event.get("model_source")
+        or "-",
+        limit=24,
+    )
+
+
+def _ai_model_value(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("model")
+        or event.get("model_name")
+        or event.get("ai_model")
+        or event.get("model_id")
+        or "-",
+        limit=24,
+    )
+
+
+def _ai_status_value(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("status")
+        or event.get("event_state")
+        or event.get("action")
+        or event.get("decision")
+        or event.get("event_type")
+        or "observed",
+        limit=24,
+    )
+
+
+def _ai_activity_value(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("decision")
+        or event.get("action")
+        or event.get("reason")
+        or event.get("status")
+        or event.get("event_type")
+        or "observed",
+        limit=28,
+    )
+
+
+def _ai_source_value(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("_ai_source") or event.get("event_type") or event.get("source_mode") or "-",
+        limit=24,
+    )
+
+
+def _is_ai_event(event: Dict[str, Any]) -> bool:
+    if any(
+        event.get(key) not in {"", "-", None}
+        for key in ("ai_provider", "provider", "model", "model_name", "ai_model")
+    ):
+        return True
+    event_type = str(event.get("event_type") or "").lower()
+    return "ai" in event_type or "model" in event_type
+
+
+def _ai_enriched_event(event: Dict[str, Any], source: str) -> Dict[str, Any] | None:
+    if not isinstance(event, dict) or not _is_ai_event(event):
+        return None
+    enriched = dict(event)
+    enriched.setdefault("_ai_source", source)
+    return enriched
+
+
+def _ai_events_from_sources(
+    *,
+    remediation_events: List[Dict[str, Any]] | None = None,
+    scan_results: List[Dict[str, Any]] | None = None,
+    master_events: List[Dict[str, Any]] | None = None,
+    limit: int = AI_ACTIVITY_LIMIT,
+) -> List[Dict[str, Any]]:
+    events: List[Dict[str, Any]] = []
+    for source, rows in (
+        ("remediation", remediation_events or []),
+        ("scan_result", scan_results or []),
+        ("master_event", master_events or []),
+    ):
+        for event in rows:
+            enriched = _ai_enriched_event(event, source)
+            if enriched is not None:
+                events.append(enriched)
+    events.sort(key=_ai_sort_time, reverse=True)
+    return events[: max(limit, 0)]
+
+
+def _ai_provider_model_rows(
+    events: List[Dict[str, Any]],
+    *,
+    limit: int = AI_ACTIVITY_LIMIT,
+) -> List[Dict[str, str]]:
+    grouped: Dict[str, Dict[str, Any]] = {}
+    for event in events:
+        provider = _ai_provider_value(event)
+        model = _ai_model_value(event)
+        identity = "|".join([provider, model])
+        row = grouped.setdefault(
+            identity,
+            {
+                "provider": provider,
+                "model": model,
+                "decisions": 0,
+                "updated": "-",
+                "_sort_time": 0.0,
+                "status": "-",
+                "source": "-",
+                "latest_activity": "-",
+            },
+        )
+        row["decisions"] += 1
+        sort_time = _ai_sort_time(event)
+        if sort_time >= row["_sort_time"]:
+            row["_sort_time"] = sort_time
+            row["updated"] = _ai_event_time(event)
+            row["status"] = _ai_status_value(event)
+            row["source"] = _ai_source_value(event)
+            row["latest_activity"] = _ai_activity_value(event)
+    rows = sorted(
+        grouped.values(),
+        key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
+        reverse=True,
+    )
+    return [
+        {
+            "provider": row["provider"],
+            "model": row["model"],
+            "status": row["status"],
+            "decisions": str(row["decisions"]),
+            "updated": row["updated"],
+            "source": row["source"],
+            "latest_activity": row["latest_activity"],
+            "mode": "read_only",
+            "execution": "not performed",
+            "key": "|".join([row["provider"], row["model"]]),
+        }
+        for row in rows[: max(limit, 0)]
+    ]
+
+
+def _ai_status_table_row(ai_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    providers = {row.get("provider") for row in ai_rows if row.get("provider") not in {"", "-", None}}
+    models = {row.get("model") for row in ai_rows if row.get("model") not in {"", "-", None}}
+    decisions = sum(_deployment_int(row.get("decisions")) for row in ai_rows)
+    latest = max(
+        (row.get("updated") for row in ai_rows if row.get("updated") not in {"", "-", None}),
+        default="-",
+    )
+    return {
+        "providers": str(len(providers)),
+        "models": str(len(models)),
+        "decisions": str(decisions),
+        "last_updated": latest,
+        "mode": "read_only",
+    }
+
+
+def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
+    row = ai_row or {}
+    return [
+        ("Provider", row.get("provider", "-")),
+        ("Model", row.get("model", "-")),
+        ("Status", row.get("status", "-")),
+        ("Decisions", row.get("decisions", "-")),
+        ("Updated", row.get("updated", "-")),
+        ("Source", row.get("source", "-")),
+        ("Latest Activity", row.get("latest_activity", "-")),
+        ("Mode", row.get("mode", "-")),
+        ("Execution", row.get("execution", "-")),
+    ]
+
+
+def _ai_provider_summary_rows(ai_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    grouped: Dict[str, Dict[str, Any]] = {}
+    for row in ai_rows:
+        provider = row.get("provider") or "-"
+        item = grouped.setdefault(provider, {"provider": provider, "models": set(), "decisions": 0})
+        model = row.get("model")
+        if model not in {"", "-", None}:
+            item["models"].add(model)
+        item["decisions"] += _deployment_int(row.get("decisions"))
+    rows = sorted(grouped.values(), key=lambda row: (-row["decisions"], row["provider"]))
+    return [
+        {"provider": row["provider"], "models": str(len(row["models"])), "decisions": str(row["decisions"])}
+        for row in rows[: max(limit, 0)]
+    ]
+
+
+def _ai_recent_activity_rows(events: List[Dict[str, Any]], *, limit: int = 9) -> List[Dict[str, str]]:
+    recent = sorted(events, key=_ai_sort_time, reverse=True)[: max(limit, 0)]
+    return [
+        {
+            "time": _ai_event_time(event),
+            "provider": _ai_provider_value(event),
+            "model": _ai_model_value(event),
+            "activity": _ai_activity_value(event),
+            "key": "|".join(
+                [_ai_event_time(event), _ai_provider_value(event), _ai_model_value(event), _ai_activity_value(event)]
+            ),
+        }
+        for event in reversed(recent)
+    ]
+
+
+def _ai_timeline_rows(events: List[Dict[str, Any]], *, limit: int = 9) -> List[Dict[str, str]]:
+    buckets: Dict[str, Dict[str, Any]] = {}
+    for event in events:
+        time = _ai_event_time(event)
+        bucket = time[:10] if time != "-" else "-"
+        item = buckets.setdefault(bucket, {"providers": set(), "decisions": 0, "events": 0})
+        provider = _ai_provider_value(event)
+        if provider != "-":
+            item["providers"].add(provider)
+        item["decisions"] += 1
+        item["events"] += 1
+    return [
+        {
+            "time": bucket,
+            "providers": str(len(values["providers"])),
+            "decisions": str(values["decisions"]),
+            "events": str(values["events"]),
+        }
+        for bucket, values in sorted(buckets.items(), reverse=True)[: max(limit, 0)]
+    ]
+
+
 def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     row_index = table.cursor_row if isinstance(table.cursor_row, int) else 0
     selection: Dict[str, Any] = {"row_index": row_index, "row_key": None}
@@ -3156,6 +3428,165 @@ class DeploymentTimelineTable(DataTable):
         _restore_table_selection(self, selection)
 
 
+class AIStatusTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Providers")
+        self.add_column("Models")
+        self.add_column("Decisions")
+        self.add_column("Last Updated")
+        self.add_column("Mode")
+        self.update_status([])
+
+    def update_status(self, ai_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        row = _ai_status_table_row(ai_rows)
+        self.clear()
+        self.add_row(
+            row["providers"],
+            row["models"],
+            row["decisions"],
+            row["last_updated"],
+            row["mode"],
+            key="ai-status",
+        )
+        _restore_table_selection(self, selection)
+
+
+class AIProviderModelTable(DataTable):
+    def on_mount(self) -> None:
+        self.ai_rows: List[Dict[str, str]] = []
+        self.add_column("Provider")
+        self.add_column("Model")
+        self.add_column("Status")
+        self.add_column("Decisions")
+        self.add_column("Updated")
+        self.update_ai([])
+
+    def update_ai(self, ai_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        self.ai_rows = ai_rows
+        if not ai_rows:
+            self.add_row("-", "-", "No AI metadata available.", "0", "-", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in ai_rows:
+            self.add_row(
+                row.get("provider", "-"),
+                row.get("model", "-"),
+                row.get("status", "-"),
+                row.get("decisions", "0"),
+                row.get("updated", "-"),
+                key=_unique_table_key(row.get("key"), seen),
+            )
+        _restore_table_selection(self, selection)
+
+    def selected_ai(self, row_index: int | None = None) -> Dict[str, str] | None:
+        if not self.ai_rows:
+            return None
+        index = self.cursor_row if row_index is None else row_index
+        if not isinstance(index, int) or index < 0 or index >= len(self.ai_rows):
+            index = 0
+        return self.ai_rows[index]
+
+
+class AIDetailsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Field")
+        self.add_column("Value")
+        self.update_details(None)
+
+    def update_details(self, ai_row: Dict[str, str] | None) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        for field, value in _ai_detail_rows(ai_row):
+            self.add_row(field, value, key=field)
+        _restore_table_selection(self, selection)
+
+
+class AIProviderSummaryTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Provider")
+        self.add_column("Models")
+        self.add_column("Decisions")
+        self.update_providers([])
+
+    def update_providers(self, ai_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _ai_provider_summary_rows(ai_rows)
+        if not rows:
+            self.add_row("No AI providers available.", "0", "0", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["provider"],
+                row["models"],
+                row["decisions"],
+                key=_unique_table_key(row["provider"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
+class AIActivityTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Provider")
+        self.add_column("Model")
+        self.add_column("Activity")
+        self.update_activity([])
+
+    def update_activity(self, events: List[Dict[str, Any]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _ai_recent_activity_rows(events)
+        if not rows:
+            self.add_row("-", "-", "-", "No AI activity available.", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["provider"],
+                row["model"],
+                row["activity"],
+                key=_unique_table_key(row["key"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
+class AITimelineTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Providers")
+        self.add_column("Decisions")
+        self.add_column("Events")
+        self.update_timeline([])
+
+    def update_timeline(self, events: List[Dict[str, Any]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _ai_timeline_rows(events)
+        if not rows:
+            self.add_row("-", "0", "0", "0", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["providers"],
+                row["decisions"],
+                row["events"],
+                key=_unique_table_key(row["time"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
 class TopologyPanel(DataTable):
     def on_mount(self) -> None:
         self.add_column("Source")
@@ -3252,6 +3683,9 @@ class PortMapDashboard(App):
         height: 1fr;
     }
     #tab-deployment {
+        height: 1fr;
+    }
+    #tab-ai {
         height: 1fr;
     }
     #risk-screen {
@@ -3450,6 +3884,54 @@ class PortMapDashboard(App):
         height: 1fr;
         overflow-x: hidden;
     }
+    #ai-screen {
+        layout: grid;
+        grid-size: 3 4;
+        grid-columns: 2fr 5fr 3fr;
+        grid-rows: 3 1 13fr 7fr;
+        overflow: hidden;
+        height: 1fr;
+        padding: 0 1;
+    }
+    .ai-grid-cell {
+        width: 1fr;
+        height: 1fr;
+        overflow: hidden;
+    }
+    .ai-grid-span-2 {
+        column-span: 2;
+    }
+    .ai-grid-span-3 {
+        column-span: 3;
+    }
+    .ai-grid-heading {
+        height: 1;
+        max-height: 1;
+        overflow: hidden;
+    }
+    .ai-status-table {
+        height: 2;
+        max-height: 2;
+    }
+    .ai-active-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .ai-details-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .ai-support-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .ai-section {
+        padding: 0 1;
+        margin: 0 1 0 0;
+        width: 1fr;
+        height: 1fr;
+        overflow-x: hidden;
+    }
     #log-panel {
         height: 12;
         overflow-y: auto;
@@ -3505,6 +3987,10 @@ class PortMapDashboard(App):
             if tab.tab_id == "deployment":
                 with Container(id="tab-deployment", classes="tab-panel"):
                     yield from self._compose_deployment_tab()
+                continue
+            if tab.tab_id == "ai":
+                with Container(id="tab-ai", classes="tab-panel"):
+                    yield from self._compose_ai_tab()
                 continue
             yield Container(
                 Static(render_placeholder_tab(tab.tab_id)),
@@ -3844,6 +4330,59 @@ class PortMapDashboard(App):
                 )
                 yield self.deployment_timeline_panel
 
+    def _compose_ai_tab(self) -> ComposeResult:
+        with Grid(id="ai-screen"):
+            with Container(classes="ai-grid-cell ai-grid-span-3"):
+                yield Static(
+                    _panel_heading(
+                        "AI Summary",
+                        "Read-only AI metadata from existing observations; no inference or model loading.",
+                    ),
+                    classes="panel-heading ai-grid-heading",
+                )
+                self.ai_status_panel = AIStatusTable(classes=f"{AI_WORKSPACE_CONTENT_CLASS} ai-status-table")
+                yield self.ai_status_panel
+            yield Static(
+                _panel_heading(
+                    "AI Provider / Model",
+                    "Provider and model records from observed AI metadata only.",
+                ),
+                classes="panel-heading ai-grid-heading ai-grid-span-2",
+            )
+            yield Static(
+                _panel_heading("AI Details", "Selected provider/model metadata context."),
+                classes="panel-heading ai-grid-heading",
+            )
+            self.ai_provider_model_panel = AIProviderModelTable(
+                classes=f"{AI_WORKSPACE_CONTENT_CLASS} ai-active-table ai-grid-span-2"
+            )
+            yield self.ai_provider_model_panel
+            self.ai_details_panel = AIDetailsTable(classes=f"{AI_WORKSPACE_CONTENT_CLASS} ai-details-table")
+            yield self.ai_details_panel
+            with Container(classes="ai-grid-cell"):
+                yield Static(
+                    _panel_heading("Provider Summary", "Aggregate observed AI metadata by provider."),
+                    classes="panel-heading ai-grid-heading",
+                )
+                self.ai_provider_summary_panel = AIProviderSummaryTable(
+                    classes=f"{AI_WORKSPACE_CONTENT_CLASS} ai-support-table"
+                )
+                yield self.ai_provider_summary_panel
+            with Container(classes="ai-grid-cell"):
+                yield Static(
+                    _panel_heading("Recent AI Activity", "Recent AI-related observations from existing events."),
+                    classes="panel-heading ai-grid-heading",
+                )
+                self.ai_activity_panel = AIActivityTable(classes=f"{AI_WORKSPACE_CONTENT_CLASS} ai-support-table")
+                yield self.ai_activity_panel
+            with Container(classes="ai-grid-cell"):
+                yield Static(
+                    _panel_heading("AI Timeline", "Bucketed summary of observed AI metadata."),
+                    classes="panel-heading ai-grid-heading",
+                )
+                self.ai_timeline_panel = AITimelineTable(classes=f"{AI_WORKSPACE_CONTENT_CLASS} ai-support-table")
+                yield self.ai_timeline_panel
+
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
         self.runtime_settings = load_settings(defaults={})
@@ -3905,6 +4444,14 @@ class PortMapDashboard(App):
         if hasattr(self, "deployment_status_panel"):
             self._update_deployment_workspace(
                 self._load_deployment_rows(limit=max(self.tail_size * 4, DEPLOYMENT_READINESS_LIMIT))
+            )
+        if hasattr(self, "ai_status_panel"):
+            self._update_ai_workspace(
+                self._load_ai_events(
+                    remediation_events=remediation_events,
+                    scan_results=scan_results,
+                    limit=max(self.tail_size * 4, AI_ACTIVITY_LIMIT),
+                )
             )
         if hasattr(self, "topology_panel"):
             self.topology_panel.update_topology(topology_edge_rows(flow_visualization.get("topology"), limit=self.tail_size))
@@ -3994,6 +4541,32 @@ class PortMapDashboard(App):
         self.deployment_events_panel.update_events(deployment_rows)
         self.deployment_timeline_panel.update_timeline(deployment_rows)
 
+    def _load_ai_events(
+        self,
+        *,
+        remediation_events: List[Dict[str, Any]] | None = None,
+        scan_results: List[Dict[str, Any]] | None = None,
+        limit: int = AI_ACTIVITY_LIMIT,
+    ) -> List[Dict[str, Any]]:
+        return _ai_events_from_sources(
+            remediation_events=remediation_events,
+            scan_results=scan_results,
+            master_events=self._load_master_events(limit=limit),
+            limit=limit,
+        )
+
+    def _update_ai_workspace(self, ai_events: List[Dict[str, Any]]) -> None:
+        if not hasattr(self, "ai_status_panel"):
+            return
+        ai_rows = _ai_provider_model_rows(ai_events, limit=AI_ACTIVITY_LIMIT)
+        self.ai_status_panel.update_status(ai_rows)
+        self.ai_provider_model_panel.update_ai(ai_rows)
+        selected_ai = self.ai_provider_model_panel.selected_ai()
+        self.ai_details_panel.update_details(selected_ai)
+        self.ai_provider_summary_panel.update_providers(ai_rows)
+        self.ai_activity_panel.update_activity(ai_events)
+        self.ai_timeline_panel.update_timeline(ai_events)
+
     def _update_risk_workspace(
         self,
         *,
@@ -4052,6 +4625,10 @@ class PortMapDashboard(App):
         self.risk_footer_status_panel.update(_format_footer_status(sections["allowlist_status"], sections["safety_boundary"]))
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if getattr(self, "ai_provider_model_panel", None) is event.data_table:
+            if hasattr(self, "ai_details_panel"):
+                self.ai_details_panel.update_details(self.ai_provider_model_panel.selected_ai(event.cursor_row))
+            return
         if getattr(self, "deployment_readiness_panel", None) is event.data_table:
             if hasattr(self, "deployment_details_panel"):
                 self.deployment_details_panel.update_details(
