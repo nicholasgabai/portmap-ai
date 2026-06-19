@@ -186,14 +186,13 @@ def test_dashboard_section_labels_keep_risk_details_on_risk_tab():
 
 
 def test_placeholder_tabs_render_safe_labels_and_serialization():
-    for tab_id in ["governance", "deployment", "ai", "packet"]:
+    for tab_id in ["deployment", "ai", "packet"]:
         rendered = gui_app.render_placeholder_tab(tab_id)
         assert "This tab is a navigation placeholder." in rendered
         assert "No collectors, packet capture, network calls" in rendered
 
     assert "Risk and remediation readiness surface." in gui_app.render_placeholder_tab("risk")
     assert "Last Export Summary" in gui_app.render_placeholder_tab("exports")
-    assert "Privacy Safeguards" in gui_app.render_placeholder_tab("governance")
     assert "Deployment wizard readiness" in gui_app.render_placeholder_tab("deployment")
     assert "Threat Prediction Models" in gui_app.render_placeholder_tab("ai")
     assert "Packet Intelligence Integration" in gui_app.render_placeholder_tab("packet")
@@ -488,6 +487,178 @@ def test_export_rows_from_dir_reads_archive_metadata(tmp_path):
     assert rows[0]["files"] == "1"
     assert rows[0]["size"] == "6 B"
     assert rows[0]["validation_result"] == "valid"
+
+
+def test_governance_workspace_layout_mounts_correctly():
+    assert gui_app.governance_workspace_heading_labels() == (
+        "Governance Status",
+        "Governance Evidence",
+        "Governance Details",
+        "Evidence Categories",
+        "Recent Governance Events",
+        "Governance Timeline",
+    )
+    assert gui_app.governance_workspace_layout_rows() == (
+        "governance-status-row",
+        "governance-active-heading-row",
+        "governance-active-table-row",
+        "governance-support-tables-row",
+    )
+    assert gui_app.governance_workspace_content_class() == "governance-section"
+
+    css = gui_app.PortMapDashboard.CSS
+    assert "#governance-screen" in css
+    assert "layout: grid;" in css
+    assert "grid-size: 3 4;" in css
+    assert "grid-columns: 2fr 5fr 3fr;" in css
+    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "governance-section" in css
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "VerticalScroll" not in source
+    assert "withGrid(id=\"governance-screen\"):" in compact_source
+    assert '_panel_heading("GovernanceStatus"' in compact_source
+    assert '_panel_heading("GovernanceEvidence"' in compact_source
+    assert '_panel_heading("GovernanceDetails"' in compact_source
+    assert '_panel_heading("EvidenceCategories"' in compact_source
+    assert '_panel_heading("RecentGovernanceEvents"' in compact_source
+    assert '_panel_heading("GovernanceTimeline"' in compact_source
+
+    class Harness(gui_app.PortMapDashboard):
+        def compose(self):
+            yield from self._compose_governance_tab()
+
+        async def on_mount(self):
+            pass
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test():
+            assert app.query_one("#governance-screen", gui_app.Grid)
+            assert app.query_one(gui_app.GovernanceStatusTable)
+            assert app.query_one(gui_app.GovernanceEvidenceTable)
+            assert app.query_one(gui_app.GovernanceDetailsTable)
+            assert app.query_one(gui_app.GovernanceCategoriesTable)
+            assert app.query_one(gui_app.GovernanceRecentEventsTable)
+            assert app.query_one(gui_app.GovernanceTimelineTable)
+
+    asyncio.run(run_case())
+
+
+def test_governance_workspace_uses_dashboard_style_data_tables():
+    assert issubclass(gui_app.GovernanceStatusTable, gui_app.DataTable)
+    assert issubclass(gui_app.GovernanceEvidenceTable, gui_app.DataTable)
+    assert issubclass(gui_app.GovernanceDetailsTable, gui_app.DataTable)
+    assert issubclass(gui_app.GovernanceCategoriesTable, gui_app.DataTable)
+    assert issubclass(gui_app.GovernanceRecentEventsTable, gui_app.DataTable)
+    assert issubclass(gui_app.GovernanceTimelineTable, gui_app.DataTable)
+
+    source = Path(gui_app.__file__).read_text()
+    compact_source = "".join(source.split())
+    assert "self.governance_status_panel=GovernanceStatusTable(" in compact_source
+    assert "self.governance_evidence_panel=GovernanceEvidenceTable(" in compact_source
+    assert "self.governance_details_panel=GovernanceDetailsTable(" in compact_source
+    assert "self.governance_categories_panel=GovernanceCategoriesTable(" in compact_source
+    assert "self.governance_recent_events_panel=GovernanceRecentEventsTable(" in compact_source
+    assert "self.governance_timeline_panel=GovernanceTimelineTable(" in compact_source
+    assert "self.governance_evidence_panel=Static(" not in compact_source
+    assert "self.governance_details_panel=Static(" not in compact_source
+
+
+def _sample_governance_rows():
+    return gui_app._governance_rows_from_sources(
+        audit_events=[
+            {
+                "created_at": "2026-06-14T12:03:00+00:00",
+                "event_type": "export_created",
+                "event_category": "export",
+                "event_state": "recorded",
+                "actor_reference": "operator",
+                "action_reference": "export_logs",
+                "target_reference": "portmap-logs.zip",
+                "source_mode": "live",
+                "evidence_references": ["archive"],
+            },
+            {
+                "created_at": "2026-06-14T12:01:00+00:00",
+                "event_type": "policy_review",
+                "event_category": "policy_review",
+                "event_state": "degraded",
+                "actor_reference": "reviewer",
+                "target_reference": "policy-1",
+                "source_mode": "fixture",
+            },
+        ],
+        command_events=[
+            {
+                "timestamp": "2026-06-14T12:02:00+00:00",
+                "node_id": "worker-1",
+                "command_type": "scan_now",
+                "status": "applied",
+            }
+        ],
+        remediation_events=[
+            {
+                "timestamp": "2026-06-14T12:00:00+00:00",
+                "node_id": "worker-2",
+                "action": "prompt_operator",
+                "status": "preview",
+                "port": 22,
+            }
+        ],
+        export_rows=[
+            {
+                "export_id": "portmap-logs-20260614-120400.zip",
+                "timestamp": "2026-06-14 12:04:00",
+                "export_type": "logs",
+                "validation_result": "valid",
+            }
+        ],
+    )
+
+
+def test_governance_status_and_analytics_population():
+    rows = _sample_governance_rows()
+    status = gui_app._governance_status_table_row(rows)
+
+    assert status == {
+        "latest": "2026-06-14 12:04:00",
+        "evidence_count": "5",
+        "preview_count": "5",
+        "exception_count": "1",
+        "category_count": "4",
+        "readiness": "attention",
+    }
+    assert gui_app._governance_category_rows(rows) == [
+        {"category": "export", "count": "2"},
+        {"category": "operator_action", "count": "1"},
+        {"category": "policy_review", "count": "1"},
+        {"category": "remediation_preview", "count": "1"},
+    ]
+    recent = gui_app._governance_recent_event_rows(rows, limit=2)
+    assert [row["event_type"] for row in recent] == ["export_created", "export_available"]
+    assert gui_app._governance_timeline_rows(rows) == [
+        {"time": "2026-06-14", "events": "5", "exceptions": "1", "preview": "5"}
+    ]
+
+
+def test_governance_details_rows_use_selected_evidence_with_placeholders():
+    rows = _sample_governance_rows()
+    details = dict(gui_app._governance_detail_rows(rows[0]))
+
+    assert details["Category"] == "export"
+    assert details["Event Type"] == "export_available"
+    assert details["State"] == "valid"
+    assert details["Actor"] == "local_export_dir"
+    assert details["Target"] == "portmap-logs-20260614-120..."
+    assert details["Source"] == "local_file"
+    assert details["Evidence Count"] == "1"
+    assert details["Preview Only"] == "True"
+    assert details["Destructive Action"] == "False"
+
+    placeholders = dict(gui_app._governance_detail_rows(None))
+    assert all(value == "-" for value in placeholders.values())
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
@@ -876,6 +1047,102 @@ def test_export_details_update_when_selection_changes():
             await pilot.pause()
             assert dict(details.get_row_at(index) for index in range(details.row_count))["Export ID"] == (
                 "topology-20260614-120200.zip"
+            )
+
+    asyncio.run(run_case())
+
+
+def test_governance_evidence_selection_survives_refresh_when_row_still_exists():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.GovernanceEvidenceTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.GovernanceEvidenceTable)
+            rows = _sample_governance_rows()
+            table.update_governance(rows)
+            table.move_cursor(row=1, column=0)
+            await pilot.pause()
+            assert table.selected_governance()["event_type"] == "export_created"
+
+            table.update_governance(
+                [
+                    {
+                        "time": "2026-06-14 12:05:00",
+                        "category": "security_review",
+                        "event_type": "review_recorded",
+                        "state": "recorded",
+                        "actor": "reviewer",
+                        "action": "security_review",
+                        "target": "review-1",
+                        "source": "fixture",
+                        "evidence": "1",
+                        "preview_only": "True",
+                        "destructive_action": "False",
+                        "key": "security|2026-06-14 12:05:00|review-1",
+                    },
+                    *rows,
+                ]
+            )
+            await pilot.pause()
+            assert table.cursor_row == 2
+            assert table.selected_governance()["event_type"] == "export_created"
+
+    asyncio.run(run_case())
+
+
+def test_governance_evidence_selection_falls_back_when_selected_row_removed():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.table = gui_app.GovernanceEvidenceTable()
+            yield self.table
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            table = app.query_one(gui_app.GovernanceEvidenceTable)
+            rows = _sample_governance_rows()
+            table.update_governance(rows)
+            table.move_cursor(row=2, column=0)
+            await pilot.pause()
+            assert table.selected_governance()["event_type"] == "scan_now"
+
+            table.update_governance([rows[0], rows[1]])
+            await pilot.pause()
+            assert table.cursor_row == 1
+            assert table.selected_governance()["event_type"] == "export_created"
+
+    asyncio.run(run_case())
+
+
+def test_governance_details_update_when_selection_changes():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.evidence = gui_app.GovernanceEvidenceTable()
+            self.details = gui_app.GovernanceDetailsTable()
+            yield self.evidence
+            yield self.details
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            evidence = app.query_one(gui_app.GovernanceEvidenceTable)
+            details = app.query_one(gui_app.GovernanceDetailsTable)
+            evidence.update_governance(_sample_governance_rows())
+            details.update_details(evidence.selected_governance())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Event Type"] == (
+                "export_available"
+            )
+
+            evidence.move_cursor(row=1, column=0)
+            details.update_details(evidence.selected_governance())
+            await pilot.pause()
+            assert dict(details.get_row_at(index) for index in range(details.row_count))["Event Type"] == (
+                "export_created"
             )
 
     asyncio.run(run_case())

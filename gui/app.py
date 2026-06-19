@@ -31,6 +31,7 @@ from core_engine.modules.scanner import normalize_scan_snapshot
 ORCHESTRATOR_STATE = Path.home() / ".portmap-ai" / "data" / "orchestrator_state.json"
 MASTER_LOG = Path.home() / ".portmap-ai" / "logs" / "master.log"
 MASTER_EVENTS_LOG = Path.home() / ".portmap-ai" / "logs" / "master_events.log"
+AUDIT_EVENTS_LOG = Path.home() / ".portmap-ai" / "logs" / "audit_events.jsonl"
 REMEDIATION_LOG = Path.home() / ".portmap-ai" / "logs" / "remediation_events.jsonl"
 COMMAND_AUDIT_LOG = Path.home() / ".portmap-ai" / "logs" / "command_events.jsonl"
 FLOW_EVENTS_LOG = Path.home() / ".portmap-ai" / "logs" / "flow_events.jsonl"
@@ -446,6 +447,22 @@ EXPORT_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
     "export-support-tables-row",
 )
 EXPORT_ACTIVITY_LIMIT = 24
+GOVERNANCE_WORKSPACE_HEADING_LABELS: tuple[str, ...] = (
+    "Governance Status",
+    "Governance Evidence",
+    "Governance Details",
+    "Evidence Categories",
+    "Recent Governance Events",
+    "Governance Timeline",
+)
+GOVERNANCE_WORKSPACE_CONTENT_CLASS = "governance-section"
+GOVERNANCE_WORKSPACE_LAYOUT_ROWS: tuple[str, ...] = (
+    "governance-status-row",
+    "governance-active-heading-row",
+    "governance-active-table-row",
+    "governance-support-tables-row",
+)
+GOVERNANCE_EVIDENCE_LIMIT = 24
 
 
 def tui_tab_shortcut_mapping() -> Dict[str, str]:
@@ -486,6 +503,18 @@ def export_workspace_content_class() -> str:
 
 def export_workspace_layout_rows() -> tuple[str, ...]:
     return EXPORT_WORKSPACE_LAYOUT_ROWS
+
+
+def governance_workspace_heading_labels() -> tuple[str, ...]:
+    return GOVERNANCE_WORKSPACE_HEADING_LABELS
+
+
+def governance_workspace_content_class() -> str:
+    return GOVERNANCE_WORKSPACE_CONTENT_CLASS
+
+
+def governance_workspace_layout_rows() -> tuple[str, ...]:
+    return GOVERNANCE_WORKSPACE_LAYOUT_ROWS
 
 
 def render_tab_nav(active_tab: str = DEFAULT_TUI_TAB) -> str:
@@ -1557,6 +1586,211 @@ def _export_validation_timeline_rows(export_rows: List[Dict[str, str]], *, limit
     ]
 
 
+def _governance_event_time(event: Dict[str, Any]) -> str:
+    return _format_timestamp(event.get("created_at") or event.get("timestamp") or event.get("generated_at"))
+
+
+def _governance_event_category(event: Dict[str, Any], source: str) -> str:
+    category = event.get("event_category") or event.get("category")
+    if category not in {"", "-", None}:
+        return _short_text(category, limit=24)
+    event_type = str(event.get("event_type") or event.get("command_type") or event.get("action") or "").lower()
+    if source == "command_audit":
+        return "operator_action"
+    if source == "remediation":
+        return "remediation_preview"
+    if source == "export":
+        return "export"
+    if "export" in event_type:
+        return "export"
+    if "policy" in event_type:
+        return "policy_review"
+    if "security" in event_type:
+        return "security_review"
+    if "config" in event_type or "command" in event_type:
+        return "configuration"
+    return "runtime"
+
+
+def _governance_evidence_count(event: Dict[str, Any]) -> str:
+    evidence = event.get("evidence_references")
+    if isinstance(evidence, list):
+        return str(len(evidence))
+    if isinstance(event.get("details"), dict):
+        return "1"
+    if event.get("export_id"):
+        return "1"
+    return "-"
+
+
+def _governance_row_from_event(event: Dict[str, Any], *, source: str) -> Dict[str, str]:
+    event_type = (
+        event.get("event_type")
+        or event.get("command_type")
+        or event.get("action")
+        or event.get("export_type")
+        or "unknown"
+    )
+    state = event.get("event_state") or event.get("status") or event.get("validation_result") or "recorded"
+    actor = event.get("actor_reference") or event.get("actor") or event.get("node_id") or event.get("source") or "-"
+    action = event.get("action_reference") or event.get("action") or event.get("command_type") or event_type
+    target = (
+        event.get("target_reference")
+        or event.get("target")
+        or event.get("node_id")
+        or event.get("export_id")
+        or event.get("port")
+        or "-"
+    )
+    mode = event.get("source_mode") or event.get("data_source") or event.get("source") or source
+    time = _governance_event_time(event)
+    raw_time = event.get("created_at") or event.get("timestamp") or event.get("generated_at")
+    parsed_time = _timestamp_to_datetime(raw_time)
+    category = _governance_event_category(event, source)
+    row = {
+        "time": time,
+        "category": category,
+        "event_type": _short_text(event_type, limit=24),
+        "state": _short_text(state, limit=18),
+        "actor": _short_text(actor, limit=24),
+        "action": _short_text(action, limit=28),
+        "target": _short_text(target, limit=28),
+        "source": _short_text(mode, limit=24),
+        "evidence": _governance_evidence_count(event),
+        "preview_only": str(bool(event.get("preview_only", True))),
+        "destructive_action": str(bool(event.get("destructive_action", False))),
+        "key": "|".join(
+            [
+                source,
+                time,
+                category,
+                _short_text(event_type, limit=40),
+                _short_text(target, limit=40),
+            ]
+        ),
+        "_sort_time": f"{parsed_time.timestamp():020.6f}" if parsed_time else str(raw_time or ""),
+    }
+    return row
+
+
+def _governance_rows_from_sources(
+    *,
+    audit_events: List[Dict[str, Any]] | None = None,
+    command_events: List[Dict[str, Any]] | None = None,
+    remediation_events: List[Dict[str, Any]] | None = None,
+    export_rows: List[Dict[str, str]] | None = None,
+    limit: int = GOVERNANCE_EVIDENCE_LIMIT,
+) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    rows.extend(_governance_row_from_event(event, source="audit") for event in list(audit_events or []))
+    rows.extend(_governance_row_from_event(event, source="command_audit") for event in list(command_events or []))
+    rows.extend(_governance_row_from_event(event, source="remediation") for event in list(remediation_events or []))
+    for export in list(export_rows or []):
+        event = {
+            "timestamp": export.get("timestamp"),
+            "event_type": "export_available",
+            "event_category": "export",
+            "event_state": export.get("validation_result"),
+            "actor_reference": "local_export_dir",
+            "action_reference": export.get("export_type"),
+            "target_reference": export.get("export_id"),
+            "source_mode": "local_file",
+            "export_id": export.get("export_id"),
+            "preview_only": True,
+            "destructive_action": False,
+        }
+        rows.append(_governance_row_from_event(event, source="export"))
+    rows.sort(key=lambda row: row.get("_sort_time") or row.get("time") or "", reverse=True)
+    return rows[: max(limit, 0)]
+
+
+def _governance_status_table_row(governance_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    failures = sum(1 for row in governance_rows if row.get("state") in {"invalid", "degraded", "failed", "empty"})
+    destructive = sum(1 for row in governance_rows if row.get("destructive_action") == "True")
+    preview = sum(1 for row in governance_rows if row.get("preview_only") == "True")
+    latest = governance_rows[0].get("time", "-") if governance_rows else "-"
+    if not governance_rows:
+        readiness = "no_evidence"
+    elif destructive:
+        readiness = "review_required"
+    elif failures:
+        readiness = "attention"
+    else:
+        readiness = "ready"
+    return {
+        "latest": latest,
+        "evidence_count": str(len(governance_rows)),
+        "preview_count": str(preview),
+        "exception_count": str(failures + destructive),
+        "category_count": str(len({row.get("category") for row in governance_rows if row.get("category")})),
+        "readiness": readiness,
+    }
+
+
+def _governance_detail_rows(governance_row: Dict[str, str] | None) -> List[tuple[str, str]]:
+    row = governance_row or {}
+    return [
+        ("Time", row.get("time", "-")),
+        ("Category", row.get("category", "-")),
+        ("Event Type", row.get("event_type", "-")),
+        ("State", row.get("state", "-")),
+        ("Actor", row.get("actor", "-")),
+        ("Action", row.get("action", "-")),
+        ("Target", row.get("target", "-")),
+        ("Source", row.get("source", "-")),
+        ("Evidence Count", row.get("evidence", "-")),
+        ("Preview Only", row.get("preview_only", "-")),
+        ("Destructive Action", row.get("destructive_action", "-")),
+    ]
+
+
+def _governance_category_rows(governance_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    counts: Dict[str, int] = {}
+    for row in governance_rows:
+        category = row.get("category") or "unknown"
+        counts[category] = counts.get(category, 0) + 1
+    return [
+        {"category": _short_text(category, limit=24), "count": str(count)}
+        for category, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[: max(limit, 0)]
+    ]
+
+
+def _governance_recent_event_rows(governance_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    recent = list(governance_rows)[: max(limit, 0)]
+    return [
+        {
+            "time": row.get("time", "-"),
+            "category": row.get("category", "-"),
+            "state": row.get("state", "-"),
+            "event_type": row.get("event_type", "-"),
+            "key": row.get("key", "-"),
+        }
+        for row in reversed(recent)
+    ]
+
+
+def _governance_timeline_rows(governance_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
+    buckets: Dict[str, Dict[str, int]] = {}
+    for row in governance_rows:
+        time = row.get("time") or "-"
+        bucket = time[:10] if time != "-" else "-"
+        item = buckets.setdefault(bucket, {"events": 0, "exceptions": 0, "preview": 0})
+        item["events"] += 1
+        if row.get("state") in {"invalid", "degraded", "failed", "empty"} or row.get("destructive_action") == "True":
+            item["exceptions"] += 1
+        if row.get("preview_only") == "True":
+            item["preview"] += 1
+    return [
+        {
+            "time": bucket,
+            "events": str(values["events"]),
+            "exceptions": str(values["exceptions"]),
+            "preview": str(values["preview"]),
+        }
+        for bucket, values in sorted(buckets.items(), reverse=True)[: max(limit, 0)]
+    ]
+
+
 def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     row_index = table.cursor_row if isinstance(table.cursor_row, int) else 0
     selection: Dict[str, Any] = {"row_index": row_index, "row_key": None}
@@ -2236,6 +2470,165 @@ class ExportValidationTimelineTable(DataTable):
         _restore_table_selection(self, selection)
 
 
+class GovernanceStatusTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Latest")
+        self.add_column("Evidence")
+        self.add_column("Preview")
+        self.add_column("Exceptions")
+        self.add_column("Categories")
+        self.add_column("Readiness")
+        self.update_status([])
+
+    def update_status(self, governance_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        row = _governance_status_table_row(governance_rows)
+        self.clear()
+        self.add_row(
+            row["latest"],
+            row["evidence_count"],
+            row["preview_count"],
+            row["exception_count"],
+            row["category_count"],
+            row["readiness"],
+            key="governance-status",
+        )
+        _restore_table_selection(self, selection)
+
+
+class GovernanceEvidenceTable(DataTable):
+    def on_mount(self) -> None:
+        self.governance_rows: List[Dict[str, str]] = []
+        self.add_column("Time")
+        self.add_column("Category")
+        self.add_column("Event Type")
+        self.add_column("State")
+        self.add_column("Actor")
+        self.add_column("Target")
+        self.add_column("Source")
+        self.update_governance([])
+
+    def update_governance(self, governance_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        self.governance_rows = governance_rows
+        if not governance_rows:
+            self.add_row("-", "-", "No governance evidence available.", "-", "-", "-", "-", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in governance_rows:
+            self.add_row(
+                row.get("time", "-"),
+                row.get("category", "-"),
+                row.get("event_type", "-"),
+                row.get("state", "-"),
+                row.get("actor", "-"),
+                row.get("target", "-"),
+                row.get("source", "-"),
+                key=_unique_table_key(row.get("key"), seen),
+            )
+        _restore_table_selection(self, selection)
+
+    def selected_governance(self, row_index: int | None = None) -> Dict[str, str] | None:
+        if not self.governance_rows:
+            return None
+        index = self.cursor_row if row_index is None else row_index
+        if not isinstance(index, int) or index < 0 or index >= len(self.governance_rows):
+            index = 0
+        return self.governance_rows[index]
+
+
+class GovernanceDetailsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Field")
+        self.add_column("Value")
+        self.update_details(None)
+
+    def update_details(self, governance_row: Dict[str, str] | None) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        for field, value in _governance_detail_rows(governance_row):
+            self.add_row(field, value, key=field)
+        _restore_table_selection(self, selection)
+
+
+class GovernanceCategoriesTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Category")
+        self.add_column("Count")
+        self.update_categories([])
+
+    def update_categories(self, governance_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _governance_category_rows(governance_rows)
+        if not rows:
+            self.add_row("No evidence categories available.", "-", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(row["category"], row["count"], key=_unique_table_key(row["category"], seen))
+        _restore_table_selection(self, selection)
+
+
+class GovernanceRecentEventsTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Category")
+        self.add_column("State")
+        self.add_column("Event Type")
+        self.update_events([])
+
+    def update_events(self, governance_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _governance_recent_event_rows(governance_rows)
+        if not rows:
+            self.add_row("-", "-", "-", "No governance events available.", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["category"],
+                row["state"],
+                row["event_type"],
+                key=_unique_table_key(row["key"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
+class GovernanceTimelineTable(DataTable):
+    def on_mount(self) -> None:
+        self.add_column("Time")
+        self.add_column("Events")
+        self.add_column("Exceptions")
+        self.add_column("Preview")
+        self.update_timeline([])
+
+    def update_timeline(self, governance_rows: List[Dict[str, str]]) -> None:
+        selection = _capture_table_selection(self)
+        self.clear()
+        rows = _governance_timeline_rows(governance_rows)
+        if not rows:
+            self.add_row("-", "0", "0", "0", key="empty")
+            _restore_table_selection(self, selection)
+            return
+        seen: set[str] = set()
+        for row in rows:
+            self.add_row(
+                row["time"],
+                row["events"],
+                row["exceptions"],
+                row["preview"],
+                key=_unique_table_key(row["time"], seen),
+            )
+        _restore_table_selection(self, selection)
+
+
 class TopologyPanel(DataTable):
     def on_mount(self) -> None:
         self.add_column("Source")
@@ -2326,6 +2719,9 @@ class PortMapDashboard(App):
         height: 1fr;
     }
     #tab-exports {
+        height: 1fr;
+    }
+    #tab-governance {
         height: 1fr;
     }
     #risk-screen {
@@ -2428,6 +2824,54 @@ class PortMapDashboard(App):
         height: 1fr;
         overflow-x: hidden;
     }
+    #governance-screen {
+        layout: grid;
+        grid-size: 3 4;
+        grid-columns: 2fr 5fr 3fr;
+        grid-rows: 3 1 13fr 7fr;
+        overflow: hidden;
+        height: 1fr;
+        padding: 0 1;
+    }
+    .governance-grid-cell {
+        width: 1fr;
+        height: 1fr;
+        overflow: hidden;
+    }
+    .governance-grid-span-2 {
+        column-span: 2;
+    }
+    .governance-grid-span-3 {
+        column-span: 3;
+    }
+    .governance-grid-heading {
+        height: 1;
+        max-height: 1;
+        overflow: hidden;
+    }
+    .governance-status-table {
+        height: 2;
+        max-height: 2;
+    }
+    .governance-active-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .governance-details-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .governance-support-table {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    .governance-section {
+        padding: 0 1;
+        margin: 0 1 0 0;
+        width: 1fr;
+        height: 1fr;
+        overflow-x: hidden;
+    }
     #log-panel {
         height: 12;
         overflow-y: auto;
@@ -2475,6 +2919,10 @@ class PortMapDashboard(App):
             if tab.tab_id == "exports":
                 with Container(id="tab-exports", classes="tab-panel"):
                     yield from self._compose_exports_tab()
+                continue
+            if tab.tab_id == "governance":
+                with Container(id="tab-governance", classes="tab-panel"):
+                    yield from self._compose_governance_tab()
                 continue
             yield Container(
                 Static(render_placeholder_tab(tab.tab_id)),
@@ -2695,6 +3143,64 @@ class PortMapDashboard(App):
                 )
                 yield self.export_validation_timeline_panel
 
+    def _compose_governance_tab(self) -> ComposeResult:
+        with Grid(id="governance-screen"):
+            with Container(classes="governance-grid-cell governance-grid-span-3"):
+                yield Static(
+                    _panel_heading("Governance Status", "Audit evidence, preview safety, and readiness state."),
+                    classes="panel-heading governance-grid-heading",
+                )
+                self.governance_status_panel = GovernanceStatusTable(
+                    classes=f"{GOVERNANCE_WORKSPACE_CONTENT_CLASS} governance-status-table"
+                )
+                yield self.governance_status_panel
+            yield Static(
+                _panel_heading(
+                    "Governance Evidence",
+                    "Read-only evidence from audit, command, remediation, and export records.",
+                ),
+                classes="panel-heading governance-grid-heading governance-grid-span-2",
+            )
+            yield Static(
+                _panel_heading("Governance Details", "Selected governance evidence context."),
+                classes="panel-heading governance-grid-heading",
+            )
+            self.governance_evidence_panel = GovernanceEvidenceTable(
+                classes=f"{GOVERNANCE_WORKSPACE_CONTENT_CLASS} governance-active-table governance-grid-span-2"
+            )
+            yield self.governance_evidence_panel
+            self.governance_details_panel = GovernanceDetailsTable(
+                classes=f"{GOVERNANCE_WORKSPACE_CONTENT_CLASS} governance-details-table"
+            )
+            yield self.governance_details_panel
+            with Container(classes="governance-grid-cell"):
+                yield Static(
+                    _panel_heading("Evidence Categories", "Count by governance evidence category."),
+                    classes="panel-heading governance-grid-heading",
+                )
+                self.governance_categories_panel = GovernanceCategoriesTable(
+                    classes=f"{GOVERNANCE_WORKSPACE_CONTENT_CLASS} governance-support-table"
+                )
+                yield self.governance_categories_panel
+            with Container(classes="governance-grid-cell"):
+                yield Static(
+                    _panel_heading("Recent Governance Events", "Chronological governance evidence feed."),
+                    classes="panel-heading governance-grid-heading",
+                )
+                self.governance_recent_events_panel = GovernanceRecentEventsTable(
+                    classes=f"{GOVERNANCE_WORKSPACE_CONTENT_CLASS} governance-support-table"
+                )
+                yield self.governance_recent_events_panel
+            with Container(classes="governance-grid-cell"):
+                yield Static(
+                    _panel_heading("Governance Timeline", "Bucketed evidence and exception history."),
+                    classes="panel-heading governance-grid-heading",
+                )
+                self.governance_timeline_panel = GovernanceTimelineTable(
+                    classes=f"{GOVERNANCE_WORKSPACE_CONTENT_CLASS} governance-support-table",
+                )
+                yield self.governance_timeline_panel
+
     async def on_mount(self) -> None:
         self._load_orchestrator_defaults()
         self.runtime_settings = load_settings(defaults={})
@@ -2745,6 +3251,14 @@ class PortMapDashboard(App):
             self.compact_risk_panel.update_risk(remediation_events, scan_results)
         if hasattr(self, "exports_status_panel"):
             self._update_exports_workspace(self._load_export_rows(limit=max(self.tail_size * 4, EXPORT_ACTIVITY_LIMIT)))
+        if hasattr(self, "governance_status_panel"):
+            self._update_governance_workspace(
+                self._load_governance_rows(
+                    remediation_events=remediation_events,
+                    export_rows=self._load_export_rows(limit=max(self.tail_size * 4, EXPORT_ACTIVITY_LIMIT)),
+                    limit=max(self.tail_size * 4, GOVERNANCE_EVIDENCE_LIMIT),
+                )
+            )
         if hasattr(self, "topology_panel"):
             self.topology_panel.update_topology(topology_edge_rows(flow_visualization.get("topology"), limit=self.tail_size))
         if hasattr(self, "traffic_flows_panel"):
@@ -2790,6 +3304,34 @@ class PortMapDashboard(App):
         self.export_types_panel.update_types(export_rows)
         self.export_events_panel.update_events(export_rows)
         self.export_validation_timeline_panel.update_timeline(export_rows)
+
+    def _load_governance_rows(
+        self,
+        *,
+        remediation_events: List[Dict[str, Any]] | None = None,
+        export_rows: List[Dict[str, str]] | None = None,
+        limit: int = GOVERNANCE_EVIDENCE_LIMIT,
+    ) -> List[Dict[str, str]]:
+        audit_events = read_jsonl(AUDIT_EVENTS_LOG, limit=limit)
+        command_events = self._load_command_events(limit=limit)
+        return _governance_rows_from_sources(
+            audit_events=audit_events,
+            command_events=command_events,
+            remediation_events=remediation_events,
+            export_rows=export_rows,
+            limit=limit,
+        )
+
+    def _update_governance_workspace(self, governance_rows: List[Dict[str, str]]) -> None:
+        if not hasattr(self, "governance_status_panel"):
+            return
+        self.governance_status_panel.update_status(governance_rows)
+        self.governance_evidence_panel.update_governance(governance_rows)
+        selected_governance = self.governance_evidence_panel.selected_governance()
+        self.governance_details_panel.update_details(selected_governance)
+        self.governance_categories_panel.update_categories(governance_rows)
+        self.governance_recent_events_panel.update_events(governance_rows)
+        self.governance_timeline_panel.update_timeline(governance_rows)
 
     def _update_risk_workspace(
         self,
@@ -2849,6 +3391,12 @@ class PortMapDashboard(App):
         self.risk_footer_status_panel.update(_format_footer_status(sections["allowlist_status"], sections["safety_boundary"]))
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if getattr(self, "governance_evidence_panel", None) is event.data_table:
+            if hasattr(self, "governance_details_panel"):
+                self.governance_details_panel.update_details(
+                    self.governance_evidence_panel.selected_governance(event.cursor_row)
+                )
+            return
         if getattr(self, "export_activity_panel", None) is event.data_table:
             if hasattr(self, "export_details_panel"):
                 self.export_details_panel.update_details(
