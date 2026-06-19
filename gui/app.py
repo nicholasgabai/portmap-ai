@@ -761,6 +761,25 @@ def _risk_finding_summary(event: Dict[str, Any]) -> str:
     return _short_text(event.get("risk_explanation") or event.get("reason") or event.get("status") or "-", limit=28)
 
 
+def _risk_finding_node(event: Dict[str, Any]) -> str:
+    return _short_text(event.get("node_id") or event.get("node") or event.get("target") or "-", limit=24)
+
+
+def _risk_finding_port(event: Dict[str, Any]) -> str:
+    port = event.get("port")
+    return _short_text(port, limit=12) if port not in {"", "-", None} else "-"
+
+
+def _risk_finding_protocol(event: Dict[str, Any]) -> str:
+    protocol = event.get("protocol")
+    return _short_text(str(protocol).upper(), limit=12) if protocol not in {"", "-", None} else "-"
+
+
+def _risk_finding_service_name(event: Dict[str, Any]) -> str:
+    service = event.get("service") or event.get("service_name") or event.get("program")
+    return _short_text(service, limit=24) if service not in {"", "-", None} else "-"
+
+
 def _risk_finding_provider(event: Dict[str, Any]) -> str:
     return _short_text(
         event.get("ai_provider") or event.get("provider") or event.get("model") or event.get("model_name") or "-",
@@ -780,6 +799,29 @@ def _risk_finding_state(event: Dict[str, Any]) -> str:
     )
 
 
+def _risk_finding_current_status(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("current_status")
+        or event.get("status")
+        or event.get("action")
+        or event.get("reason")
+        or "-",
+        limit=24,
+    )
+
+
+def _risk_finding_source(event: Dict[str, Any]) -> str:
+    return _short_text(
+        event.get("risk_source")
+        or event.get("_finding_source")
+        or event.get("event_type")
+        or event.get("source_mode")
+        or event.get("data_source")
+        or "-",
+        limit=24,
+    )
+
+
 def _risk_finding_count(event: Dict[str, Any]) -> str:
     for key in ("count", "event_count", "seen_count", "occurrences"):
         value = event.get(key)
@@ -793,6 +835,39 @@ def _format_optional_timestamp(value: Any) -> str:
     return formatted if formatted != "-" else "-"
 
 
+def _risk_signal_category(signal: str) -> str:
+    head = signal.split(":", 1)[0].split("=", 1)[0].strip()
+    return _short_text(head or signal, limit=18)
+
+
+def _risk_signal_summary(event: Dict[str, Any]) -> Dict[str, str]:
+    signals = _signals_from_event(event)
+    categories: List[str] = []
+    for signal in signals:
+        category = _risk_signal_category(signal)
+        if category != "-" and category not in categories:
+            categories.append(category)
+    return {
+        "signal_count": str(len(signals)) if signals else "-",
+        "top_signal": _short_text(signals[0], limit=28) if signals else "-",
+        "related_signals": _short_text(", ".join(signals[:3]), limit=48) if signals else "-",
+        "strongest_signal": _short_text(signals[0], limit=28) if signals else "-",
+        "signal_categories": ", ".join(categories[:4]) if categories else "-",
+        "signal_set": "|".join(sorted(signals)),
+    }
+
+
+def _risk_finding_identity(event: Dict[str, Any]) -> str:
+    return "|".join(
+        [
+            _risk_finding_target(event),
+            _risk_finding_service(event),
+            _risk_finding_summary(event),
+            _risk_finding_source(event),
+        ]
+    )
+
+
 def _risk_finding_key(event: Dict[str, Any]) -> str:
     score = _format_compact_risk_score(_numeric_risk_score(event))
     return "|".join(
@@ -804,6 +879,60 @@ def _risk_finding_key(event: Dict[str, Any]) -> str:
             _format_time(event.get("timestamp") or event.get("generated_at")),
         ]
     )
+
+
+def _risk_timeline_bucket_time(value: Any, *, bucket_seconds: int = 300) -> str:
+    times = _risk_timeline_bucket_times(value, bucket_seconds=bucket_seconds)
+    return times[0] if times else "-"
+
+
+def _risk_timeline_bucket_times(value: Any, *, bucket_seconds: int = 300) -> List[str]:
+    parsed = _timestamp_to_datetime(value)
+    if parsed is None:
+        return []
+    wall_bucket = parsed.replace(
+        minute=(parsed.minute // max(bucket_seconds // 60, 1)) * max(bucket_seconds // 60, 1),
+        second=0,
+        microsecond=0,
+    ).strftime("%H:%M")
+    bucket_epoch = int(parsed.timestamp() // bucket_seconds * bucket_seconds)
+    epoch_bucket = _format_time(bucket_epoch)
+    times = []
+    for value in (wall_bucket, epoch_bucket):
+        if value != "-" and value not in times:
+            times.append(value)
+    return times
+
+
+def _risk_finding_history(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, str]]:
+    history: Dict[str, Dict[str, Any]] = {}
+    for event in events:
+        identity = _risk_finding_identity(event)
+        item = history.setdefault(identity, {"count": 0, "first": None, "last": None})
+        try:
+            item["count"] += int(event.get("count") or event.get("event_count") or event.get("seen_count") or 1)
+        except (TypeError, ValueError):
+            item["count"] += 1
+        for raw in (
+            event.get("first_seen"),
+            event.get("last_seen"),
+            event.get("timestamp") or event.get("generated_at"),
+        ):
+            parsed = _timestamp_to_datetime(raw)
+            if parsed is None:
+                continue
+            if item["first"] is None or parsed < item["first"]:
+                item["first"] = parsed
+            if item["last"] is None or parsed > item["last"]:
+                item["last"] = parsed
+    return {
+        identity: {
+            "first_seen": value["first"].strftime("%Y-%m-%d %H:%M:%S") if value["first"] else "-",
+            "last_seen": value["last"].strftime("%Y-%m-%d %H:%M:%S") if value["last"] else "-",
+            "occurrence_count": str(value["count"]) if value["count"] else "-",
+        }
+        for identity, value in history.items()
+    }
 
 
 def _format_active_risk_findings(
@@ -839,9 +968,13 @@ def _active_risk_finding_rows(
         enriched = dict(event)
         enriched.setdefault("_finding_source", "sampled_port")
         events.append(enriched)
+    history = _risk_finding_history(events)
     rows = []
     for event in sorted(events, key=_risk_finding_sort_key, reverse=True)[: max(limit, 0)]:
         score_value = _numeric_risk_score(event)
+        identity = _risk_finding_identity(event)
+        signal_summary = _risk_signal_summary(event)
+        history_row = history.get(identity, {})
         rows.append(
             {
                 "severity": _risk_severity_label(score_value),
@@ -851,11 +984,29 @@ def _active_risk_finding_rows(
                 "score": _format_compact_risk_score(score_value),
                 "action": _short_text(event.get("action") or event.get("status") or event.get("reason"), limit=12),
                 "time": _format_time(event.get("timestamp") or event.get("generated_at")),
+                "node": _risk_finding_node(event),
+                "port": _risk_finding_port(event),
+                "protocol": _risk_finding_protocol(event),
+                "service_name": _risk_finding_service_name(event),
                 "provider": _risk_finding_provider(event),
                 "state": _risk_finding_state(event),
-                "first_seen": _format_optional_timestamp(event.get("first_seen")),
-                "last_seen": _format_optional_timestamp(event.get("last_seen")),
-                "count": _risk_finding_count(event),
+                "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
+                "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
+                "count": _risk_finding_count(event) if _risk_finding_count(event) != "-" else history_row.get("occurrence_count", "-"),
+                "occurrence_count": history_row.get("occurrence_count", _risk_finding_count(event)),
+                "signal_count": signal_summary["signal_count"],
+                "top_signal": signal_summary["top_signal"],
+                "related_signals": signal_summary["related_signals"],
+                "strongest_signal": signal_summary["strongest_signal"],
+                "signal_categories": signal_summary["signal_categories"],
+                "signal_set": signal_summary["signal_set"],
+                "risk_source": _risk_finding_source(event),
+                "current_status": _risk_finding_current_status(event),
+                "timeline_bucket": _risk_timeline_bucket_time(event.get("timestamp") or event.get("generated_at")),
+                "timeline_buckets": "|".join(
+                    _risk_timeline_bucket_times(event.get("timestamp") or event.get("generated_at"))
+                ),
+                "identity": identity,
                 "key": _risk_finding_key(event),
             }
         )
@@ -867,6 +1018,10 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
     return [
         ("Asset", row.get("asset", "-")),
         ("Service", row.get("service", "-")),
+        ("Node", row.get("node", "-")),
+        ("Port", row.get("port", "-")),
+        ("Protocol", row.get("protocol", "-")),
+        ("Service Name", row.get("service_name", "-")),
         ("Finding", row.get("finding", "-")),
         ("Provider", row.get("provider", "-")),
         ("Score", row.get("score", "-")),
@@ -875,7 +1030,14 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("State", row.get("state", "-")),
         ("First Seen", row.get("first_seen", "-")),
         ("Last Seen", row.get("last_seen", "-")),
-        ("Count", row.get("count", "-")),
+        ("Occurrence Count", row.get("occurrence_count", row.get("count", "-"))),
+        ("Signal Count", row.get("signal_count", "-")),
+        ("Top Signal", row.get("top_signal", "-")),
+        ("Related Signals", row.get("related_signals", "-")),
+        ("Strongest Signal", row.get("strongest_signal", "-")),
+        ("Signal Categories", row.get("signal_categories", "-")),
+        ("Risk Source", row.get("risk_source", "-")),
+        ("Current Status", row.get("current_status", "-")),
     ]
 
 
@@ -892,12 +1054,16 @@ def _remediation_feed_rows(events: List[Dict[str, Any]], *, limit: int = 9) -> L
     recent = list(events)[-max(limit, 0) :]
     rows = []
     for event in reversed(recent):
+        signal_summary = _risk_signal_summary(event)
         rows.append(
             {
                 "time": _format_time(event.get("timestamp") or event.get("generated_at")),
                 "action": _short_text(event.get("action"), limit=14),
                 "score": _format_compact_risk_score(_numeric_risk_score(event)),
                 "signal": _short_text(_format_score_factors(event, limit=1), limit=24),
+                "identity": _risk_finding_identity(event),
+                "signal_set": signal_summary["signal_set"],
+                "timeline_bucket": _risk_timeline_bucket_time(event.get("timestamp") or event.get("generated_at")),
                 "key": "|".join(
                     [
                         _format_time(event.get("timestamp") or event.get("generated_at")),
@@ -947,6 +1113,9 @@ def _risk_timeline_rows(timeline: List[Dict[str, Any]], *, limit: int = 9) -> Li
                 "max": _format_compact_risk_score(bucket.get("max_score")),
                 "events": str(bucket.get("event_count", 0)),
                 "trend": trend,
+                "identity": _short_text(bucket.get("identity"), limit=64),
+                "signal_set": "|".join(_signals_from_event(bucket)),
+                "timeline_bucket": _format_time(bucket.get("bucket_start")),
                 "key": "|".join(
                     [
                         _format_time(bucket.get("bucket_start")),
@@ -959,6 +1128,26 @@ def _risk_timeline_rows(timeline: List[Dict[str, Any]], *, limit: int = 9) -> Li
         )
         previous_average = average
     return rows
+
+
+def _signal_set_values(value: Any) -> set[str]:
+    if not value or value == "-":
+        return set()
+    return {item for item in str(value).split("|") if item}
+
+
+def _row_matches_selected_finding(finding: Dict[str, str] | None, row: Dict[str, str]) -> bool:
+    if not finding:
+        return False
+    if finding.get("identity") and finding.get("identity") == row.get("identity"):
+        return True
+    finding_signals = _signal_set_values(finding.get("signal_set"))
+    row_signals = _signal_set_values(row.get("signal_set"))
+    if finding_signals and row_signals and finding_signals.intersection(row_signals):
+        return True
+    finding_buckets = _signal_set_values(finding.get("timeline_buckets") or finding.get("timeline_bucket"))
+    row_bucket = row.get("timeline_bucket")
+    return bool(row_bucket and row_bucket != "-" and row_bucket in finding_buckets)
 
 
 def _format_allowlist_status(
@@ -1508,7 +1697,12 @@ class RiskFeedTable(DataTable):
         self.add_column("Signal")
         self.update_feed([])
 
-    def update_feed(self, events: List[Dict[str, Any]], new_keys: set[str] | None = None) -> None:
+    def update_feed(
+        self,
+        events: List[Dict[str, Any]],
+        new_keys: set[str] | None = None,
+        selected_finding: Dict[str, str] | None = None,
+    ) -> None:
         self.clear()
         rows = _remediation_feed_rows(events)
         if not rows:
@@ -1516,7 +1710,12 @@ class RiskFeedTable(DataTable):
             return
         new_keys = new_keys or set()
         for row in rows:
-            signal = f"NEW {row['signal']}" if row["key"] in new_keys else row["signal"]
+            markers = []
+            if row["key"] in new_keys:
+                markers.append("NEW")
+            if _row_matches_selected_finding(selected_finding, row):
+                markers.append("MATCH")
+            signal = " ".join([*markers, row["signal"]]) if markers else row["signal"]
             self.add_row(row["time"], row["action"], row["score"], signal)
 
 
@@ -1529,7 +1728,12 @@ class RiskTimelineTable(DataTable):
         self.add_column("Trend")
         self.update_timeline_rows([])
 
-    def update_timeline_rows(self, timeline: List[Dict[str, Any]], new_keys: set[str] | None = None) -> None:
+    def update_timeline_rows(
+        self,
+        timeline: List[Dict[str, Any]],
+        new_keys: set[str] | None = None,
+        selected_finding: Dict[str, str] | None = None,
+    ) -> None:
         self.clear()
         rows = _risk_timeline_rows(timeline)
         if not rows:
@@ -1538,6 +1742,8 @@ class RiskTimelineTable(DataTable):
         new_keys = new_keys or set()
         for row in rows:
             trend = "new" if row["key"] in new_keys else row["trend"]
+            if _row_matches_selected_finding(selected_finding, row):
+                trend = "match" if trend == "-" else f"{trend}+match"
             self.add_row(row["time"], row["avg"], row["max"], row["events"], trend)
 
 
@@ -1874,6 +2080,10 @@ class PortMapDashboard(App):
         self._risk_finding_keys: set[str] | None = None
         self._risk_feed_keys: set[str] | None = None
         self._risk_timeline_keys: set[str] | None = None
+        self._risk_last_remediation_events: List[Dict[str, Any]] = []
+        self._risk_last_timeline: List[Dict[str, Any]] = []
+        self._risk_last_feed_new_keys: set[str] = set()
+        self._risk_last_timeline_new_keys: set[str] = set()
         self._apply_active_tab()
         self.refresh_task = asyncio.create_task(self.auto_refresh())
         self._set_status(f"Export destination: {self.export_dir}")
@@ -1970,16 +2180,29 @@ class PortMapDashboard(App):
         self._risk_finding_keys = finding_keys
         self._risk_feed_keys = feed_keys
         self._risk_timeline_keys = timeline_keys
+        self._risk_last_remediation_events = remediation_events
+        self._risk_last_timeline = risk_timeline
+        self._risk_last_feed_new_keys = new_feed_keys
+        self._risk_last_timeline_new_keys = new_timeline_keys
         self.risk_status_panel.update_status(remediation_events, scan_results)
         self.risk_active_findings_panel.update_findings(
             remediation_events,
             scan_results,
             new_keys=new_finding_keys,
         )
-        self.risk_finding_details_panel.update_details(self.risk_active_findings_panel.selected_finding())
+        selected_finding = self.risk_active_findings_panel.selected_finding()
+        self.risk_finding_details_panel.update_details(selected_finding)
         self.risk_signals_panel.update_signals(remediation_events, scan_results)
-        self.risk_feed_panel.update_feed(remediation_events, new_keys=new_feed_keys)
-        self.risk_workspace_timeline_panel.update_timeline_rows(risk_timeline, new_keys=new_timeline_keys)
+        self.risk_feed_panel.update_feed(
+            remediation_events,
+            new_keys=new_feed_keys,
+            selected_finding=selected_finding,
+        )
+        self.risk_workspace_timeline_panel.update_timeline_rows(
+            risk_timeline,
+            new_keys=new_timeline_keys,
+            selected_finding=selected_finding,
+        )
         self.risk_footer_status_panel.update(_format_footer_status(sections["allowlist_status"], sections["safety_boundary"]))
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
@@ -1987,9 +2210,20 @@ class PortMapDashboard(App):
             return
         if not hasattr(self, "risk_finding_details_panel"):
             return
-        self.risk_finding_details_panel.update_details(
-            self.risk_active_findings_panel.selected_finding(event.cursor_row)
-        )
+        selected_finding = self.risk_active_findings_panel.selected_finding(event.cursor_row)
+        self.risk_finding_details_panel.update_details(selected_finding)
+        if hasattr(self, "risk_feed_panel"):
+            self.risk_feed_panel.update_feed(
+                getattr(self, "_risk_last_remediation_events", []),
+                new_keys=getattr(self, "_risk_last_feed_new_keys", set()),
+                selected_finding=selected_finding,
+            )
+        if hasattr(self, "risk_workspace_timeline_panel"):
+            self.risk_workspace_timeline_panel.update_timeline_rows(
+                getattr(self, "_risk_last_timeline", []),
+                new_keys=getattr(self, "_risk_last_timeline_new_keys", set()),
+                selected_finding=selected_finding,
+            )
 
     def _load_orchestrator_defaults(self) -> None:
         # Environment variables take precedence

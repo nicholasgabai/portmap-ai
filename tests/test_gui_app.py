@@ -410,6 +410,10 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
                 "score": 0.82,
                 "score_factors": ["sensitive_port:22"],
                 "ai_provider": "local_rules",
+                "port": 22,
+                "protocol": "tcp",
+                "service_name": "ssh",
+                "status": "LISTEN",
                 "first_seen": "2026-06-14T11:00:00+00:00",
                 "last_seen": "2026-06-14T12:00:00+00:00",
                 "count": 3,
@@ -421,17 +425,75 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     details = dict(gui_app._finding_detail_rows(rows[0]))
 
     assert details["Asset"] == "worker-1"
+    assert details["Node"] == "worker-1"
+    assert details["Port"] == "22"
+    assert details["Protocol"] == "TCP"
+    assert details["Service Name"] == "ssh"
     assert details["Finding"] == "sensitive_port:22"
     assert details["Provider"] == "local_rules"
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."
-    assert details["State"] == "remediation"
+    assert details["State"] == "LISTEN"
     assert details["First Seen"] == "2026-06-14 11:00:00"
     assert details["Last Seen"] == "2026-06-14 12:00:00"
-    assert details["Count"] == "3"
+    assert details["Occurrence Count"] == "3"
+    assert details["Signal Count"] == "1"
+    assert details["Top Signal"] == "sensitive_port:22"
+    assert details["Related Signals"] == "sensitive_port:22"
+    assert details["Strongest Signal"] == "sensitive_port:22"
+    assert details["Signal Categories"] == "sensitive_port"
+    assert details["Risk Source"] == "remediation"
+    assert details["Current Status"] == "LISTEN"
 
     placeholders = dict(gui_app._finding_detail_rows(None))
     assert all(value == "-" for value in placeholders.values())
+
+
+def test_risk_finding_correlation_marks_related_feed_and_timeline_rows():
+    events = [
+        {
+            "timestamp": "2026-06-14T12:02:00+00:00",
+            "node_id": "worker-1",
+            "action": "prompt_operator",
+            "score": 0.82,
+            "port": 22,
+            "protocol": "tcp",
+            "service_name": "ssh",
+            "score_factors": ["sensitive_port:22", "listening_socket"],
+        },
+        {
+            "timestamp": "2026-06-14T12:07:00+00:00",
+            "node_id": "worker-2",
+            "action": "monitor",
+            "score": 0.2,
+            "port": 8080,
+            "protocol": "tcp",
+            "score_factors": ["expected_service"],
+        },
+    ]
+    selected = gui_app._active_risk_finding_rows(events, [], limit=1)[0]
+    feed_rows = gui_app._remediation_feed_rows(events, limit=2)
+    timeline_rows = gui_app._risk_timeline_rows(
+        [
+            {
+                "bucket_start": "2026-06-14T12:00:00+00:00",
+                "event_count": 1,
+                "average_score": 0.82,
+                "max_score": 0.82,
+            },
+            {
+                "bucket_start": "2026-06-14T12:10:00+00:00",
+                "event_count": 1,
+                "average_score": 0.2,
+                "max_score": 0.2,
+            },
+        ]
+    )
+
+    assert gui_app._row_matches_selected_finding(selected, feed_rows[1])
+    assert not gui_app._row_matches_selected_finding(selected, feed_rows[0])
+    assert gui_app._row_matches_selected_finding(selected, timeline_rows[0])
+    assert not gui_app._row_matches_selected_finding(selected, timeline_rows[1])
 
 
 def test_risk_severity_labels_are_score_only_presentation():
