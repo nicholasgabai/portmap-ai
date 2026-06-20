@@ -17,6 +17,39 @@ from core_engine.attribution.signature_learning import build_behavioral_signatur
 
 APPLICATION_ATTRIBUTION_RECORD_VERSION = 1
 DEMO_ATTRIBUTION_LABELS = {"dummy_app", "dummy_db"}
+PROBABILISTIC_APPLICATION_MODEL_VERSION = 1
+APPLICATION_TOKEN_CANDIDATES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("nginx", ("nginx",)),
+    ("apache", ("apache", "httpd")),
+    ("postgresql", ("postgres", "postgresql", "psql")),
+    ("mysql", ("mysql", "mysqld", "mariadb")),
+    ("redis", ("redis",)),
+    ("ssh", ("ssh", "sshd")),
+    ("dns", ("dns", "resolver", "named", "bind")),
+    ("browser", ("browser", "chrome", "firefox", "safari", "edge")),
+)
+APPLICATION_PORT_CANDIDATES: dict[int, tuple[str, ...]] = {
+    22: ("ssh", "remote_access"),
+    53: ("dns",),
+    80: ("http_service", "nginx", "apache"),
+    443: ("https_service", "nginx", "apache", "unknown_proxy"),
+    3306: ("mysql", "database_service"),
+    5432: ("postgresql", "database_service"),
+    6379: ("redis", "database_service"),
+    8080: ("http_service", "unknown_proxy"),
+    8443: ("https_service", "unknown_proxy"),
+}
+APPLICATION_PROTOCOL_CANDIDATES: dict[str, tuple[str, ...]] = {
+    "http": ("http_service", "nginx", "apache"),
+    "https": ("https_service", "nginx", "apache", "unknown_proxy"),
+    "tls": ("https_service", "unknown_proxy"),
+    "ssh": ("ssh", "remote_access"),
+    "dns": ("dns",),
+    "mysql": ("mysql", "database_service"),
+    "postgres": ("postgresql", "database_service"),
+    "postgresql": ("postgresql", "database_service"),
+    "redis": ("redis", "database_service"),
+}
 
 
 class ApplicationAttributionError(ValueError):
@@ -256,6 +289,78 @@ def deterministic_application_attribution_json(record: dict[str, Any]) -> str:
     return json.dumps(record, sort_keys=True, separators=(",", ":"), default=str)
 
 
+def build_probabilistic_application_model(
+    observation: dict[str, Any],
+    *,
+    generated_at: str | None = None,
+    max_candidates: int = 4,
+) -> dict[str, Any]:
+    """Build a deterministic probability distribution from existing metadata only."""
+    if not isinstance(observation, dict):
+        raise ApplicationAttributionError("observation must be an object")
+    if max_candidates <= 0:
+        raise ApplicationAttributionError("max_candidates must be greater than 0")
+
+    timestamp = generated_at or _now()
+    mode = normalize_source_mode(observation.get("source_mode") or observation.get("data_source") or "unknown")
+    evidence = _probabilistic_evidence(observation, source_mode=mode)
+    scores = _probabilistic_candidate_scores(evidence)
+    if not scores:
+        scores["unknown_application"] = 1.0
+    if "unknown_application" not in scores:
+        scores["unknown_application"] = max(0.12, 1.0 - min(max(scores.values()), 1.0) * 0.15)
+
+    total = sum(scores.values()) or 1.0
+    candidates = [
+        {
+            "candidate": label,
+            "probability": round(score / total, 3),
+            "supporting_evidence": sorted(evidence.get("candidate_evidence", {}).get(label, [])),
+        }
+        for label, score in sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:max_candidates]
+    ]
+    probability_total = sum(float(row["probability"]) for row in candidates)
+    if candidates and probability_total != 1.0:
+        candidates[0]["probability"] = round(float(candidates[0]["probability"]) + (1.0 - probability_total), 3)
+
+    top = candidates[0] if candidates else {"candidate": "unknown_application", "probability": 1.0}
+    return {
+        "record_type": "probabilistic_application_model",
+        "record_version": PROBABILISTIC_APPLICATION_MODEL_VERSION,
+        "model_id": "prob-app-model-"
+        + _digest(
+            {
+                "entity": _entity_ref(observation),
+                "candidates": [(row["candidate"], row["probability"]) for row in candidates],
+                "source_mode": mode,
+            }
+        )[:16],
+        "generated_at": timestamp,
+        "observed_entity_reference": _entity_ref(observation),
+        "top_classification": top["candidate"],
+        "confidence": float(top["probability"]),
+        "candidates": candidates,
+        "candidate_count": len(candidates),
+        "alternative_candidates": [
+            {"candidate": row["candidate"], "probability": row["probability"]} for row in candidates[1:]
+        ],
+        "evidence_count": len(evidence["signals"]),
+        "evidence_signals": evidence["signals"],
+        "source_mode": mode,
+        "data_source": mode,
+        "model_state": "metadata_only",
+        "deterministic": True,
+        "training_performed": False,
+        "inference_executed": False,
+        "automated_action": False,
+        **ATTRIBUTION_SAFETY_FLAGS,
+    }
+
+
+def deterministic_probabilistic_application_model_json(record: dict[str, Any]) -> str:
+    return json.dumps(record, sort_keys=True, separators=(",", ":"), default=str)
+
+
 def normalize_source_mode(value: Any) -> str:
     text = str(value or "unknown").strip().lower()
     return text if text in {"live", "simulated", "fixture", "replay", "unknown"} else "unknown"
@@ -340,6 +445,134 @@ def _hint_confidence(value: str) -> float:
     if value in {"redacted_destination", "hashed_destination"}:
         return 0.7
     return 0.82
+
+
+def _probabilistic_evidence(observation: dict[str, Any], *, source_mode: str) -> dict[str, Any]:
+    process = _safe_candidate(
+        observation.get("process_hint")
+        or observation.get("program")
+        or observation.get("process")
+        or observation.get("process_attribution"),
+        source_mode=source_mode,
+        fallback="Unknown",
+    )
+    service = _safe_candidate(
+        observation.get("service_hint")
+        or observation.get("service")
+        or observation.get("service_name")
+        or observation.get("service_attribution"),
+        source_mode=source_mode,
+        fallback="Unattributed",
+    )
+    protocol = _safe_token(
+        observation.get("protocol_hint")
+        or observation.get("protocol")
+        or observation.get("transport")
+        or observation.get("application_protocol")
+        or _first_list_value(observation.get("application_protocols"))
+    )
+    port = _safe_int(
+        observation.get("port")
+        or observation.get("service_port")
+        or observation.get("dst_port")
+        or observation.get("destination_port")
+        or observation.get("local_port")
+    )
+    state = _safe_token(observation.get("status") or observation.get("state") or observation.get("flow_state"))
+    signals = []
+    if process not in {"Unknown", "Unattributed"}:
+        signals.append(f"process:{process}")
+    if service not in {"Unknown", "Unattributed"}:
+        signals.append(f"service:{service}")
+    if protocol != "unknown":
+        signals.append(f"protocol:{protocol}")
+    if port is not None:
+        signals.append(f"port:{port}")
+    if state != "unknown":
+        signals.append(f"state:{state}")
+    for signal in _existing_signal_values(observation):
+        if signal not in signals:
+            signals.append(signal)
+    return {
+        "process": process,
+        "service": service,
+        "protocol": protocol,
+        "port": port,
+        "state": state,
+        "signals": signals[:12],
+        "candidate_evidence": {},
+    }
+
+
+def _probabilistic_candidate_scores(evidence: dict[str, Any]) -> dict[str, float]:
+    scores: dict[str, float] = {}
+    candidate_evidence: dict[str, list[str]] = evidence["candidate_evidence"]
+
+    def add(label: str, amount: float, reason: str) -> None:
+        safe_label = _safe_token(label)
+        if safe_label in {"unknown", "unattributed"}:
+            safe_label = "unknown_application"
+        scores[safe_label] = scores.get(safe_label, 0.0) + amount
+        candidate_evidence.setdefault(safe_label, [])
+        if reason not in candidate_evidence[safe_label]:
+            candidate_evidence[safe_label].append(reason)
+
+    process = str(evidence.get("process") or "")
+    service = str(evidence.get("service") or "")
+    protocol = str(evidence.get("protocol") or "")
+    port = evidence.get("port")
+    state = str(evidence.get("state") or "")
+
+    for label, tokens in APPLICATION_TOKEN_CANDIDATES:
+        if any(token in process.lower() for token in tokens):
+            add(label, 3.2, f"process:{process}")
+        if any(token in service.lower() for token in tokens):
+            add(label, 2.4, f"service:{service}")
+
+    if service not in {"", "Unknown", "Unattributed"}:
+        add(service, 1.6, f"service:{service}")
+    if protocol != "unknown":
+        for label in APPLICATION_PROTOCOL_CANDIDATES.get(protocol, ()):
+            add(label, 1.5, f"protocol:{protocol}")
+    if port is not None:
+        for label in APPLICATION_PORT_CANDIDATES.get(port, ()):
+            add(label, 2.0, f"port:{port}")
+    if state in {"listen", "listening", "established", "open"}:
+        for label in list(scores):
+            add(label, 0.25, f"state:{state}")
+
+    return scores
+
+
+def _existing_signal_values(observation: dict[str, Any]) -> list[str]:
+    signals: list[str] = []
+    for key in ("score_factors", "signals", "findings"):
+        value = observation.get(key)
+        if isinstance(value, list):
+            signals.extend(_safe_token(item) for item in value if not _is_blank_signal(item))
+        elif isinstance(value, dict):
+            signals.extend(_safe_token(item) for item in value.values() if not _is_blank_signal(item))
+        elif not _is_blank_signal(value):
+            signals.append(_safe_token(value))
+    return signals
+
+
+def _is_blank_signal(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and value.strip() in {"", "-"})
+
+
+def _first_list_value(value: Any) -> Any:
+    if isinstance(value, (list, tuple)) and value:
+        return value[0]
+    return value
+
+
+def _safe_int(value: Any) -> int | None:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed >= 0 else None
 
 
 def _signature_recurrence_confidence(signatures: list[dict[str, Any]]) -> float:

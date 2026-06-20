@@ -12,13 +12,16 @@ from core_engine.attribution.confidence_models import (
 )
 from core_engine.attribution.probabilistic_apps import (
     APPLICATION_ATTRIBUTION_RECORD_VERSION,
+    PROBABILISTIC_APPLICATION_MODEL_VERSION,
     ApplicationAttributionError,
     build_application_attribution_api,
     build_application_attribution_dashboard,
     build_application_attribution_report,
     build_probable_application_attribution,
     build_probable_application_attributions,
+    build_probabilistic_application_model,
     deterministic_application_attribution_json,
+    deterministic_probabilistic_application_model_json,
     summarize_application_attributions,
 )
 from core_engine.attribution.signature_learning import (
@@ -43,6 +46,7 @@ __all__ = [
     "ATTRIBUTION_SAFETY_FLAGS",
     "ATTRIBUTION_STATES",
     "ApplicationAttributionError",
+    "PROBABILISTIC_APPLICATION_MODEL_VERSION",
     "SIGNATURE_CLASSES",
     "SIGNATURE_LEARNING_RECORD_VERSION",
     "SIGNATURE_SAFETY_FLAGS",
@@ -55,6 +59,7 @@ __all__ = [
     "build_confidence_breakdown",
     "build_probable_application_attribution",
     "build_probable_application_attributions",
+    "build_probabilistic_application_model",
     "build_signature_api",
     "build_signature_dashboard",
     "build_signature_learning_report",
@@ -62,6 +67,7 @@ __all__ = [
     "confidence_level",
     "deterministic_application_attribution_json",
     "deterministic_confidence_json",
+    "deterministic_probabilistic_application_model_json",
     "deterministic_signature_json",
     "normalize_signature_class",
     "score_application_attribution_confidence",

@@ -15,6 +15,7 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Footer, Header, Static, Label
 
+from core_engine.attribution import build_probabilistic_application_model
 from core_engine.config_loader import load_settings, save_settings
 from core_engine.deployment import build_deployment_manifest_catalog
 from core_engine.log_exporter import export_logs, resolve_export_dir
@@ -1123,6 +1124,7 @@ def _active_risk_finding_rows(
         score_value = _numeric_risk_score(event)
         identity = _risk_finding_identity(event)
         signal_summary = _risk_signal_summary(event)
+        classification = _probabilistic_application_model(event)
         history_row = history.get(identity, {})
         rows.append(
             {
@@ -1138,6 +1140,10 @@ def _active_risk_finding_rows(
                 "protocol": _risk_finding_protocol(event),
                 "service_name": _risk_finding_service_name(event),
                 "provider": _risk_finding_provider(event),
+                "top_classification": _short_text(classification.get("top_classification"), limit=24),
+                "classification_confidence": _format_probability(classification.get("confidence")),
+                "alternative_candidates": _classification_alternatives_text(classification),
+                "evidence_signals": _classification_evidence_text(classification),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -1173,6 +1179,10 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Service Name", row.get("service_name", "-")),
         ("Finding", row.get("finding", "-")),
         ("Provider", row.get("provider", "-")),
+        ("Top Classification", row.get("top_classification", "-")),
+        ("Classification Confidence", row.get("classification_confidence", "-")),
+        ("Alternative Candidates", row.get("alternative_candidates", "-")),
+        ("Evidence Signals", row.get("evidence_signals", "-")),
         ("Score", row.get("score", "-")),
         ("Action", row.get("action", "-")),
         ("Time", row.get("time", "-")),
@@ -2279,6 +2289,68 @@ def _ai_source_value(event: Dict[str, Any]) -> str:
     )
 
 
+def _classification_generated_at(event: Dict[str, Any]) -> str:
+    raw = event.get("created_at") or event.get("timestamp") or event.get("generated_at")
+    return str(raw) if raw not in {"", "-", None} else "metadata_only"
+
+
+def _probabilistic_application_model(event: Dict[str, Any] | None) -> Dict[str, Any]:
+    if not isinstance(event, dict):
+        return {}
+    try:
+        return build_probabilistic_application_model(event, generated_at=_classification_generated_at(event))
+    except Exception:
+        return {}
+
+
+def _format_probability(value: Any) -> str:
+    if value in {"", "-", None}:
+        return "-"
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def _classification_candidates_text(model: Dict[str, Any], *, limit: int = 3) -> str:
+    candidates = model.get("candidates")
+    if not isinstance(candidates, list):
+        return "-"
+    rows = []
+    for candidate in candidates[: max(limit, 0)]:
+        if not isinstance(candidate, dict):
+            continue
+        label = _short_text(candidate.get("candidate"), limit=24)
+        probability = _format_probability(candidate.get("probability"))
+        if label != "-" and probability != "-":
+            rows.append(f"{label} {probability}")
+    return ", ".join(rows) if rows else "-"
+
+
+def _classification_alternatives_text(model: Dict[str, Any], *, limit: int = 3) -> str:
+    alternatives = model.get("alternative_candidates")
+    if not isinstance(alternatives, list):
+        return "-"
+    rows = []
+    for candidate in alternatives[: max(limit, 0)]:
+        if not isinstance(candidate, dict):
+            continue
+        label = _short_text(candidate.get("candidate"), limit=24)
+        probability = _format_probability(candidate.get("probability"))
+        if label != "-" and probability != "-":
+            rows.append(f"{label} {probability}")
+    return ", ".join(rows) if rows else "-"
+
+
+def _classification_evidence_text(model: Dict[str, Any], *, limit: int = 4) -> str:
+    signals = model.get("evidence_signals")
+    if not isinstance(signals, list):
+        return "-"
+    rows = [_short_text(signal, limit=32) for signal in signals[: max(limit, 0)]]
+    rows = [row for row in rows if row != "-"]
+    return ", ".join(rows) if rows else "-"
+
+
 def _is_ai_event(event: Dict[str, Any]) -> bool:
     if any(
         event.get(key) not in {"", "-", None}
@@ -2294,6 +2366,7 @@ def _ai_enriched_event(event: Dict[str, Any], source: str) -> Dict[str, Any] | N
         return None
     enriched = dict(event)
     enriched.setdefault("_ai_source", source)
+    enriched.setdefault("probabilistic_application_model", _probabilistic_application_model(enriched))
     return enriched
 
 
@@ -2339,6 +2412,12 @@ def _ai_provider_model_rows(
                 "status": "-",
                 "source": "-",
                 "latest_activity": "-",
+                "candidate_models": "-",
+                "confidence": "-",
+                "evidence_count": "0",
+                "top_classification": "-",
+                "alternative_candidates": "-",
+                "evidence_signals": "-",
             },
         )
         row["decisions"] += 1
@@ -2349,6 +2428,17 @@ def _ai_provider_model_rows(
             row["status"] = _ai_status_value(event)
             row["source"] = _ai_source_value(event)
             row["latest_activity"] = _ai_activity_value(event)
+            model_record = (
+                event.get("probabilistic_application_model")
+                if isinstance(event.get("probabilistic_application_model"), dict)
+                else _probabilistic_application_model(event)
+            )
+            row["candidate_models"] = _classification_candidates_text(model_record)
+            row["confidence"] = _format_probability(model_record.get("confidence"))
+            row["evidence_count"] = str(model_record.get("evidence_count", 0))
+            row["top_classification"] = _short_text(model_record.get("top_classification"), limit=24)
+            row["alternative_candidates"] = _classification_alternatives_text(model_record)
+            row["evidence_signals"] = _classification_evidence_text(model_record)
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -2358,11 +2448,17 @@ def _ai_provider_model_rows(
         {
             "provider": row["provider"],
             "model": row["model"],
+            "candidate_models": row["candidate_models"],
+            "confidence": row["confidence"],
+            "evidence_count": row["evidence_count"],
             "status": row["status"],
             "decisions": str(row["decisions"]),
             "updated": row["updated"],
             "source": row["source"],
             "latest_activity": row["latest_activity"],
+            "top_classification": row["top_classification"],
+            "alternative_candidates": row["alternative_candidates"],
+            "evidence_signals": row["evidence_signals"],
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"]]),
@@ -2393,6 +2489,11 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
     return [
         ("Provider", row.get("provider", "-")),
         ("Model", row.get("model", "-")),
+        ("Top Classification", row.get("top_classification", "-")),
+        ("Confidence", row.get("confidence", "-")),
+        ("Alternative Candidates", row.get("alternative_candidates", "-")),
+        ("Evidence Count", row.get("evidence_count", "-")),
+        ("Evidence Signals", row.get("evidence_signals", "-")),
         ("Status", row.get("status", "-")),
         ("Decisions", row.get("decisions", "-")),
         ("Updated", row.get("updated", "-")),
@@ -3666,6 +3767,9 @@ class AIProviderModelTable(DataTable):
         self.ai_rows: List[Dict[str, str]] = []
         self.add_column("Provider")
         self.add_column("Model")
+        self.add_column("Candidate Models")
+        self.add_column("Confidence")
+        self.add_column("Evidence Count")
         self.add_column("Status")
         self.add_column("Decisions")
         self.add_column("Updated")
@@ -3676,7 +3780,7 @@ class AIProviderModelTable(DataTable):
         self.clear()
         self.ai_rows = ai_rows
         if not ai_rows:
-            self.add_row("-", "-", "No AI metadata available.", "0", "-", key="empty")
+            self.add_row("-", "-", "No AI metadata available.", "-", "0", "-", "0", "-", key="empty")
             _restore_table_selection(self, selection)
             return
         seen: set[str] = set()
@@ -3684,6 +3788,9 @@ class AIProviderModelTable(DataTable):
             self.add_row(
                 row.get("provider", "-"),
                 row.get("model", "-"),
+                row.get("candidate_models", "-"),
+                row.get("confidence", "-"),
+                row.get("evidence_count", "0"),
                 row.get("status", "-"),
                 row.get("decisions", "0"),
                 row.get("updated", "-"),

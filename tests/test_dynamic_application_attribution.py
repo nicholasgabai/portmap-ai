@@ -8,9 +8,11 @@ from core_engine.attribution import (
     build_application_attribution_report,
     build_behavioral_signature_record,
     build_probable_application_attributions,
+    build_probabilistic_application_model,
     build_signature_learning_report,
     deterministic_application_attribution_json,
     deterministic_confidence_json,
+    deterministic_probabilistic_application_model_json,
     deterministic_signature_json,
     score_application_attribution_confidence,
 )
@@ -111,6 +113,70 @@ def test_unknown_unattributed_live_observation_remains_unresolved():
     assert rows[0]["attribution_state"] == "unattributed"
     assert "dummy_app" not in deterministic_application_attribution_json(rows[0])
     assert "dummy_db" not in deterministic_application_attribution_json(rows[0])
+
+
+def test_probabilistic_application_model_ranks_candidates_from_existing_metadata():
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-nginx",
+            "program": "nginx",
+            "service_name": "https",
+            "protocol": "tls",
+            "port": 443,
+            "status": "LISTEN",
+            "score_factors": ["sensitive_port:443"],
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    assert record["record_type"] == "probabilistic_application_model"
+    assert record["top_classification"] == "nginx"
+    assert record["confidence"] > 0.0
+    assert record["candidate_count"] >= 3
+    assert {row["candidate"] for row in record["candidates"]} >= {"nginx", "https_service", "unknown_proxy"}
+    assert record["evidence_count"] >= 5
+    assert "port:443" in record["evidence_signals"]
+    assert record["training_performed"] is False
+    assert record["inference_executed"] is False
+    assert record["automated_action"] is False
+    assert record["raw_payload_stored"] is False
+    assert record["pcap_generated"] is False
+
+
+def test_probabilistic_application_model_is_deterministic_and_export_safe():
+    observation = {
+        "observed_entity_reference": "session-redacted-db",
+        "program": "postgres",
+        "service_name": "postgresql",
+        "protocol": "tcp",
+        "port": 5432,
+        "payload_content": "must-not-export",
+        "raw_packet": "ignored",
+        "source_mode": "live",
+    }
+    first = build_probabilistic_application_model(observation, generated_at=FIXED_TIME)
+    second = build_probabilistic_application_model(observation, generated_at=FIXED_TIME)
+    serialized = deterministic_probabilistic_application_model_json(first)
+
+    assert first == second
+    assert first["top_classification"] == "postgresql"
+    assert round(sum(float(row["probability"]) for row in first["candidates"]), 3) == 1.0
+    assert "must-not-export" not in serialized
+    assert "ignored" not in serialized
+    assert '"training_performed":false' in serialized
+
+
+def test_probabilistic_application_model_handles_unknown_metadata():
+    record = build_probabilistic_application_model(
+        {"observed_entity_reference": "session-redacted-unknown", "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+
+    assert record["top_classification"] == "unknown_application"
+    assert record["confidence"] == 1.0
+    assert record["candidate_count"] == 1
+    assert record["evidence_count"] == 0
 
 
 def test_dummy_labels_remain_fixture_or_simulated_only():

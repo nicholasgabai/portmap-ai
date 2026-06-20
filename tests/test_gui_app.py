@@ -909,6 +909,11 @@ def _sample_ai_events():
                 "model": "risk-v1",
                 "action": "prompt_operator",
                 "status": "preview",
+                "program": "nginx",
+                "service_name": "https",
+                "protocol": "tls",
+                "port": 443,
+                "score_factors": ["sensitive_port:443"],
             },
             {
                 "timestamp": "2026-06-14T12:01:00+00:00",
@@ -916,6 +921,10 @@ def _sample_ai_events():
                 "model": "risk-v1",
                 "action": "monitor",
                 "status": "preview",
+                "program": "sshd",
+                "service_name": "ssh",
+                "protocol": "tcp",
+                "port": 22,
             },
         ],
         scan_results=[
@@ -924,6 +933,10 @@ def _sample_ai_events():
                 "ai_provider": "local_rules",
                 "model_name": "port-score",
                 "status": "LISTEN",
+                "program": "postgres",
+                "service_name": "postgresql",
+                "protocol": "tcp",
+                "port": 5432,
             }
         ],
         master_events=[
@@ -953,6 +966,12 @@ def test_ai_provider_model_rows_and_analytics_population():
     assert rows[0]["provider"] == "heuristic"
     assert rows[0]["model"] == "risk-v1"
     assert rows[0]["decisions"] == "2"
+    assert rows[0]["candidate_models"].startswith("nginx ")
+    assert rows[0]["confidence"] != "-"
+    assert rows[0]["evidence_count"] == "6"
+    assert rows[0]["top_classification"] == "nginx"
+    assert "https_service" in rows[0]["alternative_candidates"]
+    assert "port:443" in rows[0]["evidence_signals"]
     assert rows[0]["mode"] == "read_only"
     assert rows[0]["execution"] == "not performed"
     assert gui_app._ai_provider_summary_rows(rows) == [
@@ -975,6 +994,11 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
 
     assert details["Provider"] == "heuristic"
     assert details["Model"] == "risk-v1"
+    assert details["Top Classification"] == "nginx"
+    assert details["Confidence"] != "-"
+    assert "https_service" in details["Alternative Candidates"]
+    assert details["Evidence Count"] == "6"
+    assert "port:443" in details["Evidence Signals"]
     assert details["Status"] == "preview"
     assert details["Decisions"] == "2"
     assert details["Updated"] == "2026-06-14 12:03:00"
@@ -1037,6 +1061,9 @@ def test_ai_table_and_timeline_populate_from_existing_ai_data():
             assert app.providers.row_count == 3
             assert app.providers.get_row_at(0)[0] == "heuristic"
             assert app.providers.get_row_at(0)[1] == "risk-v1"
+            assert "nginx" in app.providers.get_row_at(0)[2]
+            assert app.providers.get_row_at(0)[3] != "-"
+            assert app.providers.get_row_at(0)[4] == "6"
             assert app.timeline.row_count == 2
             assert app.timeline.get_row_at(0)[0] == "2026-06-14"
 
@@ -1485,6 +1512,10 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Service Name"] == "ssh"
     assert details["Finding"] == "sensitive_port:22"
     assert details["Provider"] == "local_rules"
+    assert details["Top Classification"] == "ssh"
+    assert details["Classification Confidence"] != "-"
+    assert "remote_access" in details["Alternative Candidates"]
+    assert "port:22" in details["Evidence Signals"]
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."
     assert details["State"] == "LISTEN"
