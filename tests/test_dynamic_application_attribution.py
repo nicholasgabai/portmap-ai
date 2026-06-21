@@ -144,6 +144,166 @@ def test_probabilistic_application_model_ranks_candidates_from_existing_metadata
     assert record["pcap_generated"] is False
 
 
+@pytest.mark.parametrize(
+    ("expected", "observation"),
+    [
+        (
+            "caddy",
+            {
+                "program": "caddy",
+                "service_name": "https",
+                "protocol": "tls",
+                "port": 443,
+            },
+        ),
+        (
+            "mariadb",
+            {
+                "process": "mariadbd",
+                "service_name": "mariadb",
+                "protocol": "mysql",
+                "port": 3306,
+            },
+        ),
+        (
+            "mongodb",
+            {
+                "process": "mongod",
+                "service_name": "mongodb",
+                "port": 27017,
+            },
+        ),
+        (
+            "grafana",
+            {
+                "program": "grafana-server",
+                "service_name": "grafana",
+                "port": 3000,
+            },
+        ),
+        (
+            "docker",
+            {
+                "process": "dockerd",
+                "service_fingerprint": "docker engine api",
+                "port": 2375,
+            },
+        ),
+        (
+            "kubernetes",
+            {
+                "process": "kubelet",
+                "service_name": "kubernetes",
+                "port": 10250,
+            },
+        ),
+        (
+            "rdp",
+            {
+                "service_name": "rdp",
+                "protocol": "rdp",
+                "port": 3389,
+            },
+        ),
+        (
+            "smtp",
+            {
+                "process": "postfix",
+                "protocol": "smtp",
+                "port": 25,
+            },
+        ),
+    ],
+)
+def test_probabilistic_application_catalog_expansion_classifies_common_services(expected, observation):
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": f"session-redacted-{expected}",
+            "source_mode": "live",
+            **observation,
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    assert record["top_classification"] == expected
+    assert record["confidence"] > 0.25
+    assert record["alternative_candidates"]
+    assert record["evidence_count"] >= 2
+    assert record["training_performed"] is False
+    assert record["inference_executed"] is False
+
+
+def test_probabilistic_application_catalog_uses_fingerprint_signals_as_metadata_evidence():
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-prometheus",
+            "service_fingerprint": "prometheus metrics endpoint",
+            "port": 9090,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    assert record["top_classification"] == "prometheus"
+    assert record["confidence"] > 0.4
+    assert "observability_service" in {row["candidate"] for row in record["alternative_candidates"]}
+    assert "prometheus_metrics_endpoint" in record["evidence_signals"]
+
+
+def test_probabilistic_application_catalog_reports_ambiguous_web_candidates_without_overconfidence():
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-ambiguous-web",
+            "protocol": "tls",
+            "port": 443,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    candidates = {row["candidate"] for row in record["candidates"]}
+
+    assert record["top_classification"] == "https_service"
+    assert record["confidence"] < 0.4
+    assert {"nginx", "apache", "caddy", "unknown_proxy"}.issubset(candidates)
+    assert len(record["alternative_candidates"]) >= 3
+    assert record["evidence_signals"] == ["protocol:tls", "port:443"]
+
+
+def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
+    strong = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-strong-caddy",
+            "program": "caddy",
+            "service_name": "https",
+            "protocol": "tls",
+            "port": 443,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    ambiguous = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-ambiguous-tls",
+            "protocol": "tls",
+            "port": 443,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    weak = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-weak-port",
+            "port": 443,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    assert strong["top_classification"] == "caddy"
+    assert strong["confidence"] > ambiguous["confidence"] > weak["confidence"]
+    assert weak["confidence"] < 0.25
+
+
 def test_probabilistic_application_model_is_deterministic_and_export_safe():
     observation = {
         "observed_entity_reference": "session-redacted-db",

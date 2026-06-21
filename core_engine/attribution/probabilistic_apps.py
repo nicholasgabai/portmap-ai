@@ -21,34 +21,92 @@ PROBABILISTIC_APPLICATION_MODEL_VERSION = 1
 APPLICATION_TOKEN_CANDIDATES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("nginx", ("nginx",)),
     ("apache", ("apache", "httpd")),
+    ("caddy", ("caddy",)),
     ("postgresql", ("postgres", "postgresql", "psql")),
-    ("mysql", ("mysql", "mysqld", "mariadb")),
+    ("mysql", ("mysql", "mysqld")),
+    ("mariadb", ("mariadb",)),
+    ("mongodb", ("mongodb", "mongod", "mongo")),
     ("redis", ("redis",)),
+    ("memcached", ("memcached",)),
+    ("grafana", ("grafana",)),
+    ("prometheus", ("prometheus",)),
+    ("elasticsearch", ("elasticsearch", "elastic")),
+    ("nextcloud", ("nextcloud",)),
+    ("docker", ("docker", "dockerd", "containerd")),
+    ("kubernetes", ("kubernetes", "kubelet", "kubectl", "kube_apiserver", "kube_proxy")),
     ("ssh", ("ssh", "sshd")),
+    ("sftp", ("sftp",)),
+    ("rdp", ("rdp", "xrdp", "remote_desktop")),
+    ("vnc", ("vnc", "x11vnc", "tightvnc", "tigervnc")),
+    ("ldap", ("ldap", "slapd", "openldap")),
+    ("smtp", ("smtp", "postfix", "exim", "sendmail")),
+    ("imap", ("imap", "dovecot", "cyrus")),
+    ("pop3", ("pop3",)),
+    ("ftp", ("ftp", "ftpd", "vsftpd", "proftpd")),
     ("dns", ("dns", "resolver", "named", "bind")),
     ("browser", ("browser", "chrome", "firefox", "safari", "edge")),
 )
 APPLICATION_PORT_CANDIDATES: dict[int, tuple[str, ...]] = {
-    22: ("ssh", "remote_access"),
+    21: ("ftp", "file_transfer"),
+    22: ("ssh", "sftp", "remote_access"),
+    25: ("smtp", "mail_service"),
     53: ("dns",),
-    80: ("http_service", "nginx", "apache"),
-    443: ("https_service", "nginx", "apache", "unknown_proxy"),
-    3306: ("mysql", "database_service"),
+    80: ("http_service", "nginx", "apache", "caddy"),
+    110: ("pop3", "mail_service"),
+    143: ("imap", "mail_service"),
+    389: ("ldap", "directory_service"),
+    443: ("https_service", "nginx", "apache", "caddy", "unknown_proxy"),
+    465: ("smtp", "mail_service"),
+    587: ("smtp", "mail_service"),
+    636: ("ldap", "directory_service"),
+    993: ("imap", "mail_service"),
+    995: ("pop3", "mail_service"),
+    2375: ("docker", "container_runtime"),
+    2376: ("docker", "container_runtime"),
+    3000: ("grafana", "observability_service"),
+    3306: ("mysql", "mariadb", "database_service"),
+    3389: ("rdp", "remote_access"),
     5432: ("postgresql", "database_service"),
+    5601: ("elasticsearch", "observability_service"),
+    5900: ("vnc", "remote_access"),
     6379: ("redis", "database_service"),
+    6443: ("kubernetes", "container_orchestration"),
     8080: ("http_service", "unknown_proxy"),
     8443: ("https_service", "unknown_proxy"),
+    9090: ("prometheus", "observability_service"),
+    9200: ("elasticsearch", "observability_service"),
+    9300: ("elasticsearch", "observability_service"),
+    10250: ("kubernetes", "container_orchestration"),
+    11211: ("memcached", "database_service"),
+    27017: ("mongodb", "database_service"),
 }
 APPLICATION_PROTOCOL_CANDIDATES: dict[str, tuple[str, ...]] = {
-    "http": ("http_service", "nginx", "apache"),
-    "https": ("https_service", "nginx", "apache", "unknown_proxy"),
+    "http": ("http_service", "nginx", "apache", "caddy"),
+    "https": ("https_service", "nginx", "apache", "caddy", "unknown_proxy"),
     "tls": ("https_service", "unknown_proxy"),
+    "ftp": ("ftp", "file_transfer"),
+    "sftp": ("sftp", "ssh", "file_transfer"),
     "ssh": ("ssh", "remote_access"),
+    "rdp": ("rdp", "remote_access"),
+    "vnc": ("vnc", "remote_access"),
+    "ldap": ("ldap", "directory_service"),
     "dns": ("dns",),
+    "smtp": ("smtp", "mail_service"),
+    "imap": ("imap", "mail_service"),
+    "pop3": ("pop3", "mail_service"),
     "mysql": ("mysql", "database_service"),
+    "mariadb": ("mariadb", "database_service"),
+    "mongo": ("mongodb", "database_service"),
+    "mongodb": ("mongodb", "database_service"),
     "postgres": ("postgresql", "database_service"),
     "postgresql": ("postgresql", "database_service"),
     "redis": ("redis", "database_service"),
+    "memcached": ("memcached", "database_service"),
+    "docker": ("docker", "container_runtime"),
+    "kubernetes": ("kubernetes", "container_orchestration"),
+    "prometheus": ("prometheus", "observability_service"),
+    "grafana": ("grafana", "observability_service"),
+    "elasticsearch": ("elasticsearch", "observability_service"),
 }
 
 
@@ -293,7 +351,7 @@ def build_probabilistic_application_model(
     observation: dict[str, Any],
     *,
     generated_at: str | None = None,
-    max_candidates: int = 4,
+    max_candidates: int = 6,
 ) -> dict[str, Any]:
     """Build a deterministic probability distribution from existing metadata only."""
     if not isinstance(observation, dict):
@@ -490,9 +548,11 @@ def _probabilistic_evidence(observation: dict[str, Any], *, source_mode: str) ->
         signals.append(f"port:{port}")
     if state != "unknown":
         signals.append(f"state:{state}")
+    external_signals = []
     for signal in _existing_signal_values(observation):
         if signal not in signals:
             signals.append(signal)
+        external_signals.append(signal)
     return {
         "process": process,
         "service": service,
@@ -500,6 +560,7 @@ def _probabilistic_evidence(observation: dict[str, Any], *, source_mode: str) ->
         "port": port,
         "state": state,
         "signals": signals[:12],
+        "external_signals": external_signals[:12],
         "candidate_evidence": {},
     }
 
@@ -537,6 +598,9 @@ def _probabilistic_candidate_scores(evidence: dict[str, Any]) -> dict[str, float
     if port is not None:
         for label in APPLICATION_PORT_CANDIDATES.get(port, ()):
             add(label, 2.0, f"port:{port}")
+    for signal in evidence.get("external_signals", []):
+        for label in _candidate_labels_from_text(signal):
+            add(label, 1.1, f"signal:{signal}")
     if state in {"listen", "listening", "established", "open"}:
         for label in list(scores):
             add(label, 0.25, f"state:{state}")
@@ -546,15 +610,32 @@ def _probabilistic_candidate_scores(evidence: dict[str, Any]) -> dict[str, float
 
 def _existing_signal_values(observation: dict[str, Any]) -> list[str]:
     signals: list[str] = []
-    for key in ("score_factors", "signals", "findings"):
+    for key in (
+        "score_factors",
+        "signals",
+        "findings",
+        "heuristic_signals",
+        "visibility_fingerprint",
+        "service_fingerprint",
+        "fingerprint",
+    ):
         value = observation.get(key)
-        if isinstance(value, list):
+        if isinstance(value, (list, tuple, set)):
             signals.extend(_safe_token(item) for item in value if not _is_blank_signal(item))
         elif isinstance(value, dict):
             signals.extend(_safe_token(item) for item in value.values() if not _is_blank_signal(item))
         elif not _is_blank_signal(value):
             signals.append(_safe_token(value))
     return signals
+
+
+def _candidate_labels_from_text(value: Any) -> list[str]:
+    text = _safe_token(value)
+    labels = []
+    for label, tokens in APPLICATION_TOKEN_CANDIDATES:
+        if any(token in text for token in tokens):
+            labels.append(label)
+    return labels
 
 
 def _is_blank_signal(value: Any) -> bool:
