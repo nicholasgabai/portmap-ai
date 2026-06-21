@@ -972,6 +972,7 @@ def test_ai_provider_model_rows_and_analytics_population():
     assert rows[0]["top_classification"] == "nginx"
     assert "https_service" in rows[0]["alternative_candidates"]
     assert "port:443" in rows[0]["evidence_signals"]
+    assert "process_match" in rows[0]["calibration"]
     assert rows[0]["mode"] == "read_only"
     assert rows[0]["execution"] == "not performed"
     assert gui_app._ai_provider_summary_rows(rows) == [
@@ -1516,6 +1517,7 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Classification Confidence"] != "-"
     assert "remote_access" in details["Alternative Candidates"]
     assert "port:22" in details["Evidence Signals"]
+    assert "service_match" in rows[0]["calibration"]
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."
     assert details["State"] == "LISTEN"

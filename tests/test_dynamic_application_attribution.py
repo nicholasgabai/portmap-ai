@@ -51,6 +51,13 @@ def _signature(**overrides):
     return base
 
 
+def _candidate_probability(record, candidate):
+    for row in record["candidates"]:
+        if row["candidate"] == candidate:
+            return float(row["probability"])
+    return 0.0
+
+
 def test_probable_app_attribution_generation_and_candidate_ranking():
     signatures = [build_behavioral_signature_record(_signature(), generated_at=FIXED_TIME)]
     rows = build_probable_application_attributions(
@@ -262,15 +269,29 @@ def test_probabilistic_application_catalog_reports_ambiguous_web_candidates_with
     )
     candidates = {row["candidate"] for row in record["candidates"]}
 
-    assert record["top_classification"] == "https_service"
-    assert record["confidence"] < 0.4
+    assert record["top_classification"] == "unknown_application"
+    assert 0.2 <= record["confidence"] <= 0.6
     assert {"nginx", "apache", "caddy", "unknown_proxy"}.issubset(candidates)
     assert len(record["alternative_candidates"]) >= 3
+    assert max(row["probability"] for row in record["candidates"] if row["candidate"] != "unknown_application") < 0.2
     assert record["evidence_signals"] == ["protocol:tls", "port:443"]
+    assert record["calibration"]["evidence_strength"] == "weak"
+    assert "generic_metadata_only" in record["calibration"]["factors"]
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-strong-postgresql",
+            "program": "postgres",
+            "service_name": "postgresql",
+            "protocol": "tcp",
+            "port": 5432,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    moderate = build_probabilistic_application_model(
         {
             "observed_entity_reference": "session-redacted-strong-caddy",
             "program": "caddy",
@@ -281,7 +302,7 @@ def test_probabilistic_application_catalog_confidence_scales_with_evidence_stren
         },
         generated_at=FIXED_TIME,
     )
-    ambiguous = build_probabilistic_application_model(
+    weak = build_probabilistic_application_model(
         {
             "observed_entity_reference": "session-redacted-ambiguous-tls",
             "protocol": "tls",
@@ -290,7 +311,18 @@ def test_probabilistic_application_catalog_confidence_scales_with_evidence_stren
         },
         generated_at=FIXED_TIME,
     )
-    weak = build_probabilistic_application_model(
+
+    assert strong["top_classification"] == "postgresql"
+    assert moderate["top_classification"] == "caddy"
+    assert weak["top_classification"] == "unknown_application"
+    assert strong["confidence"] > moderate["confidence"] > _candidate_probability(weak, "caddy")
+    assert strong["calibration"]["evidence_strength"] == "strong"
+    assert moderate["calibration"]["evidence_strength"] == "moderate"
+    assert weak["calibration"]["evidence_strength"] == "weak"
+
+
+def test_probabilistic_application_calibration_handles_port_only_weak_evidence():
+    record = build_probabilistic_application_model(
         {
             "observed_entity_reference": "session-redacted-weak-port",
             "port": 443,
@@ -299,9 +331,33 @@ def test_probabilistic_application_catalog_confidence_scales_with_evidence_stren
         generated_at=FIXED_TIME,
     )
 
-    assert strong["top_classification"] == "caddy"
-    assert strong["confidence"] > ambiguous["confidence"] > weak["confidence"]
-    assert weak["confidence"] < 0.25
+    assert record["top_classification"] == "unknown_application"
+    assert 0.2 <= record["confidence"] <= 0.6
+    assert {"nginx", "apache", "caddy", "https_service", "unknown_proxy"}.issubset(
+        {row["candidate"] for row in record["candidates"]}
+    )
+    assert max(row["probability"] for row in record["candidates"] if row["candidate"] != "unknown_application") < 0.15
+    assert record["calibration"]["evidence_strength"] == "insufficient"
+    assert "port_only" in record["calibration"]["factors"]
+
+
+def test_probabilistic_application_calibration_handles_conflicting_evidence():
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-conflict",
+            "program": "nginx",
+            "port": 5432,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    candidates = {row["candidate"] for row in record["candidates"]}
+    assert record["top_classification"] == "unknown_application"
+    assert 0.2 <= record["confidence"] <= 0.6
+    assert {"nginx", "postgresql", "database_service"}.issubset(candidates)
+    assert record["calibration"]["conflicting_evidence"] is True
+    assert "conflicting_metadata" in record["calibration"]["factors"]
 
 
 def test_probabilistic_application_model_is_deterministic_and_export_safe():
@@ -334,9 +390,11 @@ def test_probabilistic_application_model_handles_unknown_metadata():
     )
 
     assert record["top_classification"] == "unknown_application"
-    assert record["confidence"] == 1.0
-    assert record["candidate_count"] == 1
+    assert 0.2 <= record["confidence"] <= 0.6
+    assert record["candidate_count"] == 3
     assert record["evidence_count"] == 0
+    assert record["calibration"]["evidence_strength"] == "insufficient"
+    assert "insufficient_metadata" in record["calibration"]["factors"]
 
 
 def test_dummy_labels_remain_fixture_or_simulated_only():

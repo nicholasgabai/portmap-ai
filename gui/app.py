@@ -1144,6 +1144,7 @@ def _active_risk_finding_rows(
                 "classification_confidence": _format_probability(classification.get("confidence")),
                 "alternative_candidates": _classification_alternatives_text(classification),
                 "evidence_signals": _classification_evidence_text(classification),
+                "calibration": _classification_calibration_text(classification),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -2351,6 +2352,20 @@ def _classification_evidence_text(model: Dict[str, Any], *, limit: int = 4) -> s
     return ", ".join(rows) if rows else "-"
 
 
+def _classification_calibration_text(model: Dict[str, Any], *, limit: int = 4) -> str:
+    calibration = model.get("calibration")
+    if not isinstance(calibration, dict):
+        return "-"
+    factors = calibration.get("factors")
+    if not isinstance(factors, list):
+        factors = []
+    prefix = _short_text(calibration.get("evidence_strength"), limit=16)
+    rows = [_short_text(factor, limit=28) for factor in factors[: max(limit, 0)]]
+    rows = [row for row in rows if row != "-"]
+    suffix = ", ".join(rows) if rows else "-"
+    return f"{prefix}: {suffix}" if prefix != "-" else suffix
+
+
 def _is_ai_event(event: Dict[str, Any]) -> bool:
     if any(
         event.get(key) not in {"", "-", None}
@@ -2418,6 +2433,7 @@ def _ai_provider_model_rows(
                 "top_classification": "-",
                 "alternative_candidates": "-",
                 "evidence_signals": "-",
+                "calibration": "-",
             },
         )
         row["decisions"] += 1
@@ -2439,6 +2455,7 @@ def _ai_provider_model_rows(
             row["top_classification"] = _short_text(model_record.get("top_classification"), limit=24)
             row["alternative_candidates"] = _classification_alternatives_text(model_record)
             row["evidence_signals"] = _classification_evidence_text(model_record)
+            row["calibration"] = _classification_calibration_text(model_record)
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -2459,6 +2476,7 @@ def _ai_provider_model_rows(
             "top_classification": row["top_classification"],
             "alternative_candidates": row["alternative_candidates"],
             "evidence_signals": row["evidence_signals"],
+            "calibration": row["calibration"],
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"]]),

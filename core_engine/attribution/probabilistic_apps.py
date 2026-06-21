@@ -362,11 +362,15 @@ def build_probabilistic_application_model(
     timestamp = generated_at or _now()
     mode = normalize_source_mode(observation.get("source_mode") or observation.get("data_source") or "unknown")
     evidence = _probabilistic_evidence(observation, source_mode=mode)
-    scores = _probabilistic_candidate_scores(evidence)
+    raw_scores = _probabilistic_candidate_scores(evidence)
+    calibration = _probabilistic_calibration(evidence, raw_scores)
+    scores = _calibrated_candidate_scores(raw_scores, evidence, calibration)
     if not scores:
-        scores["unknown_application"] = 1.0
-    if "unknown_application" not in scores:
-        scores["unknown_application"] = max(0.12, 1.0 - min(max(scores.values()), 1.0) * 0.15)
+        scores = {
+            "unknown_application": 0.45,
+            "insufficient_metadata": 0.35,
+            "unclassified_service": 0.20,
+        }
 
     total = sum(scores.values()) or 1.0
     candidates = [
@@ -402,6 +406,7 @@ def build_probabilistic_application_model(
         "alternative_candidates": [
             {"candidate": row["candidate"], "probability": row["probability"]} for row in candidates[1:]
         ],
+        "calibration": calibration,
         "evidence_count": len(evidence["signals"]),
         "evidence_signals": evidence["signals"],
         "source_mode": mode,
@@ -606,6 +611,147 @@ def _probabilistic_candidate_scores(evidence: dict[str, Any]) -> dict[str, float
             add(label, 0.25, f"state:{state}")
 
     return scores
+
+
+def _probabilistic_calibration(evidence: dict[str, Any], scores: dict[str, float]) -> dict[str, Any]:
+    if not scores:
+        return {
+            "quality": 0.45,
+            "unknown_probability": 0.45,
+            "evidence_strength": "insufficient",
+            "conflicting_evidence": False,
+            "factors": ["insufficient_metadata"],
+        }
+
+    top_label = max(scores.items(), key=lambda item: (item[1], item[0]))[0]
+    reason_types_by_label = _candidate_reason_types(evidence)
+    top_types = reason_types_by_label.get(top_label, set())
+    factors: list[str] = []
+    quality = 0.15
+
+    strong_types = top_types.intersection({"process", "service", "signal"})
+    if "process" in strong_types:
+        quality += 0.34
+        factors.append("process_match")
+    if "service" in strong_types:
+        quality += 0.24
+        factors.append("service_match")
+    if "signal" in strong_types:
+        quality += 0.30
+        factors.append("fingerprint_or_signal_match")
+    if "port" in top_types:
+        quality += 0.14
+        factors.append("port_support")
+    if "protocol" in top_types:
+        quality += 0.10
+        factors.append("protocol_support")
+    if "state" in top_types:
+        quality += 0.03
+        factors.append("state_support")
+
+    has_strong = bool(strong_types)
+    if not has_strong and top_types:
+        factors.append("generic_metadata_only")
+        quality = min(quality, 0.42)
+    if top_types == {"port"}:
+        quality = min(quality, 0.24)
+        factors.append("port_only")
+    elif top_types == {"protocol"}:
+        quality = min(quality, 0.28)
+        factors.append("protocol_only")
+
+    conflicting = _has_conflicting_candidate_evidence(reason_types_by_label)
+    if conflicting:
+        quality = max(0.18, quality - 0.22)
+        factors.append("conflicting_metadata")
+
+    quality = round(min(max(quality, 0.12), 0.88), 3)
+    unknown_probability = _unknown_probability_for_quality(quality)
+    if conflicting:
+        unknown_probability = max(unknown_probability, 0.35)
+    return {
+        "quality": quality,
+        "unknown_probability": unknown_probability,
+        "evidence_strength": _evidence_strength_label(quality),
+        "conflicting_evidence": conflicting,
+        "factors": factors or ["weak_metadata"],
+    }
+
+
+def _calibrated_candidate_scores(
+    scores: dict[str, float],
+    evidence: dict[str, Any],
+    calibration: dict[str, Any],
+) -> dict[str, float]:
+    if not scores:
+        return {}
+    calibrated = dict(scores)
+    reason_types_by_label = _candidate_reason_types(evidence)
+    for label, reason_types in reason_types_by_label.items():
+        if label not in calibrated:
+            continue
+        if reason_types.intersection({"process", "service", "signal"}):
+            calibrated[label] *= 1.35
+        elif reason_types and reason_types.issubset({"port", "protocol", "state"}):
+            calibrated[label] *= 0.82
+    total = sum(calibrated.values())
+    unknown_probability = float(calibration.get("unknown_probability") or 0.0)
+    if total > 0 and "unknown_application" not in calibrated:
+        calibrated["unknown_application"] = total * unknown_probability / max(1.0 - unknown_probability, 0.01)
+    return calibrated
+
+
+def _candidate_reason_types(evidence: dict[str, Any]) -> dict[str, set[str]]:
+    candidate_evidence = evidence.get("candidate_evidence")
+    if not isinstance(candidate_evidence, dict):
+        return {}
+    return {
+        str(label): {_reason_type(reason) for reason in reasons if _reason_type(reason) != "unknown"}
+        for label, reasons in candidate_evidence.items()
+        if isinstance(reasons, list)
+    }
+
+
+def _reason_type(reason: Any) -> str:
+    text = str(reason or "")
+    return text.split(":", 1)[0] if ":" in text else "unknown"
+
+
+def _has_conflicting_candidate_evidence(reason_types_by_label: dict[str, set[str]]) -> bool:
+    catalog_labels = _catalog_candidate_labels()
+    strong_labels = {
+        label
+        for label, reason_types in reason_types_by_label.items()
+        if reason_types.intersection({"process", "signal"}) or ("service" in reason_types and label in catalog_labels)
+    }
+    port_labels = {label for label, reason_types in reason_types_by_label.items() if "port" in reason_types}
+    if not strong_labels or not port_labels:
+        return False
+    return any(label not in port_labels for label in strong_labels)
+
+
+def _catalog_candidate_labels() -> set[str]:
+    return {label for label, _tokens in APPLICATION_TOKEN_CANDIDATES}
+
+
+def _evidence_strength_label(quality: float) -> str:
+    if quality >= 0.68:
+        return "strong"
+    if quality >= 0.45:
+        return "moderate"
+    if quality >= 0.25:
+        return "weak"
+    return "insufficient"
+
+
+def _unknown_probability_for_quality(quality: float) -> float:
+    if quality >= 0.68:
+        return round(min(max((1.0 - quality) * 0.45, 0.08), 0.18), 3)
+    if quality >= 0.50:
+        return round(min(max((1.0 - quality) * 0.55, 0.16), 0.28), 3)
+    if quality >= 0.25:
+        return round(min(max(1.0 - quality, 0.35), 0.58), 3)
+    return 0.58
 
 
 def _existing_signal_values(observation: dict[str, Any]) -> list[str]:
