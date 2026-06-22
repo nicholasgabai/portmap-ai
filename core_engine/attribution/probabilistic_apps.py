@@ -12,6 +12,7 @@ from core_engine.attribution.confidence_models import (
     classify_attribution_state,
     score_application_attribution_confidence,
 )
+from core_engine.attribution.learning_profiles import build_learning_profile
 from core_engine.attribution.signature_learning import build_behavioral_signature_records
 
 
@@ -384,6 +385,11 @@ def build_probabilistic_application_model(
 
     top = candidates[0] if candidates else {"candidate": "unknown_application", "probability": 1.0}
     explainability = _explainability_metadata(top=top, candidates=candidates, evidence=evidence, calibration=calibration)
+    learning_profile = build_learning_profile(
+        observation,
+        classification_model={"top_classification": top["candidate"], "confidence": float(top["probability"])},
+        generated_at=timestamp,
+    )
     return {
         "record_type": "probabilistic_application_model",
         "record_version": PROBABILISTIC_APPLICATION_MODEL_VERSION,
@@ -416,6 +422,7 @@ def build_probabilistic_application_model(
         ],
         "calibration": calibration,
         **explainability,
+        "learning_profile": learning_profile,
         "evidence_count": len(evidence["signals"]),
         "evidence_signals": evidence["signals"],
         "source_mode": mode,

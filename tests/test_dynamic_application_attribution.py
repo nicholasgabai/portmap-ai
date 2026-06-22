@@ -7,14 +7,21 @@ from core_engine.attribution import (
     SignatureLearningError,
     build_application_attribution_report,
     build_behavioral_signature_record,
+    build_learning_profile,
     build_probable_application_attributions,
     build_probabilistic_application_model,
     build_signature_learning_report,
     deterministic_application_attribution_json,
     deterministic_confidence_json,
+    deterministic_learning_profile_json,
     deterministic_probabilistic_application_model_json,
     deterministic_signature_json,
+    load_learning_profiles,
+    save_learning_profiles,
     score_application_attribution_confidence,
+    update_learning_profile,
+    update_learning_profile_store,
+    update_learning_profiles,
 )
 
 
@@ -396,6 +403,141 @@ def test_probabilistic_application_explainability_for_strong_classification():
     )
     assert record["missing_evidence_summary"] == "Missing service fingerprint."
     assert record["operator_next_steps"] == "Review expected-service allowlist and historical observations for confirmation."
+
+
+def test_learning_profile_creation_from_existing_metadata_only():
+    model = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-profile-postgresql",
+            "program": "postgres",
+            "service_name": "postgresql",
+            "protocol": "tcp",
+            "port": 5432,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-01T00:05:00+00:00",
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    profile = model["learning_profile"]
+
+    assert profile["record_type"] == "application_learning_profile"
+    assert profile["profile_name"] == "postgresql"
+    assert profile["first_seen"] == "2026-01-01T00:00:00+00:00"
+    assert profile["last_seen"] == "2026-01-01T00:05:00+00:00"
+    assert profile["observation_count"] == 1
+    assert profile["observed_ports"] == [5432]
+    assert profile["observed_protocols"] == ["tcp"]
+    assert profile["observed_services"] == ["postgresql"]
+    assert profile["observed_processes"] == ["postgres"]
+    assert profile["confidence_history"] == [
+        {
+            "observed_at": FIXED_TIME,
+            "classification": "postgresql",
+            "confidence": model["confidence"],
+        }
+    ]
+    assert 0.0 < profile["stability_score"] <= 1.0
+    assert profile["metadata_only"] is True
+    assert profile["read_only"] is True
+    assert profile["training_performed"] is False
+    assert profile["model_mutated"] is False
+    assert profile["online_learning_performed"] is False
+    assert profile["raw_payload_stored"] is False
+
+
+def test_learning_profile_updates_repeated_observations_and_stability():
+    first_model = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-profile-redis",
+            "program": "redis-server",
+            "service_name": "redis",
+            "protocol": "tcp",
+            "port": 6379,
+            "last_seen": "2026-01-01T00:01:00+00:00",
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    second_observation = {
+        "observed_entity_reference": "session-redacted-profile-redis",
+        "program": "redis-server",
+        "service_name": "redis",
+        "protocol": "tcp",
+        "port": 6380,
+        "occurrence_count": 2,
+        "last_seen": "2026-01-01T00:10:00+00:00",
+        "source_mode": "live",
+    }
+    second_model = build_probabilistic_application_model(second_observation, generated_at="2026-01-01T00:10:00+00:00")
+    profile = update_learning_profile(
+        first_model["learning_profile"],
+        second_observation,
+        classification_model=second_model,
+        generated_at="2026-01-01T00:10:00+00:00",
+    )
+
+    assert profile["profile_name"] == "redis"
+    assert profile["observation_count"] == 3
+    assert profile["observed_ports"] == [6379, 6380]
+    assert profile["observed_protocols"] == ["tcp"]
+    assert profile["observed_services"] == ["redis"]
+    assert profile["observed_processes"] == ["redis-server"]
+    assert len(profile["confidence_history"]) == 2
+    assert profile["stability_score"] >= first_model["learning_profile"]["stability_score"]
+    assert deterministic_learning_profile_json(profile) == json.dumps(
+        profile, sort_keys=True, separators=(",", ":"), default=str
+    )
+
+
+def test_learning_profiles_update_collection_by_profile_identity():
+    postgres_model = build_probabilistic_application_model(
+        {"program": "postgres", "service_name": "postgresql", "protocol": "tcp", "port": 5432, "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+    redis_model = build_probabilistic_application_model(
+        {"program": "redis-server", "service_name": "redis", "protocol": "tcp", "port": 6379, "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+
+    profiles = update_learning_profiles([], {"program": "postgres", "port": 5432}, classification_model=postgres_model, generated_at=FIXED_TIME)
+    profiles = update_learning_profiles(profiles, {"program": "redis-server", "port": 6379}, classification_model=redis_model, generated_at=FIXED_TIME)
+    profiles = update_learning_profiles(profiles, {"program": "postgres", "port": 5433}, classification_model=postgres_model, generated_at=FIXED_TIME)
+
+    assert [profile["profile_name"] for profile in profiles] == ["postgresql", "redis"]
+    postgresql = next(profile for profile in profiles if profile["profile_name"] == "postgresql")
+    assert postgresql["observation_count"] == 2
+    assert postgresql["observed_ports"] == [5432, 5433]
+
+
+def test_learning_profile_persistence_round_trip(tmp_path):
+    path = tmp_path / "profiles.json"
+    model = build_probabilistic_application_model(
+        {"program": "nginx", "service_name": "https", "protocol": "tls", "port": 443, "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+    profile = build_learning_profile(
+        {"program": "nginx", "service_name": "https", "protocol": "tls", "port": 443, "source_mode": "live"},
+        classification_model=model,
+        generated_at=FIXED_TIME,
+    )
+
+    payload = save_learning_profiles(path, [profile])
+    loaded = load_learning_profiles(path)
+    updated = update_learning_profile_store(
+        path,
+        {"program": "nginx", "service_name": "https", "protocol": "tls", "port": 8443, "source_mode": "live"},
+        classification_model=model,
+        generated_at="2026-01-01T00:10:00+00:00",
+    )
+
+    assert payload["record_type"] == "application_learning_profile_store"
+    assert payload["external_system"] is False
+    assert payload["cloud_dependency"] is False
+    assert loaded == [profile]
+    assert updated[0]["observation_count"] == 2
+    assert updated[0]["observed_ports"] == [443, 8443]
+    assert load_learning_profiles(path) == updated
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():

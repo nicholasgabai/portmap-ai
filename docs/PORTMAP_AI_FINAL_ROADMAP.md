@@ -345,6 +345,14 @@ Goal: improve operator visibility into why classifications were chosen.
 
 Completion note: attribution outputs should include deterministic explanation summaries, evidence quality, confidence rationale, ambiguity reason, missing evidence summary, and operator next steps. These details remain metadata-only, read-only, and visible through existing AI and Risk detail surfaces without changing phase numbering or introducing continuous learning.
 
+### Phase 172 Sub-Phases
+
+Phase 172 is treated as a multi-stage phase for Continuous Learning Profiles without changing the Milestone AC phase numbering. Future Phase 172 sub-phases should be added here.
+
+#### 172.0 - Learning Profile Framework (Completed)
+
+Implementation note: Phase 172.0 adds deterministic metadata-only application learning profile structures for repeated observations over time, including profile identity, first and last seen timestamps, observation counts, observed ports, protocols, services, processes, confidence history, and stability score. Persistence uses existing local file patterns only, and profile metadata can appear in existing AI and Risk details when available. This framework does not perform online learning, model mutation, packet inspection, payload analysis, remediation, enforcement, blocking, autonomous actions, or external AI calls.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

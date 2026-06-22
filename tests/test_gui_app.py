@@ -1009,6 +1009,10 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert "Alternative candidates survived" in details["Ambiguity Reason"]
     assert "service fingerprint" in details["Missing Evidence Summary"]
     assert "expected-service allowlist" in details["Operator Next Steps"]
+    assert details["Learning Profile ID"].startswith("learning-profile-")
+    assert details["Learning Profile Name"] == "nginx"
+    assert details["Learning Profile Observations"] == "1"
+    assert details["Learning Profile Stability"] != "-"
     assert details["Status"] == "preview"
     assert details["Decisions"] == "2"
     assert details["Updated"] == "2026-06-14 12:03:00"
@@ -1535,6 +1539,10 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert "Alternative candidates survived" in details["Ambiguity Reason"]
     assert "service fingerprint" in details["Missing Evidence Summary"]
     assert "expected-service allowlist" in details["Operator Next Steps"]
+    assert details["Learning Profile ID"].startswith("learning-profile-")
+    assert details["Learning Profile Name"] == "ssh"
+    assert details["Learning Profile Observations"] == "3"
+    assert details["Learning Profile Stability"] != "-"
     assert "service_match" in rows[0]["calibration"]
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."
