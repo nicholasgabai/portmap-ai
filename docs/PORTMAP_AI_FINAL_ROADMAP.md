@@ -357,6 +357,10 @@ Implementation note: Phase 172.0 adds deterministic metadata-only application le
 
 Implementation note: Phase 172.1 extends learning profiles with deterministic local historical observation storage for profile identities, first and last observed timestamps, observation counts, historical ports, protocols, services, processes, observation timestamps, and compact history summaries. The metadata can appear in existing AI and Risk detail surfaces without layout changes. This storage layer remains local, read-only from an analysis perspective, metadata-only, and does not perform online learning, model retraining, confidence evolution, adaptive scoring, packet inspection, payload analysis, remediation, enforcement, blocking, autonomous actions, or external AI services.
 
+#### 172.2 - Profile Stability Scoring (Completed)
+
+Implementation note: Phase 172.2 adds deterministic profile stability scoring from existing historical observations only, using observation count, classification consistency, confidence consistency, and profile age. Outputs include a bounded stability score and stability label exposed through existing AI and Risk detail surfaces without layout changes. This remains metadata-only and does not add machine learning, model retraining, adaptive scoring, enforcement, automated decisions, packet inspection, payload analysis, remediation, blocking, autonomous actions, or external AI services.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

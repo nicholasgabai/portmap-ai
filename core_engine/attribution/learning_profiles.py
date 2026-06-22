@@ -213,6 +213,8 @@ def build_learning_profile_history(
         **ATTRIBUTION_SAFETY_FLAGS,
     }
     history["historical_summary"] = summarize_learning_profile_history(history)
+    history["stability_score"] = history["historical_summary"]["stability_score"]
+    history["stability_label"] = history["historical_summary"]["stability_label"]
     return history
 
 
@@ -253,6 +255,8 @@ def append_learning_profile_history(
         [*list(current.get("observation_records") or []), *list(incoming.get("observation_records") or [])]
     )
     current["historical_summary"] = summarize_learning_profile_history(current)
+    current["stability_score"] = current["historical_summary"]["stability_score"]
+    current["stability_label"] = current["historical_summary"]["stability_label"]
     return current
 
 
@@ -338,6 +342,7 @@ def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[s
     row = _normalize_history(history) if isinstance(history, dict) and history.get("historical_summary") is None else dict(history or {})
     first_observed = _safe_time(row.get("first_observed"))
     last_observed = _safe_time(row.get("last_observed"))
+    stability = _history_stability(row)
     return {
         "profile_id": _safe_label(row.get("profile_id")),
         "profile_name": _safe_label(row.get("profile_name")) or "unknown_application",
@@ -345,6 +350,8 @@ def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[s
         "profile_age": _profile_age(first_observed, last_observed),
         "first_observed": first_observed or "-",
         "last_observed": last_observed or "-",
+        "stability_score": stability["stability_score"],
+        "stability_label": stability["stability_label"],
         "historical_ports": _merge_sorted(row.get("historical_ports"), [], numeric=True),
         "historical_protocols": _merge_sorted(row.get("historical_protocols"), []),
         "historical_services": _merge_sorted(row.get("historical_services"), []),
@@ -376,6 +383,8 @@ def _normalize_history(history: dict[str, Any]) -> dict[str, Any]:
     row["observation_timestamps"] = _timestamp_history(row.get("observation_timestamps") or [])
     row["observation_records"] = _observation_records(row.get("observation_records") or [])
     row["historical_summary"] = summarize_learning_profile_history({**row, "historical_summary": {}})
+    row["stability_score"] = row["historical_summary"]["stability_score"]
+    row["stability_label"] = row["historical_summary"]["stability_label"]
     row.setdefault("metadata_only", True)
     row.setdefault("read_only", True)
     row.setdefault("training_performed", False)
@@ -527,6 +536,90 @@ def _profile_age(first_observed: Any, last_observed: Any) -> str:
     if minutes:
         return f"{minutes}m"
     return "0m"
+
+
+def _history_stability(history: dict[str, Any]) -> dict[str, Any]:
+    records = [row for row in history.get("observation_records") or [] if isinstance(row, dict)]
+    observation_count = max(_safe_int(history.get("observation_count"), default=0), len(records))
+    observation_factor = min(1.0, observation_count / 8.0)
+    corroboration_factor = min(1.0, observation_count / 3.0)
+    classification_consistency = _classification_consistency(records)
+    confidence_consistency = _confidence_consistency(records)
+    age_factor = _age_factor(history.get("first_observed"), history.get("last_observed"))
+    score = round(
+        min(
+            1.0,
+            max(
+                0.0,
+                (observation_factor * 0.35)
+                + (classification_consistency * corroboration_factor * 0.25)
+                + (confidence_consistency * corroboration_factor * 0.25)
+                + (age_factor * 0.15),
+            ),
+        ),
+        2,
+    )
+    return {
+        "stability_score": score,
+        "stability_label": _stability_label(score),
+        "stability_factors": {
+            "observation_count": observation_count,
+            "classification_consistency": round(classification_consistency, 3),
+            "confidence_consistency": round(confidence_consistency, 3),
+            "profile_age_factor": round(age_factor, 3),
+        },
+    }
+
+
+def _classification_consistency(records: list[dict[str, Any]]) -> float:
+    if not records:
+        return 0.0
+    counts: dict[str, int] = {}
+    for record in records:
+        label = _safe_label(record.get("profile_name")) or "unknown_application"
+        counts[label] = counts.get(label, 0) + max(1, _safe_int(record.get("observation_count"), default=1))
+    total = sum(counts.values())
+    return max(counts.values()) / total if total else 0.0
+
+
+def _confidence_consistency(records: list[dict[str, Any]]) -> float:
+    values = [_bounded_float(record.get("confidence")) for record in records]
+    if not values:
+        return 0.0
+    if len(values) == 1:
+        return 1.0
+    return max(0.0, 1.0 - (max(values) - min(values)))
+
+
+def _age_factor(first_observed: Any, last_observed: Any) -> float:
+    first = _parse_time(first_observed)
+    last = _parse_time(last_observed)
+    if first is None or last is None:
+        return 0.0
+    seconds = max(0, int((last - first).total_seconds()))
+    if seconds >= 30 * 86_400:
+        return 1.0
+    if seconds >= 7 * 86_400:
+        return 0.85
+    if seconds >= 86_400:
+        return 0.65
+    if seconds >= 3_600:
+        return 0.45
+    if seconds >= 600:
+        return 0.25
+    if seconds > 0:
+        return 0.15
+    return 0.0
+
+
+def _stability_label(score: float) -> str:
+    if score >= 0.80:
+        return "highly_stable"
+    if score >= 0.60:
+        return "stable"
+    if score >= 0.35:
+        return "developing"
+    return "unstable"
 
 
 def _parse_time(value: Any) -> datetime | None:

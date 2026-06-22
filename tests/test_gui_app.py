@@ -1017,6 +1017,8 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Profile Age"] == "0m"
     assert details["First Observed"] == "2026-06-14T12:03:00+00:00"
     assert details["Last Observed"] == "2026-06-14T12:03:00+00:00"
+    assert details["Stability Score"] != "-"
+    assert details["Stability Label"] == "unstable"
     assert details["Status"] == "preview"
     assert details["Decisions"] == "2"
     assert details["Updated"] == "2026-06-14 12:03:00"
@@ -1551,6 +1553,8 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Profile Age"] == "1h"
     assert details["First Observed"] == "2026-06-14T11:00:00+00:00"
     assert details["Last Observed"] == "2026-06-14T12:00:00+00:00"
+    assert details["Stability Score"] != "-"
+    assert details["Stability Label"] == "stable"
     assert "service_match" in rows[0]["calibration"]
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."

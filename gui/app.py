@@ -1166,6 +1166,8 @@ def _active_risk_finding_rows(
                 "profile_age": _learning_history_text_field(classification, "profile_age", limit=12),
                 "first_observed": _learning_history_text_field(classification, "first_observed", limit=32),
                 "last_observed": _learning_history_text_field(classification, "last_observed", limit=32),
+                "stability_score": _learning_history_stability_score(classification),
+                "stability_label": _learning_history_text_field(classification, "stability_label", limit=24),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -1222,6 +1224,8 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Profile Age", row.get("profile_age", "-")),
         ("First Observed", row.get("first_observed", "-")),
         ("Last Observed", row.get("last_observed", "-")),
+        ("Stability Score", row.get("stability_score", "-")),
+        ("Stability Label", row.get("stability_label", "-")),
         ("Score", row.get("score", "-")),
         ("Action", row.get("action", "-")),
         ("Time", row.get("time", "-")),
@@ -2479,6 +2483,10 @@ def _learning_history_text_field(model: Dict[str, Any], field: str, *, limit: in
     return _short_text(_classification_history_summary(model).get(field), limit=limit)
 
 
+def _learning_history_stability_score(model: Dict[str, Any]) -> str:
+    return _format_probability(_classification_history_summary(model).get("stability_score"))
+
+
 def _is_ai_event(event: Dict[str, Any]) -> bool:
     if any(
         event.get(key) not in {"", "-", None}
@@ -2564,6 +2572,8 @@ def _ai_provider_model_rows(
                 "profile_age": "-",
                 "first_observed": "-",
                 "last_observed": "-",
+                "stability_score": "-",
+                "stability_label": "-",
             },
         )
         row["decisions"] += 1
@@ -2607,6 +2617,8 @@ def _ai_provider_model_rows(
             row["profile_age"] = _learning_history_text_field(model_record, "profile_age", limit=12)
             row["first_observed"] = _learning_history_text_field(model_record, "first_observed", limit=32)
             row["last_observed"] = _learning_history_text_field(model_record, "last_observed", limit=32)
+            row["stability_score"] = _learning_history_stability_score(model_record)
+            row["stability_label"] = _learning_history_text_field(model_record, "stability_label", limit=24)
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -2645,6 +2657,8 @@ def _ai_provider_model_rows(
             "profile_age": row["profile_age"],
             "first_observed": row["first_observed"],
             "last_observed": row["last_observed"],
+            "stability_score": row["stability_score"],
+            "stability_label": row["stability_label"],
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"]]),
@@ -2697,6 +2711,8 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Profile Age", row.get("profile_age", "-")),
         ("First Observed", row.get("first_observed", "-")),
         ("Last Observed", row.get("last_observed", "-")),
+        ("Stability Score", row.get("stability_score", "-")),
+        ("Stability Label", row.get("stability_label", "-")),
         ("Status", row.get("status", "-")),
         ("Decisions", row.get("decisions", "-")),
         ("Updated", row.get("updated", "-")),

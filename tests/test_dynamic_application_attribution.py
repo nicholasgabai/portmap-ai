@@ -697,6 +697,125 @@ def test_learning_profile_history_persistence_round_trip(tmp_path):
     assert load_learning_profile_histories(path) == updated
 
 
+def test_learning_profile_history_stability_scores_repeated_consistent_observations():
+    model = build_probabilistic_application_model(
+        {"program": "postgres", "service_name": "postgresql", "protocol": "tcp", "port": 5432, "source_mode": "live"},
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+    history = build_learning_profile_history(
+        {
+            "program": "postgres",
+            "service_name": "postgresql",
+            "protocol": "tcp",
+            "port": 5432,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-01T00:00:00+00:00",
+            "source_mode": "live",
+        },
+        classification_model=model,
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+    for day in range(1, 8):
+        timestamp = f"2026-01-0{day + 1}T00:00:00+00:00"
+        history = append_learning_profile_history(
+            history,
+            {
+                "program": "postgres",
+                "service_name": "postgresql",
+                "protocol": "tcp",
+                "port": 5432,
+                "last_seen": timestamp,
+                "source_mode": "live",
+            },
+            classification_model=model,
+            generated_at=timestamp,
+        )
+
+    assert history["observation_count"] == 8
+    assert history["historical_summary"]["stability_score"] >= 0.8
+    assert history["historical_summary"]["stability_label"] == "highly_stable"
+    assert history["stability_label"] == "highly_stable"
+
+
+def test_learning_profile_history_stability_penalizes_sparse_conflicting_and_variable_observations():
+    postgresql = {"top_classification": "postgresql", "confidence": 0.9}
+    mysql = {"top_classification": "mysql", "confidence": 0.9}
+    low_confidence_postgresql = {"top_classification": "postgresql", "confidence": 0.2}
+    first = {
+        "program": "postgres",
+        "service_name": "postgresql",
+        "protocol": "tcp",
+        "port": 5432,
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-01T00:00:00+00:00",
+        "source_mode": "live",
+    }
+    second = {
+        "program": "mysql",
+        "service_name": "mysql",
+        "protocol": "tcp",
+        "port": 3306,
+        "last_seen": "2026-01-01T01:00:00+00:00",
+        "source_mode": "live",
+    }
+    sparse = build_learning_profile_history(first, classification_model=postgresql, generated_at="2026-01-01T00:00:00+00:00")
+    conflicting = append_learning_profile_history(
+        sparse,
+        second,
+        classification_model=mysql,
+        generated_at="2026-01-01T01:00:00+00:00",
+    )
+    fluctuating = append_learning_profile_history(
+        sparse,
+        {**first, "last_seen": "2026-01-01T01:00:00+00:00"},
+        classification_model=low_confidence_postgresql,
+        generated_at="2026-01-01T01:00:00+00:00",
+    )
+    consistent = append_learning_profile_history(
+        sparse,
+        {**first, "last_seen": "2026-01-01T01:00:00+00:00"},
+        classification_model=postgresql,
+        generated_at="2026-01-01T01:00:00+00:00",
+    )
+
+    assert sparse["historical_summary"]["stability_label"] == "unstable"
+    assert conflicting["historical_summary"]["stability_score"] < consistent["historical_summary"]["stability_score"]
+    assert fluctuating["historical_summary"]["stability_score"] < consistent["historical_summary"]["stability_score"]
+    assert conflicting["historical_summary"]["stability_label"] in {"developing", "unstable"}
+    assert fluctuating["historical_summary"]["stability_label"] in {"developing", "unstable"}
+
+
+def test_learning_profile_history_stability_increases_with_profile_age():
+    model = {"top_classification": "postgresql", "confidence": 0.9}
+    short = build_learning_profile_history(
+        {
+            "program": "postgres",
+            "service_name": "postgresql",
+            "port": 5432,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-01T00:10:00+00:00",
+            "observation_count": 3,
+        },
+        classification_model=model,
+        generated_at="2026-01-01T00:10:00+00:00",
+    )
+    aged = build_learning_profile_history(
+        {
+            "program": "postgres",
+            "service_name": "postgresql",
+            "port": 5432,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-08T00:00:00+00:00",
+            "observation_count": 3,
+        },
+        classification_model=model,
+        generated_at="2026-01-08T00:00:00+00:00",
+    )
+
+    assert aged["historical_summary"]["stability_score"] > short["historical_summary"]["stability_score"]
+    assert aged["historical_summary"]["stability_label"] in {"stable", "highly_stable"}
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {
