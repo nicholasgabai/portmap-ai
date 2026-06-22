@@ -1031,6 +1031,75 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert all(value == "-" for value in placeholders.values())
 
 
+def test_wrapped_detail_rows_wrap_and_bound_long_metadata_values():
+    long_value = "candidate-" + ("metadata " * 40) + "tail"
+    rows = gui_app._wrapped_detail_rows([("Alternative Candidates", long_value)], width=32, max_lines=3)
+
+    assert len(rows) == 3
+    assert rows[0][0] == "Alternative Candidates"
+    assert rows[1][0] == ""
+    assert rows[2][0] == ""
+    assert rows[2][1].endswith("...")
+    assert rows[0][2] == "Alternative Candidates"
+    assert rows[1][2] == "Alternative Candidates#1"
+
+
+def test_wrapped_detail_rows_break_long_tokens_without_wrapping_short_values():
+    long_token = "learning-profile-" + ("abcdef" * 12)
+    rows = gui_app._wrapped_detail_rows(
+        [
+            ("Status", "preview"),
+            ("Learning Profile ID", long_token),
+        ],
+        width=24,
+        max_lines=4,
+    )
+
+    assert rows[0] == ("Status", "preview", "Status")
+    assert rows[1][0] == "Learning Profile ID"
+    assert rows[2][0] == ""
+    assert all(len(row[1]) <= 24 for row in rows)
+
+
+def test_ai_details_table_wraps_long_metadata_and_preserves_cursor_selection():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.AIDetailsTable()
+            yield self.details
+
+    long_value = "nginx 0.42, " + ("shared_tls_metadata " * 4) + "apache 0.31, caddy 0.18"
+    ai_row = {
+        "provider": "heuristic",
+        "model": "risk-v1",
+        "alternative_candidates": long_value,
+        "candidate_reasoning": "nginx: " + ("process and service metadata " * 5),
+        "supporting_evidence": "nginx: process:nginx, service:https, port:443, protocol:tls",
+        "missing_evidence": "nginx: fingerprint, historical confirmation, expected service review",
+        "operator_next_steps": "Review service name, process owner, expected-service allowlist, and historical observations.",
+        "learning_profile_id": "learning-profile-" + ("abcdef" * 8),
+    }
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            details = app.query_one(gui_app.AIDetailsTable)
+            details.update_details(ai_row)
+            await pilot.pause()
+            rendered = [details.get_row_at(index) for index in range(details.row_count)]
+            assert any(row[0] == "Alternative Candidates" for row in rendered)
+            assert any(row[0] == "" and "apache" in row[1] for row in rendered)
+            assert any(row[0] == "Learning Profile ID" for row in rendered)
+
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            details.move_cursor(row=continuation_index, column=0)
+            details.update_details(ai_row)
+            await pilot.pause()
+            assert details.cursor_row == continuation_index
+            assert details.get_row_at(details.cursor_row)[0] == ""
+
+    asyncio.run(run_case())
+
+
 def test_ai_tables_handle_empty_metadata_without_crashing():
     class Harness(gui_app.App):
         def compose(self):
@@ -1576,6 +1645,45 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
 
     placeholders = dict(gui_app._finding_detail_rows(None))
     assert all(value == "-" for value in placeholders.values())
+
+
+def test_risk_details_table_wraps_long_metadata_and_preserves_cursor_selection():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.FindingDetailsTable()
+            yield self.details
+
+    finding = {
+        "asset": "worker-1",
+        "service": "TCP/443",
+        "alternative_candidates": "nginx 0.42, " + ("shared_tls_metadata " * 4) + "apache 0.31, caddy 0.18",
+        "candidate_reasoning": "nginx: " + ("process and service metadata " * 5),
+        "supporting_evidence": "nginx: process:nginx, service:https, port:443, protocol:tls",
+        "missing_evidence": "nginx: fingerprint, historical confirmation, expected service review",
+        "operator_next_steps": "Review service name, process owner, expected-service allowlist, and historical observations.",
+        "learning_profile_id": "learning-profile-" + ("123456" * 8),
+    }
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            details = app.query_one(gui_app.FindingDetailsTable)
+            details.update_details(finding)
+            await pilot.pause()
+            rendered = [details.get_row_at(index) for index in range(details.row_count)]
+            assert any(row[0] == "Alternative Candidates" for row in rendered)
+            assert any(row[0] == "" and "apache" in row[1] for row in rendered)
+            assert any(row[0] == "Operator Next Steps" for row in rendered)
+            assert any(row[0] == "Learning Profile ID" for row in rendered)
+
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            details.move_cursor(row=continuation_index, column=0)
+            details.update_details(finding)
+            await pilot.pause()
+            assert details.cursor_row == continuation_index
+            assert details.get_row_at(details.cursor_row)[0] == ""
+
+    asyncio.run(run_case())
 
 
 def test_risk_finding_correlation_marks_related_feed_and_timeline_rows():

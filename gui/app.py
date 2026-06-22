@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from textwrap import wrap
 from typing import Any, Dict, List, Optional
 from urllib import error, request
 
@@ -92,6 +93,34 @@ def _short_text(value: Any, *, limit: int = 72) -> str:
     if len(text) <= limit:
         return text
     return text[: max(limit - 3, 1)].rstrip() + "..."
+
+
+DETAIL_WRAP_WIDTH = 56
+DETAIL_WRAP_MAX_LINES = 4
+
+
+def _wrapped_detail_rows(
+    rows: List[tuple[str, str]],
+    *,
+    width: int = DETAIL_WRAP_WIDTH,
+    max_lines: int = DETAIL_WRAP_MAX_LINES,
+) -> List[tuple[str, str, str]]:
+    rendered: List[tuple[str, str, str]] = []
+    for field, value in rows:
+        text = " ".join(str(value or "-").replace("\n", " ").replace("\r", " ").split()) or "-"
+        if text == "-" or len(text) <= width:
+            rendered.append((field, text, field))
+            continue
+        pieces = wrap(text, width=width, break_long_words=True, break_on_hyphens=False) or [text]
+        truncated = len(pieces) > max_lines
+        if truncated:
+            pieces = pieces[:max_lines]
+            pieces[-1] = pieces[-1][: max(width - 3, 1)].rstrip() + "..."
+        for index, piece in enumerate(pieces):
+            row_field = field if index == 0 else ""
+            key = field if index == 0 else f"{field}#{index}"
+            rendered.append((row_field, piece, key))
+    return rendered
 
 
 def _format_risk_score(value: Any) -> str:
@@ -3388,8 +3417,8 @@ class FindingDetailsTable(DataTable):
     def update_details(self, finding: Dict[str, str] | None) -> None:
         selection = _capture_table_selection(self)
         self.clear()
-        for field, value in _finding_detail_rows(finding):
-            self.add_row(field, value, key=field)
+        for field, value, key in _wrapped_detail_rows(_finding_detail_rows(finding)):
+            self.add_row(field, value, key=key)
         _restore_table_selection(self, selection)
 
 
@@ -4051,8 +4080,8 @@ class AIDetailsTable(DataTable):
     def update_details(self, ai_row: Dict[str, str] | None) -> None:
         selection = _capture_table_selection(self)
         self.clear()
-        for field, value in _ai_detail_rows(ai_row):
-            self.add_row(field, value, key=field)
+        for field, value, key in _wrapped_detail_rows(_ai_detail_rows(ai_row)):
+            self.add_row(field, value, key=key)
         _restore_table_selection(self, selection)
 
 
