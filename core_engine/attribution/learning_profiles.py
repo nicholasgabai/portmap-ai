@@ -11,6 +11,7 @@ from core_engine.attribution.confidence_models import ATTRIBUTION_SAFETY_FLAGS
 
 LEARNING_PROFILE_RECORD_VERSION = 1
 MAX_CONFIDENCE_HISTORY = 24
+MAX_OBSERVATION_RECORDS = 100
 
 
 class LearningProfileError(ValueError):
@@ -169,8 +170,271 @@ def update_learning_profile_store(
     return profiles
 
 
+def build_learning_profile_history(
+    observation: dict[str, Any],
+    *,
+    classification_model: dict[str, Any] | None = None,
+    generated_at: str | None = None,
+) -> dict[str, Any]:
+    profile = build_learning_profile(
+        observation,
+        classification_model=classification_model,
+        generated_at=generated_at,
+    )
+    observed_at = _profile_timestamp(observation, generated_at=generated_at)
+    record = _historical_observation_record(
+        observation,
+        profile=profile,
+        classification_model=classification_model,
+        observed_at=observed_at,
+    )
+    history = {
+        "record_type": "application_learning_profile_history",
+        "record_version": LEARNING_PROFILE_RECORD_VERSION,
+        "profile_id": profile["profile_id"],
+        "profile_name": profile["profile_name"],
+        "first_observed": _safe_time(observation.get("first_seen")) or observed_at,
+        "last_observed": _safe_time(observation.get("last_seen")) or observed_at,
+        "observation_count": profile["observation_count"],
+        "historical_ports": profile["observed_ports"],
+        "historical_protocols": profile["observed_protocols"],
+        "historical_services": profile["observed_services"],
+        "historical_processes": profile["observed_processes"],
+        "observation_timestamps": [observed_at],
+        "observation_records": [record],
+        "historical_summary": {},
+        "metadata_only": True,
+        "read_only": True,
+        "training_performed": False,
+        "model_retrained": False,
+        "confidence_evolution_performed": False,
+        "adaptive_scoring_performed": False,
+        "automated_action": False,
+        **ATTRIBUTION_SAFETY_FLAGS,
+    }
+    history["historical_summary"] = summarize_learning_profile_history(history)
+    return history
+
+
+def append_learning_profile_history(
+    history: dict[str, Any] | None,
+    observation: dict[str, Any],
+    *,
+    classification_model: dict[str, Any] | None = None,
+    generated_at: str | None = None,
+) -> dict[str, Any]:
+    if history is None:
+        return build_learning_profile_history(
+            observation,
+            classification_model=classification_model,
+            generated_at=generated_at,
+        )
+    if not isinstance(history, dict):
+        raise LearningProfileError("history must be an object")
+    current = _normalize_history(history)
+    incoming = build_learning_profile_history(
+        observation,
+        classification_model=classification_model,
+        generated_at=generated_at,
+    )
+    current["first_observed"] = _earliest_time(current.get("first_observed"), incoming.get("first_observed"))
+    current["last_observed"] = _latest_time(current.get("last_observed"), incoming.get("last_observed"))
+    current["observation_count"] = int(current.get("observation_count") or 0) + int(
+        incoming.get("observation_count") or 0
+    )
+    current["historical_ports"] = _merge_sorted(current.get("historical_ports"), incoming.get("historical_ports"), numeric=True)
+    current["historical_protocols"] = _merge_sorted(current.get("historical_protocols"), incoming.get("historical_protocols"))
+    current["historical_services"] = _merge_sorted(current.get("historical_services"), incoming.get("historical_services"))
+    current["historical_processes"] = _merge_sorted(current.get("historical_processes"), incoming.get("historical_processes"))
+    current["observation_timestamps"] = _timestamp_history(
+        [*list(current.get("observation_timestamps") or []), *list(incoming.get("observation_timestamps") or [])]
+    )
+    current["observation_records"] = _observation_records(
+        [*list(current.get("observation_records") or []), *list(incoming.get("observation_records") or [])]
+    )
+    current["historical_summary"] = summarize_learning_profile_history(current)
+    return current
+
+
+def update_learning_profile_histories(
+    histories: Iterable[dict[str, Any]] | None,
+    observation: dict[str, Any],
+    *,
+    classification_model: dict[str, Any] | None = None,
+    generated_at: str | None = None,
+) -> list[dict[str, Any]]:
+    rows = [_normalize_history(row) for row in histories or [] if isinstance(row, dict)]
+    incoming = build_learning_profile_history(
+        observation,
+        classification_model=classification_model,
+        generated_at=generated_at,
+    )
+    for index, row in enumerate(rows):
+        if row.get("profile_id") == incoming["profile_id"]:
+            rows[index] = append_learning_profile_history(
+                row,
+                observation,
+                classification_model=classification_model,
+                generated_at=generated_at,
+            )
+            break
+    else:
+        rows.append(incoming)
+    return sorted(rows, key=lambda item: (str(item.get("profile_name") or ""), str(item.get("profile_id") or "")))
+
+
+def save_learning_profile_histories(path: str | Path, histories: Iterable[dict[str, Any]]) -> dict[str, Any]:
+    target = Path(path)
+    payload = {
+        "record_type": "application_learning_profile_history_store",
+        "record_version": LEARNING_PROFILE_RECORD_VERSION,
+        "histories": sorted(
+            [_normalize_history(row) for row in histories or [] if isinstance(row, dict)],
+            key=lambda item: (str(item.get("profile_name") or ""), str(item.get("profile_id") or "")),
+        ),
+        "metadata_only": True,
+        "read_only": True,
+        "external_system": False,
+        "cloud_dependency": False,
+        **ATTRIBUTION_SAFETY_FLAGS,
+    }
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str))
+    return payload
+
+
+def load_learning_profile_histories(path: str | Path) -> list[dict[str, Any]]:
+    source = Path(path)
+    if not source.exists():
+        return []
+    try:
+        payload = json.loads(source.read_text())
+    except Exception as exc:
+        raise LearningProfileError(f"could not load learning profile history: {exc}") from exc
+    rows = payload.get("histories") if isinstance(payload, dict) else payload
+    if not isinstance(rows, list):
+        raise LearningProfileError("learning profile history store must contain a history list")
+    return [_normalize_history(row) for row in rows if isinstance(row, dict)]
+
+
+def update_learning_profile_history_store(
+    path: str | Path,
+    observation: dict[str, Any],
+    *,
+    classification_model: dict[str, Any] | None = None,
+    generated_at: str | None = None,
+) -> list[dict[str, Any]]:
+    histories = update_learning_profile_histories(
+        load_learning_profile_histories(path),
+        observation,
+        classification_model=classification_model,
+        generated_at=generated_at,
+    )
+    save_learning_profile_histories(path, histories)
+    return histories
+
+
+def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[str, Any]:
+    row = _normalize_history(history) if isinstance(history, dict) and history.get("historical_summary") is None else dict(history or {})
+    first_observed = _safe_time(row.get("first_observed"))
+    last_observed = _safe_time(row.get("last_observed"))
+    return {
+        "profile_id": _safe_label(row.get("profile_id")),
+        "profile_name": _safe_label(row.get("profile_name")) or "unknown_application",
+        "historical_observations": str(max(0, _safe_int(row.get("observation_count"), default=0))),
+        "profile_age": _profile_age(first_observed, last_observed),
+        "first_observed": first_observed or "-",
+        "last_observed": last_observed or "-",
+        "historical_ports": _merge_sorted(row.get("historical_ports"), [], numeric=True),
+        "historical_protocols": _merge_sorted(row.get("historical_protocols"), []),
+        "historical_services": _merge_sorted(row.get("historical_services"), []),
+        "historical_processes": _merge_sorted(row.get("historical_processes"), []),
+        "observation_timestamp_count": str(len(_timestamp_history(row.get("observation_timestamps") or []))),
+        "metadata_only": True,
+        "read_only": True,
+    }
+
+
 def deterministic_learning_profile_json(record: dict[str, Any]) -> str:
     return json.dumps(record, sort_keys=True, separators=(",", ":"), default=str)
+
+
+def _normalize_history(history: dict[str, Any]) -> dict[str, Any]:
+    row = dict(history)
+    name = _safe_label(row.get("profile_name")) or "unknown_application"
+    row.setdefault("record_type", "application_learning_profile_history")
+    row.setdefault("record_version", LEARNING_PROFILE_RECORD_VERSION)
+    row.setdefault("profile_name", name)
+    row.setdefault("profile_id", _profile_id(name))
+    row["first_observed"] = _safe_time(row.get("first_observed")) or _safe_time(row.get("first_seen"))
+    row["last_observed"] = _safe_time(row.get("last_observed")) or _safe_time(row.get("last_seen"))
+    row["observation_count"] = max(0, _safe_int(row.get("observation_count"), default=0))
+    row["historical_ports"] = _merge_sorted(row.get("historical_ports") or row.get("observed_ports"), [], numeric=True)
+    row["historical_protocols"] = _merge_sorted(row.get("historical_protocols") or row.get("observed_protocols"), [])
+    row["historical_services"] = _merge_sorted(row.get("historical_services") or row.get("observed_services"), [])
+    row["historical_processes"] = _merge_sorted(row.get("historical_processes") or row.get("observed_processes"), [])
+    row["observation_timestamps"] = _timestamp_history(row.get("observation_timestamps") or [])
+    row["observation_records"] = _observation_records(row.get("observation_records") or [])
+    row["historical_summary"] = summarize_learning_profile_history({**row, "historical_summary": {}})
+    row.setdefault("metadata_only", True)
+    row.setdefault("read_only", True)
+    row.setdefault("training_performed", False)
+    row.setdefault("model_retrained", False)
+    row.setdefault("confidence_evolution_performed", False)
+    row.setdefault("adaptive_scoring_performed", False)
+    row.setdefault("automated_action", False)
+    for key, value in ATTRIBUTION_SAFETY_FLAGS.items():
+        row.setdefault(key, value)
+    return row
+
+
+def _historical_observation_record(
+    observation: dict[str, Any],
+    *,
+    profile: dict[str, Any],
+    classification_model: dict[str, Any] | None,
+    observed_at: str,
+) -> dict[str, Any]:
+    return {
+        "observed_at": observed_at,
+        "profile_id": profile["profile_id"],
+        "profile_name": profile["profile_name"],
+        "observation_count": profile["observation_count"],
+        "ports": list(profile.get("observed_ports") or []),
+        "protocols": list(profile.get("observed_protocols") or []),
+        "services": list(profile.get("observed_services") or []),
+        "processes": list(profile.get("observed_processes") or []),
+        "confidence": _profile_confidence(observation, classification_model),
+        "metadata_only": True,
+        "read_only": True,
+    }
+
+
+def _timestamp_history(values: Iterable[Any]) -> list[str]:
+    return sorted({timestamp for value in values if (timestamp := _safe_time(value))})
+
+
+def _observation_records(values: Iterable[Any]) -> list[dict[str, Any]]:
+    rows = []
+    for value in values:
+        if not isinstance(value, dict):
+            continue
+        row = {
+            "observed_at": _safe_time(value.get("observed_at")),
+            "profile_id": _safe_label(value.get("profile_id")),
+            "profile_name": _safe_label(value.get("profile_name")) or "unknown_application",
+            "observation_count": max(1, _safe_int(value.get("observation_count"), default=1)),
+            "ports": _merge_sorted(value.get("ports"), [], numeric=True),
+            "protocols": _merge_sorted(value.get("protocols"), []),
+            "services": _merge_sorted(value.get("services"), []),
+            "processes": _merge_sorted(value.get("processes"), []),
+            "confidence": _bounded_float(value.get("confidence")),
+            "metadata_only": True,
+            "read_only": True,
+        }
+        rows.append(row)
+    rows.sort(key=lambda item: (str(item.get("observed_at") or ""), str(item.get("profile_id") or "")))
+    return rows[-MAX_OBSERVATION_RECORDS:]
 
 
 def _normalize_profile(profile: dict[str, Any]) -> dict[str, Any]:
@@ -245,6 +509,34 @@ def _earliest_time(left: Any, right: Any) -> str:
 def _latest_time(left: Any, right: Any) -> str:
     values = [value for value in (_safe_time(left), _safe_time(right)) if value]
     return max(values) if values else ""
+
+
+def _profile_age(first_observed: Any, last_observed: Any) -> str:
+    first = _parse_time(first_observed)
+    last = _parse_time(last_observed)
+    if first is None or last is None:
+        return "-"
+    seconds = max(0, int((last - first).total_seconds()))
+    days = seconds // 86_400
+    if days:
+        return f"{days}d"
+    hours = seconds // 3_600
+    if hours:
+        return f"{hours}h"
+    minutes = seconds // 60
+    if minutes:
+        return f"{minutes}m"
+    return "0m"
+
+
+def _parse_time(value: Any) -> datetime | None:
+    text = _safe_time(value)
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def _observation_count(observation: dict[str, Any]) -> int:

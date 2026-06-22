@@ -353,6 +353,10 @@ Phase 172 is treated as a multi-stage phase for Continuous Learning Profiles wit
 
 Implementation note: Phase 172.0 adds deterministic metadata-only application learning profile structures for repeated observations over time, including profile identity, first and last seen timestamps, observation counts, observed ports, protocols, services, processes, confidence history, and stability score. Persistence uses existing local file patterns only, and profile metadata can appear in existing AI and Risk details when available. This framework does not perform online learning, model mutation, packet inspection, payload analysis, remediation, enforcement, blocking, autonomous actions, or external AI calls.
 
+#### 172.1 - Historical Observation Storage (Completed)
+
+Implementation note: Phase 172.1 extends learning profiles with deterministic local historical observation storage for profile identities, first and last observed timestamps, observation counts, historical ports, protocols, services, processes, observation timestamps, and compact history summaries. The metadata can appear in existing AI and Risk detail surfaces without layout changes. This storage layer remains local, read-only from an analysis perspective, metadata-only, and does not perform online learning, model retraining, confidence evolution, adaptive scoring, packet inspection, payload analysis, remediation, enforcement, blocking, autonomous actions, or external AI services.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

@@ -5,9 +5,11 @@ import pytest
 from core_engine.attribution import (
     ApplicationAttributionError,
     SignatureLearningError,
+    append_learning_profile_history,
     build_application_attribution_report,
     build_behavioral_signature_record,
     build_learning_profile,
+    build_learning_profile_history,
     build_probable_application_attributions,
     build_probabilistic_application_model,
     build_signature_learning_report,
@@ -16,10 +18,15 @@ from core_engine.attribution import (
     deterministic_learning_profile_json,
     deterministic_probabilistic_application_model_json,
     deterministic_signature_json,
+    load_learning_profile_histories,
     load_learning_profiles,
+    save_learning_profile_histories,
     save_learning_profiles,
     score_application_attribution_confidence,
+    summarize_learning_profile_history,
     update_learning_profile,
+    update_learning_profile_histories,
+    update_learning_profile_history_store,
     update_learning_profile_store,
     update_learning_profiles,
 )
@@ -538,6 +545,156 @@ def test_learning_profile_persistence_round_trip(tmp_path):
     assert updated[0]["observation_count"] == 2
     assert updated[0]["observed_ports"] == [443, 8443]
     assert load_learning_profiles(path) == updated
+
+
+def test_learning_profile_history_creation_uses_existing_metadata_only():
+    model = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-history-postgresql",
+            "program": "postgres",
+            "service_name": "postgresql",
+            "protocol": "tcp",
+            "port": 5432,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-01T00:05:00+00:00",
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    history = model["learning_profile_history"]
+
+    assert history["record_type"] == "application_learning_profile_history"
+    assert history["profile_name"] == "postgresql"
+    assert history["first_observed"] == "2026-01-01T00:00:00+00:00"
+    assert history["last_observed"] == "2026-01-01T00:05:00+00:00"
+    assert history["observation_count"] == 1
+    assert history["historical_ports"] == [5432]
+    assert history["historical_protocols"] == ["tcp"]
+    assert history["historical_services"] == ["postgresql"]
+    assert history["historical_processes"] == ["postgres"]
+    assert history["observation_timestamps"] == [FIXED_TIME]
+    assert history["observation_records"][0]["metadata_only"] is True
+    assert history["model_retrained"] is False
+    assert history["confidence_evolution_performed"] is False
+    assert history["adaptive_scoring_performed"] is False
+    assert history["raw_payload_stored"] is False
+    assert history["historical_summary"]["historical_observations"] == "1"
+    assert history["historical_summary"]["profile_age"] == "5m"
+
+
+def test_learning_profile_history_repeated_observations_preserve_and_merge_metadata():
+    first_observation = {
+        "program": "redis-server",
+        "service_name": "redis",
+        "protocol": "tcp",
+        "port": 6379,
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-01T00:01:00+00:00",
+        "source_mode": "live",
+    }
+    second_observation = {
+        "program": "redis-server",
+        "service_name": "redis-cache",
+        "protocol": "tcp",
+        "port": 6380,
+        "occurrence_count": 2,
+        "last_seen": "2026-01-01T00:10:00+00:00",
+        "source_mode": "live",
+    }
+    first_model = build_probabilistic_application_model(first_observation, generated_at=FIXED_TIME)
+    second_model = build_probabilistic_application_model(
+        second_observation,
+        generated_at="2026-01-01T00:10:00+00:00",
+    )
+
+    history = append_learning_profile_history(
+        first_model["learning_profile_history"],
+        second_observation,
+        classification_model=second_model,
+        generated_at="2026-01-01T00:10:00+00:00",
+    )
+
+    assert history["profile_name"] == "redis"
+    assert history["first_observed"] == "2026-01-01T00:00:00+00:00"
+    assert history["last_observed"] == "2026-01-01T00:10:00+00:00"
+    assert history["observation_count"] == 3
+    assert history["historical_ports"] == [6379, 6380]
+    assert history["historical_protocols"] == ["tcp"]
+    assert history["historical_services"] == ["redis", "redis-cache"]
+    assert history["historical_processes"] == ["redis-server"]
+    assert history["observation_timestamps"] == [FIXED_TIME, "2026-01-01T00:10:00+00:00"]
+    assert len(history["observation_records"]) == 2
+    assert history["historical_summary"]["historical_observations"] == "3"
+    assert history["historical_summary"]["profile_age"] == "10m"
+
+
+def test_learning_profile_history_collection_updates_by_profile_identity():
+    postgres_model = build_probabilistic_application_model(
+        {"program": "postgres", "service_name": "postgresql", "protocol": "tcp", "port": 5432, "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+    redis_model = build_probabilistic_application_model(
+        {"program": "redis-server", "service_name": "redis", "protocol": "tcp", "port": 6379, "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+
+    histories = update_learning_profile_histories(
+        [],
+        {"program": "postgres", "port": 5432, "source_mode": "live"},
+        classification_model=postgres_model,
+        generated_at=FIXED_TIME,
+    )
+    histories = update_learning_profile_histories(
+        histories,
+        {"program": "redis-server", "port": 6379, "source_mode": "live"},
+        classification_model=redis_model,
+        generated_at=FIXED_TIME,
+    )
+    histories = update_learning_profile_histories(
+        histories,
+        {"program": "postgres", "port": 5433, "last_seen": "2026-01-01T00:12:00+00:00", "source_mode": "live"},
+        classification_model=postgres_model,
+        generated_at="2026-01-01T00:12:00+00:00",
+    )
+
+    assert [history["profile_name"] for history in histories] == ["postgresql", "redis"]
+    postgresql = next(history for history in histories if history["profile_name"] == "postgresql")
+    assert postgresql["observation_count"] == 2
+    assert postgresql["historical_ports"] == [5432, 5433]
+    assert postgresql["last_observed"] == "2026-01-01T00:12:00+00:00"
+
+
+def test_learning_profile_history_persistence_round_trip(tmp_path):
+    path = tmp_path / "profile-history.json"
+    model = build_probabilistic_application_model(
+        {"program": "nginx", "service_name": "https", "protocol": "tls", "port": 443, "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+    history = build_learning_profile_history(
+        {"program": "nginx", "service_name": "https", "protocol": "tls", "port": 443, "source_mode": "live"},
+        classification_model=model,
+        generated_at=FIXED_TIME,
+    )
+
+    payload = save_learning_profile_histories(path, [history])
+    loaded = load_learning_profile_histories(path)
+    updated = update_learning_profile_history_store(
+        path,
+        {"program": "nginx", "service_name": "https", "protocol": "tls", "port": 8443, "source_mode": "live"},
+        classification_model=model,
+        generated_at="2026-01-01T00:10:00+00:00",
+    )
+    summary = summarize_learning_profile_history(updated[0])
+
+    assert payload["record_type"] == "application_learning_profile_history_store"
+    assert payload["external_system"] is False
+    assert payload["cloud_dependency"] is False
+    assert loaded == [history]
+    assert updated[0]["observation_count"] == 2
+    assert updated[0]["historical_ports"] == [443, 8443]
+    assert updated[0]["observation_timestamps"] == [FIXED_TIME, "2026-01-01T00:10:00+00:00"]
+    assert summary["historical_observations"] == "2"
+    assert load_learning_profile_histories(path) == updated
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
