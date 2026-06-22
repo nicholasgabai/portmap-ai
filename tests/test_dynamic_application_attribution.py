@@ -816,6 +816,123 @@ def test_learning_profile_history_stability_increases_with_profile_age():
     assert aged["historical_summary"]["stability_label"] in {"stable", "highly_stable"}
 
 
+def test_learning_profile_history_reports_no_drift_for_repeated_consistent_observations():
+    model = {"top_classification": "postgresql", "confidence": 0.82}
+    first = {
+        "program": "postgres",
+        "service_name": "postgresql",
+        "protocol": "tcp",
+        "port": 5432,
+        "service_fingerprint": "postgresql_server",
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-01T00:00:00+00:00",
+        "source_mode": "live",
+    }
+    history = build_learning_profile_history(first, classification_model=model, generated_at="2026-01-01T00:00:00+00:00")
+    history = append_learning_profile_history(
+        history,
+        {**first, "last_seen": "2026-01-02T00:00:00+00:00"},
+        classification_model=model,
+        generated_at="2026-01-02T00:00:00+00:00",
+    )
+
+    assert history["historical_summary"]["drift_score"] == 0.0
+    assert history["historical_summary"]["drift_label"] == "none"
+    assert history["drift_label"] == "none"
+
+
+def test_learning_profile_history_detects_classification_drift():
+    first = {
+        "program": "postgres",
+        "service_name": "postgresql",
+        "protocol": "tcp",
+        "port": 5432,
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-01T00:00:00+00:00",
+        "source_mode": "live",
+    }
+    history = build_learning_profile_history(
+        first,
+        classification_model={"top_classification": "postgresql", "confidence": 0.84},
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+    for index, classification in enumerate(("mysql", "mongodb", "redis"), start=2):
+        history = append_learning_profile_history(
+            history,
+            {
+                "program": classification,
+                "service_name": classification,
+                "protocol": "tcp",
+                "port": 5000 + index,
+                "last_seen": f"2026-01-0{index}T00:00:00+00:00",
+                "source_mode": "live",
+            },
+            classification_model={"top_classification": classification, "confidence": 0.84},
+            generated_at=f"2026-01-0{index}T00:00:00+00:00",
+        )
+
+    assert history["historical_summary"]["drift_score"] >= 0.35
+    assert history["historical_summary"]["drift_label"] in {"moderate", "high"}
+
+
+def test_learning_profile_history_detects_confidence_drift():
+    first = {
+        "program": "nginx",
+        "service_name": "https",
+        "protocol": "tls",
+        "port": 443,
+        "last_seen": "2026-01-01T00:00:00+00:00",
+        "source_mode": "live",
+    }
+    stable = build_learning_profile_history(
+        first,
+        classification_model={"top_classification": "nginx", "confidence": 0.8},
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+    fluctuating = append_learning_profile_history(
+        stable,
+        {**first, "last_seen": "2026-01-01T01:00:00+00:00"},
+        classification_model={"top_classification": "nginx", "confidence": 0.15},
+        generated_at="2026-01-01T01:00:00+00:00",
+    )
+
+    assert fluctuating["historical_summary"]["drift_score"] > stable["historical_summary"]["drift_score"]
+    assert fluctuating["historical_summary"]["drift_label"] in {"low", "moderate"}
+
+
+def test_learning_profile_history_detects_metadata_drift_in_ports_services_protocols_and_fingerprints():
+    model = {"top_classification": "nginx", "confidence": 0.75}
+    first = {
+        "program": "nginx",
+        "service_name": "https",
+        "protocol": "tls",
+        "port": 443,
+        "service_fingerprint": "nginx_tls",
+        "last_seen": "2026-01-01T00:00:00+00:00",
+        "source_mode": "live",
+    }
+    history = build_learning_profile_history(first, classification_model=model, generated_at="2026-01-01T00:00:00+00:00")
+    history = append_learning_profile_history(
+        history,
+        {
+            "program": "nginx",
+            "service_name": "http",
+            "protocol": "http",
+            "port": 8080,
+            "service_fingerprint": "nginx_http_alt",
+            "last_seen": "2026-01-01T01:00:00+00:00",
+            "source_mode": "live",
+        },
+        classification_model=model,
+        generated_at="2026-01-01T01:00:00+00:00",
+    )
+
+    assert history["historical_summary"]["drift_score"] >= 0.30
+    assert history["historical_summary"]["drift_label"] in {"low", "moderate", "high"}
+    assert history["observation_records"][0]["fingerprints"] == ["nginx_tls"]
+    assert history["observation_records"][1]["fingerprints"] == ["nginx_http_alt"]
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {

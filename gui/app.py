@@ -1168,6 +1168,8 @@ def _active_risk_finding_rows(
                 "last_observed": _learning_history_text_field(classification, "last_observed", limit=32),
                 "stability_score": _learning_history_stability_score(classification),
                 "stability_label": _learning_history_text_field(classification, "stability_label", limit=24),
+                "drift_score": _learning_history_drift_score(classification),
+                "drift_label": _learning_history_text_field(classification, "drift_label", limit=24),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -1226,6 +1228,8 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Last Observed", row.get("last_observed", "-")),
         ("Stability Score", row.get("stability_score", "-")),
         ("Stability Label", row.get("stability_label", "-")),
+        ("Drift Score", row.get("drift_score", "-")),
+        ("Drift Label", row.get("drift_label", "-")),
         ("Score", row.get("score", "-")),
         ("Action", row.get("action", "-")),
         ("Time", row.get("time", "-")),
@@ -2487,6 +2491,10 @@ def _learning_history_stability_score(model: Dict[str, Any]) -> str:
     return _format_probability(_classification_history_summary(model).get("stability_score"))
 
 
+def _learning_history_drift_score(model: Dict[str, Any]) -> str:
+    return _format_probability(_classification_history_summary(model).get("drift_score"))
+
+
 def _is_ai_event(event: Dict[str, Any]) -> bool:
     if any(
         event.get(key) not in {"", "-", None}
@@ -2574,6 +2582,8 @@ def _ai_provider_model_rows(
                 "last_observed": "-",
                 "stability_score": "-",
                 "stability_label": "-",
+                "drift_score": "-",
+                "drift_label": "-",
             },
         )
         row["decisions"] += 1
@@ -2619,6 +2629,8 @@ def _ai_provider_model_rows(
             row["last_observed"] = _learning_history_text_field(model_record, "last_observed", limit=32)
             row["stability_score"] = _learning_history_stability_score(model_record)
             row["stability_label"] = _learning_history_text_field(model_record, "stability_label", limit=24)
+            row["drift_score"] = _learning_history_drift_score(model_record)
+            row["drift_label"] = _learning_history_text_field(model_record, "drift_label", limit=24)
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -2659,6 +2671,8 @@ def _ai_provider_model_rows(
             "last_observed": row["last_observed"],
             "stability_score": row["stability_score"],
             "stability_label": row["stability_label"],
+            "drift_score": row["drift_score"],
+            "drift_label": row["drift_label"],
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"]]),
@@ -2713,6 +2727,8 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Last Observed", row.get("last_observed", "-")),
         ("Stability Score", row.get("stability_score", "-")),
         ("Stability Label", row.get("stability_label", "-")),
+        ("Drift Score", row.get("drift_score", "-")),
+        ("Drift Label", row.get("drift_label", "-")),
         ("Status", row.get("status", "-")),
         ("Decisions", row.get("decisions", "-")),
         ("Updated", row.get("updated", "-")),

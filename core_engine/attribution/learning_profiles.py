@@ -215,6 +215,8 @@ def build_learning_profile_history(
     history["historical_summary"] = summarize_learning_profile_history(history)
     history["stability_score"] = history["historical_summary"]["stability_score"]
     history["stability_label"] = history["historical_summary"]["stability_label"]
+    history["drift_score"] = history["historical_summary"]["drift_score"]
+    history["drift_label"] = history["historical_summary"]["drift_label"]
     return history
 
 
@@ -257,6 +259,8 @@ def append_learning_profile_history(
     current["historical_summary"] = summarize_learning_profile_history(current)
     current["stability_score"] = current["historical_summary"]["stability_score"]
     current["stability_label"] = current["historical_summary"]["stability_label"]
+    current["drift_score"] = current["historical_summary"]["drift_score"]
+    current["drift_label"] = current["historical_summary"]["drift_label"]
     return current
 
 
@@ -343,6 +347,7 @@ def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[s
     first_observed = _safe_time(row.get("first_observed"))
     last_observed = _safe_time(row.get("last_observed"))
     stability = _history_stability(row)
+    drift = _history_drift(row)
     return {
         "profile_id": _safe_label(row.get("profile_id")),
         "profile_name": _safe_label(row.get("profile_name")) or "unknown_application",
@@ -352,6 +357,8 @@ def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[s
         "last_observed": last_observed or "-",
         "stability_score": stability["stability_score"],
         "stability_label": stability["stability_label"],
+        "drift_score": drift["drift_score"],
+        "drift_label": drift["drift_label"],
         "historical_ports": _merge_sorted(row.get("historical_ports"), [], numeric=True),
         "historical_protocols": _merge_sorted(row.get("historical_protocols"), []),
         "historical_services": _merge_sorted(row.get("historical_services"), []),
@@ -385,6 +392,8 @@ def _normalize_history(history: dict[str, Any]) -> dict[str, Any]:
     row["historical_summary"] = summarize_learning_profile_history({**row, "historical_summary": {}})
     row["stability_score"] = row["historical_summary"]["stability_score"]
     row["stability_label"] = row["historical_summary"]["stability_label"]
+    row["drift_score"] = row["historical_summary"]["drift_score"]
+    row["drift_label"] = row["historical_summary"]["drift_label"]
     row.setdefault("metadata_only", True)
     row.setdefault("read_only", True)
     row.setdefault("training_performed", False)
@@ -413,6 +422,7 @@ def _historical_observation_record(
         "protocols": list(profile.get("observed_protocols") or []),
         "services": list(profile.get("observed_services") or []),
         "processes": list(profile.get("observed_processes") or []),
+        "fingerprints": _observed_fingerprints(observation),
         "confidence": _profile_confidence(observation, classification_model),
         "metadata_only": True,
         "read_only": True,
@@ -437,6 +447,7 @@ def _observation_records(values: Iterable[Any]) -> list[dict[str, Any]]:
             "protocols": _merge_sorted(value.get("protocols"), []),
             "services": _merge_sorted(value.get("services"), []),
             "processes": _merge_sorted(value.get("processes"), []),
+            "fingerprints": _merge_sorted(value.get("fingerprints"), []),
             "confidence": _bounded_float(value.get("confidence")),
             "metadata_only": True,
             "read_only": True,
@@ -571,6 +582,34 @@ def _history_stability(history: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _history_drift(history: dict[str, Any]) -> dict[str, Any]:
+    records = [row for row in history.get("observation_records") or [] if isinstance(row, dict)]
+    classification_drift = 1.0 - _classification_consistency(records) if len(records) > 1 else 0.0
+    confidence_drift = _confidence_drift(records)
+    metadata_drift = _metadata_drift(records)
+    score = round(
+        min(
+            1.0,
+            max(
+                0.0,
+                (classification_drift * 0.40)
+                + (confidence_drift * 0.30)
+                + (metadata_drift * 0.30),
+            ),
+        ),
+        2,
+    )
+    return {
+        "drift_score": score,
+        "drift_label": _drift_label(score),
+        "drift_factors": {
+            "classification_drift": round(classification_drift, 3),
+            "confidence_drift": round(confidence_drift, 3),
+            "metadata_drift": round(metadata_drift, 3),
+        },
+    }
+
+
 def _classification_consistency(records: list[dict[str, Any]]) -> float:
     if not records:
         return 0.0
@@ -589,6 +628,35 @@ def _confidence_consistency(records: list[dict[str, Any]]) -> float:
     if len(values) == 1:
         return 1.0
     return max(0.0, 1.0 - (max(values) - min(values)))
+
+
+def _confidence_drift(records: list[dict[str, Any]]) -> float:
+    values = [_bounded_float(record.get("confidence")) for record in records]
+    if len(values) <= 1:
+        return 0.0
+    return max(0.0, min(1.0, max(values) - min(values)))
+
+
+def _metadata_drift(records: list[dict[str, Any]]) -> float:
+    if len(records) <= 1:
+        return 0.0
+    denominator = max(len(records) - 1, 1)
+    dimensions = (
+        ("ports", 0.25),
+        ("protocols", 0.20),
+        ("services", 0.30),
+        ("fingerprints", 0.25),
+    )
+    score = 0.0
+    for key, weight in dimensions:
+        values: set[str] = set()
+        for record in records:
+            raw = record.get(key)
+            if isinstance(raw, list):
+                values.update(str(item) for item in raw if str(item or "").strip())
+        dimension_drift = min(1.0, max(0, len(values) - 1) / denominator)
+        score += dimension_drift * weight
+    return min(1.0, score)
 
 
 def _age_factor(first_observed: Any, last_observed: Any) -> float:
@@ -620,6 +688,16 @@ def _stability_label(score: float) -> str:
     if score >= 0.35:
         return "developing"
     return "unstable"
+
+
+def _drift_label(score: float) -> str:
+    if score >= 0.65:
+        return "high"
+    if score >= 0.35:
+        return "moderate"
+    if score >= 0.10:
+        return "low"
+    return "none"
 
 
 def _parse_time(value: Any) -> datetime | None:
@@ -659,6 +737,18 @@ def _observed_values(observation: dict[str, Any], keys: tuple[str, ...]) -> list
         else:
             values.append(_safe_label(value))
     return sorted({value for value in values if value})
+
+
+def _observed_fingerprints(observation: dict[str, Any]) -> list[str]:
+    return _observed_values(
+        observation,
+        (
+            "fingerprint",
+            "service_fingerprint",
+            "visibility_fingerprint",
+            "application_fingerprint",
+        ),
+    )
 
 
 def _confidence_history_row(timestamp: str, classification: str, confidence: float) -> dict[str, Any]:

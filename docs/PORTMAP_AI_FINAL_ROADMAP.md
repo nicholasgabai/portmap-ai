@@ -361,6 +361,10 @@ Implementation note: Phase 172.1 extends learning profiles with deterministic lo
 
 Implementation note: Phase 172.2 adds deterministic profile stability scoring from existing historical observations only, using observation count, classification consistency, confidence consistency, and profile age. Outputs include a bounded stability score and stability label exposed through existing AI and Risk detail surfaces without layout changes. This remains metadata-only and does not add machine learning, model retraining, adaptive scoring, enforcement, automated decisions, packet inspection, payload analysis, remediation, blocking, autonomous actions, or external AI services.
 
+#### 172.3 - Profile Drift Detection (Completed)
+
+Implementation note: Phase 172.3 adds deterministic profile drift detection from existing historical observations only, covering classification drift, confidence drift, and metadata drift across ports, services, protocols, and fingerprints. Outputs include a bounded drift score and drift label exposed through existing AI and Risk detail surfaces without layout changes. This remains metadata-only and does not add machine learning, automated decisions, enforcement, packet inspection, payload analysis, remediation, blocking, autonomous actions, or external AI services.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.
