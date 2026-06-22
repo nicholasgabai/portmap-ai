@@ -383,6 +383,7 @@ def build_probabilistic_application_model(
         candidates[0]["confidence_contribution"] = candidates[0]["probability"]
 
     top = candidates[0] if candidates else {"candidate": "unknown_application", "probability": 1.0}
+    explainability = _explainability_metadata(top=top, candidates=candidates, evidence=evidence, calibration=calibration)
     return {
         "record_type": "probabilistic_application_model",
         "record_version": PROBABILISTIC_APPLICATION_MODEL_VERSION,
@@ -414,6 +415,7 @@ def build_probabilistic_application_model(
             for row in candidates
         ],
         "calibration": calibration,
+        **explainability,
         "evidence_count": len(evidence["signals"]),
         "evidence_signals": evidence["signals"],
         "source_mode": mode,
@@ -868,6 +870,92 @@ def _dedupe_text(values: list[str]) -> list[str]:
         if text and text not in rows:
             rows.append(text)
     return rows
+
+
+def _explainability_metadata(
+    *,
+    top: dict[str, Any],
+    candidates: list[dict[str, Any]],
+    evidence: dict[str, Any],
+    calibration: dict[str, Any],
+) -> dict[str, str]:
+    candidate = str(top.get("candidate") or "unknown_application")
+    confidence = float(top.get("probability") or 0.0)
+    supporting = [str(item) for item in top.get("supporting_evidence") or []]
+    missing = [str(item) for item in top.get("missing_evidence") or []]
+    alternatives = [str(row.get("candidate") or "") for row in candidates[1:] if row.get("candidate")]
+    return {
+        "explanation_summary": _explanation_summary(candidate, supporting, confidence),
+        "evidence_quality": str(calibration.get("evidence_strength") or "unknown"),
+        "confidence_rationale": _confidence_rationale(candidate, confidence, calibration, supporting),
+        "ambiguity_reason": _ambiguity_reason(candidate, alternatives, calibration),
+        "missing_evidence_summary": _missing_evidence_summary(missing),
+        "operator_next_steps": _operator_next_steps(candidate, evidence, calibration),
+    }
+
+
+def _explanation_summary(candidate: str, supporting: list[str], confidence: float) -> str:
+    if candidate == "unknown_application":
+        if supporting and supporting != ["insufficient_metadata"]:
+            return "Observed generic service metadata, but no strong process, service, or fingerprint match."
+        return "No strong process, service, fingerprint, or catalog evidence was observed."
+    if confidence >= 0.7:
+        return f"Classified as {candidate} because multiple metadata signals corroborate the candidate."
+    if any(item.startswith("process:") or item.startswith("service:") for item in supporting):
+        return f"Classified as {candidate} because process or service metadata supports the candidate."
+    return f"Classified as {candidate} from limited metadata; alternatives remain plausible."
+
+
+def _confidence_rationale(candidate: str, confidence: float, calibration: dict[str, Any], supporting: list[str]) -> str:
+    factors = calibration.get("factors") if isinstance(calibration, dict) else []
+    factor_text = ", ".join(str(item) for item in factors[:3]) if isinstance(factors, list) and factors else "weak metadata"
+    if candidate == "unknown_application":
+        if supporting and supporting != ["insufficient_metadata"]:
+            return "Confidence is moderate-low because evidence is generic and alternatives remain plausible."
+        return "Confidence is low-to-moderate because attribution evidence is insufficient."
+    if confidence >= 0.7:
+        return f"Confidence is high because {factor_text} corroborate the classification."
+    if confidence >= 0.45:
+        return f"Confidence is moderate because {factor_text} support the result, but alternatives remain."
+    if supporting and supporting != ["insufficient_metadata"]:
+        return "Confidence is moderate-low because evidence is generic and alternatives remain plausible."
+    return "Confidence is low-to-moderate because attribution evidence is insufficient."
+
+
+def _ambiguity_reason(candidate: str, alternatives: list[str], calibration: dict[str, Any]) -> str:
+    if not alternatives:
+        return "No alternative candidates survived the bounded attribution limit."
+    if candidate == "unknown_application":
+        return "Multiple candidates remain because no unique application fingerprint was observed."
+    if calibration.get("conflicting_evidence") is True:
+        return "Multiple candidates remain because observed metadata points to conflicting application families."
+    return "Alternative candidates survived because shared port, protocol, or generic service metadata also matched."
+
+
+def _missing_evidence_summary(missing: list[str]) -> str:
+    if not missing:
+        return "No major attribution evidence gaps were identified."
+    labels = {
+        "process_match": "process match",
+        "service_match": "service match",
+        "fingerprint": "service fingerprint",
+        "process_evidence": "process evidence",
+        "service_evidence": "service evidence",
+        "protocol_context": "protocol context",
+        "port_context": "port context",
+    }
+    rendered = [labels.get(item, item.replace("_", " ")) for item in missing[:4]]
+    return "Missing " + ", ".join(rendered) + "."
+
+
+def _operator_next_steps(candidate: str, evidence: dict[str, Any], calibration: dict[str, Any]) -> str:
+    if candidate == "unknown_application" or calibration.get("evidence_strength") in {"insufficient", "weak"}:
+        return "Review service name, process owner, expected-service allowlist, and historical observations."
+    if calibration.get("conflicting_evidence") is True:
+        return "Review conflicting process and service metadata before treating the attribution as expected."
+    if evidence.get("external_signals"):
+        return "Review fingerprint source, expected-service allowlist, and historical observations."
+    return "Review expected-service allowlist and historical observations for confirmation."
 
 
 def _existing_signal_values(observation: dict[str, Any]) -> list[str]:

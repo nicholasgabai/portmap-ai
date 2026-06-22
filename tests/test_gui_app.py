@@ -1003,6 +1003,12 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert "nginx:" in details["Candidate Reasoning"]
     assert "process:nginx" in details["Supporting Evidence"]
     assert "fingerprint" in details["Missing Evidence"]
+    assert "Classified as nginx" in details["Explanation Summary"]
+    assert details["Evidence Quality"] == "moderate"
+    assert "moderate-low" in details["Confidence Rationale"]
+    assert "Alternative candidates survived" in details["Ambiguity Reason"]
+    assert "service fingerprint" in details["Missing Evidence Summary"]
+    assert "expected-service allowlist" in details["Operator Next Steps"]
     assert details["Status"] == "preview"
     assert details["Decisions"] == "2"
     assert details["Updated"] == "2026-06-14 12:03:00"
@@ -1523,6 +1529,12 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert "ssh:" in details["Candidate Reasoning"]
     assert "service:ssh" in details["Supporting Evidence"]
     assert "fingerprint" in details["Missing Evidence"]
+    assert "Classified as ssh" in details["Explanation Summary"]
+    assert details["Evidence Quality"] == "moderate"
+    assert "moderate" in details["Confidence Rationale"]
+    assert "Alternative candidates survived" in details["Ambiguity Reason"]
+    assert "service fingerprint" in details["Missing Evidence Summary"]
+    assert "expected-service allowlist" in details["Operator Next Steps"]
     assert "service_match" in rows[0]["calibration"]
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."

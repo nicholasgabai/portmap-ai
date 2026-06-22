@@ -1148,6 +1148,12 @@ def _active_risk_finding_rows(
                 "candidate_reasoning": _classification_candidate_reasoning_text(classification),
                 "supporting_evidence": _classification_supporting_evidence_text(classification),
                 "missing_evidence": _classification_missing_evidence_text(classification),
+                "explanation_summary": _classification_text_field(classification, "explanation_summary"),
+                "evidence_quality": _classification_text_field(classification, "evidence_quality", limit=24),
+                "confidence_rationale": _classification_text_field(classification, "confidence_rationale"),
+                "ambiguity_reason": _classification_text_field(classification, "ambiguity_reason"),
+                "missing_evidence_summary": _classification_text_field(classification, "missing_evidence_summary"),
+                "operator_next_steps": _classification_text_field(classification, "operator_next_steps"),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -1190,6 +1196,12 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Candidate Reasoning", row.get("candidate_reasoning", "-")),
         ("Supporting Evidence", row.get("supporting_evidence", "-")),
         ("Missing Evidence", row.get("missing_evidence", "-")),
+        ("Explanation Summary", row.get("explanation_summary", "-")),
+        ("Evidence Quality", row.get("evidence_quality", "-")),
+        ("Confidence Rationale", row.get("confidence_rationale", "-")),
+        ("Ambiguity Reason", row.get("ambiguity_reason", "-")),
+        ("Missing Evidence Summary", row.get("missing_evidence_summary", "-")),
+        ("Operator Next Steps", row.get("operator_next_steps", "-")),
         ("Score", row.get("score", "-")),
         ("Action", row.get("action", "-")),
         ("Time", row.get("time", "-")),
@@ -2418,6 +2430,10 @@ def _classification_missing_evidence_text(model: Dict[str, Any], *, limit: int =
     return "; ".join(rows) if rows else "-"
 
 
+def _classification_text_field(model: Dict[str, Any], field: str, *, limit: int = 96) -> str:
+    return _short_text(model.get(field), limit=limit)
+
+
 def _is_ai_event(event: Dict[str, Any]) -> bool:
     if any(
         event.get(key) not in {"", "-", None}
@@ -2489,6 +2505,12 @@ def _ai_provider_model_rows(
                 "candidate_reasoning": "-",
                 "supporting_evidence": "-",
                 "missing_evidence": "-",
+                "explanation_summary": "-",
+                "evidence_quality": "-",
+                "confidence_rationale": "-",
+                "ambiguity_reason": "-",
+                "missing_evidence_summary": "-",
+                "operator_next_steps": "-",
             },
         )
         row["decisions"] += 1
@@ -2514,6 +2536,12 @@ def _ai_provider_model_rows(
             row["candidate_reasoning"] = _classification_candidate_reasoning_text(model_record)
             row["supporting_evidence"] = _classification_supporting_evidence_text(model_record)
             row["missing_evidence"] = _classification_missing_evidence_text(model_record)
+            row["explanation_summary"] = _classification_text_field(model_record, "explanation_summary")
+            row["evidence_quality"] = _classification_text_field(model_record, "evidence_quality", limit=24)
+            row["confidence_rationale"] = _classification_text_field(model_record, "confidence_rationale")
+            row["ambiguity_reason"] = _classification_text_field(model_record, "ambiguity_reason")
+            row["missing_evidence_summary"] = _classification_text_field(model_record, "missing_evidence_summary")
+            row["operator_next_steps"] = _classification_text_field(model_record, "operator_next_steps")
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -2538,6 +2566,12 @@ def _ai_provider_model_rows(
             "candidate_reasoning": row["candidate_reasoning"],
             "supporting_evidence": row["supporting_evidence"],
             "missing_evidence": row["missing_evidence"],
+            "explanation_summary": row["explanation_summary"],
+            "evidence_quality": row["evidence_quality"],
+            "confidence_rationale": row["confidence_rationale"],
+            "ambiguity_reason": row["ambiguity_reason"],
+            "missing_evidence_summary": row["missing_evidence_summary"],
+            "operator_next_steps": row["operator_next_steps"],
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"]]),
@@ -2576,6 +2610,12 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Candidate Reasoning", row.get("candidate_reasoning", "-")),
         ("Supporting Evidence", row.get("supporting_evidence", "-")),
         ("Missing Evidence", row.get("missing_evidence", "-")),
+        ("Explanation Summary", row.get("explanation_summary", "-")),
+        ("Evidence Quality", row.get("evidence_quality", "-")),
+        ("Confidence Rationale", row.get("confidence_rationale", "-")),
+        ("Ambiguity Reason", row.get("ambiguity_reason", "-")),
+        ("Missing Evidence Summary", row.get("missing_evidence_summary", "-")),
+        ("Operator Next Steps", row.get("operator_next_steps", "-")),
         ("Status", row.get("status", "-")),
         ("Decisions", row.get("decisions", "-")),
         ("Updated", row.get("updated", "-")),

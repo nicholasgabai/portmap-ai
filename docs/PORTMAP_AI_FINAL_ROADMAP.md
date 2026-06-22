@@ -275,6 +275,76 @@ Phases:
 | 175 | Federated Intelligence |
 | 176 | Autonomous Investigation Chains |
 
+### Phase 171 Sub-Phases
+
+Phase 171 is treated as a multi-stage phase. These sub-phases extend Probabilistic Application Models without changing the Milestone AC phase numbering. Future Phase 171 sub-phases should be added here.
+
+#### 171.0 - Probabilistic Application Model Framework (Completed)
+
+Delivered:
+
+- Classification framework.
+- Confidence scoring.
+- Evidence chains.
+- AI workspace integration.
+- Risk workspace integration.
+- Read-only metadata attribution.
+
+#### 171.1 - Application Attribution Catalog Expansion (Next)
+
+Goal: expand deterministic application/service attribution using existing metadata sources.
+
+Examples:
+
+- nginx
+- apache
+- caddy
+- redis
+- memcached
+- mysql
+- mariadb
+- postgresql
+- mongodb
+- elasticsearch
+- grafana
+- prometheus
+- nextcloud
+- docker
+- kubernetes
+- ssh
+- dns
+- ldap
+- smtp
+- imap
+- pop3
+- ftp
+- sftp
+- rdp
+- vnc
+
+Constraints:
+
+- Metadata-only.
+- No packet payload inspection.
+- No packet decoding.
+- No remediation.
+- No enforcement.
+- No external AI calls.
+
+#### 171.2 - Confidence Calibration
+
+Goal: improve probability weighting and candidate ranking.
+
+#### 171.3 - Ambiguous Classification Handling
+
+Goal: support multiple valid candidates and uncertainty reporting.
+
+#### 171.4 - Explainability And Attribution Transparency
+
+Goal: improve operator visibility into why classifications were chosen.
+
+Completion note: attribution outputs should include deterministic explanation summaries, evidence quality, confidence rationale, ambiguity reason, missing evidence summary, and operator next steps. These details remain metadata-only, read-only, and visible through existing AI and Risk detail surfaces without changing phase numbering or introducing continuous learning.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

@@ -344,6 +344,60 @@ def test_probabilistic_application_unknown_candidates_explain_insufficient_metad
     assert record["confidence"] == unknown["confidence_contribution"]
 
 
+def test_probabilistic_application_explainability_for_unknown_classification():
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-unknown-explainability",
+            "protocol": "tls",
+            "port": 443,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    assert record["top_classification"] == "unknown_application"
+    assert record["explanation_summary"] == (
+        "Observed generic service metadata, but no strong process, service, or fingerprint match."
+    )
+    assert record["evidence_quality"] == "weak"
+    assert record["confidence_rationale"] == (
+        "Confidence is moderate-low because evidence is generic and alternatives remain plausible."
+    )
+    assert record["ambiguity_reason"] == "Multiple candidates remain because no unique application fingerprint was observed."
+    assert record["missing_evidence_summary"] == "Missing process match, service match, service fingerprint."
+    assert record["operator_next_steps"] == (
+        "Review service name, process owner, expected-service allowlist, and historical observations."
+    )
+
+
+def test_probabilistic_application_explainability_for_strong_classification():
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-postgresql-explainability",
+            "program": "postgres",
+            "service_name": "postgresql",
+            "protocol": "tcp",
+            "port": 5432,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    assert record["top_classification"] == "postgresql"
+    assert record["explanation_summary"] == (
+        "Classified as postgresql because multiple metadata signals corroborate the candidate."
+    )
+    assert record["evidence_quality"] == "strong"
+    assert record["confidence_rationale"] == (
+        "Confidence is high because process_match, service_match, port_support corroborate the classification."
+    )
+    assert record["ambiguity_reason"] == (
+        "Alternative candidates survived because shared port, protocol, or generic service metadata also matched."
+    )
+    assert record["missing_evidence_summary"] == "Missing service fingerprint."
+    assert record["operator_next_steps"] == "Review expected-service allowlist and historical observations for confirmation."
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {
