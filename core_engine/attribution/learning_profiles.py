@@ -217,6 +217,9 @@ def build_learning_profile_history(
     history["stability_label"] = history["historical_summary"]["stability_label"]
     history["drift_score"] = history["historical_summary"]["drift_score"]
     history["drift_label"] = history["historical_summary"]["drift_label"]
+    history["recommendation_count"] = history["historical_summary"]["recommendation_count"]
+    history["primary_recommendation"] = history["historical_summary"]["primary_recommendation"]
+    history["recommendation_list"] = history["historical_summary"]["recommendation_list"]
     return history
 
 
@@ -261,6 +264,9 @@ def append_learning_profile_history(
     current["stability_label"] = current["historical_summary"]["stability_label"]
     current["drift_score"] = current["historical_summary"]["drift_score"]
     current["drift_label"] = current["historical_summary"]["drift_label"]
+    current["recommendation_count"] = current["historical_summary"]["recommendation_count"]
+    current["primary_recommendation"] = current["historical_summary"]["primary_recommendation"]
+    current["recommendation_list"] = current["historical_summary"]["recommendation_list"]
     return current
 
 
@@ -348,6 +354,7 @@ def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[s
     last_observed = _safe_time(row.get("last_observed"))
     stability = _history_stability(row)
     drift = _history_drift(row)
+    recommendations = _history_recommendations(row, stability=stability, drift=drift)
     return {
         "profile_id": _safe_label(row.get("profile_id")),
         "profile_name": _safe_label(row.get("profile_name")) or "unknown_application",
@@ -359,6 +366,9 @@ def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[s
         "stability_label": stability["stability_label"],
         "drift_score": drift["drift_score"],
         "drift_label": drift["drift_label"],
+        "recommendation_count": str(len(recommendations)),
+        "primary_recommendation": recommendations[0]["recommendation_id"] if recommendations else "-",
+        "recommendation_list": recommendations,
         "historical_ports": _merge_sorted(row.get("historical_ports"), [], numeric=True),
         "historical_protocols": _merge_sorted(row.get("historical_protocols"), []),
         "historical_services": _merge_sorted(row.get("historical_services"), []),
@@ -394,6 +404,9 @@ def _normalize_history(history: dict[str, Any]) -> dict[str, Any]:
     row["stability_label"] = row["historical_summary"]["stability_label"]
     row["drift_score"] = row["historical_summary"]["drift_score"]
     row["drift_label"] = row["historical_summary"]["drift_label"]
+    row["recommendation_count"] = row["historical_summary"]["recommendation_count"]
+    row["primary_recommendation"] = row["historical_summary"]["primary_recommendation"]
+    row["recommendation_list"] = row["historical_summary"]["recommendation_list"]
     row.setdefault("metadata_only", True)
     row.setdefault("read_only", True)
     row.setdefault("training_performed", False)
@@ -424,6 +437,11 @@ def _historical_observation_record(
         "processes": list(profile.get("observed_processes") or []),
         "fingerprints": _observed_fingerprints(observation),
         "confidence": _profile_confidence(observation, classification_model),
+        "evidence_quality": _safe_label(_classification_field(classification_model, "evidence_quality")),
+        "ambiguity_reason": _safe_label(_classification_field(classification_model, "ambiguity_reason")),
+        "evidence_count": _safe_int(_classification_field(classification_model, "evidence_count"), default=0),
+        "candidate_count": _candidate_count(classification_model),
+        "alternative_candidate_count": _alternative_candidate_count(classification_model),
         "metadata_only": True,
         "read_only": True,
     }
@@ -449,6 +467,11 @@ def _observation_records(values: Iterable[Any]) -> list[dict[str, Any]]:
             "processes": _merge_sorted(value.get("processes"), []),
             "fingerprints": _merge_sorted(value.get("fingerprints"), []),
             "confidence": _bounded_float(value.get("confidence")),
+            "evidence_quality": _safe_label(value.get("evidence_quality")),
+            "ambiguity_reason": _safe_label(value.get("ambiguity_reason")),
+            "evidence_count": max(0, _safe_int(value.get("evidence_count"), default=0)),
+            "candidate_count": max(0, _safe_int(value.get("candidate_count"), default=0)),
+            "alternative_candidate_count": max(0, _safe_int(value.get("alternative_candidate_count"), default=0)),
             "metadata_only": True,
             "read_only": True,
         }
@@ -504,6 +527,30 @@ def _profile_confidence(observation: dict[str, Any], classification_model: dict[
         if value not in {"", "-", None}:
             return _bounded_float(value)
     return 0.0
+
+
+def _classification_field(classification_model: dict[str, Any] | None, field: str) -> Any:
+    if not isinstance(classification_model, dict):
+        return ""
+    return classification_model.get(field)
+
+
+def _candidate_count(classification_model: dict[str, Any] | None) -> int:
+    if not isinstance(classification_model, dict):
+        return 0
+    candidates = classification_model.get("candidates")
+    if isinstance(candidates, list):
+        return len(candidates)
+    return max(0, _safe_int(classification_model.get("candidate_count"), default=0))
+
+
+def _alternative_candidate_count(classification_model: dict[str, Any] | None) -> int:
+    if not isinstance(classification_model, dict):
+        return 0
+    alternatives = classification_model.get("alternative_candidates")
+    if isinstance(alternatives, list):
+        return len(alternatives)
+    return max(0, _safe_int(classification_model.get("alternative_candidate_count"), default=0))
 
 
 def _profile_timestamp(observation: dict[str, Any], *, generated_at: str | None) -> str:
@@ -610,6 +657,93 @@ def _history_drift(history: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _history_recommendations(
+    history: dict[str, Any],
+    *,
+    stability: dict[str, Any],
+    drift: dict[str, Any],
+) -> list[dict[str, Any]]:
+    records = [row for row in history.get("observation_records") or [] if isinstance(row, dict)]
+    observation_count = max(_safe_int(history.get("observation_count"), default=0), len(records))
+    stability_score = _bounded_float(stability.get("stability_score"))
+    stability_label = _safe_label(stability.get("stability_label")) or _stability_label(stability_score)
+    drift_score = _bounded_float(drift.get("drift_score"))
+    drift_label = _safe_label(drift.get("drift_label")) or _drift_label(drift_score)
+    drift_factors = drift.get("drift_factors") if isinstance(drift.get("drift_factors"), dict) else {}
+    confidence_drift = _bounded_float(drift_factors.get("confidence_drift"))
+    metadata_drift = _bounded_float(drift_factors.get("metadata_drift"))
+    latest_confidence = _latest_confidence(records)
+    average_confidence = _average_confidence(records)
+    evidence_quality = _latest_evidence_quality(records)
+    ambiguous = _has_ambiguity(records)
+    recommendations: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def add(recommendation_id: str, reason: str, supporting_factors: list[str]) -> None:
+        if recommendation_id in seen:
+            return
+        seen.add(recommendation_id)
+        recommendations.append(
+            {
+                "recommendation_id": recommendation_id,
+                "reason": reason,
+                "supporting_factors": [factor for factor in supporting_factors if factor],
+                "read_only": True,
+                "automated_action": False,
+            }
+        )
+
+    if drift_label in {"moderate", "high"} or drift_score >= 0.35:
+        add(
+            "review_profile_drift",
+            "Profile history shows classification or metadata drift that should be reviewed.",
+            [f"drift_label:{drift_label}", f"drift_score:{drift_score:.2f}"],
+        )
+    if confidence_drift >= 0.35:
+        add(
+            "investigate_confidence_change",
+            "Attribution confidence has changed enough to warrant operator review.",
+            [f"confidence_drift:{confidence_drift:.2f}", f"latest_confidence:{latest_confidence:.2f}"],
+        )
+    if metadata_drift >= 0.20 and drift_label != "none":
+        add(
+            "monitor_behavior_change",
+            "Observed ports, protocols, services, or fingerprints changed across profile history.",
+            [f"metadata_drift:{metadata_drift:.2f}", f"drift_label:{drift_label}"],
+        )
+    if stability_label in {"stable", "highly_stable"} and drift_label in {"none", "low"} and latest_confidence >= 0.50:
+        add(
+            "classification_stable",
+            "Repeated observations support the current classification.",
+            [f"stability_label:{stability_label}", f"stability_score:{stability_score:.2f}", f"drift_label:{drift_label}"],
+        )
+    if latest_confidence < 0.50 or average_confidence < 0.50:
+        add(
+            "verify_service_identity",
+            "Attribution confidence is low, so the service identity should be verified.",
+            [f"latest_confidence:{latest_confidence:.2f}", f"average_confidence:{average_confidence:.2f}"],
+        )
+    if ambiguous:
+        add(
+            "verify_service_identity",
+            "Alternative classifications remain plausible for this profile.",
+            [f"candidate_count:{_max_candidate_count(records)}", f"evidence_quality:{evidence_quality or 'unknown'}"],
+        )
+    if observation_count < 3 or stability_label in {"unstable", "developing"} or evidence_quality in {"insufficient", "weak", "generic"}:
+        add(
+            "gather_more_metadata",
+            "More metadata would improve profile confidence and stability.",
+            [f"observation_count:{observation_count}", f"stability_label:{stability_label}", f"evidence_quality:{evidence_quality or 'unknown'}"],
+        )
+    if not recommendations or stability_label in {"stable", "highly_stable"}:
+        add(
+            "continue_observation",
+            "Continue read-only observation to maintain profile history.",
+            [f"observation_count:{observation_count}", f"profile_age:{_profile_age(history.get('first_observed'), history.get('last_observed'))}"],
+        )
+    return recommendations
+
+
 def _classification_consistency(records: list[dict[str, Any]]) -> float:
     if not records:
         return 0.0
@@ -635,6 +769,40 @@ def _confidence_drift(records: list[dict[str, Any]]) -> float:
     if len(values) <= 1:
         return 0.0
     return max(0.0, min(1.0, max(values) - min(values)))
+
+
+def _latest_confidence(records: list[dict[str, Any]]) -> float:
+    if not records:
+        return 0.0
+    return _bounded_float(records[-1].get("confidence"))
+
+
+def _average_confidence(records: list[dict[str, Any]]) -> float:
+    values = [_bounded_float(record.get("confidence")) for record in records]
+    if not values:
+        return 0.0
+    return round(sum(values) / len(values), 3)
+
+
+def _latest_evidence_quality(records: list[dict[str, Any]]) -> str:
+    for record in reversed(records):
+        value = _safe_label(record.get("evidence_quality"))
+        if value:
+            return value
+    return ""
+
+
+def _has_ambiguity(records: list[dict[str, Any]]) -> bool:
+    return any(
+        _safe_int(record.get("candidate_count"), default=0) > 1
+        or _safe_int(record.get("alternative_candidate_count"), default=0) > 0
+        or bool(_safe_label(record.get("ambiguity_reason")))
+        for record in records
+    )
+
+
+def _max_candidate_count(records: list[dict[str, Any]]) -> int:
+    return max((_safe_int(record.get("candidate_count"), default=0) for record in records), default=0)
 
 
 def _metadata_drift(records: list[dict[str, Any]]) -> float:

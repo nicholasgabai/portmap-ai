@@ -1199,6 +1199,13 @@ def _active_risk_finding_rows(
                 "stability_label": _learning_history_text_field(classification, "stability_label", limit=24),
                 "drift_score": _learning_history_drift_score(classification),
                 "drift_label": _learning_history_text_field(classification, "drift_label", limit=24),
+                "recommendation_count": _learning_history_text_field(
+                    classification, "recommendation_count", limit=12
+                ),
+                "primary_recommendation": _learning_history_text_field(
+                    classification, "primary_recommendation", limit=32
+                ),
+                "recommendation_list": _learning_history_recommendations_text(classification),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -1259,6 +1266,9 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Stability Label", row.get("stability_label", "-")),
         ("Drift Score", row.get("drift_score", "-")),
         ("Drift Label", row.get("drift_label", "-")),
+        ("Recommendation Count", row.get("recommendation_count", "-")),
+        ("Primary Recommendation", row.get("primary_recommendation", "-")),
+        ("Recommendation List", row.get("recommendation_list", "-")),
         ("Score", row.get("score", "-")),
         ("Action", row.get("action", "-")),
         ("Time", row.get("time", "-")),
@@ -2524,6 +2534,26 @@ def _learning_history_drift_score(model: Dict[str, Any]) -> str:
     return _format_probability(_classification_history_summary(model).get("drift_score"))
 
 
+def _learning_history_recommendations_text(model: Dict[str, Any], *, limit: int = 3) -> str:
+    recommendations = _classification_history_summary(model).get("recommendation_list")
+    if not isinstance(recommendations, list):
+        return "-"
+    rows = []
+    for item in recommendations[: max(limit, 0)]:
+        if not isinstance(item, dict):
+            continue
+        recommendation_id = _short_text(item.get("recommendation_id"), limit=32)
+        reason = _short_text(item.get("reason"), limit=88)
+        factors = item.get("supporting_factors")
+        factor_text = ""
+        if isinstance(factors, list):
+            factor_text = _short_text(", ".join(str(factor) for factor in factors[:3]), limit=72)
+        if recommendation_id != "-" and reason != "-":
+            text = f"{recommendation_id}: {reason}"
+            rows.append(f"{text} ({factor_text})" if factor_text != "-" else text)
+    return "; ".join(rows) if rows else "-"
+
+
 def _is_ai_event(event: Dict[str, Any]) -> bool:
     if any(
         event.get(key) not in {"", "-", None}
@@ -2613,6 +2643,9 @@ def _ai_provider_model_rows(
                 "stability_label": "-",
                 "drift_score": "-",
                 "drift_label": "-",
+                "recommendation_count": "-",
+                "primary_recommendation": "-",
+                "recommendation_list": "-",
             },
         )
         row["decisions"] += 1
@@ -2660,6 +2693,13 @@ def _ai_provider_model_rows(
             row["stability_label"] = _learning_history_text_field(model_record, "stability_label", limit=24)
             row["drift_score"] = _learning_history_drift_score(model_record)
             row["drift_label"] = _learning_history_text_field(model_record, "drift_label", limit=24)
+            row["recommendation_count"] = _learning_history_text_field(
+                model_record, "recommendation_count", limit=12
+            )
+            row["primary_recommendation"] = _learning_history_text_field(
+                model_record, "primary_recommendation", limit=32
+            )
+            row["recommendation_list"] = _learning_history_recommendations_text(model_record)
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -2702,6 +2742,9 @@ def _ai_provider_model_rows(
             "stability_label": row["stability_label"],
             "drift_score": row["drift_score"],
             "drift_label": row["drift_label"],
+            "recommendation_count": row["recommendation_count"],
+            "primary_recommendation": row["primary_recommendation"],
+            "recommendation_list": row["recommendation_list"],
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"]]),
@@ -2758,6 +2801,9 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Stability Label", row.get("stability_label", "-")),
         ("Drift Score", row.get("drift_score", "-")),
         ("Drift Label", row.get("drift_label", "-")),
+        ("Recommendation Count", row.get("recommendation_count", "-")),
+        ("Primary Recommendation", row.get("primary_recommendation", "-")),
+        ("Recommendation List", row.get("recommendation_list", "-")),
         ("Status", row.get("status", "-")),
         ("Decisions", row.get("decisions", "-")),
         ("Updated", row.get("updated", "-")),

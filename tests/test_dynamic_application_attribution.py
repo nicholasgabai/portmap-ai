@@ -933,6 +933,154 @@ def test_learning_profile_history_detects_metadata_drift_in_ports_services_proto
     assert history["observation_records"][1]["fingerprints"] == ["nginx_http_alt"]
 
 
+def test_learning_profile_recommendations_classify_stable_profiles():
+    model = {"top_classification": "postgresql", "confidence": 0.86, "evidence_quality": "strong", "candidate_count": 1}
+    history = build_learning_profile_history(
+        {
+            "program": "postgres",
+            "service_name": "postgresql",
+            "protocol": "tcp",
+            "port": 5432,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-01T00:00:00+00:00",
+            "source_mode": "live",
+        },
+        classification_model=model,
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+    for day in range(1, 8):
+        timestamp = f"2026-01-0{day + 1}T00:00:00+00:00"
+        history = append_learning_profile_history(
+            history,
+            {"program": "postgres", "service_name": "postgresql", "protocol": "tcp", "port": 5432},
+            classification_model=model,
+            generated_at=timestamp,
+        )
+
+    summary = history["historical_summary"]
+    recommendation_ids = [row["recommendation_id"] for row in summary["recommendation_list"]]
+
+    assert summary["primary_recommendation"] == "classification_stable"
+    assert "classification_stable" in recommendation_ids
+    assert "continue_observation" in recommendation_ids
+    assert summary["recommendation_count"] == str(len(summary["recommendation_list"]))
+
+
+def test_learning_profile_recommendations_gather_metadata_for_unstable_profiles():
+    model = {"top_classification": "nginx", "confidence": 0.72, "evidence_quality": "weak", "candidate_count": 1}
+    history = build_learning_profile_history(
+        {"program": "nginx", "service_name": "https", "protocol": "tls", "port": 443},
+        classification_model=model,
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+
+    summary = history["historical_summary"]
+    recommendation_ids = [row["recommendation_id"] for row in summary["recommendation_list"]]
+
+    assert summary["primary_recommendation"] == "gather_more_metadata"
+    assert "gather_more_metadata" in recommendation_ids
+    assert summary["recommendation_list"][0]["read_only"] is True
+    assert summary["recommendation_list"][0]["automated_action"] is False
+
+
+def test_learning_profile_recommendations_review_drifting_profiles():
+    first = {"program": "postgres", "service_name": "postgresql", "protocol": "tcp", "port": 5432}
+    history = build_learning_profile_history(
+        first,
+        classification_model={"top_classification": "postgresql", "confidence": 0.82, "evidence_quality": "strong"},
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+    for index, classification in enumerate(("mysql", "mongodb", "redis"), start=2):
+        history = append_learning_profile_history(
+            history,
+            {"program": classification, "service_name": classification, "protocol": "tcp", "port": 5000 + index},
+            classification_model={"top_classification": classification, "confidence": 0.82, "evidence_quality": "strong"},
+            generated_at=f"2026-01-0{index}T00:00:00+00:00",
+        )
+
+    summary = history["historical_summary"]
+    recommendation_ids = [row["recommendation_id"] for row in summary["recommendation_list"]]
+
+    assert summary["primary_recommendation"] == "review_profile_drift"
+    assert "review_profile_drift" in recommendation_ids
+    assert "monitor_behavior_change" in recommendation_ids
+
+
+def test_learning_profile_recommendations_review_low_confidence_profiles():
+    model = {
+        "top_classification": "unknown_application",
+        "confidence": 0.34,
+        "evidence_quality": "insufficient",
+        "candidate_count": 3,
+        "ambiguity_reason": "Multiple candidates remain plausible.",
+    }
+    history = build_learning_profile_history(
+        {"protocol": "tcp", "port": 443, "source_mode": "live"},
+        classification_model=model,
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+
+    recommendation_ids = [row["recommendation_id"] for row in history["historical_summary"]["recommendation_list"]]
+
+    assert "verify_service_identity" in recommendation_ids
+    assert "gather_more_metadata" in recommendation_ids
+
+
+def test_learning_profile_recommendations_preserve_ambiguous_classification_context():
+    model = build_probabilistic_application_model(
+        {"protocol": "tls", "port": 443, "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+    history = build_learning_profile_history(
+        {"protocol": "tls", "port": 443, "source_mode": "live"},
+        classification_model=model,
+        generated_at=FIXED_TIME,
+    )
+    summary = history["historical_summary"]
+    recommendation = next(
+        row for row in summary["recommendation_list"] if row["recommendation_id"] == "verify_service_identity"
+    )
+
+    assert summary["primary_recommendation"] == "verify_service_identity"
+    assert any(factor.startswith("candidate_count:") for factor in recommendation["supporting_factors"])
+    assert "evidence_quality" in ",".join(recommendation["supporting_factors"])
+
+
+def test_learning_profile_recommendations_for_mature_profiles_remain_advisory():
+    model = {
+        "top_classification": "nginx",
+        "confidence": 0.88,
+        "evidence_quality": "strong",
+        "candidate_count": 1,
+    }
+    history = build_learning_profile_history(
+        {
+            "program": "nginx",
+            "service_name": "https",
+            "protocol": "tls",
+            "port": 443,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-01T00:00:00+00:00",
+        },
+        classification_model=model,
+        generated_at="2026-01-01T00:00:00+00:00",
+    )
+    for day in (8, 15, 22, 31):
+        timestamp = f"2026-01-{day:02d}T00:00:00+00:00"
+        history = append_learning_profile_history(
+            history,
+            {"program": "nginx", "service_name": "https", "protocol": "tls", "port": 443},
+            classification_model=model,
+            generated_at=timestamp,
+        )
+
+    summary = summarize_learning_profile_history(history)
+
+    assert summary["stability_label"] == "highly_stable"
+    assert summary["primary_recommendation"] == "classification_stable"
+    assert all(row["read_only"] is True and row["automated_action"] is False for row in summary["recommendation_list"])
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {
