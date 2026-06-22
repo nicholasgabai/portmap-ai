@@ -1000,6 +1000,9 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert "https_service" in details["Alternative Candidates"]
     assert details["Evidence Count"] == "6"
     assert "port:443" in details["Evidence Signals"]
+    assert "nginx:" in details["Candidate Reasoning"]
+    assert "process:nginx" in details["Supporting Evidence"]
+    assert "fingerprint" in details["Missing Evidence"]
     assert details["Status"] == "preview"
     assert details["Decisions"] == "2"
     assert details["Updated"] == "2026-06-14 12:03:00"
@@ -1517,6 +1520,9 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Classification Confidence"] != "-"
     assert "remote_access" in details["Alternative Candidates"]
     assert "port:22" in details["Evidence Signals"]
+    assert "ssh:" in details["Candidate Reasoning"]
+    assert "service:ssh" in details["Supporting Evidence"]
+    assert "fingerprint" in details["Missing Evidence"]
     assert "service_match" in rows[0]["calibration"]
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."

@@ -374,16 +374,13 @@ def build_probabilistic_application_model(
 
     total = sum(scores.values()) or 1.0
     candidates = [
-        {
-            "candidate": label,
-            "probability": round(score / total, 3),
-            "supporting_evidence": sorted(evidence.get("candidate_evidence", {}).get(label, [])),
-        }
+        _candidate_reasoning_row(label=label, score=score, total=total, evidence=evidence, calibration=calibration)
         for label, score in sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:max_candidates]
     ]
     probability_total = sum(float(row["probability"]) for row in candidates)
     if candidates and probability_total != 1.0:
         candidates[0]["probability"] = round(float(candidates[0]["probability"]) + (1.0 - probability_total), 3)
+        candidates[0]["confidence_contribution"] = candidates[0]["probability"]
 
     top = candidates[0] if candidates else {"candidate": "unknown_application", "probability": 1.0}
     return {
@@ -405,6 +402,16 @@ def build_probabilistic_application_model(
         "candidate_count": len(candidates),
         "alternative_candidates": [
             {"candidate": row["candidate"], "probability": row["probability"]} for row in candidates[1:]
+        ],
+        "candidate_reasoning": [
+            {
+                "candidate": row["candidate"],
+                "reasoning": row["reasoning"],
+                "supporting_evidence": row["supporting_evidence"],
+                "missing_evidence": row["missing_evidence"],
+                "confidence_contribution": row["confidence_contribution"],
+            }
+            for row in candidates
         ],
         "calibration": calibration,
         "evidence_count": len(evidence["signals"]),
@@ -752,6 +759,115 @@ def _unknown_probability_for_quality(quality: float) -> float:
     if quality >= 0.25:
         return round(min(max(1.0 - quality, 0.35), 0.58), 3)
     return 0.58
+
+
+def _candidate_reasoning_row(
+    *,
+    label: str,
+    score: float,
+    total: float,
+    evidence: dict[str, Any],
+    calibration: dict[str, Any],
+) -> dict[str, Any]:
+    supporting = _supporting_evidence_for_candidate(label, evidence, calibration)
+    missing = _missing_evidence_for_candidate(label, supporting, evidence)
+    contribution = round(score / total, 3) if total else 0.0
+    return {
+        "candidate": label,
+        "probability": contribution,
+        "confidence_contribution": contribution,
+        "supporting_evidence": supporting,
+        "missing_evidence": missing,
+        "reasoning": _candidate_reasoning_text(label, supporting, missing, calibration),
+    }
+
+
+def _supporting_evidence_for_candidate(
+    label: str,
+    evidence: dict[str, Any],
+    calibration: dict[str, Any],
+) -> list[str]:
+    candidate_evidence = evidence.get("candidate_evidence")
+    if isinstance(candidate_evidence, dict):
+        supporting = sorted(str(item) for item in candidate_evidence.get(label, []) if item not in {"", "-", None})
+        if supporting:
+            return supporting
+    if label == "unknown_application":
+        generic = _generic_evidence_signals(evidence)
+        if generic:
+            return generic
+        return ["insufficient_metadata"]
+    if label == "insufficient_metadata":
+        return ["insufficient_metadata"]
+    if label == "unclassified_service":
+        return ["no_catalog_match"]
+    factors = calibration.get("factors") if isinstance(calibration, dict) else None
+    if isinstance(factors, list) and factors:
+        return [_safe_token(factors[0])]
+    return ["weak_metadata"]
+
+
+def _missing_evidence_for_candidate(label: str, supporting: list[str], evidence: dict[str, Any]) -> list[str]:
+    support_types = {_reason_type(item) for item in supporting}
+    missing = []
+    if "process" not in support_types:
+        missing.append("process_match")
+    if "service" not in support_types:
+        missing.append("service_match")
+    if "signal" not in support_types:
+        missing.append("fingerprint")
+    if label not in {"unknown_application", "insufficient_metadata", "unclassified_service"}:
+        if "port" not in support_types and evidence.get("port") is None:
+            missing.append("port_context")
+        if "protocol" not in support_types and evidence.get("protocol") == "unknown":
+            missing.append("protocol_context")
+    if label == "insufficient_metadata":
+        missing.extend(["process_evidence", "service_evidence"])
+    return _dedupe_text(missing)
+
+
+def _generic_evidence_signals(evidence: dict[str, Any]) -> list[str]:
+    generic = []
+    protocol = evidence.get("protocol")
+    port = evidence.get("port")
+    state = evidence.get("state")
+    if protocol not in {"", "unknown", None}:
+        generic.append(f"protocol:{protocol}")
+    if port is not None:
+        generic.append(f"port:{port}")
+    if state not in {"", "unknown", None}:
+        generic.append(f"state:{state}")
+    for signal in evidence.get("external_signals", []):
+        if signal not in generic:
+            generic.append(str(signal))
+    return generic[:6]
+
+
+def _candidate_reasoning_text(
+    label: str,
+    supporting: list[str],
+    missing: list[str],
+    calibration: dict[str, Any],
+) -> str:
+    if label == "unknown_application":
+        return "insufficient or generic metadata keeps attribution uncertain"
+    if label == "insufficient_metadata":
+        return "not enough process, service, or fingerprint evidence"
+    if label == "unclassified_service":
+        return "observed metadata did not match a known catalog entry"
+    strength = calibration.get("evidence_strength") if isinstance(calibration, dict) else "unknown"
+    support = ", ".join(supporting[:2]) if supporting else "weak_metadata"
+    missing_text = ", ".join(missing[:2]) if missing else "no_major_gap"
+    return f"{strength} candidate from {support}; missing {missing_text}"
+
+
+def _dedupe_text(values: list[str]) -> list[str]:
+    rows = []
+    for value in values:
+        text = str(value or "").strip()
+        if text and text not in rows:
+            rows.append(text)
+    return rows
 
 
 def _existing_signal_values(observation: dict[str, Any]) -> list[str]:

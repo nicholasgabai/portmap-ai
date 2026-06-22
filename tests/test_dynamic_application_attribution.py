@@ -58,6 +58,13 @@ def _candidate_probability(record, candidate):
     return 0.0
 
 
+def _candidate(record, candidate):
+    for row in record["candidates"]:
+        if row["candidate"] == candidate:
+            return row
+    raise AssertionError(candidate)
+
+
 def test_probable_app_attribution_generation_and_candidate_ranking():
     signatures = [build_behavioral_signature_record(_signature(), generated_at=FIXED_TIME)]
     rows = build_probable_application_attributions(
@@ -277,6 +284,64 @@ def test_probabilistic_application_catalog_reports_ambiguous_web_candidates_with
     assert record["evidence_signals"] == ["protocol:tls", "port:443"]
     assert record["calibration"]["evidence_strength"] == "weak"
     assert "generic_metadata_only" in record["calibration"]["factors"]
+
+
+def test_probabilistic_application_preserves_candidate_reasoning_for_ambiguous_attribution():
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-ambiguous-reasoning",
+            "protocol": "tls",
+            "port": 443,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    unknown = _candidate(record, "unknown_application")
+    nginx = _candidate(record, "nginx")
+
+    assert len(record["candidate_reasoning"]) == record["candidate_count"]
+    assert unknown["supporting_evidence"] == ["protocol:tls", "port:443"]
+    assert unknown["missing_evidence"] == ["process_match", "service_match", "fingerprint"]
+    assert "generic metadata" in unknown["reasoning"]
+    assert nginx["supporting_evidence"] == ["port:443"]
+    assert {"process_match", "service_match", "fingerprint"}.issubset(set(nginx["missing_evidence"]))
+    assert nginx["confidence_contribution"] == nginx["probability"]
+
+
+def test_probabilistic_application_generates_missing_evidence_for_port_only_service_candidate():
+    record = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-postgres-port-only",
+            "port": 5432,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    postgresql = _candidate(record, "postgresql")
+
+    assert postgresql["supporting_evidence"] == ["port:5432"]
+    assert {"process_match", "service_match", "fingerprint", "protocol_context"}.issubset(
+        set(postgresql["missing_evidence"])
+    )
+    assert "port:5432" in postgresql["reasoning"]
+    assert record["top_classification"] == "unknown_application"
+
+
+def test_probabilistic_application_unknown_candidates_explain_insufficient_metadata():
+    record = build_probabilistic_application_model(
+        {"observed_entity_reference": "session-redacted-unknown-reasoning", "source_mode": "live"},
+        generated_at=FIXED_TIME,
+    )
+    unknown = _candidate(record, "unknown_application")
+    insufficient = _candidate(record, "insufficient_metadata")
+    unclassified = _candidate(record, "unclassified_service")
+
+    assert unknown["supporting_evidence"] == ["insufficient_metadata"]
+    assert {"process_match", "service_match", "fingerprint"}.issubset(set(unknown["missing_evidence"]))
+    assert "not enough process" in insufficient["reasoning"]
+    assert {"process_evidence", "service_evidence"}.issubset(set(insufficient["missing_evidence"]))
+    assert unclassified["supporting_evidence"] == ["no_catalog_match"]
+    assert record["confidence"] == unknown["confidence_contribution"]
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():

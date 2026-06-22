@@ -1145,6 +1145,9 @@ def _active_risk_finding_rows(
                 "alternative_candidates": _classification_alternatives_text(classification),
                 "evidence_signals": _classification_evidence_text(classification),
                 "calibration": _classification_calibration_text(classification),
+                "candidate_reasoning": _classification_candidate_reasoning_text(classification),
+                "supporting_evidence": _classification_supporting_evidence_text(classification),
+                "missing_evidence": _classification_missing_evidence_text(classification),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -1184,6 +1187,9 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Classification Confidence", row.get("classification_confidence", "-")),
         ("Alternative Candidates", row.get("alternative_candidates", "-")),
         ("Evidence Signals", row.get("evidence_signals", "-")),
+        ("Candidate Reasoning", row.get("candidate_reasoning", "-")),
+        ("Supporting Evidence", row.get("supporting_evidence", "-")),
+        ("Missing Evidence", row.get("missing_evidence", "-")),
         ("Score", row.get("score", "-")),
         ("Action", row.get("action", "-")),
         ("Time", row.get("time", "-")),
@@ -2366,6 +2372,52 @@ def _classification_calibration_text(model: Dict[str, Any], *, limit: int = 4) -
     return f"{prefix}: {suffix}" if prefix != "-" else suffix
 
 
+def _candidate_reasoning_items(model: Dict[str, Any]) -> List[Dict[str, Any]]:
+    rows = model.get("candidate_reasoning")
+    if isinstance(rows, list):
+        return [row for row in rows if isinstance(row, dict)]
+    candidates = model.get("candidates")
+    if isinstance(candidates, list):
+        return [row for row in candidates if isinstance(row, dict)]
+    return []
+
+
+def _classification_candidate_reasoning_text(model: Dict[str, Any], *, limit: int = 3) -> str:
+    rows = []
+    for row in _candidate_reasoning_items(model)[: max(limit, 0)]:
+        candidate = _short_text(row.get("candidate"), limit=24)
+        reasoning = _short_text(row.get("reasoning"), limit=52)
+        if candidate != "-" and reasoning != "-":
+            rows.append(f"{candidate}: {reasoning}")
+    return "; ".join(rows) if rows else "-"
+
+
+def _classification_supporting_evidence_text(model: Dict[str, Any], *, limit: int = 3) -> str:
+    rows = []
+    for row in _candidate_reasoning_items(model)[: max(limit, 0)]:
+        candidate = _short_text(row.get("candidate"), limit=24)
+        supporting = row.get("supporting_evidence")
+        if not isinstance(supporting, list):
+            continue
+        evidence = ", ".join(_short_text(item, limit=28) for item in supporting[:3])
+        if candidate != "-" and evidence:
+            rows.append(f"{candidate}: {evidence}")
+    return "; ".join(rows) if rows else "-"
+
+
+def _classification_missing_evidence_text(model: Dict[str, Any], *, limit: int = 3) -> str:
+    rows = []
+    for row in _candidate_reasoning_items(model)[: max(limit, 0)]:
+        candidate = _short_text(row.get("candidate"), limit=24)
+        missing = row.get("missing_evidence")
+        if not isinstance(missing, list):
+            continue
+        evidence = ", ".join(_short_text(item, limit=28) for item in missing[:3])
+        if candidate != "-" and evidence:
+            rows.append(f"{candidate}: {evidence}")
+    return "; ".join(rows) if rows else "-"
+
+
 def _is_ai_event(event: Dict[str, Any]) -> bool:
     if any(
         event.get(key) not in {"", "-", None}
@@ -2434,6 +2486,9 @@ def _ai_provider_model_rows(
                 "alternative_candidates": "-",
                 "evidence_signals": "-",
                 "calibration": "-",
+                "candidate_reasoning": "-",
+                "supporting_evidence": "-",
+                "missing_evidence": "-",
             },
         )
         row["decisions"] += 1
@@ -2456,6 +2511,9 @@ def _ai_provider_model_rows(
             row["alternative_candidates"] = _classification_alternatives_text(model_record)
             row["evidence_signals"] = _classification_evidence_text(model_record)
             row["calibration"] = _classification_calibration_text(model_record)
+            row["candidate_reasoning"] = _classification_candidate_reasoning_text(model_record)
+            row["supporting_evidence"] = _classification_supporting_evidence_text(model_record)
+            row["missing_evidence"] = _classification_missing_evidence_text(model_record)
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -2477,6 +2535,9 @@ def _ai_provider_model_rows(
             "alternative_candidates": row["alternative_candidates"],
             "evidence_signals": row["evidence_signals"],
             "calibration": row["calibration"],
+            "candidate_reasoning": row["candidate_reasoning"],
+            "supporting_evidence": row["supporting_evidence"],
+            "missing_evidence": row["missing_evidence"],
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"]]),
@@ -2512,6 +2573,9 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Alternative Candidates", row.get("alternative_candidates", "-")),
         ("Evidence Count", row.get("evidence_count", "-")),
         ("Evidence Signals", row.get("evidence_signals", "-")),
+        ("Candidate Reasoning", row.get("candidate_reasoning", "-")),
+        ("Supporting Evidence", row.get("supporting_evidence", "-")),
+        ("Missing Evidence", row.get("missing_evidence", "-")),
         ("Status", row.get("status", "-")),
         ("Decisions", row.get("decisions", "-")),
         ("Updated", row.get("updated", "-")),
