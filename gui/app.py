@@ -1244,6 +1244,14 @@ def _active_risk_finding_rows(
                     _classification_behavior_graph_summary(classification).get("strongest_relationship_score")
                 ),
                 "related_entities": _behavior_graph_text_field(classification, "related_entity_count", limit=12),
+                "graph_clusters": _behavior_graph_text_field(classification, "cluster_count", limit=12),
+                "strongest_cluster": _behavior_graph_text_field(classification, "strongest_cluster", limit=40),
+                "strongest_cluster_type": _behavior_graph_text_field(
+                    classification, "strongest_cluster_type", limit=40
+                ),
+                "strongest_cluster_score": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("strongest_cluster_score")
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1325,6 +1333,10 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Strongest Relationship Type", row.get("strongest_relationship_type", "-")),
         ("Strongest Relationship Score", row.get("strongest_relationship_score", "-")),
         ("Related Entities", row.get("related_entities", "-")),
+        ("Graph Clusters", row.get("graph_clusters", "-")),
+        ("Strongest Cluster", row.get("strongest_cluster", "-")),
+        ("Strongest Cluster Type", row.get("strongest_cluster_type", "-")),
+        ("Strongest Cluster Score", row.get("strongest_cluster_score", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -2736,6 +2748,10 @@ def _ai_provider_model_rows(
                 "strongest_relationship_type": "-",
                 "strongest_relationship_score": "-",
                 "related_entities": "-",
+                "graph_clusters": "-",
+                "strongest_cluster": "-",
+                "strongest_cluster_type": "-",
+                "strongest_cluster_score": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -2816,6 +2832,14 @@ def _ai_provider_model_rows(
                 _classification_behavior_graph_summary(model_record).get("strongest_relationship_score")
             )
             row["related_entities"] = _behavior_graph_text_field(model_record, "related_entity_count", limit=12)
+            row["graph_clusters"] = _behavior_graph_text_field(model_record, "cluster_count", limit=12)
+            row["strongest_cluster"] = _behavior_graph_text_field(model_record, "strongest_cluster", limit=40)
+            row["strongest_cluster_type"] = _behavior_graph_text_field(
+                model_record, "strongest_cluster_type", limit=40
+            )
+            row["strongest_cluster_score"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("strongest_cluster_score")
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -2879,6 +2903,10 @@ def _ai_provider_model_rows(
             "strongest_relationship_type": row["strongest_relationship_type"],
             "strongest_relationship_score": row["strongest_relationship_score"],
             "related_entities": row["related_entities"],
+            "graph_clusters": row["graph_clusters"],
+            "strongest_cluster": row["strongest_cluster"],
+            "strongest_cluster_type": row["strongest_cluster_type"],
+            "strongest_cluster_score": row["strongest_cluster_score"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -2956,6 +2984,10 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Strongest Relationship Type", row.get("strongest_relationship_type", "-")),
         ("Strongest Relationship Score", row.get("strongest_relationship_score", "-")),
         ("Related Entities", row.get("related_entities", "-")),
+        ("Graph Clusters", row.get("graph_clusters", "-")),
+        ("Strongest Cluster", row.get("strongest_cluster", "-")),
+        ("Strongest Cluster Type", row.get("strongest_cluster_type", "-")),
+        ("Strongest Cluster Score", row.get("strongest_cluster_score", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),

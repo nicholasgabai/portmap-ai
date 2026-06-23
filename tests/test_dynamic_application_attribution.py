@@ -1300,6 +1300,10 @@ def test_behavior_graph_empty_input_is_safe_and_empty():
     assert graph["summary"]["strongest_relationship_type"] == "-"
     assert graph["summary"]["strongest_relationship_score"] == "-"
     assert graph["summary"]["related_entity_count"] == 0
+    assert graph["summary"]["cluster_count"] == 0
+    assert graph["summary"]["strongest_cluster"] == "-"
+    assert graph["summary"]["strongest_cluster_type"] == "-"
+    assert graph["summary"]["strongest_cluster_score"] == "-"
     assert graph["summary"]["related_asset"] == "-"
     assert graph["summary"]["related_service"] == "-"
     assert graph["summary"]["related_profile"] == "-"
@@ -1355,6 +1359,17 @@ def test_behavior_graph_infers_relationships_from_existing_metadata():
     assert graph["summary"]["related_entity_count"] >= 6
     assert all(0.0 <= float(row["strength_score"]) <= 1.0 for row in graph["relationships"])
     assert all(row["evidence_count"] == len(row["evidence_summary"]) for row in graph["relationships"])
+    assert {row["cluster_type"] for row in graph["clusters"]} == {
+        "asset_cluster",
+        "service_cluster",
+        "application_cluster",
+        "profile_cluster",
+        "risk_signal_cluster",
+    }
+    assert graph["summary"]["cluster_count"] == 5
+    assert graph["summary"]["strongest_cluster"].startswith("graph-cluster-")
+    assert graph["summary"]["strongest_cluster_type"] == "application_cluster"
+    assert graph["summary"]["strongest_cluster_score"] > 0
 
 
 def test_behavior_graph_relationship_ids_are_stable():
@@ -1416,6 +1431,99 @@ def test_behavior_graph_relationship_strength_reflects_evidence_volume():
 
     assert by_type["observed_flow_relationship"]["strength_score"] > by_type["shared_port"]["strength_score"]
     assert by_type["observed_flow_relationship"]["evidence_count"] > by_type["shared_port"]["evidence_count"]
+
+
+def test_behavior_graph_relationship_score_distribution_is_calibrated():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "peer_asset": "asset-b",
+            "service_name": "frontend",
+            "related_services": ["backend"],
+            "protocol": "tcp",
+            "port": 443,
+            "flow_id": "flow-1",
+            "score_factors": ["sensitive_port:443", "new_peer"],
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "nginx",
+            "confidence": 0.72,
+            "candidates": [
+                {"candidate": "nginx", "probability": 0.72},
+                {"candidate": "apache", "probability": 0.18},
+            ],
+        },
+        learning_profile={"profile_id": "learning-profile-primary"},
+        generated_at=FIXED_TIME,
+    )
+    scores = [float(row["strength_score"]) for row in graph["relationships"]]
+    weak = min(
+        (row for row in graph["relationships"] if row["relationship_type"] == "shared_port"),
+        key=lambda row: row["strength_score"],
+    )
+    medium = max(
+        (row for row in graph["relationships"] if row["relationship_type"] == "shared_service"),
+        key=lambda row: row["strength_score"],
+    )
+    strong = max(
+        (row for row in graph["relationships"] if row["relationship_type"] == "observed_flow_relationship"),
+        key=lambda row: row["strength_score"],
+    )
+    strongest = max(graph["relationships"], key=lambda row: (row["strength_score"], row["relationship_id"]))
+
+    assert weak["strength_score"] < 0.50
+    assert 0.50 <= medium["strength_score"] < 0.85
+    assert strong["strength_score"] >= 0.85
+    assert len(set(scores)) >= 4
+    assert any(score < 0.98 for score in scores)
+    assert all(0.0 <= score <= 1.0 for score in scores)
+    assert graph["summary"]["strongest_relationship_score"] == strongest["strength_score"]
+    assert graph["summary"]["strongest_relationship"] == strongest["relationship_id"]
+
+
+def test_behavior_graph_cluster_ids_are_deterministic_and_summarized():
+    observation = {
+        "node_id": "asset-a",
+        "peer_asset": "asset-b",
+        "service_name": "frontend",
+        "related_services": ["backend"],
+        "protocol": "tcp",
+        "port": 443,
+        "flow_id": "flow-1",
+        "score_factors": ["sensitive_port:443"],
+        "related_profiles": ["learning-profile-related"],
+        "source_mode": "live",
+    }
+    classifier = {
+        "top_classification": "nginx",
+        "confidence": 0.72,
+        "candidates": [
+            {"candidate": "nginx", "probability": 0.72},
+            {"candidate": "apache", "probability": 0.18},
+        ],
+    }
+    first = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile={"profile_id": "learning-profile-primary"},
+        generated_at=FIXED_TIME,
+    )
+    second = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile={"profile_id": "learning-profile-primary"},
+        generated_at=FIXED_TIME,
+    )
+
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+    assert [row["cluster_id"] for row in first["clusters"]] == [row["cluster_id"] for row in second["clusters"]]
+    assert all(row["cluster_id"].startswith("graph-cluster-") for row in first["clusters"])
+    assert all(0.0 <= float(row["confidence_score"]) <= 1.0 for row in first["clusters"])
+    assert all(row["member_count"] >= 1 for row in first["clusters"])
+    assert first["summary"]["cluster_count"] == len(first["clusters"])
+    assert first["summary"]["strongest_cluster"].startswith("graph-cluster-")
+    assert first["summary"]["strongest_cluster_type"] in {row["cluster_type"] for row in first["clusters"]}
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():

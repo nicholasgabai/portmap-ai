@@ -35,6 +35,13 @@ GRAPH_RELATIONSHIP_TYPES = {
     "observed_flow_relationship",
     "related_risk_signal",
 }
+GRAPH_CLUSTER_TYPES = {
+    "asset_cluster",
+    "service_cluster",
+    "application_cluster",
+    "profile_cluster",
+    "risk_signal_cluster",
+}
 
 
 def build_behavior_graph_model(
@@ -140,14 +147,19 @@ def build_behavior_graph_model(
         profile_nodes=profile_nodes,
         flows=flows,
     )
+    node_rows = sorted(nodes.values(), key=lambda row: (row["node_type"], row["node_id"]))
+    edge_rows = sorted(edges.values(), key=lambda row: (row["edge_type"], row["edge_id"]))
+    relationship_rows = sorted(
+        relationships.values(), key=lambda row: (row["relationship_type"], row["relationship_id"])
+    )
+    cluster_rows = _build_behavior_clusters(node_rows, edge_rows, relationship_rows)
 
     return _graph_record(
         timestamp=timestamp,
-        nodes=sorted(nodes.values(), key=lambda row: (row["node_type"], row["node_id"])),
-        edges=sorted(edges.values(), key=lambda row: (row["edge_type"], row["edge_id"])),
-        relationships=sorted(
-            relationships.values(), key=lambda row: (row["relationship_type"], row["relationship_id"])
-        ),
+        nodes=node_rows,
+        edges=edge_rows,
+        relationships=relationship_rows,
+        clusters=cluster_rows,
         related={
             "related_asset": related_asset,
             "related_service": related_service,
@@ -166,10 +178,12 @@ def _graph_record(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
     relationships: list[dict[str, Any]] | None = None,
+    clusters: list[dict[str, Any]] | None = None,
     related: dict[str, str],
 ) -> dict[str, Any]:
     relationship_rows = relationships or []
-    summary = _graph_summary(nodes, edges, relationship_rows, related)
+    cluster_rows = clusters or []
+    summary = _graph_summary(nodes, edges, relationship_rows, cluster_rows, related)
     return {
         "record_type": "graph_behavior_model",
         "record_version": BEHAVIOR_GRAPH_RECORD_VERSION,
@@ -181,12 +195,14 @@ def _graph_record(
                     (row.get("relationship_type"), row.get("source_id"), row.get("target_id"))
                     for row in relationship_rows
                 ],
+                "clusters": [(row.get("cluster_type"), row.get("cluster_id")) for row in cluster_rows],
             }
         )[:16],
         "generated_at": timestamp,
         "nodes": nodes,
         "edges": edges,
         "relationships": relationship_rows,
+        "clusters": cluster_rows,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -203,6 +219,7 @@ def _graph_summary(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
     relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -211,6 +228,7 @@ def _graph_summary(
         if node_type in counts:
             counts[node_type] += 1
     strongest = _strongest_relationship(relationships)
+    strongest_cluster = _strongest_cluster(clusters)
     return {
         "node_count": len(nodes),
         "edge_count": len(edges),
@@ -224,6 +242,10 @@ def _graph_summary(
         "strongest_relationship_type": strongest.get("relationship_type", "-"),
         "strongest_relationship_score": strongest.get("strength_score", "-"),
         "related_entity_count": _related_entity_count(relationships),
+        "cluster_count": len(clusters),
+        "strongest_cluster": strongest_cluster.get("cluster_id", "-"),
+        "strongest_cluster_type": strongest_cluster.get("cluster_type", "-"),
+        "strongest_cluster_score": strongest_cluster.get("confidence_score", "-"),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -404,6 +426,117 @@ def _infer_relationships(
         )
 
 
+def _build_behavior_clusters(
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    relationships: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    clusters = [
+        _cluster_for(
+            "asset_cluster",
+            nodes,
+            edges,
+            relationships,
+            node_types={"asset_node"},
+            relationship_types={"shared_asset"},
+        ),
+        _cluster_for(
+            "service_cluster",
+            nodes,
+            edges,
+            relationships,
+            node_types={"service_node", "port_node", "protocol_node"},
+            relationship_types={
+                "shared_service",
+                "shared_protocol",
+                "shared_port",
+                "observed_flow_relationship",
+            },
+        ),
+        _cluster_for(
+            "application_cluster",
+            nodes,
+            edges,
+            relationships,
+            node_types={"application_node"},
+            relationship_types={"shared_application_candidate"},
+        ),
+        _cluster_for(
+            "profile_cluster",
+            nodes,
+            edges,
+            relationships,
+            node_types={"profile_node"},
+            relationship_types={"shared_learning_profile"},
+        ),
+        _cluster_for(
+            "risk_signal_cluster",
+            nodes,
+            edges,
+            relationships,
+            node_types=set(),
+            relationship_types={"related_risk_signal"},
+        ),
+    ]
+    return sorted(
+        [cluster for cluster in clusters if cluster is not None],
+        key=lambda row: (row["cluster_type"], row["cluster_id"]),
+    )
+
+
+def _cluster_for(
+    cluster_type: str,
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    relationships: list[dict[str, Any]],
+    *,
+    node_types: set[str],
+    relationship_types: set[str],
+) -> dict[str, Any] | None:
+    safe_type = cluster_type if cluster_type in GRAPH_CLUSTER_TYPES else "service_cluster"
+    matching_nodes = [row for row in nodes if str(row.get("node_type") or "") in node_types]
+    matching_relationships = [
+        row for row in relationships if str(row.get("relationship_type") or "") in relationship_types
+    ]
+    member_ids = {str(row.get("node_id") or "") for row in matching_nodes if row.get("node_id")}
+    member_labels = {str(row.get("label") or "") for row in matching_nodes if row.get("label")}
+    for relationship in matching_relationships:
+        for key in ("source_id", "target_id"):
+            value = str(relationship.get(key) or "")
+            if value:
+                member_ids.add(value)
+        for key in ("source_label", "target_label"):
+            value = str(relationship.get(key) or "")
+            if value:
+                member_labels.add(value)
+    cluster_edges = [
+        row
+        for row in edges
+        if str(row.get("source_id") or "") in member_ids or str(row.get("target_id") or "") in member_ids
+    ]
+    if not member_ids and not matching_relationships:
+        return None
+    strongest_relationship = _strongest_relationship(matching_relationships)
+    confidence = _cluster_confidence(matching_relationships, cluster_edges, len(member_ids))
+    evidence = _cluster_evidence(matching_relationships, cluster_edges, member_labels)
+    cluster_id = _cluster_id(
+        safe_type,
+        sorted(member_ids),
+        [(row.get("relationship_type"), row.get("relationship_id")) for row in matching_relationships],
+    )
+    return {
+        "cluster_id": cluster_id,
+        "cluster_type": safe_type,
+        "member_count": len(member_ids),
+        "relationship_count": len(matching_relationships),
+        "strongest_member": _cluster_strongest_member(strongest_relationship, member_labels),
+        "strongest_relationship_type": strongest_relationship.get("relationship_type", "-"),
+        "confidence_score": confidence,
+        "evidence_summary": evidence,
+        "metadata_only": True,
+    }
+
+
 def _asset_label(observation: dict[str, Any]) -> str:
     return _first_text(
         observation,
@@ -575,6 +708,67 @@ def _related_entity_count(relationships: list[dict[str, Any]]) -> int:
     return len(entity_ids)
 
 
+def _strongest_cluster(clusters: list[dict[str, Any]]) -> dict[str, Any]:
+    if not clusters:
+        return {}
+    return sorted(
+        clusters,
+        key=lambda row: (
+            -float(row.get("confidence_score") or 0.0),
+            str(row.get("cluster_type") or ""),
+            str(row.get("cluster_id") or ""),
+        ),
+    )[0]
+
+
+def _cluster_confidence(
+    relationships: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    member_count: int,
+) -> float:
+    scores = [float(row.get("strength_score") or 0.0) for row in relationships]
+    if scores:
+        average_score = sum(scores) / len(scores)
+        max_score = max(scores)
+        density = min(len(relationships) / max(member_count, 1), 1.0)
+        confidence = (average_score * 0.55) + (max_score * 0.30) + (density * 0.15)
+    else:
+        edge_support = min(len(edges), 3) * 0.08
+        member_support = min(member_count, 4) * 0.06
+        confidence = edge_support + member_support
+    return round(min(max(confidence, 0.0), 1.0), 2)
+
+
+def _cluster_evidence(
+    relationships: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    member_labels: set[str],
+) -> list[str]:
+    evidence: list[str] = []
+    for relationship in sorted(
+        relationships,
+        key=lambda row: (-float(row.get("strength_score") or 0.0), str(row.get("relationship_id") or "")),
+    ):
+        relationship_type = _safe_text(relationship.get("relationship_type"))
+        if relationship_type != "-":
+            evidence.append(f"relationship:{relationship_type}")
+        for item in relationship.get("evidence_summary") or []:
+            evidence.append(item)
+    if edges:
+        evidence.append(f"structural_edges:{len(edges)}")
+    if member_labels:
+        evidence.append("members:" + ",".join(sorted(member_labels)[:3]))
+    return _unique_text(evidence, limit=8)
+
+
+def _cluster_strongest_member(relationship: dict[str, Any], member_labels: set[str]) -> str:
+    for key in ("target_label", "source_label"):
+        value = _safe_text(relationship.get(key))
+        if value != "-":
+            return value
+    return sorted(member_labels)[0] if member_labels else "-"
+
+
 def _first_text(observation: dict[str, Any], keys: tuple[str, ...]) -> str:
     for key in keys:
         value = observation.get(key)
@@ -675,6 +869,16 @@ def _relationship_id(relationship_type: str, source_id: str, target_id: str, evi
             "source": source_id,
             "target": target_id,
             "evidence": evidence,
+        }
+    )[:16]
+
+
+def _cluster_id(cluster_type: str, member_ids: list[str], relationships: list[tuple[Any, Any]]) -> str:
+    return "graph-cluster-" + cluster_type.replace("_cluster", "") + "-" + _digest(
+        {
+            "type": cluster_type,
+            "members": member_ids,
+            "relationships": relationships,
         }
     )[:16]
 

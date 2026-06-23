@@ -385,6 +385,10 @@ Implementation note: Phase 173.0 adds deterministic metadata-only behavior graph
 
 Implementation note: Phase 173.1 extends deterministic metadata-only behavior graph modeling with inferred relationships across assets, services, applications, profiles, flows, shared ports, shared protocols, shared application candidates, shared learning profiles, observed flow relationships, and related risk signals. Outputs include inferred relationship count, strongest relationship, strongest relationship type, strongest relationship score, and related entity count exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add enforcement, blocking, remediation execution, packet capture, external connectivity, autonomous action, machine learning, new collection, packet inspection, or payload analysis.
 
+#### 173.2 - Behavioral Cluster Formation (Completed)
+
+Implementation note: Phase 173.2 adds deterministic metadata-only behavioral cluster formation from existing graph nodes, edges, inferred relationships, and relationship strength scores. Outputs include asset, service, application, profile, and risk-signal clusters with cluster IDs, member counts, relationship counts, strongest members, strongest relationship types, confidence scores, evidence summaries, cluster count, strongest cluster, strongest cluster type, and strongest cluster score exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add enforcement, blocking, remediation execution, packet capture, external connectivity, autonomous action, machine learning, new collection, packet inspection, or payload analysis.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

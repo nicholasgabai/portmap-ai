@@ -12,6 +12,7 @@ from core_engine.attribution.confidence_models import (
 )
 from core_engine.attribution.behavior_graph import (
     BEHAVIOR_GRAPH_RECORD_VERSION,
+    GRAPH_CLUSTER_TYPES,
     GRAPH_EDGE_TYPES,
     GRAPH_NODE_TYPES,
     GRAPH_RELATIONSHIP_TYPES,
@@ -74,6 +75,7 @@ __all__ = [
     "ApplicationAttributionError",
     "BEHAVIOR_GRAPH_RECORD_VERSION",
     "GRAPH_EDGE_TYPES",
+    "GRAPH_CLUSTER_TYPES",
     "GRAPH_NODE_TYPES",
     "GRAPH_RELATIONSHIP_TYPES",
     "LEARNING_PROFILE_RECORD_VERSION",

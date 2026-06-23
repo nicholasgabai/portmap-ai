@@ -1039,6 +1039,10 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Strongest Relationship Type"] != "-"
     assert details["Strongest Relationship Score"] != "-"
     assert int(details["Related Entities"]) > 0
+    assert int(details["Graph Clusters"]) > 0
+    assert details["Strongest Cluster"].startswith("graph-cluster-")
+    assert details["Strongest Cluster Type"] != "-"
+    assert details["Strongest Cluster Score"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1224,6 +1228,7 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "candidate_reasoning": "nginx:" + ("process_service_fingerprint_without_spaces" * 4),
         "recommendation_list": "review_profile_drift:" + ("metadata-drift-with-long-token" * 5),
         "strongest_relationship": "graph-rel-shared_application_candidate-" + ("abcdef1234567890" * 4),
+        "strongest_cluster": "graph-cluster-application-" + ("abcdef1234567890" * 4),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1242,6 +1247,7 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Candidate Reasoning" for row in rendered)
             assert any(row[0] == "Recommendation List" for row in rendered)
             assert any(row[0] == "Strongest Relationship" for row in rendered)
+            assert any(row[0] == "Strongest Cluster" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -1794,6 +1800,10 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Strongest Relationship Type"] != "-"
     assert details["Strongest Relationship Score"] != "-"
     assert int(details["Related Entities"]) > 0
+    assert int(details["Graph Clusters"]) > 0
+    assert details["Strongest Cluster"].startswith("graph-cluster-")
+    assert details["Strongest Cluster Type"] != "-"
+    assert details["Strongest Cluster Score"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1958,6 +1968,7 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "candidate_reasoning": "nginx:" + ("process_service_fingerprint_without_spaces" * 4),
         "recommendation_list": "review_profile_drift:" + ("metadata-drift-with-long-token" * 5),
         "strongest_relationship": "graph-rel-shared_learning_profile-" + ("1234567890abcdef" * 4),
+        "strongest_cluster": "graph-cluster-profile-" + ("1234567890abcdef" * 4),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -1976,6 +1987,7 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Candidate Reasoning" for row in rendered)
             assert any(row[0] == "Recommendation List" for row in rendered)
             assert any(row[0] == "Strongest Relationship" for row in rendered)
+            assert any(row[0] == "Strongest Cluster" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
