@@ -1031,6 +1031,12 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Recommendation Count"] != "-"
     assert details["Primary Recommendation"] == "verify_service_identity"
     assert "verify_service_identity" in details["Recommendation List"]
+    assert details["Graph Nodes"] == "5"
+    assert details["Graph Edges"] == "4"
+    assert details["Graph Relationships"] == "4"
+    assert details["Related Asset"] == "-"
+    assert details["Related Service"] == "https"
+    assert details["Related Profile"].startswith("learning-profile-")
     assert details["Status"] == "preview"
     assert details["Decisions"] == "2"
     assert details["Updated"] == "2026-06-14 12:03:00"
@@ -1773,6 +1779,12 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Recommendation Count"] != "-"
     assert details["Primary Recommendation"] == "classification_stable"
     assert "classification_stable" in details["Recommendation List"]
+    assert details["Graph Nodes"] == "6"
+    assert details["Graph Edges"] == "5"
+    assert details["Graph Relationships"] == "5"
+    assert details["Related Asset"] == "worker-1"
+    assert details["Related Service"] == "ssh"
+    assert details["Related Profile"].startswith("learning-profile-")
     assert "service_match" in rows[0]["calibration"]
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."

@@ -10,6 +10,13 @@ from core_engine.attribution.confidence_models import (
     deterministic_confidence_json,
     score_application_attribution_confidence,
 )
+from core_engine.attribution.behavior_graph import (
+    BEHAVIOR_GRAPH_RECORD_VERSION,
+    GRAPH_EDGE_TYPES,
+    GRAPH_NODE_TYPES,
+    build_behavior_graph_model,
+    deterministic_behavior_graph_json,
+)
 from core_engine.attribution.learning_profiles import (
     LEARNING_PROFILE_RECORD_VERSION,
     LearningProfileError,
@@ -64,6 +71,9 @@ __all__ = [
     "ATTRIBUTION_SAFETY_FLAGS",
     "ATTRIBUTION_STATES",
     "ApplicationAttributionError",
+    "BEHAVIOR_GRAPH_RECORD_VERSION",
+    "GRAPH_EDGE_TYPES",
+    "GRAPH_NODE_TYPES",
     "LEARNING_PROFILE_RECORD_VERSION",
     "LearningProfileError",
     "PROBABILISTIC_APPLICATION_MODEL_VERSION",
@@ -75,6 +85,7 @@ __all__ = [
     "build_application_attribution_api",
     "build_application_attribution_dashboard",
     "build_application_attribution_report",
+    "build_behavior_graph_model",
     "build_behavioral_signature_record",
     "build_behavioral_signature_records",
     "build_confidence_breakdown",
@@ -89,6 +100,7 @@ __all__ = [
     "classify_attribution_state",
     "confidence_level",
     "deterministic_application_attribution_json",
+    "deterministic_behavior_graph_json",
     "deterministic_confidence_json",
     "deterministic_learning_profile_json",
     "deterministic_probabilistic_application_model_json",

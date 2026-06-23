@@ -1228,6 +1228,12 @@ def _active_risk_finding_rows(
                     classification, "primary_recommendation", limit=32
                 ),
                 "recommendation_list": _learning_history_recommendations_text(classification),
+                "graph_nodes": _behavior_graph_text_field(classification, "node_count", limit=12),
+                "graph_edges": _behavior_graph_text_field(classification, "edge_count", limit=12),
+                "graph_relationships": _behavior_graph_text_field(classification, "relationship_count", limit=12),
+                "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
+                "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
+                "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -1298,6 +1304,12 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Recommendation Count", row.get("recommendation_count", "-")),
         ("Primary Recommendation", row.get("primary_recommendation", "-")),
         ("Recommendation List", row.get("recommendation_list", "-")),
+        ("Graph Nodes", row.get("graph_nodes", "-")),
+        ("Graph Edges", row.get("graph_edges", "-")),
+        ("Graph Relationships", row.get("graph_relationships", "-")),
+        ("Related Asset", row.get("related_asset", "-")),
+        ("Related Service", row.get("related_service", "-")),
+        ("Related Profile", row.get("related_profile", "-")),
         ("Score", row.get("score", "-")),
         ("Action", row.get("action", "-")),
         ("Time", row.get("time", "-")),
@@ -2587,6 +2599,18 @@ def _learning_history_recommendations_text(model: Dict[str, Any], *, limit: int 
     return "; ".join(rows) if rows else "-"
 
 
+def _classification_behavior_graph_summary(model: Dict[str, Any]) -> Dict[str, Any]:
+    graph = model.get("behavior_graph")
+    if not isinstance(graph, dict):
+        return {}
+    summary = graph.get("summary")
+    return summary if isinstance(summary, dict) else {}
+
+
+def _behavior_graph_text_field(model: Dict[str, Any], field: str, *, limit: int = 64) -> str:
+    return _short_text(_classification_behavior_graph_summary(model).get(field), limit=limit)
+
+
 def _is_ai_event(event: Dict[str, Any]) -> bool:
     if any(
         event.get(key) not in {"", "-", None}
@@ -2686,6 +2710,12 @@ def _ai_provider_model_rows(
                 "recommendation_count": "-",
                 "primary_recommendation": "-",
                 "recommendation_list": "-",
+                "graph_nodes": "-",
+                "graph_edges": "-",
+                "graph_relationships": "-",
+                "related_asset": "-",
+                "related_service": "-",
+                "related_profile": "-",
             },
         )
         row["decisions"] += 1
@@ -2747,6 +2777,12 @@ def _ai_provider_model_rows(
                 model_record, "primary_recommendation", limit=32
             )
             row["recommendation_list"] = _learning_history_recommendations_text(model_record)
+            row["graph_nodes"] = _behavior_graph_text_field(model_record, "node_count", limit=12)
+            row["graph_edges"] = _behavior_graph_text_field(model_record, "edge_count", limit=12)
+            row["graph_relationships"] = _behavior_graph_text_field(model_record, "relationship_count", limit=12)
+            row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
+            row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
+            row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -2799,6 +2835,12 @@ def _ai_provider_model_rows(
             "recommendation_count": row["recommendation_count"],
             "primary_recommendation": row["primary_recommendation"],
             "recommendation_list": row["recommendation_list"],
+            "graph_nodes": row["graph_nodes"],
+            "graph_edges": row["graph_edges"],
+            "graph_relationships": row["graph_relationships"],
+            "related_asset": row["related_asset"],
+            "related_service": row["related_service"],
+            "related_profile": row["related_profile"],
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"]]),
@@ -2865,6 +2907,12 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Recommendation Count", row.get("recommendation_count", "-")),
         ("Primary Recommendation", row.get("primary_recommendation", "-")),
         ("Recommendation List", row.get("recommendation_list", "-")),
+        ("Graph Nodes", row.get("graph_nodes", "-")),
+        ("Graph Edges", row.get("graph_edges", "-")),
+        ("Graph Relationships", row.get("graph_relationships", "-")),
+        ("Related Asset", row.get("related_asset", "-")),
+        ("Related Service", row.get("related_service", "-")),
+        ("Related Profile", row.get("related_profile", "-")),
         ("Status", row.get("status", "-")),
         ("Decisions", row.get("decisions", "-")),
         ("Updated", row.get("updated", "-")),

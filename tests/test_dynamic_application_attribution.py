@@ -7,6 +7,7 @@ from core_engine.attribution import (
     SignatureLearningError,
     append_learning_profile_history,
     build_application_attribution_report,
+    build_behavior_graph_model,
     build_behavioral_signature_record,
     build_learning_profile,
     build_learning_profile_history,
@@ -29,6 +30,7 @@ from core_engine.attribution import (
     update_learning_profile_history_store,
     update_learning_profile_store,
     update_learning_profiles,
+    deterministic_behavior_graph_json,
 )
 
 
@@ -1186,6 +1188,113 @@ def test_learning_profile_confidence_evolution_summarizes_mixed_confidence_histo
     assert summary["confidence_average"] == 0.555
     assert summary["confidence_delta"] == 0.28
     assert summary["confidence_trend"] == "volatile"
+
+
+def test_behavior_graph_generates_nodes_from_existing_metadata_only():
+    model = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-graph",
+            "node_id": "worker-1",
+            "program": "nginx",
+            "service_name": "https",
+            "protocol": "tls",
+            "port": 443,
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    graph = model["behavior_graph"]
+
+    assert graph["record_type"] == "graph_behavior_model"
+    assert graph["metadata_only"] is True
+    assert graph["read_only"] is True
+    assert graph["enforcement_enabled"] is False
+    assert {row["node_type"] for row in graph["nodes"]} == {
+        "asset_node",
+        "service_node",
+        "port_node",
+        "protocol_node",
+        "application_node",
+        "profile_node",
+    }
+    assert graph["summary"]["node_count"] == 6
+    assert graph["summary"]["asset_count"] == 1
+    assert graph["summary"]["service_count"] == 1
+    assert graph["summary"]["application_count"] == 1
+    assert graph["summary"]["profile_count"] == 1
+
+
+def test_behavior_graph_generates_required_edges_from_flow_metadata():
+    model = build_probabilistic_application_model(
+        {
+            "observed_entity_reference": "session-redacted-flow-graph",
+            "node_id": "worker-1",
+            "program": "nginx",
+            "service_name": "https",
+            "protocol": "tls",
+            "port": 443,
+            "flow_id": "flow-redacted-1",
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+    graph = model["behavior_graph"]
+
+    assert {row["edge_type"] for row in graph["edges"]} == {
+        "asset_exposes_service",
+        "service_uses_port",
+        "service_uses_protocol",
+        "service_classified_as_application",
+        "service_linked_to_profile",
+        "asset_observed_flow",
+    }
+    assert graph["summary"]["edge_count"] == 6
+    assert graph["summary"]["relationship_count"] == 6
+    assert graph["summary"]["related_asset"] == "worker-1"
+    assert graph["summary"]["related_service"] == "https"
+    assert graph["summary"]["related_profile"].startswith("learning-profile-")
+
+
+def test_behavior_graph_ids_are_deterministic_and_export_safe():
+    observation = {
+        "observed_entity_reference": "session-redacted-stable-graph",
+        "node_id": "worker-1",
+        "program": "postgres",
+        "service_name": "postgresql",
+        "protocol": "tcp",
+        "port": 5432,
+        "flow_id": "flow-redacted-postgres",
+        "source_mode": "live",
+        "payload": "must-not-export",
+        "raw_packet": "must-not-export",
+    }
+    first = build_probabilistic_application_model(observation, generated_at=FIXED_TIME)["behavior_graph"]
+    second = build_probabilistic_application_model(observation, generated_at=FIXED_TIME)["behavior_graph"]
+
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+    assert [row["node_id"] for row in first["nodes"]] == [row["node_id"] for row in second["nodes"]]
+    assert [row["edge_id"] for row in first["edges"]] == [row["edge_id"] for row in second["edges"]]
+    serialized = deterministic_behavior_graph_json(first)
+    assert "must-not-export" not in serialized
+    assert all(row["node_id"].startswith("graph-node-") for row in first["nodes"])
+    assert all(row["edge_id"].startswith("graph-edge-") for row in first["edges"])
+
+
+def test_behavior_graph_empty_input_is_safe_and_empty():
+    graph = build_behavior_graph_model({}, generated_at=FIXED_TIME)
+
+    assert graph["summary"]["node_count"] == 0
+    assert graph["summary"]["edge_count"] == 0
+    assert graph["summary"]["asset_count"] == 0
+    assert graph["summary"]["service_count"] == 0
+    assert graph["summary"]["application_count"] == 0
+    assert graph["summary"]["profile_count"] == 0
+    assert graph["summary"]["relationship_count"] == 0
+    assert graph["summary"]["related_asset"] == "-"
+    assert graph["summary"]["related_service"] == "-"
+    assert graph["summary"]["related_profile"] == "-"
+    assert graph["metadata_only"] is True
+    assert graph["read_only"] is True
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():

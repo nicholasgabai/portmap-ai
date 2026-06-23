@@ -373,6 +373,14 @@ Implementation note: Phase 172.4 adds deterministic advisory recommendation gene
 
 Implementation note: Phase 172.5 adds deterministic confidence evolution summaries from existing learning profile history only, including first, latest, minimum, maximum, average, delta, and trend categories for confidence observations. Confidence trend metadata is exposed through existing AI and Risk detail surfaces without layout changes, and recommendation logic can consume declining, stable, improving, or volatile trends while remaining advisory only. This remains read-only, metadata-only, and does not add enforcement, blocking, remediation execution, packet capture, orchestration actions, external connectivity, autonomous behavior, machine learning, model retraining, packet inspection, or payload analysis.
 
+### Phase 173 Sub-Phases
+
+Phase 173 is treated as a multi-stage phase for Graph-Based Behavioral AI without changing the Milestone AC phase numbering. Future Phase 173 sub-phases should be added here.
+
+#### 173.0 - Graph-Based Behavioral AI Foundation (Completed)
+
+Implementation note: Phase 173.0 adds deterministic metadata-only behavior graph modeling from existing observed assets, services, ports, protocols, flows, findings, probabilistic application attribution, and learning profile metadata. Outputs include graph nodes, graph edges, relationship counts, related asset, related service, and related profile metadata exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add enforcement, blocking, remediation execution, packet capture, external connectivity, autonomous action, machine learning, packet inspection, or payload analysis.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.
