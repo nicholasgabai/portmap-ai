@@ -1135,17 +1135,23 @@ def test_ai_details_table_preserves_scroll_and_highlighted_wrapped_row_on_refres
             rendered = [details.get_row_at(index) for index in range(details.row_count)]
             continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
             details.move_cursor(row=continuation_index, column=0)
-            details.scroll_to(y=continuation_index, animate=False)
+            details.scroll_to(y=max(continuation_index - 1, 0), animate=False)
             await pilot.pause()
             previous_scroll = details.scroll_y
+            previous_first_visible = gui_app._table_row_key_at(details, previous_scroll)
+            previous_selected = gui_app._table_row_key_at(details, details.cursor_row)
 
             details.update_details(ai_row)
+            await pilot.pause()
             await pilot.pause()
 
             assert details.cursor_row == continuation_index
             assert details.get_row_at(details.cursor_row)[0] == ""
+            assert gui_app._table_row_key_at(details, details.cursor_row) == previous_selected
+            assert gui_app._table_row_key_at(details, details.scroll_y) == previous_first_visible
             assert details.scroll_y == previous_scroll
             assert details.scroll_y > 0
+            assert details.scroll_y <= details.cursor_row <= details.scroll_y + max(int(details.size.height), 1)
 
     asyncio.run(run_case())
 
@@ -1850,17 +1856,23 @@ def test_risk_details_table_preserves_scroll_and_highlighted_wrapped_row_on_refr
             rendered = [details.get_row_at(index) for index in range(details.row_count)]
             continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
             details.move_cursor(row=continuation_index, column=0)
-            details.scroll_to(y=continuation_index, animate=False)
+            details.scroll_to(y=max(continuation_index - 1, 0), animate=False)
             await pilot.pause()
             previous_scroll = details.scroll_y
+            previous_first_visible = gui_app._table_row_key_at(details, previous_scroll)
+            previous_selected = gui_app._table_row_key_at(details, details.cursor_row)
 
             details.update_details(finding)
+            await pilot.pause()
             await pilot.pause()
 
             assert details.cursor_row == continuation_index
             assert details.get_row_at(details.cursor_row)[0] == ""
+            assert gui_app._table_row_key_at(details, details.cursor_row) == previous_selected
+            assert gui_app._table_row_key_at(details, details.scroll_y) == previous_first_visible
             assert details.scroll_y == previous_scroll
             assert details.scroll_y > 0
+            assert details.scroll_y <= details.cursor_row <= details.scroll_y + max(int(details.size.height), 1)
 
     asyncio.run(run_case())
 

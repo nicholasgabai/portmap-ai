@@ -12,6 +12,7 @@ from urllib import error, request
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Grid, Horizontal
+from textual.coordinate import Coordinate
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Footer, Header, Static, Label
@@ -3111,10 +3112,14 @@ def _packet_timeline_rows(packet_rows: List[Dict[str, str]], *, limit: int = 9) 
 
 def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     row_index = table.cursor_row if isinstance(table.cursor_row, int) else 0
+    scroll_y = _table_scroll_y(table)
     selection: Dict[str, Any] = {
         "row_index": row_index,
         "row_key": None,
-        "scroll_y": _table_scroll_y(table),
+        "column_index": _table_cursor_column(table),
+        "scroll_y": scroll_y,
+        "first_visible_row_index": scroll_y,
+        "first_visible_row_key": _table_row_key_at(table, scroll_y),
     }
     try:
         if table.row_count > 0 and 0 <= row_index < table.row_count:
@@ -3125,7 +3130,21 @@ def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     return selection
 
 
-def _restore_table_selection(table: DataTable, selection: Dict[str, Any], *, preserve_scroll: bool = False) -> None:
+def _restore_table_selection(
+    table: DataTable,
+    selection: Dict[str, Any],
+    *,
+    preserve_scroll: bool = False,
+    after_refresh: bool = False,
+) -> None:
+    if after_refresh:
+        try:
+            table.call_after_refresh(
+                lambda: _restore_table_selection(table, selection, preserve_scroll=preserve_scroll)
+            )
+            return
+        except Exception:
+            pass
     try:
         row_count = table.row_count
     except Exception:
@@ -3148,7 +3167,12 @@ def _restore_table_selection(table: DataTable, selection: Dict[str, Any], *, pre
         row_index = min(max(previous_index, 0), row_count - 1)
 
     try:
-        table.move_cursor(row=row_index, column=0, animate=False, scroll=not preserve_scroll)
+        table.move_cursor(
+            row=row_index,
+            column=_table_restore_column(selection),
+            animate=False,
+            scroll=not preserve_scroll,
+        )
     except Exception:
         pass
     if preserve_scroll:
@@ -3162,15 +3186,46 @@ def _table_scroll_y(table: DataTable) -> int:
         return 0
 
 
+def _table_cursor_column(table: DataTable) -> int:
+    try:
+        return max(0, int(getattr(table.cursor_coordinate, "column", 0) or 0))
+    except Exception:
+        return 0
+
+
+def _table_restore_column(selection: Dict[str, Any]) -> int:
+    column = selection.get("column_index", 0)
+    return column if isinstance(column, int) and column >= 0 else 0
+
+
+def _table_row_key_at(table: DataTable, row_index: int) -> str | None:
+    try:
+        if table.row_count <= 0 or row_index < 0 or row_index >= table.row_count:
+            return None
+        cell_key = table.coordinate_to_cell_key(Coordinate(row_index, 0))
+        return getattr(cell_key.row_key, "value", None)
+    except Exception:
+        return None
+
+
 def _restore_table_scroll(table: DataTable, selection: Dict[str, Any]) -> None:
-    scroll_y = selection.get("scroll_y", 0)
-    if not isinstance(scroll_y, int):
-        scroll_y = 0
+    scroll_y = _restore_table_scroll_anchor(table, selection)
     try:
         max_scroll_y = max(0, int(getattr(table, "max_scroll_y", 0) or 0))
         table.scroll_to(y=min(max(scroll_y, 0), max_scroll_y), animate=False)
     except Exception:
         pass
+
+
+def _restore_table_scroll_anchor(table: DataTable, selection: Dict[str, Any]) -> int:
+    first_visible_key = selection.get("first_visible_row_key")
+    if first_visible_key not in {"", "-", None}:
+        try:
+            return table.get_row_index(str(first_visible_key))
+        except Exception:
+            pass
+    scroll_y = selection.get("scroll_y", 0)
+    return scroll_y if isinstance(scroll_y, int) else 0
 
 
 def _unique_table_key(base: Any, seen: set[str]) -> str:
@@ -3552,7 +3607,7 @@ class FindingDetailsTable(DataTable):
             width=_detail_value_wrap_width(self),
         ):
             self.add_row(field, value, key=key)
-        _restore_table_selection(self, selection, preserve_scroll=True)
+        _restore_table_selection(self, selection, preserve_scroll=True, after_refresh=True)
 
 
 class RiskSignalsTable(DataTable):
@@ -4218,7 +4273,7 @@ class AIDetailsTable(DataTable):
             width=_detail_value_wrap_width(self),
         ):
             self.add_row(field, value, key=key)
-        _restore_table_selection(self, selection, preserve_scroll=True)
+        _restore_table_selection(self, selection, preserve_scroll=True, after_refresh=True)
 
 
 class AIProviderSummaryTable(DataTable):
