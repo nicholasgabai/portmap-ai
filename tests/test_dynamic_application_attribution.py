@@ -1309,6 +1309,15 @@ def test_behavior_graph_empty_input_is_safe_and_empty():
     assert graph["summary"]["primary_cluster_risk"] == "-"
     assert graph["summary"]["primary_cluster_confidence"] == "-"
     assert graph["summary"]["primary_cluster_reason"] == "-"
+    assert graph["summary"]["primary_cluster_trend"] == "-"
+    assert graph["summary"]["primary_cluster_age"] == "-"
+    assert graph["summary"]["primary_cluster_evolution_score"] == "-"
+    assert graph["summary"]["primary_cluster_new_relationships"] == "-"
+    assert graph["summary"]["primary_cluster_lost_relationships"] == "-"
+    assert graph["summary"]["primary_cluster_new_signals"] == "-"
+    assert graph["summary"]["primary_cluster_lost_signals"] == "-"
+    assert graph["summary"]["primary_cluster_evolution_summary"] == "-"
+    assert graph["summary"]["primary_cluster_trend_summary"] == "-"
     assert graph["summary"]["related_asset"] == "-"
     assert graph["summary"]["related_service"] == "-"
     assert graph["summary"]["related_profile"] == "-"
@@ -1380,6 +1389,18 @@ def test_behavior_graph_infers_relationships_from_existing_metadata():
     assert graph["summary"]["primary_cluster_risk"] in {"low", "medium", "high", "critical"}
     assert 0.0 <= graph["summary"]["primary_cluster_confidence"] <= 1.0
     assert graph["summary"]["primary_cluster_reason"] != "-"
+    assert graph["summary"]["primary_cluster_trend"] in {
+        "emerging",
+        "growing",
+        "shrinking",
+        "stable",
+        "dormant",
+        "unknown",
+    }
+    assert graph["summary"]["primary_cluster_age"] != "-"
+    assert 0.0 <= graph["summary"]["primary_cluster_evolution_score"] <= 1.0
+    assert graph["summary"]["primary_cluster_evolution_summary"] != "-"
+    assert graph["summary"]["primary_cluster_trend_summary"] != "-"
 
 
 def test_behavior_graph_relationship_ids_are_stable():
@@ -1622,6 +1643,135 @@ def test_behavior_graph_cluster_analysis_derives_stability_and_drift_labels():
     assert "unstable" in {row["cluster_stability"] for row in unstable["clusters"]}
     assert {row["cluster_drift"] for row in sparse["clusters"]} == {"none"}
     assert "high" in {row["cluster_drift"] for row in unstable["clusters"]}
+
+
+def test_behavior_graph_cluster_evolution_derives_temporal_trends_and_deltas():
+    base = {
+        "node_id": "asset-a",
+        "service_name": "frontend",
+        "protocol": "tcp",
+        "port": 443,
+        "flow_id": "flow-1",
+        "score_factors": ["risk-signal-a"],
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-02T00:00:00+00:00",
+        "source_mode": "live",
+    }
+    classifier = {"top_classification": "nginx", "confidence": 0.70}
+    cases = [
+        ("emerging", dict(base), 1, 0, 1, 0),
+        (
+            "growing",
+            {**base, "previous_relationship_count": 0, "previous_signal_count": 0, "previous_entity_count": 0},
+            1,
+            0,
+            1,
+            0,
+        ),
+        (
+            "shrinking",
+            {**base, "previous_relationship_count": 9, "previous_signal_count": 4, "previous_entity_count": 9},
+            0,
+            8,
+            0,
+            3,
+        ),
+        (
+            "stable",
+            {**base, "previous_relationship_count": 1, "previous_signal_count": 1, "previous_entity_count": 2},
+            0,
+            0,
+            0,
+            0,
+        ),
+    ]
+
+    for trend, observation, new_relationships, lost_relationships, new_signals, lost_signals in cases:
+        graph = build_behavior_graph_model(
+            observation,
+            classification_model=classifier,
+            generated_at="2026-01-02T00:00:00+00:00",
+        )
+        primary = next(row for row in graph["clusters"] if row["cluster_id"] == graph["summary"]["primary_cluster"])
+
+        assert primary["cluster_trend"] == trend
+        assert graph["summary"]["primary_cluster_trend"] == trend
+        assert primary["cluster_age"] == "24h"
+        assert graph["summary"]["primary_cluster_age"] == "24h"
+        assert primary["new_relationships"] == new_relationships
+        assert primary["lost_relationships"] == lost_relationships
+        assert primary["new_signals"] == new_signals
+        assert primary["lost_signals"] == lost_signals
+        assert 0.0 <= primary["cluster_evolution_score"] <= 1.0
+        assert graph["summary"]["primary_cluster_evolution_score"] == primary["cluster_evolution_score"]
+        assert f"{primary['cluster_type']}:{trend}" in primary["evolution_summary"]
+        assert f"trend:{trend}" in primary["trend_summary"]
+
+
+def test_behavior_graph_cluster_evolution_derives_dormant_and_unknown_states():
+    dormant = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "source_mode": "live",
+        },
+        generated_at="2026-01-02T00:00:00+00:00",
+    )
+    dormant_primary = next(
+        row for row in dormant["clusters"] if row["cluster_id"] == dormant["summary"]["primary_cluster"]
+    )
+    unknown = build_behavior_graph_model(
+        {"node_id": "asset-a", "source_mode": "fixture"},
+    )
+    unknown_primary = next(
+        row for row in unknown["clusters"] if row["cluster_id"] == unknown["summary"]["primary_cluster"]
+    )
+
+    assert dormant_primary["cluster_trend"] == "dormant"
+    assert dormant["summary"]["primary_cluster_trend"] == "dormant"
+    assert dormant_primary["cluster_age"] == "24h"
+    assert dormant_primary["new_relationships"] == 0
+    assert dormant_primary["lost_relationships"] == 0
+    assert dormant_primary["new_signals"] == 0
+    assert dormant_primary["lost_signals"] == 0
+    assert unknown_primary["cluster_trend"] == "unknown"
+    assert unknown["summary"]["primary_cluster_trend"] == "unknown"
+    assert unknown["summary"]["primary_cluster_age"] == "-"
+
+
+def test_behavior_graph_cluster_evolution_primary_summary_selects_primary_cluster_fields():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "frontend",
+            "protocol": "tcp",
+            "port": 443,
+            "flow_id": "flow-1",
+            "score": 0.72,
+            "score_factors": ["risk-signal-a", "risk-signal-b"],
+            "previous_relationship_count": 9,
+            "previous_signal_count": 5,
+            "previous_entity_count": 9,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-03T00:00:00+00:00",
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.72},
+        learning_profile_history={"historical_summary": {"drift_score": 0.65}},
+        generated_at="2026-01-03T00:00:00+00:00",
+    )
+    primary = next(row for row in graph["clusters"] if row["cluster_id"] == graph["summary"]["primary_cluster"])
+
+    assert graph["summary"]["primary_cluster_trend"] == primary["cluster_trend"]
+    assert graph["summary"]["primary_cluster_age"] == primary["cluster_age"]
+    assert graph["summary"]["primary_cluster_evolution_score"] == primary["cluster_evolution_score"]
+    assert graph["summary"]["primary_cluster_new_relationships"] == primary["new_relationships"]
+    assert graph["summary"]["primary_cluster_lost_relationships"] == primary["lost_relationships"]
+    assert graph["summary"]["primary_cluster_new_signals"] == primary["new_signals"]
+    assert graph["summary"]["primary_cluster_lost_signals"] == primary["lost_signals"]
+    assert graph["summary"]["primary_cluster_evolution_summary"] == primary["evolution_summary"]
+    assert graph["summary"]["primary_cluster_trend_summary"] == primary["trend_summary"]
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():

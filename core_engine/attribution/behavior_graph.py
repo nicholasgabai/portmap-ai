@@ -156,7 +156,7 @@ def build_behavior_graph_model(
         node_rows,
         edge_rows,
         relationship_rows,
-        context=_cluster_context(observation, classifier, profile, history),
+        context=_cluster_context(observation, classifier, profile, history, generated_at=generated_at),
     )
 
     return _graph_record(
@@ -234,6 +234,7 @@ def _graph_summary(
             counts[node_type] += 1
     strongest = _strongest_relationship(relationships)
     strongest_cluster = _strongest_cluster(clusters)
+    primary = _primary_cluster(clusters)
     return {
         "node_count": len(nodes),
         "edge_count": len(edges),
@@ -251,11 +252,20 @@ def _graph_summary(
         "strongest_cluster": strongest_cluster.get("cluster_id", "-"),
         "strongest_cluster_type": strongest_cluster.get("cluster_type", "-"),
         "strongest_cluster_score": strongest_cluster.get("confidence_score", "-"),
-        "primary_cluster": _primary_cluster(clusters).get("cluster_id", "-"),
-        "primary_cluster_type": _primary_cluster(clusters).get("cluster_type", "-"),
-        "primary_cluster_risk": _primary_cluster(clusters).get("cluster_risk_level", "-"),
-        "primary_cluster_confidence": _primary_cluster(clusters).get("cluster_confidence", "-"),
-        "primary_cluster_reason": _primary_cluster(clusters).get("primary_reason", "-"),
+        "primary_cluster": primary.get("cluster_id", "-"),
+        "primary_cluster_type": primary.get("cluster_type", "-"),
+        "primary_cluster_risk": primary.get("cluster_risk_level", "-"),
+        "primary_cluster_confidence": primary.get("cluster_confidence", "-"),
+        "primary_cluster_reason": primary.get("primary_reason", "-"),
+        "primary_cluster_trend": primary.get("cluster_trend", "-"),
+        "primary_cluster_age": primary.get("cluster_age", "-"),
+        "primary_cluster_evolution_score": primary.get("cluster_evolution_score", "-"),
+        "primary_cluster_new_relationships": primary.get("new_relationships", "-"),
+        "primary_cluster_lost_relationships": primary.get("lost_relationships", "-"),
+        "primary_cluster_new_signals": primary.get("new_signals", "-"),
+        "primary_cluster_lost_signals": primary.get("lost_signals", "-"),
+        "primary_cluster_evolution_summary": primary.get("evolution_summary", "-"),
+        "primary_cluster_trend_summary": primary.get("trend_summary", "-"),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -545,6 +555,13 @@ def _cluster_for(
         confidence_score=confidence,
         context=context,
     )
+    evolution = _cluster_evolution(
+        safe_type,
+        matching_relationships,
+        member_count=len(member_ids),
+        cluster_confidence=analysis["cluster_confidence"],
+        context=context,
+    )
     cluster_id = _cluster_id(
         safe_type,
         sorted(member_ids),
@@ -563,6 +580,17 @@ def _cluster_for(
         "cluster_stability": analysis["cluster_stability"],
         "cluster_drift": analysis["cluster_drift"],
         "primary_reason": analysis["primary_reason"],
+        "cluster_first_seen": evolution["cluster_first_seen"],
+        "cluster_last_seen": evolution["cluster_last_seen"],
+        "cluster_age": evolution["cluster_age"],
+        "cluster_trend": evolution["cluster_trend"],
+        "cluster_evolution_score": evolution["cluster_evolution_score"],
+        "new_relationships": evolution["new_relationships"],
+        "lost_relationships": evolution["lost_relationships"],
+        "new_signals": evolution["new_signals"],
+        "lost_signals": evolution["lost_signals"],
+        "evolution_summary": evolution["evolution_summary"],
+        "trend_summary": evolution["trend_summary"],
         "evidence_summary": _unique_text([*analysis["evidence_summary"], *evidence], limit=10),
         "metadata_only": True,
     }
@@ -573,10 +601,25 @@ def _cluster_context(
     classification_model: dict[str, Any],
     learning_profile: dict[str, Any],
     learning_profile_history: dict[str, Any],
+    *,
+    generated_at: str | None = None,
 ) -> dict[str, Any]:
     history_summary = learning_profile_history.get("historical_summary")
     if not isinstance(history_summary, dict):
         history_summary = {}
+    risk_signals = _risk_signal_values(observation)
+    first_seen = _first_temporal_value(observation, learning_profile_history, generated_at=generated_at)
+    last_seen = _last_temporal_value(observation, learning_profile_history, generated_at=generated_at)
+    previous_confidence = _optional_float(
+        _first_present_value(
+            observation.get("previous_confidence"),
+            observation.get("historical_confidence"),
+            history_summary.get("confidence_first"),
+        )
+    )
+    candidate_confidence = _safe_float(
+        classification_model.get("confidence") or classification_model.get("confidence_score")
+    )
     return {
         "risk_score": _safe_float(
             observation.get("risk_score")
@@ -584,7 +627,7 @@ def _cluster_context(
             or observation.get("confidence")
             or history_summary.get("risk_score")
         ),
-        "risk_signals": _risk_signal_values(observation),
+        "risk_signals": risk_signals,
         "profile_stability": _safe_float(
             history_summary.get("stability_score") or learning_profile.get("stability_score")
         ),
@@ -599,9 +642,37 @@ def _cluster_context(
             or learning_profile.get("observation_count")
             or observation.get("count")
         ),
-        "candidate_confidence": _safe_float(
-            classification_model.get("confidence") or classification_model.get("confidence_score")
+        "candidate_confidence": candidate_confidence,
+        "previous_confidence": previous_confidence,
+        "confidence_change": _confidence_change(candidate_confidence, previous_confidence, history_summary),
+        "first_seen": first_seen,
+        "last_seen": last_seen,
+        "has_temporal_metadata": first_seen != "-" or last_seen != "-",
+        "previous_relationship_count": _optional_int(
+            _first_present_value(
+                observation.get("previous_relationship_count"),
+                observation.get("prior_relationship_count"),
+                observation.get("historical_relationship_count"),
+                history_summary.get("previous_relationship_count"),
+            )
         ),
+        "previous_signal_count": _optional_int(
+            _first_present_value(
+                observation.get("previous_signal_count"),
+                observation.get("prior_signal_count"),
+                observation.get("historical_signal_count"),
+                history_summary.get("previous_signal_count"),
+            )
+        ),
+        "previous_entity_count": _optional_int(
+            _first_present_value(
+                observation.get("previous_entity_count"),
+                observation.get("prior_entity_count"),
+                observation.get("historical_entity_count"),
+                history_summary.get("previous_entity_count"),
+            )
+        ),
+        "signal_count": len(risk_signals),
     }
 
 
@@ -673,6 +744,178 @@ def _cluster_analysis(
         "primary_reason": primary_reason,
         "evidence_summary": evidence,
     }
+
+
+def _cluster_evolution(
+    cluster_type: str,
+    relationships: list[dict[str, Any]],
+    *,
+    member_count: int,
+    cluster_confidence: float,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    first_seen = _safe_text(context.get("first_seen"))
+    last_seen = _safe_text(context.get("last_seen"))
+    has_temporal = bool(context.get("has_temporal_metadata"))
+    current_relationships = len(relationships)
+    current_signals = int(context.get("signal_count") or 0)
+    previous_relationships = context.get("previous_relationship_count")
+    previous_signals = context.get("previous_signal_count")
+    previous_entities = context.get("previous_entity_count")
+    new_relationships, lost_relationships = _delta_pair(current_relationships, previous_relationships)
+    new_signals, lost_signals = _delta_pair(current_signals, previous_signals)
+    new_entities, lost_entities = _delta_pair(member_count, previous_entities)
+    confidence_change = abs(float(context.get("confidence_change") or 0.0))
+    drift_score = float(context.get("drift_score") or 0.0)
+
+    trend = _cluster_trend(
+        has_temporal=has_temporal,
+        current_relationships=current_relationships,
+        current_signals=current_signals,
+        previous_relationships=previous_relationships,
+        previous_signals=previous_signals,
+        previous_entities=previous_entities,
+        new_relationships=new_relationships,
+        lost_relationships=lost_relationships,
+        new_signals=new_signals,
+        lost_signals=lost_signals,
+        new_entities=new_entities,
+        lost_entities=lost_entities,
+        first_seen=first_seen,
+        last_seen=last_seen,
+    )
+    if trend == "emerging":
+        new_relationships = current_relationships
+        new_signals = current_signals
+        new_entities = member_count
+    evolution_score = _cluster_evolution_score(
+        new_relationships=new_relationships,
+        lost_relationships=lost_relationships,
+        new_signals=new_signals,
+        lost_signals=lost_signals,
+        new_entities=new_entities,
+        lost_entities=lost_entities,
+        confidence_change=confidence_change,
+        drift_score=drift_score,
+        cluster_confidence=cluster_confidence,
+    )
+    age = _duration_label(first_seen, last_seen)
+    evolution_summary = _cluster_evolution_summary(
+        cluster_type=cluster_type,
+        trend=trend,
+        relationship_delta=new_relationships - lost_relationships,
+        signal_delta=new_signals - lost_signals,
+        entity_delta=new_entities - lost_entities,
+    )
+    trend_summary = _cluster_trend_summary(
+        trend=trend,
+        age=age,
+        evolution_score=evolution_score,
+        current_relationships=current_relationships,
+        current_signals=current_signals,
+    )
+    return {
+        "cluster_first_seen": first_seen,
+        "cluster_last_seen": last_seen,
+        "cluster_age": age,
+        "cluster_trend": trend,
+        "cluster_evolution_score": evolution_score,
+        "new_relationships": new_relationships,
+        "lost_relationships": lost_relationships,
+        "new_signals": new_signals,
+        "lost_signals": lost_signals,
+        "evolution_summary": evolution_summary,
+        "trend_summary": trend_summary,
+    }
+
+
+def _cluster_trend(
+    *,
+    has_temporal: bool,
+    current_relationships: int,
+    current_signals: int,
+    previous_relationships: int | None,
+    previous_signals: int | None,
+    previous_entities: int | None,
+    new_relationships: int,
+    lost_relationships: int,
+    new_signals: int,
+    lost_signals: int,
+    new_entities: int,
+    lost_entities: int,
+    first_seen: str,
+    last_seen: str,
+) -> str:
+    if not has_temporal:
+        return "unknown"
+    if current_relationships == 0 and current_signals == 0 and first_seen != "-" and last_seen != "-" and first_seen != last_seen:
+        return "dormant"
+    has_previous = previous_relationships is not None or previous_signals is not None or previous_entities is not None
+    if has_previous:
+        if new_relationships or new_signals or new_entities:
+            return "growing"
+        if lost_relationships or lost_signals or lost_entities:
+            return "shrinking"
+        return "stable"
+    if current_relationships or current_signals:
+        return "emerging"
+    return "unknown"
+
+
+def _cluster_evolution_score(
+    *,
+    new_relationships: int,
+    lost_relationships: int,
+    new_signals: int,
+    lost_signals: int,
+    new_entities: int,
+    lost_entities: int,
+    confidence_change: float,
+    drift_score: float,
+    cluster_confidence: float,
+) -> float:
+    relationship_change = min(new_relationships + lost_relationships, 6) / 6.0
+    signal_change = min(new_signals + lost_signals, 6) / 6.0
+    entity_change = min(new_entities + lost_entities, 6) / 6.0
+    score = (
+        relationship_change * 0.30
+        + signal_change * 0.20
+        + entity_change * 0.15
+        + min(confidence_change, 1.0) * 0.15
+        + min(drift_score, 1.0) * 0.12
+        + min(cluster_confidence, 1.0) * 0.08
+    )
+    return round(min(max(score, 0.0), 1.0), 2)
+
+
+def _cluster_evolution_summary(
+    *,
+    cluster_type: str,
+    trend: str,
+    relationship_delta: int,
+    signal_delta: int,
+    entity_delta: int,
+) -> str:
+    return (
+        f"{cluster_type}:{trend}; "
+        f"relationships:{relationship_delta:+d}; "
+        f"signals:{signal_delta:+d}; "
+        f"entities:{entity_delta:+d}"
+    )
+
+
+def _cluster_trend_summary(
+    *,
+    trend: str,
+    age: str,
+    evolution_score: float,
+    current_relationships: int,
+    current_signals: int,
+) -> str:
+    return (
+        f"trend:{trend}; age:{age}; evolution:{evolution_score:.2f}; "
+        f"relationships:{current_relationships}; signals:{current_signals}"
+    )
 
 
 def _cluster_analysis_confidence(
@@ -927,6 +1170,154 @@ def _candidate_probability_for_label(observation: dict[str, Any], label: Any) ->
                 except (TypeError, ValueError):
                     return "-"
     return "-"
+
+
+def _first_temporal_value(
+    observation: dict[str, Any],
+    learning_profile_history: dict[str, Any],
+    *,
+    generated_at: str | None,
+) -> str:
+    return _safe_time_text(
+        observation.get("first_seen")
+        or observation.get("first_observed")
+        or learning_profile_history.get("first_observed")
+        or learning_profile_history.get("first_seen")
+        or _first_observation_record_time(learning_profile_history)
+        or observation.get("timestamp")
+        or observation.get("generated_at")
+        or generated_at
+    )
+
+
+def _last_temporal_value(
+    observation: dict[str, Any],
+    learning_profile_history: dict[str, Any],
+    *,
+    generated_at: str | None,
+) -> str:
+    return _safe_time_text(
+        observation.get("last_seen")
+        or observation.get("last_observed")
+        or observation.get("timestamp")
+        or observation.get("generated_at")
+        or learning_profile_history.get("last_observed")
+        or learning_profile_history.get("last_seen")
+        or _last_observation_record_time(learning_profile_history)
+        or generated_at
+    )
+
+
+def _first_observation_record_time(learning_profile_history: dict[str, Any]) -> Any:
+    records = learning_profile_history.get("observation_records")
+    if not isinstance(records, list):
+        return None
+    times = [_safe_time_text(row.get("observed_at") or row.get("timestamp")) for row in records if isinstance(row, dict)]
+    rows = [time for time in times if time != "-"]
+    return rows[0] if rows else None
+
+
+def _last_observation_record_time(learning_profile_history: dict[str, Any]) -> Any:
+    records = learning_profile_history.get("observation_records")
+    if not isinstance(records, list):
+        return None
+    times = [_safe_time_text(row.get("observed_at") or row.get("timestamp")) for row in records if isinstance(row, dict)]
+    rows = [time for time in times if time != "-"]
+    return rows[-1] if rows else None
+
+
+def _safe_time_text(value: Any) -> str:
+    if value in {"", "-", None}:
+        return "-"
+    parsed = _parse_time(value)
+    if parsed is None:
+        return _safe_text(value, limit=48)
+    return parsed.isoformat()
+
+
+def _duration_label(first_seen: str, last_seen: str) -> str:
+    first = _parse_time(first_seen)
+    last = _parse_time(last_seen)
+    if first is None or last is None:
+        return "-"
+    seconds = max(int((last - first).total_seconds()), 0)
+    if seconds < 60:
+        return "0m"
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}m"
+    hours = minutes // 60
+    if hours < 48:
+        return f"{hours}h"
+    days = hours // 24
+    return f"{days}d"
+
+
+def _parse_time(value: Any) -> datetime | None:
+    if value in {"", "-", None}:
+        return None
+    if isinstance(value, (int, float)):
+        try:
+            timestamp = float(value)
+            if timestamp > 10_000_000_000:
+                timestamp = timestamp / 1000.0
+            return datetime.fromtimestamp(timestamp, tz=UTC)
+        except (OverflowError, OSError, ValueError):
+            return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=UTC)
+        return parsed
+    except ValueError:
+        return None
+
+
+def _delta_pair(current: int, previous: int | None) -> tuple[int, int]:
+    if previous is None:
+        return 0, 0
+    delta = int(current) - int(previous)
+    return max(delta, 0), max(-delta, 0)
+
+
+def _optional_int(value: Any) -> int | None:
+    if value in {"", "-", None}:
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_float(value: Any) -> float | None:
+    if value in {"", "-", None}:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _first_present_value(*values: Any) -> Any:
+    for value in values:
+        if value is None:
+            continue
+        if isinstance(value, str) and value.strip() in {"", "-"}:
+            continue
+        return value
+    return None
+
+
+def _confidence_change(current: float, previous: float | None, history_summary: dict[str, Any]) -> float:
+    explicit = _optional_float(history_summary.get("confidence_delta"))
+    if explicit is not None:
+        return abs(explicit)
+    if previous is None:
+        return 0.0
+    return abs(current - previous)
 
 
 def _relationship_endpoint(value: dict[str, Any] | str) -> tuple[str, str]:

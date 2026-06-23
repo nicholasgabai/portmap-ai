@@ -1261,6 +1261,31 @@ def _active_risk_finding_rows(
                 "primary_cluster_reason": _behavior_graph_text_field(
                     classification, "primary_cluster_reason", limit=96
                 ),
+                "primary_cluster_trend": _behavior_graph_text_field(
+                    classification, "primary_cluster_trend", limit=24
+                ),
+                "primary_cluster_age": _behavior_graph_text_field(classification, "primary_cluster_age", limit=16),
+                "primary_cluster_evolution_score": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("primary_cluster_evolution_score")
+                ),
+                "primary_cluster_new_relationships": _behavior_graph_text_field(
+                    classification, "primary_cluster_new_relationships", limit=12
+                ),
+                "primary_cluster_lost_relationships": _behavior_graph_text_field(
+                    classification, "primary_cluster_lost_relationships", limit=12
+                ),
+                "primary_cluster_new_signals": _behavior_graph_text_field(
+                    classification, "primary_cluster_new_signals", limit=12
+                ),
+                "primary_cluster_lost_signals": _behavior_graph_text_field(
+                    classification, "primary_cluster_lost_signals", limit=12
+                ),
+                "primary_cluster_evolution_summary": _behavior_graph_text_field(
+                    classification, "primary_cluster_evolution_summary", limit=96
+                ),
+                "primary_cluster_trend_summary": _behavior_graph_text_field(
+                    classification, "primary_cluster_trend_summary", limit=96
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1351,6 +1376,15 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Primary Cluster Risk", row.get("primary_cluster_risk", "-")),
         ("Primary Cluster Confidence", row.get("primary_cluster_confidence", "-")),
         ("Primary Cluster Reason", row.get("primary_cluster_reason", "-")),
+        ("Primary Cluster Trend", row.get("primary_cluster_trend", "-")),
+        ("Primary Cluster Age", row.get("primary_cluster_age", "-")),
+        ("Primary Cluster Evolution Score", row.get("primary_cluster_evolution_score", "-")),
+        ("Primary Cluster New Relationships", row.get("primary_cluster_new_relationships", "-")),
+        ("Primary Cluster Lost Relationships", row.get("primary_cluster_lost_relationships", "-")),
+        ("Primary Cluster New Signals", row.get("primary_cluster_new_signals", "-")),
+        ("Primary Cluster Lost Signals", row.get("primary_cluster_lost_signals", "-")),
+        ("Primary Cluster Evolution Summary", row.get("primary_cluster_evolution_summary", "-")),
+        ("Primary Cluster Trend Summary", row.get("primary_cluster_trend_summary", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -2652,7 +2686,10 @@ def _classification_behavior_graph_summary(model: Dict[str, Any]) -> Dict[str, A
 
 
 def _behavior_graph_text_field(model: Dict[str, Any], field: str, *, limit: int = 64) -> str:
-    return _short_text(_classification_behavior_graph_summary(model).get(field), limit=limit)
+    value = _classification_behavior_graph_summary(model).get(field)
+    if value in {"", "-", None}:
+        return "-"
+    return _short_text(str(value), limit=limit)
 
 
 def _is_ai_event(event: Dict[str, Any]) -> bool:
@@ -2771,6 +2808,15 @@ def _ai_provider_model_rows(
                 "primary_cluster_risk": "-",
                 "primary_cluster_confidence": "-",
                 "primary_cluster_reason": "-",
+                "primary_cluster_trend": "-",
+                "primary_cluster_age": "-",
+                "primary_cluster_evolution_score": "-",
+                "primary_cluster_new_relationships": "-",
+                "primary_cluster_lost_relationships": "-",
+                "primary_cluster_new_signals": "-",
+                "primary_cluster_lost_signals": "-",
+                "primary_cluster_evolution_summary": "-",
+                "primary_cluster_trend_summary": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -2868,6 +2914,31 @@ def _ai_provider_model_rows(
             row["primary_cluster_reason"] = _behavior_graph_text_field(
                 model_record, "primary_cluster_reason", limit=96
             )
+            row["primary_cluster_trend"] = _behavior_graph_text_field(
+                model_record, "primary_cluster_trend", limit=24
+            )
+            row["primary_cluster_age"] = _behavior_graph_text_field(model_record, "primary_cluster_age", limit=16)
+            row["primary_cluster_evolution_score"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("primary_cluster_evolution_score")
+            )
+            row["primary_cluster_new_relationships"] = _behavior_graph_text_field(
+                model_record, "primary_cluster_new_relationships", limit=12
+            )
+            row["primary_cluster_lost_relationships"] = _behavior_graph_text_field(
+                model_record, "primary_cluster_lost_relationships", limit=12
+            )
+            row["primary_cluster_new_signals"] = _behavior_graph_text_field(
+                model_record, "primary_cluster_new_signals", limit=12
+            )
+            row["primary_cluster_lost_signals"] = _behavior_graph_text_field(
+                model_record, "primary_cluster_lost_signals", limit=12
+            )
+            row["primary_cluster_evolution_summary"] = _behavior_graph_text_field(
+                model_record, "primary_cluster_evolution_summary", limit=96
+            )
+            row["primary_cluster_trend_summary"] = _behavior_graph_text_field(
+                model_record, "primary_cluster_trend_summary", limit=96
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -2940,6 +3011,15 @@ def _ai_provider_model_rows(
             "primary_cluster_risk": row["primary_cluster_risk"],
             "primary_cluster_confidence": row["primary_cluster_confidence"],
             "primary_cluster_reason": row["primary_cluster_reason"],
+            "primary_cluster_trend": row["primary_cluster_trend"],
+            "primary_cluster_age": row["primary_cluster_age"],
+            "primary_cluster_evolution_score": row["primary_cluster_evolution_score"],
+            "primary_cluster_new_relationships": row["primary_cluster_new_relationships"],
+            "primary_cluster_lost_relationships": row["primary_cluster_lost_relationships"],
+            "primary_cluster_new_signals": row["primary_cluster_new_signals"],
+            "primary_cluster_lost_signals": row["primary_cluster_lost_signals"],
+            "primary_cluster_evolution_summary": row["primary_cluster_evolution_summary"],
+            "primary_cluster_trend_summary": row["primary_cluster_trend_summary"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3026,6 +3106,15 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Primary Cluster Risk", row.get("primary_cluster_risk", "-")),
         ("Primary Cluster Confidence", row.get("primary_cluster_confidence", "-")),
         ("Primary Cluster Reason", row.get("primary_cluster_reason", "-")),
+        ("Primary Cluster Trend", row.get("primary_cluster_trend", "-")),
+        ("Primary Cluster Age", row.get("primary_cluster_age", "-")),
+        ("Primary Cluster Evolution Score", row.get("primary_cluster_evolution_score", "-")),
+        ("Primary Cluster New Relationships", row.get("primary_cluster_new_relationships", "-")),
+        ("Primary Cluster Lost Relationships", row.get("primary_cluster_lost_relationships", "-")),
+        ("Primary Cluster New Signals", row.get("primary_cluster_new_signals", "-")),
+        ("Primary Cluster Lost Signals", row.get("primary_cluster_lost_signals", "-")),
+        ("Primary Cluster Evolution Summary", row.get("primary_cluster_evolution_summary", "-")),
+        ("Primary Cluster Trend Summary", row.get("primary_cluster_trend_summary", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -3758,6 +3847,10 @@ class RiskActiveFindingsTable(DataTable):
 
 
 class FindingDetailsTable(DataTable):
+    @property
+    def allow_horizontal_scroll(self) -> bool:
+        return False
+
     def on_mount(self) -> None:
         self.add_column("Field")
         self.add_column("Value")
@@ -4424,6 +4517,10 @@ class AIProviderModelTable(DataTable):
 
 
 class AIDetailsTable(DataTable):
+    @property
+    def allow_horizontal_scroll(self) -> bool:
+        return False
+
     def on_mount(self) -> None:
         self.add_column("Field")
         self.add_column("Value")

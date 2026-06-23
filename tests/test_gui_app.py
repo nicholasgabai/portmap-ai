@@ -1048,6 +1048,15 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Primary Cluster Risk"] in {"low", "medium", "high", "critical"}
     assert details["Primary Cluster Confidence"] != "-"
     assert details["Primary Cluster Reason"] != "-"
+    assert details["Primary Cluster Trend"] in {"emerging", "growing", "shrinking", "stable", "dormant", "unknown"}
+    assert details["Primary Cluster Age"] != "-"
+    assert details["Primary Cluster Evolution Score"] != "-"
+    assert details["Primary Cluster New Relationships"] != "-"
+    assert details["Primary Cluster Lost Relationships"] != "-"
+    assert details["Primary Cluster New Signals"] != "-"
+    assert details["Primary Cluster Lost Signals"] != "-"
+    assert details["Primary Cluster Evolution Summary"] != "-"
+    assert details["Primary Cluster Trend Summary"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1235,6 +1244,8 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "strongest_relationship": "graph-rel-shared_application_candidate-" + ("abcdef1234567890" * 4),
         "strongest_cluster": "graph-cluster-application-" + ("abcdef1234567890" * 4),
         "primary_cluster_reason": "critical_risk_from_profile_drift:" + ("cluster-analysis-token" * 5),
+        "primary_cluster_evolution_summary": "application_cluster:growing;" + ("relationship-signal-delta-token" * 4),
+        "primary_cluster_trend_summary": "trend:growing;" + ("temporal-evolution-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1255,6 +1266,8 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Strongest Relationship" for row in rendered)
             assert any(row[0] == "Strongest Cluster" for row in rendered)
             assert any(row[0] == "Primary Cluster Reason" for row in rendered)
+            assert any(row[0] == "Primary Cluster Evolution Summary" for row in rendered)
+            assert any(row[0] == "Primary Cluster Trend Summary" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -1816,6 +1829,15 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Primary Cluster Risk"] in {"low", "medium", "high", "critical"}
     assert details["Primary Cluster Confidence"] != "-"
     assert details["Primary Cluster Reason"] != "-"
+    assert details["Primary Cluster Trend"] in {"emerging", "growing", "shrinking", "stable", "dormant", "unknown"}
+    assert details["Primary Cluster Age"] != "-"
+    assert details["Primary Cluster Evolution Score"] != "-"
+    assert details["Primary Cluster New Relationships"] != "-"
+    assert details["Primary Cluster Lost Relationships"] != "-"
+    assert details["Primary Cluster New Signals"] != "-"
+    assert details["Primary Cluster Lost Signals"] != "-"
+    assert details["Primary Cluster Evolution Summary"] != "-"
+    assert details["Primary Cluster Trend Summary"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1982,6 +2004,8 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "strongest_relationship": "graph-rel-shared_learning_profile-" + ("1234567890abcdef" * 4),
         "strongest_cluster": "graph-cluster-profile-" + ("1234567890abcdef" * 4),
         "primary_cluster_reason": "high_risk_from_service_score:" + ("cluster-analysis-token" * 5),
+        "primary_cluster_evolution_summary": "profile_cluster:shrinking;" + ("relationship-signal-delta-token" * 4),
+        "primary_cluster_trend_summary": "trend:shrinking;" + ("temporal-evolution-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2002,6 +2026,8 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Strongest Relationship" for row in rendered)
             assert any(row[0] == "Strongest Cluster" for row in rendered)
             assert any(row[0] == "Primary Cluster Reason" for row in rendered)
+            assert any(row[0] == "Primary Cluster Evolution Summary" for row in rendered)
+            assert any(row[0] == "Primary Cluster Trend Summary" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
