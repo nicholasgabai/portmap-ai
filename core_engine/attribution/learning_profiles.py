@@ -217,6 +217,13 @@ def build_learning_profile_history(
     history["stability_label"] = history["historical_summary"]["stability_label"]
     history["drift_score"] = history["historical_summary"]["drift_score"]
     history["drift_label"] = history["historical_summary"]["drift_label"]
+    history["confidence_first"] = history["historical_summary"]["confidence_first"]
+    history["confidence_latest"] = history["historical_summary"]["confidence_latest"]
+    history["confidence_trend"] = history["historical_summary"]["confidence_trend"]
+    history["confidence_delta"] = history["historical_summary"]["confidence_delta"]
+    history["confidence_average"] = history["historical_summary"]["confidence_average"]
+    history["confidence_min"] = history["historical_summary"]["confidence_min"]
+    history["confidence_max"] = history["historical_summary"]["confidence_max"]
     history["recommendation_count"] = history["historical_summary"]["recommendation_count"]
     history["primary_recommendation"] = history["historical_summary"]["primary_recommendation"]
     history["recommendation_list"] = history["historical_summary"]["recommendation_list"]
@@ -264,6 +271,13 @@ def append_learning_profile_history(
     current["stability_label"] = current["historical_summary"]["stability_label"]
     current["drift_score"] = current["historical_summary"]["drift_score"]
     current["drift_label"] = current["historical_summary"]["drift_label"]
+    current["confidence_first"] = current["historical_summary"]["confidence_first"]
+    current["confidence_latest"] = current["historical_summary"]["confidence_latest"]
+    current["confidence_trend"] = current["historical_summary"]["confidence_trend"]
+    current["confidence_delta"] = current["historical_summary"]["confidence_delta"]
+    current["confidence_average"] = current["historical_summary"]["confidence_average"]
+    current["confidence_min"] = current["historical_summary"]["confidence_min"]
+    current["confidence_max"] = current["historical_summary"]["confidence_max"]
     current["recommendation_count"] = current["historical_summary"]["recommendation_count"]
     current["primary_recommendation"] = current["historical_summary"]["primary_recommendation"]
     current["recommendation_list"] = current["historical_summary"]["recommendation_list"]
@@ -354,7 +368,8 @@ def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[s
     last_observed = _safe_time(row.get("last_observed"))
     stability = _history_stability(row)
     drift = _history_drift(row)
-    recommendations = _history_recommendations(row, stability=stability, drift=drift)
+    confidence = _confidence_evolution(row)
+    recommendations = _history_recommendations(row, stability=stability, drift=drift, confidence=confidence)
     return {
         "profile_id": _safe_label(row.get("profile_id")),
         "profile_name": _safe_label(row.get("profile_name")) or "unknown_application",
@@ -366,6 +381,13 @@ def summarize_learning_profile_history(history: dict[str, Any] | None) -> dict[s
         "stability_label": stability["stability_label"],
         "drift_score": drift["drift_score"],
         "drift_label": drift["drift_label"],
+        "confidence_first": confidence["confidence_first"],
+        "confidence_latest": confidence["confidence_latest"],
+        "confidence_min": confidence["confidence_min"],
+        "confidence_max": confidence["confidence_max"],
+        "confidence_average": confidence["confidence_average"],
+        "confidence_delta": confidence["confidence_delta"],
+        "confidence_trend": confidence["confidence_trend"],
         "recommendation_count": str(len(recommendations)),
         "primary_recommendation": recommendations[0]["recommendation_id"] if recommendations else "-",
         "recommendation_list": recommendations,
@@ -404,6 +426,13 @@ def _normalize_history(history: dict[str, Any]) -> dict[str, Any]:
     row["stability_label"] = row["historical_summary"]["stability_label"]
     row["drift_score"] = row["historical_summary"]["drift_score"]
     row["drift_label"] = row["historical_summary"]["drift_label"]
+    row["confidence_first"] = row["historical_summary"]["confidence_first"]
+    row["confidence_latest"] = row["historical_summary"]["confidence_latest"]
+    row["confidence_trend"] = row["historical_summary"]["confidence_trend"]
+    row["confidence_delta"] = row["historical_summary"]["confidence_delta"]
+    row["confidence_average"] = row["historical_summary"]["confidence_average"]
+    row["confidence_min"] = row["historical_summary"]["confidence_min"]
+    row["confidence_max"] = row["historical_summary"]["confidence_max"]
     row["recommendation_count"] = row["historical_summary"]["recommendation_count"]
     row["primary_recommendation"] = row["historical_summary"]["primary_recommendation"]
     row["recommendation_list"] = row["historical_summary"]["recommendation_list"]
@@ -657,11 +686,64 @@ def _history_drift(history: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _confidence_evolution(history: dict[str, Any]) -> dict[str, Any]:
+    records = [row for row in history.get("observation_records") or [] if isinstance(row, dict)]
+    values = [_bounded_float(record.get("confidence")) for record in records]
+    if not values:
+        return {
+            "confidence_first": 0.0,
+            "confidence_latest": 0.0,
+            "confidence_min": 0.0,
+            "confidence_max": 0.0,
+            "confidence_average": 0.0,
+            "confidence_delta": 0.0,
+            "confidence_trend": "stable",
+        }
+    first = values[0]
+    latest = values[-1]
+    minimum = min(values)
+    maximum = max(values)
+    average = sum(values) / len(values)
+    delta = latest - first
+    return {
+        "confidence_first": round(first, 3),
+        "confidence_latest": round(latest, 3),
+        "confidence_min": round(minimum, 3),
+        "confidence_max": round(maximum, 3),
+        "confidence_average": round(average, 3),
+        "confidence_delta": round(delta, 3),
+        "confidence_trend": _confidence_trend(values),
+    }
+
+
+def _confidence_trend(values: list[float]) -> str:
+    if len(values) <= 1:
+        return "stable"
+    confidence_range = max(values) - min(values)
+    delta = values[-1] - values[0]
+    monotonic_up = all(right >= left for left, right in zip(values, values[1:]))
+    monotonic_down = all(right <= left for left, right in zip(values, values[1:]))
+    if monotonic_up and delta >= 0.12:
+        return "improving"
+    if monotonic_down and delta <= -0.12:
+        return "declining"
+    if confidence_range <= 0.10 and abs(delta) <= 0.08:
+        return "stable"
+    if confidence_range >= 0.20:
+        return "volatile"
+    if delta >= 0.12:
+        return "improving"
+    if delta <= -0.12:
+        return "declining"
+    return "stable"
+
+
 def _history_recommendations(
     history: dict[str, Any],
     *,
     stability: dict[str, Any],
     drift: dict[str, Any],
+    confidence: dict[str, Any],
 ) -> list[dict[str, Any]]:
     records = [row for row in history.get("observation_records") or [] if isinstance(row, dict)]
     observation_count = max(_safe_int(history.get("observation_count"), default=0), len(records))
@@ -674,6 +756,8 @@ def _history_recommendations(
     metadata_drift = _bounded_float(drift_factors.get("metadata_drift"))
     latest_confidence = _latest_confidence(records)
     average_confidence = _average_confidence(records)
+    confidence_trend = _safe_label(confidence.get("confidence_trend")) or "stable"
+    confidence_delta = _bounded_delta(confidence.get("confidence_delta"))
     evidence_quality = _latest_evidence_quality(records)
     ambiguous = _has_ambiguity(records)
     recommendations: list[dict[str, Any]] = []
@@ -699,11 +783,16 @@ def _history_recommendations(
             "Profile history shows classification or metadata drift that should be reviewed.",
             [f"drift_label:{drift_label}", f"drift_score:{drift_score:.2f}"],
         )
-    if confidence_drift >= 0.35:
+    if confidence_drift >= 0.35 or confidence_trend in {"declining", "volatile"}:
         add(
             "investigate_confidence_change",
             "Attribution confidence has changed enough to warrant operator review.",
-            [f"confidence_drift:{confidence_drift:.2f}", f"latest_confidence:{latest_confidence:.2f}"],
+            [
+                f"confidence_trend:{confidence_trend}",
+                f"confidence_delta:{confidence_delta:.2f}",
+                f"confidence_drift:{confidence_drift:.2f}",
+                f"latest_confidence:{latest_confidence:.2f}",
+            ],
         )
     if metadata_drift >= 0.20 and drift_label != "none":
         add(
@@ -739,7 +828,11 @@ def _history_recommendations(
         add(
             "continue_observation",
             "Continue read-only observation to maintain profile history.",
-            [f"observation_count:{observation_count}", f"profile_age:{_profile_age(history.get('first_observed'), history.get('last_observed'))}"],
+            [
+                f"observation_count:{observation_count}",
+                f"profile_age:{_profile_age(history.get('first_observed'), history.get('last_observed'))}",
+                f"confidence_trend:{confidence_trend}",
+            ],
         )
     return recommendations
 
@@ -1000,3 +1093,11 @@ def _bounded_float(value: Any) -> float:
     except (TypeError, ValueError):
         return 0.0
     return round(min(1.0, max(0.0, number)), 3)
+
+
+def _bounded_delta(value: Any) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return round(min(1.0, max(-1.0, number)), 3)

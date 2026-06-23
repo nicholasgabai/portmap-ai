@@ -369,6 +369,10 @@ Implementation note: Phase 172.3 adds deterministic profile drift detection from
 
 Implementation note: Phase 172.4 adds deterministic advisory recommendation generation from existing learning profile history, stability metrics, drift metrics, attribution confidence, ambiguity indicators, and evidence quality. Outputs include recommendation count, primary recommendation, and explainable recommendation lists exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only, metadata-only, and does not add enforcement, blocking, remediation execution, packet capture, orchestration actions, external connectivity, autonomous behavior, machine learning, model retraining, packet inspection, or payload analysis.
 
+#### 172.5 - Profile Confidence Evolution (Completed)
+
+Implementation note: Phase 172.5 adds deterministic confidence evolution summaries from existing learning profile history only, including first, latest, minimum, maximum, average, delta, and trend categories for confidence observations. Confidence trend metadata is exposed through existing AI and Risk detail surfaces without layout changes, and recommendation logic can consume declining, stable, improving, or volatile trends while remaining advisory only. This remains read-only, metadata-only, and does not add enforcement, blocking, remediation execution, packet capture, orchestration actions, external connectivity, autonomous behavior, machine learning, model retraining, packet inspection, or payload analysis.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

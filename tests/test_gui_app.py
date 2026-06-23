@@ -1021,6 +1021,13 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Stability Label"] == "unstable"
     assert details["Drift Score"] == "0.00"
     assert details["Drift Label"] == "none"
+    assert details["Confidence Trend"] == "stable"
+    assert details["Confidence Delta"] == "0.00"
+    assert details["Confidence Average"] != "-"
+    assert details["Confidence Min"] != "-"
+    assert details["Confidence Max"] != "-"
+    assert details["First Confidence"] != "-"
+    assert details["Latest Confidence"] != "-"
     assert details["Recommendation Count"] != "-"
     assert details["Primary Recommendation"] == "verify_service_identity"
     assert "verify_service_identity" in details["Recommendation List"]
@@ -1631,6 +1638,13 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Stability Label"] == "stable"
     assert details["Drift Score"] == "0.00"
     assert details["Drift Label"] == "none"
+    assert details["Confidence Trend"] == "stable"
+    assert details["Confidence Delta"] == "0.00"
+    assert details["Confidence Average"] == details["Classification Confidence"]
+    assert details["Confidence Min"] == details["Classification Confidence"]
+    assert details["Confidence Max"] == details["Classification Confidence"]
+    assert details["First Confidence"] == details["Classification Confidence"]
+    assert details["Latest Confidence"] == details["Classification Confidence"]
     assert details["Recommendation Count"] != "-"
     assert details["Primary Recommendation"] == "classification_stable"
     assert "classification_stable" in details["Recommendation List"]

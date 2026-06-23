@@ -1199,6 +1199,13 @@ def _active_risk_finding_rows(
                 "stability_label": _learning_history_text_field(classification, "stability_label", limit=24),
                 "drift_score": _learning_history_drift_score(classification),
                 "drift_label": _learning_history_text_field(classification, "drift_label", limit=24),
+                "confidence_trend": _learning_history_text_field(classification, "confidence_trend", limit=24),
+                "confidence_delta": _learning_history_probability_field(classification, "confidence_delta"),
+                "confidence_average": _learning_history_probability_field(classification, "confidence_average"),
+                "confidence_min": _learning_history_probability_field(classification, "confidence_min"),
+                "confidence_max": _learning_history_probability_field(classification, "confidence_max"),
+                "confidence_first": _learning_history_probability_field(classification, "confidence_first"),
+                "confidence_latest": _learning_history_probability_field(classification, "confidence_latest"),
                 "recommendation_count": _learning_history_text_field(
                     classification, "recommendation_count", limit=12
                 ),
@@ -1266,6 +1273,13 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Stability Label", row.get("stability_label", "-")),
         ("Drift Score", row.get("drift_score", "-")),
         ("Drift Label", row.get("drift_label", "-")),
+        ("Confidence Trend", row.get("confidence_trend", "-")),
+        ("Confidence Delta", row.get("confidence_delta", "-")),
+        ("Confidence Average", row.get("confidence_average", "-")),
+        ("Confidence Min", row.get("confidence_min", "-")),
+        ("Confidence Max", row.get("confidence_max", "-")),
+        ("First Confidence", row.get("confidence_first", "-")),
+        ("Latest Confidence", row.get("confidence_latest", "-")),
         ("Recommendation Count", row.get("recommendation_count", "-")),
         ("Primary Recommendation", row.get("primary_recommendation", "-")),
         ("Recommendation List", row.get("recommendation_list", "-")),
@@ -2534,6 +2548,10 @@ def _learning_history_drift_score(model: Dict[str, Any]) -> str:
     return _format_probability(_classification_history_summary(model).get("drift_score"))
 
 
+def _learning_history_probability_field(model: Dict[str, Any], field: str) -> str:
+    return _format_probability(_classification_history_summary(model).get(field))
+
+
 def _learning_history_recommendations_text(model: Dict[str, Any], *, limit: int = 3) -> str:
     recommendations = _classification_history_summary(model).get("recommendation_list")
     if not isinstance(recommendations, list):
@@ -2643,6 +2661,13 @@ def _ai_provider_model_rows(
                 "stability_label": "-",
                 "drift_score": "-",
                 "drift_label": "-",
+                "confidence_trend": "-",
+                "confidence_delta": "-",
+                "confidence_average": "-",
+                "confidence_min": "-",
+                "confidence_max": "-",
+                "confidence_first": "-",
+                "confidence_latest": "-",
                 "recommendation_count": "-",
                 "primary_recommendation": "-",
                 "recommendation_list": "-",
@@ -2693,6 +2718,13 @@ def _ai_provider_model_rows(
             row["stability_label"] = _learning_history_text_field(model_record, "stability_label", limit=24)
             row["drift_score"] = _learning_history_drift_score(model_record)
             row["drift_label"] = _learning_history_text_field(model_record, "drift_label", limit=24)
+            row["confidence_trend"] = _learning_history_text_field(model_record, "confidence_trend", limit=24)
+            row["confidence_delta"] = _learning_history_probability_field(model_record, "confidence_delta")
+            row["confidence_average"] = _learning_history_probability_field(model_record, "confidence_average")
+            row["confidence_min"] = _learning_history_probability_field(model_record, "confidence_min")
+            row["confidence_max"] = _learning_history_probability_field(model_record, "confidence_max")
+            row["confidence_first"] = _learning_history_probability_field(model_record, "confidence_first")
+            row["confidence_latest"] = _learning_history_probability_field(model_record, "confidence_latest")
             row["recommendation_count"] = _learning_history_text_field(
                 model_record, "recommendation_count", limit=12
             )
@@ -2742,6 +2774,13 @@ def _ai_provider_model_rows(
             "stability_label": row["stability_label"],
             "drift_score": row["drift_score"],
             "drift_label": row["drift_label"],
+            "confidence_trend": row["confidence_trend"],
+            "confidence_delta": row["confidence_delta"],
+            "confidence_average": row["confidence_average"],
+            "confidence_min": row["confidence_min"],
+            "confidence_max": row["confidence_max"],
+            "confidence_first": row["confidence_first"],
+            "confidence_latest": row["confidence_latest"],
             "recommendation_count": row["recommendation_count"],
             "primary_recommendation": row["primary_recommendation"],
             "recommendation_list": row["recommendation_list"],
@@ -2801,6 +2840,13 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Stability Label", row.get("stability_label", "-")),
         ("Drift Score", row.get("drift_score", "-")),
         ("Drift Label", row.get("drift_label", "-")),
+        ("Confidence Trend", row.get("confidence_trend", "-")),
+        ("Confidence Delta", row.get("confidence_delta", "-")),
+        ("Confidence Average", row.get("confidence_average", "-")),
+        ("Confidence Min", row.get("confidence_min", "-")),
+        ("Confidence Max", row.get("confidence_max", "-")),
+        ("First Confidence", row.get("confidence_first", "-")),
+        ("Latest Confidence", row.get("confidence_latest", "-")),
         ("Recommendation Count", row.get("recommendation_count", "-")),
         ("Primary Recommendation", row.get("primary_recommendation", "-")),
         ("Recommendation List", row.get("recommendation_list", "-")),

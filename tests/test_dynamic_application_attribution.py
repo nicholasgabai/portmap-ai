@@ -65,6 +65,40 @@ def _signature(**overrides):
     return base
 
 
+def _history_with_confidences(confidences, *, profile_name="nginx"):
+    history = None
+    for index, confidence in enumerate(confidences, start=1):
+        timestamp = f"2026-01-{index:02d}T00:00:00+00:00"
+        observation = {
+            "program": profile_name,
+            "service_name": profile_name,
+            "protocol": "tcp",
+            "port": 443,
+            "last_seen": timestamp,
+            "source_mode": "live",
+        }
+        model = {
+            "top_classification": profile_name,
+            "confidence": confidence,
+            "evidence_quality": "strong",
+            "candidate_count": 1,
+        }
+        if history is None:
+            history = build_learning_profile_history(
+                observation,
+                classification_model=model,
+                generated_at=timestamp,
+            )
+        else:
+            history = append_learning_profile_history(
+                history,
+                observation,
+                classification_model=model,
+                generated_at=timestamp,
+            )
+    return history
+
+
 def _candidate_probability(record, candidate):
     for row in record["candidates"]:
         if row["candidate"] == candidate:
@@ -1079,6 +1113,79 @@ def test_learning_profile_recommendations_for_mature_profiles_remain_advisory():
     assert summary["stability_label"] == "highly_stable"
     assert summary["primary_recommendation"] == "classification_stable"
     assert all(row["read_only"] is True and row["automated_action"] is False for row in summary["recommendation_list"])
+
+
+def test_learning_profile_confidence_evolution_detects_improving_profiles():
+    history = _history_with_confidences([0.30, 0.45, 0.62])
+    summary = history["historical_summary"]
+
+    assert summary["confidence_first"] == 0.30
+    assert summary["confidence_latest"] == 0.62
+    assert summary["confidence_delta"] == 0.32
+    assert summary["confidence_average"] == 0.457
+    assert summary["confidence_trend"] == "improving"
+    assert history["confidence_trend"] == "improving"
+
+
+def test_learning_profile_confidence_evolution_detects_stable_profiles():
+    history = _history_with_confidences([0.72, 0.74, 0.73])
+    summary = history["historical_summary"]
+
+    assert summary["confidence_min"] == 0.72
+    assert summary["confidence_max"] == 0.74
+    assert summary["confidence_delta"] == 0.01
+    assert summary["confidence_average"] == 0.73
+    assert summary["confidence_trend"] == "stable"
+    assert summary["primary_recommendation"] == "classification_stable"
+
+
+def test_learning_profile_confidence_evolution_detects_declining_profiles():
+    history = _history_with_confidences([0.82, 0.70, 0.58])
+    summary = history["historical_summary"]
+    recommendation_ids = [row["recommendation_id"] for row in summary["recommendation_list"]]
+
+    assert summary["confidence_delta"] == -0.24
+    assert summary["confidence_trend"] == "declining"
+    assert "investigate_confidence_change" in recommendation_ids
+
+
+def test_learning_profile_confidence_evolution_detects_volatile_profiles():
+    history = _history_with_confidences([0.30, 0.82, 0.42])
+    summary = history["historical_summary"]
+    recommendation = next(
+        row for row in summary["recommendation_list"] if row["recommendation_id"] == "investigate_confidence_change"
+    )
+
+    assert summary["confidence_min"] == 0.30
+    assert summary["confidence_max"] == 0.82
+    assert summary["confidence_trend"] == "volatile"
+    assert "confidence_trend:volatile" in recommendation["supporting_factors"]
+
+
+def test_learning_profile_confidence_evolution_handles_single_observation_profiles():
+    history = _history_with_confidences([0.61])
+    summary = history["historical_summary"]
+
+    assert summary["confidence_first"] == 0.61
+    assert summary["confidence_latest"] == 0.61
+    assert summary["confidence_min"] == 0.61
+    assert summary["confidence_max"] == 0.61
+    assert summary["confidence_average"] == 0.61
+    assert summary["confidence_delta"] == 0.0
+    assert summary["confidence_trend"] == "stable"
+
+
+def test_learning_profile_confidence_evolution_summarizes_mixed_confidence_histories():
+    history = _history_with_confidences([0.40, 0.62, 0.52, 0.68])
+    summary = summarize_learning_profile_history(history)
+
+    assert summary["confidence_first"] == 0.40
+    assert summary["confidence_latest"] == 0.68
+    assert summary["confidence_min"] == 0.40
+    assert summary["confidence_max"] == 0.68
+    assert summary["confidence_average"] == 0.555
+    assert summary["confidence_delta"] == 0.28
+    assert summary["confidence_trend"] == "volatile"
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
