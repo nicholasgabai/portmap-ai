@@ -1231,6 +1231,19 @@ def _active_risk_finding_rows(
                 "graph_nodes": _behavior_graph_text_field(classification, "node_count", limit=12),
                 "graph_edges": _behavior_graph_text_field(classification, "edge_count", limit=12),
                 "graph_relationships": _behavior_graph_text_field(classification, "relationship_count", limit=12),
+                "inferred_relationships": _behavior_graph_text_field(
+                    classification, "inferred_relationship_count", limit=12
+                ),
+                "strongest_relationship": _behavior_graph_text_field(
+                    classification, "strongest_relationship", limit=40
+                ),
+                "strongest_relationship_type": _behavior_graph_text_field(
+                    classification, "strongest_relationship_type", limit=40
+                ),
+                "strongest_relationship_score": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("strongest_relationship_score")
+                ),
+                "related_entities": _behavior_graph_text_field(classification, "related_entity_count", limit=12),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1307,6 +1320,11 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Graph Nodes", row.get("graph_nodes", "-")),
         ("Graph Edges", row.get("graph_edges", "-")),
         ("Graph Relationships", row.get("graph_relationships", "-")),
+        ("Inferred Relationships", row.get("inferred_relationships", "-")),
+        ("Strongest Relationship", row.get("strongest_relationship", "-")),
+        ("Strongest Relationship Type", row.get("strongest_relationship_type", "-")),
+        ("Strongest Relationship Score", row.get("strongest_relationship_score", "-")),
+        ("Related Entities", row.get("related_entities", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -2713,6 +2731,11 @@ def _ai_provider_model_rows(
                 "graph_nodes": "-",
                 "graph_edges": "-",
                 "graph_relationships": "-",
+                "inferred_relationships": "-",
+                "strongest_relationship": "-",
+                "strongest_relationship_type": "-",
+                "strongest_relationship_score": "-",
+                "related_entities": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -2780,6 +2803,19 @@ def _ai_provider_model_rows(
             row["graph_nodes"] = _behavior_graph_text_field(model_record, "node_count", limit=12)
             row["graph_edges"] = _behavior_graph_text_field(model_record, "edge_count", limit=12)
             row["graph_relationships"] = _behavior_graph_text_field(model_record, "relationship_count", limit=12)
+            row["inferred_relationships"] = _behavior_graph_text_field(
+                model_record, "inferred_relationship_count", limit=12
+            )
+            row["strongest_relationship"] = _behavior_graph_text_field(
+                model_record, "strongest_relationship", limit=40
+            )
+            row["strongest_relationship_type"] = _behavior_graph_text_field(
+                model_record, "strongest_relationship_type", limit=40
+            )
+            row["strongest_relationship_score"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("strongest_relationship_score")
+            )
+            row["related_entities"] = _behavior_graph_text_field(model_record, "related_entity_count", limit=12)
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -2838,6 +2874,11 @@ def _ai_provider_model_rows(
             "graph_nodes": row["graph_nodes"],
             "graph_edges": row["graph_edges"],
             "graph_relationships": row["graph_relationships"],
+            "inferred_relationships": row["inferred_relationships"],
+            "strongest_relationship": row["strongest_relationship"],
+            "strongest_relationship_type": row["strongest_relationship_type"],
+            "strongest_relationship_score": row["strongest_relationship_score"],
+            "related_entities": row["related_entities"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -2910,6 +2951,11 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Graph Nodes", row.get("graph_nodes", "-")),
         ("Graph Edges", row.get("graph_edges", "-")),
         ("Graph Relationships", row.get("graph_relationships", "-")),
+        ("Inferred Relationships", row.get("inferred_relationships", "-")),
+        ("Strongest Relationship", row.get("strongest_relationship", "-")),
+        ("Strongest Relationship Type", row.get("strongest_relationship_type", "-")),
+        ("Strongest Relationship Score", row.get("strongest_relationship_score", "-")),
+        ("Related Entities", row.get("related_entities", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),

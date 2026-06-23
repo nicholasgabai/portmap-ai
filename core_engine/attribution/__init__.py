@@ -14,6 +14,7 @@ from core_engine.attribution.behavior_graph import (
     BEHAVIOR_GRAPH_RECORD_VERSION,
     GRAPH_EDGE_TYPES,
     GRAPH_NODE_TYPES,
+    GRAPH_RELATIONSHIP_TYPES,
     build_behavior_graph_model,
     deterministic_behavior_graph_json,
 )
@@ -74,6 +75,7 @@ __all__ = [
     "BEHAVIOR_GRAPH_RECORD_VERSION",
     "GRAPH_EDGE_TYPES",
     "GRAPH_NODE_TYPES",
+    "GRAPH_RELATIONSHIP_TYPES",
     "LEARNING_PROFILE_RECORD_VERSION",
     "LearningProfileError",
     "PROBABILISTIC_APPLICATION_MODEL_VERSION",

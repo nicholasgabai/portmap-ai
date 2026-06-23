@@ -381,6 +381,10 @@ Phase 173 is treated as a multi-stage phase for Graph-Based Behavioral AI withou
 
 Implementation note: Phase 173.0 adds deterministic metadata-only behavior graph modeling from existing observed assets, services, ports, protocols, flows, findings, probabilistic application attribution, and learning profile metadata. Outputs include graph nodes, graph edges, relationship counts, related asset, related service, and related profile metadata exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add enforcement, blocking, remediation execution, packet capture, external connectivity, autonomous action, machine learning, packet inspection, or payload analysis.
 
+#### 173.1 - Behavioral Relationship Expansion (Completed)
+
+Implementation note: Phase 173.1 extends deterministic metadata-only behavior graph modeling with inferred relationships across assets, services, applications, profiles, flows, shared ports, shared protocols, shared application candidates, shared learning profiles, observed flow relationships, and related risk signals. Outputs include inferred relationship count, strongest relationship, strongest relationship type, strongest relationship score, and related entity count exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add enforcement, blocking, remediation execution, packet capture, external connectivity, autonomous action, machine learning, new collection, packet inspection, or payload analysis.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

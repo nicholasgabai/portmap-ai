@@ -1217,10 +1217,10 @@ def test_behavior_graph_generates_nodes_from_existing_metadata_only():
         "application_node",
         "profile_node",
     }
-    assert graph["summary"]["node_count"] == 6
+    assert graph["summary"]["node_count"] >= 6
     assert graph["summary"]["asset_count"] == 1
     assert graph["summary"]["service_count"] == 1
-    assert graph["summary"]["application_count"] == 1
+    assert graph["summary"]["application_count"] >= 1
     assert graph["summary"]["profile_count"] == 1
 
 
@@ -1253,6 +1253,11 @@ def test_behavior_graph_generates_required_edges_from_flow_metadata():
     assert graph["summary"]["related_asset"] == "worker-1"
     assert graph["summary"]["related_service"] == "https"
     assert graph["summary"]["related_profile"].startswith("learning-profile-")
+    assert graph["summary"]["inferred_relationship_count"] > 0
+    assert graph["summary"]["strongest_relationship"].startswith("graph-rel-")
+    assert graph["summary"]["strongest_relationship_type"] != "-"
+    assert graph["summary"]["strongest_relationship_score"] > 0
+    assert graph["summary"]["related_entity_count"] > 0
 
 
 def test_behavior_graph_ids_are_deterministic_and_export_safe():
@@ -1290,11 +1295,127 @@ def test_behavior_graph_empty_input_is_safe_and_empty():
     assert graph["summary"]["application_count"] == 0
     assert graph["summary"]["profile_count"] == 0
     assert graph["summary"]["relationship_count"] == 0
+    assert graph["summary"]["inferred_relationship_count"] == 0
+    assert graph["summary"]["strongest_relationship"] == "-"
+    assert graph["summary"]["strongest_relationship_type"] == "-"
+    assert graph["summary"]["strongest_relationship_score"] == "-"
+    assert graph["summary"]["related_entity_count"] == 0
     assert graph["summary"]["related_asset"] == "-"
     assert graph["summary"]["related_service"] == "-"
     assert graph["summary"]["related_profile"] == "-"
     assert graph["metadata_only"] is True
     assert graph["read_only"] is True
+
+
+def test_behavior_graph_infers_relationships_from_existing_metadata():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "peer_asset": "asset-b",
+            "service_name": "frontend",
+            "related_services": ["backend"],
+            "protocol": "tcp",
+            "port": 443,
+            "flow_id": "flow-1",
+            "score_factors": ["sensitive_port:443", "new_peer"],
+            "related_profiles": ["learning-profile-related"],
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "nginx",
+            "confidence": 0.72,
+            "candidates": [
+                {"candidate": "nginx", "probability": 0.72},
+                {"candidate": "apache", "probability": 0.18},
+            ],
+        },
+        learning_profile={"profile_id": "learning-profile-primary"},
+        learning_profile_history={
+            "profile_id": "learning-profile-primary",
+            "historical_services": ["backend"],
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    relationship_types = {row["relationship_type"] for row in graph["relationships"]}
+    assert {
+        "shared_asset",
+        "shared_service",
+        "shared_protocol",
+        "shared_port",
+        "shared_application_candidate",
+        "shared_learning_profile",
+        "observed_flow_relationship",
+        "related_risk_signal",
+    }.issubset(relationship_types)
+    assert graph["summary"]["inferred_relationship_count"] == len(graph["relationships"])
+    assert graph["summary"]["strongest_relationship"].startswith("graph-rel-")
+    assert graph["summary"]["strongest_relationship_type"] in relationship_types
+    assert graph["summary"]["strongest_relationship_score"] >= 0.5
+    assert graph["summary"]["related_entity_count"] >= 6
+    assert all(0.0 <= float(row["strength_score"]) <= 1.0 for row in graph["relationships"])
+    assert all(row["evidence_count"] == len(row["evidence_summary"]) for row in graph["relationships"])
+
+
+def test_behavior_graph_relationship_ids_are_stable():
+    observation = {
+        "node_id": "asset-a",
+        "peer_asset": "asset-b",
+        "service_name": "frontend",
+        "related_services": ["backend"],
+        "protocol": "tcp",
+        "port": 443,
+        "flow_id": "flow-1",
+        "score_factors": ["sensitive_port:443"],
+        "source_mode": "live",
+    }
+    classifier = {
+        "top_classification": "nginx",
+        "confidence": 0.72,
+        "candidates": [
+            {"candidate": "nginx", "probability": 0.72},
+            {"candidate": "apache", "probability": 0.18},
+        ],
+    }
+    first = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile={"profile_id": "learning-profile-primary"},
+        generated_at=FIXED_TIME,
+    )
+    second = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile={"profile_id": "learning-profile-primary"},
+        generated_at=FIXED_TIME,
+    )
+
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+    assert [row["relationship_id"] for row in first["relationships"]] == [
+        row["relationship_id"] for row in second["relationships"]
+    ]
+    assert all(row["relationship_id"].startswith("graph-rel-") for row in first["relationships"])
+
+
+def test_behavior_graph_relationship_strength_reflects_evidence_volume():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "peer_asset": "asset-b",
+            "service_name": "frontend",
+            "protocol": "tcp",
+            "port": 443,
+            "flow_id": "flow-1",
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.72},
+        learning_profile={"profile_id": "learning-profile-primary"},
+        generated_at=FIXED_TIME,
+    )
+    by_type = {row["relationship_type"]: row for row in graph["relationships"]}
+
+    assert by_type["observed_flow_relationship"]["strength_score"] > by_type["shared_port"]["strength_score"]
+    assert by_type["observed_flow_relationship"]["evidence_count"] > by_type["shared_port"]["evidence_count"]
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():

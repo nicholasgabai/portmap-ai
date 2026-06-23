@@ -398,7 +398,14 @@ def build_probabilistic_application_model(
     )
     behavior_graph = build_behavior_graph_model(
         observation,
-        classification_model={"top_classification": top["candidate"], "confidence": float(top["probability"])},
+        classification_model={
+            "top_classification": top["candidate"],
+            "confidence": float(top["probability"]),
+            "candidates": candidates,
+            "alternative_candidates": [
+                {"candidate": row["candidate"], "probability": row["probability"]} for row in candidates[1:]
+            ],
+        },
         learning_profile=learning_profile,
         learning_profile_history=learning_profile_history,
         generated_at=timestamp,
