@@ -1193,6 +1193,42 @@ def test_ai_details_table_falls_back_to_nearest_row_when_wrapped_key_disappears(
     asyncio.run(run_case())
 
 
+def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.AIDetailsTable()
+            self.details.styles.width = 52
+            self.details.styles.height = 8
+            yield self.details
+
+    ai_row = {
+        "provider": "heuristic",
+        "model": "risk-v1",
+        "candidate_reasoning": "nginx:" + ("process_service_fingerprint_without_spaces" * 4),
+        "recommendation_list": "review_profile_drift:" + ("metadata-drift-with-long-token" * 5),
+        "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
+    }
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            details = app.query_one(gui_app.AIDetailsTable)
+            details.update_details(ai_row)
+            await pilot.pause()
+            target_width = gui_app._detail_value_wrap_width(details)
+            rendered = [details.get_row_at(index) for index in range(details.row_count)]
+
+            assert target_width < gui_app.DETAIL_WRAP_WIDTH
+            assert details.allow_horizontal_scroll is False
+            assert all(len(row[1]) <= target_width for row in rendered)
+            assert any(row[0] == "Candidate Reasoning" for row in rendered)
+            assert any(row[0] == "Recommendation List" for row in rendered)
+            assert any(row[0] == "Learning Profile ID" for row in rendered)
+            assert any(row[0] == "" for row in rendered)
+
+    asyncio.run(run_case())
+
+
 def test_ai_tables_handle_empty_metadata_without_crashing():
     class Harness(gui_app.App):
         def compose(self):
@@ -1868,6 +1904,42 @@ def test_risk_details_table_falls_back_to_nearest_row_when_wrapped_key_disappear
             assert details.cursor_row == min(old_index, details.row_count - 1)
             assert details.scroll_y == min(previous_scroll, details.max_scroll_y)
             assert details.cursor_row > 0
+
+    asyncio.run(run_case())
+
+
+def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.FindingDetailsTable()
+            self.details.styles.width = 52
+            self.details.styles.height = 8
+            yield self.details
+
+    finding = {
+        "asset": "worker-1",
+        "service": "TCP/443",
+        "candidate_reasoning": "nginx:" + ("process_service_fingerprint_without_spaces" * 4),
+        "recommendation_list": "review_profile_drift:" + ("metadata-drift-with-long-token" * 5),
+        "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
+    }
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            details = app.query_one(gui_app.FindingDetailsTable)
+            details.update_details(finding)
+            await pilot.pause()
+            target_width = gui_app._detail_value_wrap_width(details)
+            rendered = [details.get_row_at(index) for index in range(details.row_count)]
+
+            assert target_width < gui_app.DETAIL_WRAP_WIDTH
+            assert details.allow_horizontal_scroll is False
+            assert all(len(row[1]) <= target_width for row in rendered)
+            assert any(row[0] == "Candidate Reasoning" for row in rendered)
+            assert any(row[0] == "Recommendation List" for row in rendered)
+            assert any(row[0] == "Learning Profile ID" for row in rendered)
+            assert any(row[0] == "" for row in rendered)
 
     asyncio.run(run_case())
 

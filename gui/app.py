@@ -97,6 +97,8 @@ def _short_text(value: Any, *, limit: int = 72) -> str:
 
 DETAIL_WRAP_WIDTH = 56
 DETAIL_WRAP_MAX_LINES = 4
+DETAIL_FIELD_WIDTH = 30
+DETAIL_TABLE_GUTTER_WIDTH = 6
 
 
 def _wrapped_detail_rows(
@@ -115,12 +117,24 @@ def _wrapped_detail_rows(
         truncated = len(pieces) > max_lines
         if truncated:
             pieces = pieces[:max_lines]
-            pieces[-1] = pieces[-1][: max(width - 3, 1)].rstrip() + "..."
+            ellipsis = "..." if width >= 3 else "." * width
+            pieces[-1] = pieces[-1][: max(width - len(ellipsis), 0)].rstrip() + ellipsis
         for index, piece in enumerate(pieces):
             row_field = field if index == 0 else ""
             key = field if index == 0 else f"{field}#{index}"
             rendered.append((row_field, piece, key))
     return rendered
+
+
+def _detail_value_wrap_width(table: DataTable, *, default: int = DETAIL_WRAP_WIDTH) -> int:
+    try:
+        visible_width = int(getattr(getattr(table, "size", None), "width", 0) or 0)
+    except Exception:
+        visible_width = 0
+    if visible_width <= 0:
+        return default
+    available = visible_width - DETAIL_FIELD_WIDTH - DETAIL_TABLE_GUTTER_WIDTH
+    return max(1, min(default, available))
 
 
 def _format_risk_score(value: Any) -> str:
@@ -3533,7 +3547,10 @@ class FindingDetailsTable(DataTable):
     def update_details(self, finding: Dict[str, str] | None) -> None:
         selection = _capture_table_selection(self)
         self.clear()
-        for field, value, key in _wrapped_detail_rows(_finding_detail_rows(finding)):
+        for field, value, key in _wrapped_detail_rows(
+            _finding_detail_rows(finding),
+            width=_detail_value_wrap_width(self),
+        ):
             self.add_row(field, value, key=key)
         _restore_table_selection(self, selection, preserve_scroll=True)
 
@@ -4196,7 +4213,10 @@ class AIDetailsTable(DataTable):
     def update_details(self, ai_row: Dict[str, str] | None) -> None:
         selection = _capture_table_selection(self)
         self.clear()
-        for field, value, key in _wrapped_detail_rows(_ai_detail_rows(ai_row)):
+        for field, value, key in _wrapped_detail_rows(
+            _ai_detail_rows(ai_row),
+            width=_detail_value_wrap_width(self),
+        ):
             self.add_row(field, value, key=key)
         _restore_table_selection(self, selection, preserve_scroll=True)
 
