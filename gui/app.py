@@ -3097,7 +3097,11 @@ def _packet_timeline_rows(packet_rows: List[Dict[str, str]], *, limit: int = 9) 
 
 def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     row_index = table.cursor_row if isinstance(table.cursor_row, int) else 0
-    selection: Dict[str, Any] = {"row_index": row_index, "row_key": None}
+    selection: Dict[str, Any] = {
+        "row_index": row_index,
+        "row_key": None,
+        "scroll_y": _table_scroll_y(table),
+    }
     try:
         if table.row_count > 0 and 0 <= row_index < table.row_count:
             cell_key = table.coordinate_to_cell_key(table.cursor_coordinate)
@@ -3107,7 +3111,7 @@ def _capture_table_selection(table: DataTable) -> Dict[str, Any]:
     return selection
 
 
-def _restore_table_selection(table: DataTable, selection: Dict[str, Any]) -> None:
+def _restore_table_selection(table: DataTable, selection: Dict[str, Any], *, preserve_scroll: bool = False) -> None:
     try:
         row_count = table.row_count
     except Exception:
@@ -3130,7 +3134,27 @@ def _restore_table_selection(table: DataTable, selection: Dict[str, Any]) -> Non
         row_index = min(max(previous_index, 0), row_count - 1)
 
     try:
-        table.move_cursor(row=row_index, column=0, animate=False, scroll=True)
+        table.move_cursor(row=row_index, column=0, animate=False, scroll=not preserve_scroll)
+    except Exception:
+        pass
+    if preserve_scroll:
+        _restore_table_scroll(table, selection)
+
+
+def _table_scroll_y(table: DataTable) -> int:
+    try:
+        return max(0, int(getattr(table, "scroll_y", 0) or 0))
+    except Exception:
+        return 0
+
+
+def _restore_table_scroll(table: DataTable, selection: Dict[str, Any]) -> None:
+    scroll_y = selection.get("scroll_y", 0)
+    if not isinstance(scroll_y, int):
+        scroll_y = 0
+    try:
+        max_scroll_y = max(0, int(getattr(table, "max_scroll_y", 0) or 0))
+        table.scroll_to(y=min(max(scroll_y, 0), max_scroll_y), animate=False)
     except Exception:
         pass
 
@@ -3511,7 +3535,7 @@ class FindingDetailsTable(DataTable):
         self.clear()
         for field, value, key in _wrapped_detail_rows(_finding_detail_rows(finding)):
             self.add_row(field, value, key=key)
-        _restore_table_selection(self, selection)
+        _restore_table_selection(self, selection, preserve_scroll=True)
 
 
 class RiskSignalsTable(DataTable):
@@ -4174,7 +4198,7 @@ class AIDetailsTable(DataTable):
         self.clear()
         for field, value, key in _wrapped_detail_rows(_ai_detail_rows(ai_row)):
             self.add_row(field, value, key=key)
-        _restore_table_selection(self, selection)
+        _restore_table_selection(self, selection, preserve_scroll=True)
 
 
 class AIProviderSummaryTable(DataTable):

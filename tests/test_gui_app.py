@@ -1110,6 +1110,89 @@ def test_ai_details_table_wraps_long_metadata_and_preserves_cursor_selection():
     asyncio.run(run_case())
 
 
+def test_ai_details_table_preserves_scroll_and_highlighted_wrapped_row_on_refresh():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.AIDetailsTable()
+            self.details.styles.height = 6
+            yield self.details
+
+    ai_row = {
+        "provider": "heuristic",
+        "model": "risk-v1",
+        "alternative_candidates": "nginx 0.42, " + ("shared_tls_metadata " * 6) + "apache 0.31, caddy 0.18",
+        "candidate_reasoning": "nginx: " + ("process and service metadata " * 6),
+        "operator_next_steps": "Review service name, process owner, expected-service allowlist, and historical observations.",
+        "learning_profile_id": "learning-profile-" + ("abcdef" * 8),
+    }
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            details = app.query_one(gui_app.AIDetailsTable)
+            details.update_details(ai_row)
+            await pilot.pause()
+            rendered = [details.get_row_at(index) for index in range(details.row_count)]
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            details.move_cursor(row=continuation_index, column=0)
+            details.scroll_to(y=continuation_index, animate=False)
+            await pilot.pause()
+            previous_scroll = details.scroll_y
+
+            details.update_details(ai_row)
+            await pilot.pause()
+
+            assert details.cursor_row == continuation_index
+            assert details.get_row_at(details.cursor_row)[0] == ""
+            assert details.scroll_y == previous_scroll
+            assert details.scroll_y > 0
+
+    asyncio.run(run_case())
+
+
+def test_ai_details_table_falls_back_to_nearest_row_when_wrapped_key_disappears():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.AIDetailsTable()
+            self.details.styles.height = 6
+            yield self.details
+
+    initial = {
+        "provider": "heuristic",
+        "model": "risk-v1",
+        "alternative_candidates": "nginx 0.42, " + ("shared_tls_metadata " * 6) + "apache 0.31, caddy 0.18",
+        "operator_next_steps": "Review service name, process owner, expected-service allowlist, and historical observations.",
+    }
+    updated = {
+        "provider": "heuristic",
+        "model": "risk-v1",
+        "alternative_candidates": "nginx 0.42",
+        "operator_next_steps": "Review service name.",
+    }
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            details = app.query_one(gui_app.AIDetailsTable)
+            details.update_details(initial)
+            await pilot.pause()
+            rendered = [details.get_row_at(index) for index in range(details.row_count)]
+            old_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            details.move_cursor(row=old_index, column=0)
+            details.scroll_to(y=old_index, animate=False)
+            await pilot.pause()
+            previous_scroll = details.scroll_y
+
+            details.update_details(updated)
+            await pilot.pause()
+
+            assert details.cursor_row == min(old_index, details.row_count - 1)
+            assert details.scroll_y == min(previous_scroll, details.max_scroll_y)
+            assert details.cursor_row > 0
+
+    asyncio.run(run_case())
+
+
 def test_ai_tables_handle_empty_metadata_without_crashing():
     class Harness(gui_app.App):
         def compose(self):
@@ -1702,6 +1785,89 @@ def test_risk_details_table_wraps_long_metadata_and_preserves_cursor_selection()
             await pilot.pause()
             assert details.cursor_row == continuation_index
             assert details.get_row_at(details.cursor_row)[0] == ""
+
+    asyncio.run(run_case())
+
+
+def test_risk_details_table_preserves_scroll_and_highlighted_wrapped_row_on_refresh():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.FindingDetailsTable()
+            self.details.styles.height = 6
+            yield self.details
+
+    finding = {
+        "asset": "worker-1",
+        "service": "TCP/443",
+        "alternative_candidates": "nginx 0.42, " + ("shared_tls_metadata " * 6) + "apache 0.31, caddy 0.18",
+        "candidate_reasoning": "nginx: " + ("process and service metadata " * 6),
+        "operator_next_steps": "Review service name, process owner, expected-service allowlist, and historical observations.",
+        "learning_profile_id": "learning-profile-" + ("123456" * 8),
+    }
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            details = app.query_one(gui_app.FindingDetailsTable)
+            details.update_details(finding)
+            await pilot.pause()
+            rendered = [details.get_row_at(index) for index in range(details.row_count)]
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            details.move_cursor(row=continuation_index, column=0)
+            details.scroll_to(y=continuation_index, animate=False)
+            await pilot.pause()
+            previous_scroll = details.scroll_y
+
+            details.update_details(finding)
+            await pilot.pause()
+
+            assert details.cursor_row == continuation_index
+            assert details.get_row_at(details.cursor_row)[0] == ""
+            assert details.scroll_y == previous_scroll
+            assert details.scroll_y > 0
+
+    asyncio.run(run_case())
+
+
+def test_risk_details_table_falls_back_to_nearest_row_when_wrapped_key_disappears():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.FindingDetailsTable()
+            self.details.styles.height = 6
+            yield self.details
+
+    initial = {
+        "asset": "worker-1",
+        "service": "TCP/443",
+        "alternative_candidates": "nginx 0.42, " + ("shared_tls_metadata " * 6) + "apache 0.31, caddy 0.18",
+        "operator_next_steps": "Review service name, process owner, expected-service allowlist, and historical observations.",
+    }
+    updated = {
+        "asset": "worker-1",
+        "service": "TCP/443",
+        "alternative_candidates": "nginx 0.42",
+        "operator_next_steps": "Review service name.",
+    }
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test() as pilot:
+            details = app.query_one(gui_app.FindingDetailsTable)
+            details.update_details(initial)
+            await pilot.pause()
+            rendered = [details.get_row_at(index) for index in range(details.row_count)]
+            old_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            details.move_cursor(row=old_index, column=0)
+            details.scroll_to(y=old_index, animate=False)
+            await pilot.pause()
+            previous_scroll = details.scroll_y
+
+            details.update_details(updated)
+            await pilot.pause()
+
+            assert details.cursor_row == min(old_index, details.row_count - 1)
+            assert details.scroll_y == min(previous_scroll, details.max_scroll_y)
+            assert details.cursor_row > 0
 
     asyncio.run(run_case())
 
