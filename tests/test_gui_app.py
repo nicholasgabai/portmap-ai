@@ -1043,6 +1043,11 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Strongest Cluster"].startswith("graph-cluster-")
     assert details["Strongest Cluster Type"] != "-"
     assert details["Strongest Cluster Score"] != "-"
+    assert details["Primary Cluster"].startswith("graph-cluster-")
+    assert details["Primary Cluster Type"] != "-"
+    assert details["Primary Cluster Risk"] in {"low", "medium", "high", "critical"}
+    assert details["Primary Cluster Confidence"] != "-"
+    assert details["Primary Cluster Reason"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1229,6 +1234,7 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "recommendation_list": "review_profile_drift:" + ("metadata-drift-with-long-token" * 5),
         "strongest_relationship": "graph-rel-shared_application_candidate-" + ("abcdef1234567890" * 4),
         "strongest_cluster": "graph-cluster-application-" + ("abcdef1234567890" * 4),
+        "primary_cluster_reason": "critical_risk_from_profile_drift:" + ("cluster-analysis-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1248,6 +1254,7 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Recommendation List" for row in rendered)
             assert any(row[0] == "Strongest Relationship" for row in rendered)
             assert any(row[0] == "Strongest Cluster" for row in rendered)
+            assert any(row[0] == "Primary Cluster Reason" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -1804,6 +1811,11 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Strongest Cluster"].startswith("graph-cluster-")
     assert details["Strongest Cluster Type"] != "-"
     assert details["Strongest Cluster Score"] != "-"
+    assert details["Primary Cluster"].startswith("graph-cluster-")
+    assert details["Primary Cluster Type"] != "-"
+    assert details["Primary Cluster Risk"] in {"low", "medium", "high", "critical"}
+    assert details["Primary Cluster Confidence"] != "-"
+    assert details["Primary Cluster Reason"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1969,6 +1981,7 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "recommendation_list": "review_profile_drift:" + ("metadata-drift-with-long-token" * 5),
         "strongest_relationship": "graph-rel-shared_learning_profile-" + ("1234567890abcdef" * 4),
         "strongest_cluster": "graph-cluster-profile-" + ("1234567890abcdef" * 4),
+        "primary_cluster_reason": "high_risk_from_service_score:" + ("cluster-analysis-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -1988,6 +2001,7 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Recommendation List" for row in rendered)
             assert any(row[0] == "Strongest Relationship" for row in rendered)
             assert any(row[0] == "Strongest Cluster" for row in rendered)
+            assert any(row[0] == "Primary Cluster Reason" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 

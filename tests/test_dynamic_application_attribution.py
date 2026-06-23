@@ -1304,6 +1304,11 @@ def test_behavior_graph_empty_input_is_safe_and_empty():
     assert graph["summary"]["strongest_cluster"] == "-"
     assert graph["summary"]["strongest_cluster_type"] == "-"
     assert graph["summary"]["strongest_cluster_score"] == "-"
+    assert graph["summary"]["primary_cluster"] == "-"
+    assert graph["summary"]["primary_cluster_type"] == "-"
+    assert graph["summary"]["primary_cluster_risk"] == "-"
+    assert graph["summary"]["primary_cluster_confidence"] == "-"
+    assert graph["summary"]["primary_cluster_reason"] == "-"
     assert graph["summary"]["related_asset"] == "-"
     assert graph["summary"]["related_service"] == "-"
     assert graph["summary"]["related_profile"] == "-"
@@ -1370,6 +1375,11 @@ def test_behavior_graph_infers_relationships_from_existing_metadata():
     assert graph["summary"]["strongest_cluster"].startswith("graph-cluster-")
     assert graph["summary"]["strongest_cluster_type"] == "application_cluster"
     assert graph["summary"]["strongest_cluster_score"] > 0
+    assert graph["summary"]["primary_cluster"].startswith("graph-cluster-")
+    assert graph["summary"]["primary_cluster_type"] in {row["cluster_type"] for row in graph["clusters"]}
+    assert graph["summary"]["primary_cluster_risk"] in {"low", "medium", "high", "critical"}
+    assert 0.0 <= graph["summary"]["primary_cluster_confidence"] <= 1.0
+    assert graph["summary"]["primary_cluster_reason"] != "-"
 
 
 def test_behavior_graph_relationship_ids_are_stable():
@@ -1524,6 +1534,94 @@ def test_behavior_graph_cluster_ids_are_deterministic_and_summarized():
     assert first["summary"]["cluster_count"] == len(first["clusters"])
     assert first["summary"]["strongest_cluster"].startswith("graph-cluster-")
     assert first["summary"]["strongest_cluster_type"] in {row["cluster_type"] for row in first["clusters"]}
+
+
+def test_behavior_graph_cluster_analysis_derives_risk_levels_and_primary_cluster():
+    base = {
+        "node_id": "asset-a",
+        "service_name": "frontend",
+        "protocol": "tcp",
+        "port": 443,
+        "flow_id": "flow-1",
+        "source_mode": "live",
+    }
+    cases = [
+        (
+            "low",
+            dict(base),
+            {"top_classification": "nginx", "confidence": 0.30},
+            {"stability_score": 0.80, "observation_count": 6},
+            {"historical_summary": {"stability_score": 0.80, "drift_score": 0.0, "historical_observations": 6}},
+        ),
+        (
+            "medium",
+            {**base, "score": 0.45},
+            {"top_classification": "nginx", "confidence": 0.55},
+            {"stability_score": 0.45, "observation_count": 3},
+            {"historical_summary": {"stability_score": 0.45, "drift_score": 0.25, "historical_observations": 3}},
+        ),
+        (
+            "high",
+            {**base, "score": 0.75},
+            {"top_classification": "nginx", "confidence": 0.65},
+            {"stability_score": 0.25, "observation_count": 3},
+            {"historical_summary": {"stability_score": 0.25, "drift_score": 0.55, "historical_observations": 3}},
+        ),
+        (
+            "critical",
+            {**base, "score": 0.92, "score_factors": ["a", "b", "c", "d"]},
+            {"top_classification": "nginx", "confidence": 0.85},
+            {"stability_score": 0.20, "observation_count": 5},
+            {"historical_summary": {"stability_score": 0.20, "drift_score": 0.85, "historical_observations": 5}},
+        ),
+    ]
+
+    for expected_risk, observation, classifier, profile, history in cases:
+        graph = build_behavior_graph_model(
+            observation,
+            classification_model=classifier,
+            learning_profile=profile,
+            learning_profile_history=history,
+            generated_at=FIXED_TIME,
+        )
+        primary = next(row for row in graph["clusters"] if row["cluster_id"] == graph["summary"]["primary_cluster"])
+
+        assert graph["summary"]["primary_cluster_risk"] == expected_risk
+        assert primary["cluster_risk_level"] == expected_risk
+        assert 0.0 <= primary["cluster_confidence"] <= 1.0
+        assert 0.0 <= graph["summary"]["primary_cluster_confidence"] <= 1.0
+        assert primary["primary_reason"].startswith(f"{expected_risk}_risk_")
+        assert primary["evidence_summary"]
+
+
+def test_behavior_graph_cluster_analysis_derives_stability_and_drift_labels():
+    sparse = build_behavior_graph_model(
+        {"node_id": "asset-a", "service_name": "frontend", "protocol": "tcp", "port": 443},
+        classification_model={"top_classification": "nginx", "confidence": 0.40},
+        learning_profile={"stability_score": 0.0, "observation_count": 1},
+        learning_profile_history={"historical_summary": {"stability_score": 0.0, "drift_score": 0.0, "historical_observations": 1}},
+        generated_at=FIXED_TIME,
+    )
+    stable = build_behavior_graph_model(
+        {"node_id": "asset-a", "service_name": "frontend", "protocol": "tcp", "port": 443, "flow_id": "flow-1"},
+        classification_model={"top_classification": "nginx", "confidence": 0.70},
+        learning_profile={"stability_score": 0.80, "observation_count": 6},
+        learning_profile_history={"historical_summary": {"stability_score": 0.80, "drift_score": 0.0, "historical_observations": 6}},
+        generated_at=FIXED_TIME,
+    )
+    unstable = build_behavior_graph_model(
+        {"node_id": "asset-a", "service_name": "frontend", "protocol": "tcp", "port": 443, "flow_id": "flow-1"},
+        classification_model={"top_classification": "nginx", "confidence": 0.70},
+        learning_profile={"stability_score": 0.20, "observation_count": 4},
+        learning_profile_history={"historical_summary": {"stability_score": 0.20, "drift_score": 0.72, "historical_observations": 4}},
+        generated_at=FIXED_TIME,
+    )
+
+    assert {row["cluster_stability"] for row in sparse["clusters"]}.issubset({"sparse", "unknown"})
+    assert "stable" in {row["cluster_stability"] for row in stable["clusters"]}
+    assert "unstable" in {row["cluster_stability"] for row in unstable["clusters"]}
+    assert {row["cluster_drift"] for row in sparse["clusters"]} == {"none"}
+    assert "high" in {row["cluster_drift"] for row in unstable["clusters"]}
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():

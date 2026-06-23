@@ -152,7 +152,12 @@ def build_behavior_graph_model(
     relationship_rows = sorted(
         relationships.values(), key=lambda row: (row["relationship_type"], row["relationship_id"])
     )
-    cluster_rows = _build_behavior_clusters(node_rows, edge_rows, relationship_rows)
+    cluster_rows = _build_behavior_clusters(
+        node_rows,
+        edge_rows,
+        relationship_rows,
+        context=_cluster_context(observation, classifier, profile, history),
+    )
 
     return _graph_record(
         timestamp=timestamp,
@@ -246,6 +251,11 @@ def _graph_summary(
         "strongest_cluster": strongest_cluster.get("cluster_id", "-"),
         "strongest_cluster_type": strongest_cluster.get("cluster_type", "-"),
         "strongest_cluster_score": strongest_cluster.get("confidence_score", "-"),
+        "primary_cluster": _primary_cluster(clusters).get("cluster_id", "-"),
+        "primary_cluster_type": _primary_cluster(clusters).get("cluster_type", "-"),
+        "primary_cluster_risk": _primary_cluster(clusters).get("cluster_risk_level", "-"),
+        "primary_cluster_confidence": _primary_cluster(clusters).get("cluster_confidence", "-"),
+        "primary_cluster_reason": _primary_cluster(clusters).get("primary_reason", "-"),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -430,6 +440,8 @@ def _build_behavior_clusters(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
     relationships: list[dict[str, Any]],
+    *,
+    context: dict[str, Any],
 ) -> list[dict[str, Any]]:
     clusters = [
         _cluster_for(
@@ -437,6 +449,7 @@ def _build_behavior_clusters(
             nodes,
             edges,
             relationships,
+            context=context,
             node_types={"asset_node"},
             relationship_types={"shared_asset"},
         ),
@@ -445,6 +458,7 @@ def _build_behavior_clusters(
             nodes,
             edges,
             relationships,
+            context=context,
             node_types={"service_node", "port_node", "protocol_node"},
             relationship_types={
                 "shared_service",
@@ -458,6 +472,7 @@ def _build_behavior_clusters(
             nodes,
             edges,
             relationships,
+            context=context,
             node_types={"application_node"},
             relationship_types={"shared_application_candidate"},
         ),
@@ -466,6 +481,7 @@ def _build_behavior_clusters(
             nodes,
             edges,
             relationships,
+            context=context,
             node_types={"profile_node"},
             relationship_types={"shared_learning_profile"},
         ),
@@ -474,6 +490,7 @@ def _build_behavior_clusters(
             nodes,
             edges,
             relationships,
+            context=context,
             node_types=set(),
             relationship_types={"related_risk_signal"},
         ),
@@ -490,6 +507,7 @@ def _cluster_for(
     edges: list[dict[str, Any]],
     relationships: list[dict[str, Any]],
     *,
+    context: dict[str, Any],
     node_types: set[str],
     relationship_types: set[str],
 ) -> dict[str, Any] | None:
@@ -519,6 +537,14 @@ def _cluster_for(
     strongest_relationship = _strongest_relationship(matching_relationships)
     confidence = _cluster_confidence(matching_relationships, cluster_edges, len(member_ids))
     evidence = _cluster_evidence(matching_relationships, cluster_edges, member_labels)
+    analysis = _cluster_analysis(
+        safe_type,
+        matching_relationships,
+        cluster_edges,
+        member_count=len(member_ids),
+        confidence_score=confidence,
+        context=context,
+    )
     cluster_id = _cluster_id(
         safe_type,
         sorted(member_ids),
@@ -532,9 +558,246 @@ def _cluster_for(
         "strongest_member": _cluster_strongest_member(strongest_relationship, member_labels),
         "strongest_relationship_type": strongest_relationship.get("relationship_type", "-"),
         "confidence_score": confidence,
-        "evidence_summary": evidence,
+        "cluster_risk_level": analysis["cluster_risk_level"],
+        "cluster_confidence": analysis["cluster_confidence"],
+        "cluster_stability": analysis["cluster_stability"],
+        "cluster_drift": analysis["cluster_drift"],
+        "primary_reason": analysis["primary_reason"],
+        "evidence_summary": _unique_text([*analysis["evidence_summary"], *evidence], limit=10),
         "metadata_only": True,
     }
+
+
+def _cluster_context(
+    observation: dict[str, Any],
+    classification_model: dict[str, Any],
+    learning_profile: dict[str, Any],
+    learning_profile_history: dict[str, Any],
+) -> dict[str, Any]:
+    history_summary = learning_profile_history.get("historical_summary")
+    if not isinstance(history_summary, dict):
+        history_summary = {}
+    return {
+        "risk_score": _safe_float(
+            observation.get("risk_score")
+            or observation.get("score")
+            or observation.get("confidence")
+            or history_summary.get("risk_score")
+        ),
+        "risk_signals": _risk_signal_values(observation),
+        "profile_stability": _safe_float(
+            history_summary.get("stability_score") or learning_profile.get("stability_score")
+        ),
+        "profile_stability_label": _safe_text(
+            history_summary.get("stability_label") or learning_profile.get("stability_label")
+        ),
+        "drift_score": _safe_float(history_summary.get("drift_score") or learning_profile_history.get("drift_score")),
+        "drift_label": _safe_text(history_summary.get("drift_label") or learning_profile_history.get("drift_label")),
+        "observation_count": _safe_int_value(
+            history_summary.get("historical_observations")
+            or learning_profile_history.get("observation_count")
+            or learning_profile.get("observation_count")
+            or observation.get("count")
+        ),
+        "candidate_confidence": _safe_float(
+            classification_model.get("confidence") or classification_model.get("confidence_score")
+        ),
+    }
+
+
+def _cluster_analysis(
+    cluster_type: str,
+    relationships: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    *,
+    member_count: int,
+    confidence_score: float,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    relationship_scores = [float(row.get("strength_score") or 0.0) for row in relationships]
+    max_relationship = max(relationship_scores, default=0.0)
+    risk_score = float(context.get("risk_score") or 0.0)
+    drift_score = float(context.get("drift_score") or 0.0)
+    profile_stability = float(context.get("profile_stability") or 0.0)
+    candidate_confidence = float(context.get("candidate_confidence") or 0.0)
+    risk_signal_count = len(context.get("risk_signals") or [])
+
+    cluster_confidence = _cluster_analysis_confidence(
+        confidence_score=confidence_score,
+        relationship_count=len(relationships),
+        member_count=member_count,
+        candidate_confidence=candidate_confidence,
+        profile_stability=profile_stability,
+    )
+    cluster_stability = _cluster_stability_label(
+        observation_count=int(context.get("observation_count") or 0),
+        profile_stability=profile_stability,
+        relationship_count=len(relationships),
+        member_count=member_count,
+    )
+    cluster_drift = _cluster_drift_label(drift_score, context.get("drift_label"))
+    risk_level = _cluster_risk_level(
+        cluster_type=cluster_type,
+        risk_score=risk_score,
+        max_relationship=max_relationship,
+        drift_score=drift_score,
+        risk_signal_count=risk_signal_count,
+        cluster_stability=cluster_stability,
+    )
+    primary_reason = _cluster_primary_reason(
+        cluster_type=cluster_type,
+        risk_level=risk_level,
+        risk_score=risk_score,
+        max_relationship=max_relationship,
+        drift_score=drift_score,
+        risk_signal_count=risk_signal_count,
+        cluster_stability=cluster_stability,
+    )
+    evidence = _cluster_analysis_evidence(
+        cluster_type=cluster_type,
+        risk_score=risk_score,
+        max_relationship=max_relationship,
+        drift_score=drift_score,
+        profile_stability=profile_stability,
+        observation_count=int(context.get("observation_count") or 0),
+        candidate_confidence=candidate_confidence,
+        risk_signal_count=risk_signal_count,
+        edge_count=len(edges),
+        relationship_count=len(relationships),
+    )
+    return {
+        "cluster_risk_level": risk_level,
+        "cluster_confidence": cluster_confidence,
+        "cluster_stability": cluster_stability,
+        "cluster_drift": cluster_drift,
+        "primary_reason": primary_reason,
+        "evidence_summary": evidence,
+    }
+
+
+def _cluster_analysis_confidence(
+    *,
+    confidence_score: float,
+    relationship_count: int,
+    member_count: int,
+    candidate_confidence: float,
+    profile_stability: float,
+) -> float:
+    support = min(relationship_count / max(member_count, 1), 1.0)
+    confidence = (confidence_score * 0.58) + (candidate_confidence * 0.18) + (profile_stability * 0.14) + (support * 0.10)
+    return round(min(max(confidence, 0.0), 1.0), 2)
+
+
+def _cluster_stability_label(
+    *,
+    observation_count: int,
+    profile_stability: float,
+    relationship_count: int,
+    member_count: int,
+) -> str:
+    if observation_count <= 1 and relationship_count <= 1:
+        return "sparse"
+    if profile_stability >= 0.70 and relationship_count >= 2:
+        return "stable"
+    if profile_stability > 0 and profile_stability <= 0.35:
+        return "unstable"
+    if member_count <= 1 or relationship_count == 0:
+        return "sparse"
+    return "unknown"
+
+
+def _cluster_drift_label(drift_score: float, drift_label: Any) -> str:
+    label = _safe_text(drift_label).lower()
+    if label in {"none", "low", "medium", "high"}:
+        return label
+    if drift_score >= 0.70:
+        return "high"
+    if drift_score >= 0.45:
+        return "medium"
+    if drift_score >= 0.18:
+        return "low"
+    return "none"
+
+
+def _cluster_risk_level(
+    *,
+    cluster_type: str,
+    risk_score: float,
+    max_relationship: float,
+    drift_score: float,
+    risk_signal_count: int,
+    cluster_stability: str,
+) -> str:
+    risk = (risk_score * 0.46) + (max_relationship * 0.26) + (drift_score * 0.18)
+    if cluster_type == "risk_signal_cluster":
+        risk += min(risk_signal_count, 4) * 0.09
+    elif risk_signal_count:
+        risk += min(risk_signal_count, 3) * 0.04
+    if cluster_stability == "stable":
+        risk -= 0.08
+    elif cluster_stability == "unstable":
+        risk += 0.08
+    risk = min(max(risk, 0.0), 1.0)
+    if risk >= 0.82:
+        return "critical"
+    if risk >= 0.62:
+        return "high"
+    if risk >= 0.35:
+        return "medium"
+    return "low"
+
+
+def _cluster_primary_reason(
+    *,
+    cluster_type: str,
+    risk_level: str,
+    risk_score: float,
+    max_relationship: float,
+    drift_score: float,
+    risk_signal_count: int,
+    cluster_stability: str,
+) -> str:
+    if risk_signal_count and cluster_type == "risk_signal_cluster":
+        return f"{risk_level}_risk_from_{risk_signal_count}_risk_signals"
+    if drift_score >= 0.45:
+        return f"{risk_level}_risk_from_profile_drift"
+    if risk_score >= 0.60:
+        return f"{risk_level}_risk_from_service_score"
+    if max_relationship >= 0.80:
+        return f"{risk_level}_risk_from_strong_relationship"
+    if cluster_stability == "sparse":
+        return f"{risk_level}_risk_from_sparse_observations"
+    return f"{risk_level}_risk_from_cluster_context"
+
+
+def _cluster_analysis_evidence(
+    *,
+    cluster_type: str,
+    risk_score: float,
+    max_relationship: float,
+    drift_score: float,
+    profile_stability: float,
+    observation_count: int,
+    candidate_confidence: float,
+    risk_signal_count: int,
+    edge_count: int,
+    relationship_count: int,
+) -> list[str]:
+    return _unique_text(
+        [
+            f"cluster_type:{cluster_type}",
+            f"risk_score:{risk_score:.2f}",
+            f"max_relationship:{max_relationship:.2f}",
+            f"drift_score:{drift_score:.2f}",
+            f"profile_stability:{profile_stability:.2f}",
+            f"observations:{observation_count}",
+            f"candidate_confidence:{candidate_confidence:.2f}",
+            f"risk_signals:{risk_signal_count}",
+            f"edges:{edge_count}",
+            f"relationships:{relationship_count}",
+        ],
+        limit=10,
+    )
 
 
 def _asset_label(observation: dict[str, Any]) -> str:
@@ -721,6 +984,21 @@ def _strongest_cluster(clusters: list[dict[str, Any]]) -> dict[str, Any]:
     )[0]
 
 
+def _primary_cluster(clusters: list[dict[str, Any]]) -> dict[str, Any]:
+    if not clusters:
+        return {}
+    risk_rank = {"critical": 3, "high": 2, "medium": 1, "low": 0}
+    return sorted(
+        clusters,
+        key=lambda row: (
+            -risk_rank.get(str(row.get("cluster_risk_level") or ""), -1),
+            -float(row.get("cluster_confidence") or row.get("confidence_score") or 0.0),
+            str(row.get("cluster_type") or ""),
+            str(row.get("cluster_id") or ""),
+        ),
+    )[0]
+
+
 def _cluster_confidence(
     relationships: list[dict[str, Any]],
     edges: list[dict[str, Any]],
@@ -845,6 +1123,20 @@ def _safe_text(value: Any, *, limit: int = 96) -> str:
         return "-"
     text = " ".join(str(value).replace("\n", " ").replace("\r", " ").split())
     return text[:limit] if text else "-"
+
+
+def _safe_float(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _safe_int_value(value: Any) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _node_id(node_type: str, label: str) -> str:

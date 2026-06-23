@@ -1252,6 +1252,15 @@ def _active_risk_finding_rows(
                 "strongest_cluster_score": _format_probability(
                     _classification_behavior_graph_summary(classification).get("strongest_cluster_score")
                 ),
+                "primary_cluster": _behavior_graph_text_field(classification, "primary_cluster", limit=40),
+                "primary_cluster_type": _behavior_graph_text_field(classification, "primary_cluster_type", limit=40),
+                "primary_cluster_risk": _behavior_graph_text_field(classification, "primary_cluster_risk", limit=16),
+                "primary_cluster_confidence": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("primary_cluster_confidence")
+                ),
+                "primary_cluster_reason": _behavior_graph_text_field(
+                    classification, "primary_cluster_reason", limit=96
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1337,6 +1346,11 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Strongest Cluster", row.get("strongest_cluster", "-")),
         ("Strongest Cluster Type", row.get("strongest_cluster_type", "-")),
         ("Strongest Cluster Score", row.get("strongest_cluster_score", "-")),
+        ("Primary Cluster", row.get("primary_cluster", "-")),
+        ("Primary Cluster Type", row.get("primary_cluster_type", "-")),
+        ("Primary Cluster Risk", row.get("primary_cluster_risk", "-")),
+        ("Primary Cluster Confidence", row.get("primary_cluster_confidence", "-")),
+        ("Primary Cluster Reason", row.get("primary_cluster_reason", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -2752,6 +2766,11 @@ def _ai_provider_model_rows(
                 "strongest_cluster": "-",
                 "strongest_cluster_type": "-",
                 "strongest_cluster_score": "-",
+                "primary_cluster": "-",
+                "primary_cluster_type": "-",
+                "primary_cluster_risk": "-",
+                "primary_cluster_confidence": "-",
+                "primary_cluster_reason": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -2840,6 +2859,15 @@ def _ai_provider_model_rows(
             row["strongest_cluster_score"] = _format_probability(
                 _classification_behavior_graph_summary(model_record).get("strongest_cluster_score")
             )
+            row["primary_cluster"] = _behavior_graph_text_field(model_record, "primary_cluster", limit=40)
+            row["primary_cluster_type"] = _behavior_graph_text_field(model_record, "primary_cluster_type", limit=40)
+            row["primary_cluster_risk"] = _behavior_graph_text_field(model_record, "primary_cluster_risk", limit=16)
+            row["primary_cluster_confidence"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("primary_cluster_confidence")
+            )
+            row["primary_cluster_reason"] = _behavior_graph_text_field(
+                model_record, "primary_cluster_reason", limit=96
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -2907,6 +2935,11 @@ def _ai_provider_model_rows(
             "strongest_cluster": row["strongest_cluster"],
             "strongest_cluster_type": row["strongest_cluster_type"],
             "strongest_cluster_score": row["strongest_cluster_score"],
+            "primary_cluster": row["primary_cluster"],
+            "primary_cluster_type": row["primary_cluster_type"],
+            "primary_cluster_risk": row["primary_cluster_risk"],
+            "primary_cluster_confidence": row["primary_cluster_confidence"],
+            "primary_cluster_reason": row["primary_cluster_reason"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -2988,6 +3021,11 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Strongest Cluster", row.get("strongest_cluster", "-")),
         ("Strongest Cluster Type", row.get("strongest_cluster_type", "-")),
         ("Strongest Cluster Score", row.get("strongest_cluster_score", "-")),
+        ("Primary Cluster", row.get("primary_cluster", "-")),
+        ("Primary Cluster Type", row.get("primary_cluster_type", "-")),
+        ("Primary Cluster Risk", row.get("primary_cluster_risk", "-")),
+        ("Primary Cluster Confidence", row.get("primary_cluster_confidence", "-")),
+        ("Primary Cluster Reason", row.get("primary_cluster_reason", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
