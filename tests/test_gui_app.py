@@ -1129,7 +1129,7 @@ def test_ai_details_table_wraps_long_metadata_and_preserves_cursor_selection():
             assert any(row[0] == "" and "apache" in row[1] for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
 
-            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "")
             details.move_cursor(row=continuation_index, column=0)
             details.update_details(ai_row)
             await pilot.pause()
@@ -1162,7 +1162,7 @@ def test_ai_details_table_preserves_scroll_and_highlighted_wrapped_row_on_refres
             details.update_details(ai_row)
             await pilot.pause()
             rendered = [details.get_row_at(index) for index in range(details.row_count)]
-            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "")
             details.move_cursor(row=continuation_index, column=0)
             details.scroll_to(y=max(continuation_index - 1, 0), animate=False)
             await pilot.pause()
@@ -1212,7 +1212,7 @@ def test_ai_details_table_falls_back_to_nearest_row_when_wrapped_key_disappears(
             details.update_details(initial)
             await pilot.pause()
             rendered = [details.get_row_at(index) for index in range(details.row_count)]
-            old_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            old_index = next(index for index, row in enumerate(rendered) if row[0] == "")
             details.move_cursor(row=old_index, column=0)
             details.scroll_to(y=old_index, animate=False)
             await pilot.pause()
@@ -1240,6 +1240,8 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "provider": "heuristic",
         "model": "risk-v1",
         "candidate_reasoning": "nginx:" + ("process_service_fingerprint_without_spaces" * 4),
+        "supporting_evidence": "nginx:" + ("service-process-fingerprint-support-token" * 4),
+        "missing_evidence": "nginx:" + ("missing-fingerprint-confirmation-token" * 4),
         "recommendation_list": "review_profile_drift:" + ("metadata-drift-with-long-token" * 5),
         "strongest_relationship": "graph-rel-shared_application_candidate-" + ("abcdef1234567890" * 4),
         "strongest_cluster": "graph-cluster-application-" + ("abcdef1234567890" * 4),
@@ -1255,13 +1257,22 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             details = app.query_one(gui_app.AIDetailsTable)
             details.update_details(ai_row)
             await pilot.pause()
-            target_width = gui_app._detail_value_wrap_width(details)
+            target_width = gui_app._detail_value_wrap_width(details, gui_app._ai_detail_rows(ai_row))
             rendered = [details.get_row_at(index) for index in range(details.row_count)]
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "")
+            details.move_cursor(row=continuation_index, column=0)
+            details.scroll_to(y=max(continuation_index - 1, 0), animate=False)
+            await pilot.pause()
+            previous_scroll = details.scroll_y
+            previous_selected = gui_app._table_row_key_at(details, details.cursor_row)
 
             assert target_width < gui_app.DETAIL_WRAP_WIDTH
+            assert details.columns.get("value").width == target_width
             assert details.allow_horizontal_scroll is False
             assert all(len(row[1]) <= target_width for row in rendered)
             assert any(row[0] == "Candidate Reasoning" for row in rendered)
+            assert any(row[0] == "Supporting Evidence" for row in rendered)
+            assert any(row[0] == "Missing Evidence" for row in rendered)
             assert any(row[0] == "Recommendation List" for row in rendered)
             assert any(row[0] == "Strongest Relationship" for row in rendered)
             assert any(row[0] == "Strongest Cluster" for row in rendered)
@@ -1270,6 +1281,14 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Primary Cluster Trend Summary" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
+
+            details.update_details(ai_row)
+            await pilot.pause()
+            refreshed = [details.get_row_at(index) for index in range(details.row_count)]
+            assert details.allow_horizontal_scroll is False
+            assert all(len(row[1]) <= target_width for row in refreshed)
+            assert gui_app._table_row_key_at(details, details.cursor_row) == previous_selected
+            assert details.scroll_y == previous_scroll
 
     asyncio.run(run_case())
 
@@ -1889,7 +1908,7 @@ def test_risk_details_table_wraps_long_metadata_and_preserves_cursor_selection()
             assert any(row[0] == "Operator Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
 
-            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "")
             details.move_cursor(row=continuation_index, column=0)
             details.update_details(finding)
             await pilot.pause()
@@ -1922,7 +1941,7 @@ def test_risk_details_table_preserves_scroll_and_highlighted_wrapped_row_on_refr
             details.update_details(finding)
             await pilot.pause()
             rendered = [details.get_row_at(index) for index in range(details.row_count)]
-            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "")
             details.move_cursor(row=continuation_index, column=0)
             details.scroll_to(y=max(continuation_index - 1, 0), animate=False)
             await pilot.pause()
@@ -1972,7 +1991,7 @@ def test_risk_details_table_falls_back_to_nearest_row_when_wrapped_key_disappear
             details.update_details(initial)
             await pilot.pause()
             rendered = [details.get_row_at(index) for index in range(details.row_count)]
-            old_index = next(index for index, row in enumerate(rendered) if row[0] == "" and "apache" in row[1])
+            old_index = next(index for index, row in enumerate(rendered) if row[0] == "")
             details.move_cursor(row=old_index, column=0)
             details.scroll_to(y=old_index, animate=False)
             await pilot.pause()
@@ -2000,6 +2019,8 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "asset": "worker-1",
         "service": "TCP/443",
         "candidate_reasoning": "nginx:" + ("process_service_fingerprint_without_spaces" * 4),
+        "supporting_evidence": "nginx:" + ("service-process-fingerprint-support-token" * 4),
+        "missing_evidence": "nginx:" + ("missing-fingerprint-confirmation-token" * 4),
         "recommendation_list": "review_profile_drift:" + ("metadata-drift-with-long-token" * 5),
         "strongest_relationship": "graph-rel-shared_learning_profile-" + ("1234567890abcdef" * 4),
         "strongest_cluster": "graph-cluster-profile-" + ("1234567890abcdef" * 4),
@@ -2015,13 +2036,22 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             details = app.query_one(gui_app.FindingDetailsTable)
             details.update_details(finding)
             await pilot.pause()
-            target_width = gui_app._detail_value_wrap_width(details)
+            target_width = gui_app._detail_value_wrap_width(details, gui_app._finding_detail_rows(finding))
             rendered = [details.get_row_at(index) for index in range(details.row_count)]
+            continuation_index = next(index for index, row in enumerate(rendered) if row[0] == "")
+            details.move_cursor(row=continuation_index, column=0)
+            details.scroll_to(y=max(continuation_index - 1, 0), animate=False)
+            await pilot.pause()
+            previous_scroll = details.scroll_y
+            previous_selected = gui_app._table_row_key_at(details, details.cursor_row)
 
             assert target_width < gui_app.DETAIL_WRAP_WIDTH
+            assert details.columns.get("value").width == target_width
             assert details.allow_horizontal_scroll is False
             assert all(len(row[1]) <= target_width for row in rendered)
             assert any(row[0] == "Candidate Reasoning" for row in rendered)
+            assert any(row[0] == "Supporting Evidence" for row in rendered)
+            assert any(row[0] == "Missing Evidence" for row in rendered)
             assert any(row[0] == "Recommendation List" for row in rendered)
             assert any(row[0] == "Strongest Relationship" for row in rendered)
             assert any(row[0] == "Strongest Cluster" for row in rendered)
@@ -2030,6 +2060,14 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Primary Cluster Trend Summary" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
+
+            details.update_details(finding)
+            await pilot.pause()
+            refreshed = [details.get_row_at(index) for index in range(details.row_count)]
+            assert details.allow_horizontal_scroll is False
+            assert all(len(row[1]) <= target_width for row in refreshed)
+            assert gui_app._table_row_key_at(details, details.cursor_row) == previous_selected
+            assert details.scroll_y == previous_scroll
 
     asyncio.run(run_case())
 

@@ -99,7 +99,9 @@ def _short_text(value: Any, *, limit: int = 72) -> str:
 DETAIL_WRAP_WIDTH = 56
 DETAIL_WRAP_MAX_LINES = 4
 DETAIL_FIELD_WIDTH = 30
-DETAIL_TABLE_GUTTER_WIDTH = 6
+DETAIL_FIELD_MIN_WIDTH = 12
+DETAIL_FIELD_MAX_WIDTH = 32
+DETAIL_TABLE_GUTTER_WIDTH = 10
 
 
 def _wrapped_detail_rows(
@@ -127,15 +129,58 @@ def _wrapped_detail_rows(
     return rendered
 
 
-def _detail_value_wrap_width(table: DataTable, *, default: int = DETAIL_WRAP_WIDTH) -> int:
-    try:
-        visible_width = int(getattr(getattr(table, "size", None), "width", 0) or 0)
-    except Exception:
-        visible_width = 0
+def _detail_visible_width(table: DataTable) -> int:
+    widths: list[int] = []
+    for attr in ("scrollable_content_region", "content_region", "region", "size"):
+        try:
+            width = int(getattr(getattr(table, attr, None), "width", 0) or 0)
+        except Exception:
+            width = 0
+        if width > 0:
+            widths.append(width)
+    return min(widths) if widths else 0
+
+
+def _detail_column_widths(
+    table: DataTable,
+    rows: List[tuple[str, str]] | None = None,
+    *,
+    default: int = DETAIL_WRAP_WIDTH,
+) -> tuple[int, int]:
+    visible_width = _detail_visible_width(table)
     if visible_width <= 0:
-        return default
-    available = visible_width - DETAIL_FIELD_WIDTH - DETAIL_TABLE_GUTTER_WIDTH
-    return max(1, min(default, available))
+        return DETAIL_FIELD_WIDTH, default
+    field_labels = [str(field or "") for field, _ in rows or [] if field]
+    max_field_width = max([DETAIL_FIELD_WIDTH, *(len(label) for label in field_labels)])
+    field_width = min(max_field_width, DETAIL_FIELD_MAX_WIDTH, max(DETAIL_FIELD_MIN_WIDTH, visible_width // 2))
+    field_width = max(DETAIL_FIELD_MIN_WIDTH, field_width)
+    available = visible_width - field_width - DETAIL_TABLE_GUTTER_WIDTH
+    return field_width, max(1, min(default, available))
+
+
+def _detail_value_wrap_width(
+    table: DataTable,
+    rows: List[tuple[str, str]] | None = None,
+    *,
+    default: int = DETAIL_WRAP_WIDTH,
+) -> int:
+    return _detail_column_widths(table, rows, default=default)[1]
+
+
+def _configure_detail_table_columns(table: DataTable, rows: List[tuple[str, str]]) -> int:
+    field_width, value_width = _detail_column_widths(table, rows)
+    for key, width in (("field", field_width), ("value", value_width)):
+        column = table.columns.get(key)
+        if column is None:
+            continue
+        column.width = width
+        column.content_width = width
+        column.auto_width = False
+    try:
+        table._require_update_dimensions = True
+    except Exception:
+        pass
+    return value_width
 
 
 def _format_risk_score(value: Any) -> str:
@@ -3852,16 +3897,18 @@ class FindingDetailsTable(DataTable):
         return False
 
     def on_mount(self) -> None:
-        self.add_column("Field")
-        self.add_column("Value")
+        self.add_column("Field", width=DETAIL_FIELD_WIDTH, key="field")
+        self.add_column("Value", width=DETAIL_WRAP_WIDTH, key="value")
         self.update_details(None)
 
     def update_details(self, finding: Dict[str, str] | None) -> None:
         selection = _capture_table_selection(self)
+        rows = _finding_detail_rows(finding)
+        value_width = _configure_detail_table_columns(self, rows)
         self.clear()
         for field, value, key in _wrapped_detail_rows(
-            _finding_detail_rows(finding),
-            width=_detail_value_wrap_width(self),
+            rows,
+            width=value_width,
         ):
             self.add_row(field, value, key=key)
         _restore_table_selection(self, selection, preserve_scroll=True, after_refresh=True)
@@ -4522,16 +4569,18 @@ class AIDetailsTable(DataTable):
         return False
 
     def on_mount(self) -> None:
-        self.add_column("Field")
-        self.add_column("Value")
+        self.add_column("Field", width=DETAIL_FIELD_WIDTH, key="field")
+        self.add_column("Value", width=DETAIL_WRAP_WIDTH, key="value")
         self.update_details(None)
 
     def update_details(self, ai_row: Dict[str, str] | None) -> None:
         selection = _capture_table_selection(self)
+        rows = _ai_detail_rows(ai_row)
+        value_width = _configure_detail_table_columns(self, rows)
         self.clear()
         for field, value, key in _wrapped_detail_rows(
-            _ai_detail_rows(ai_row),
-            width=_detail_value_wrap_width(self),
+            rows,
+            width=value_width,
         ):
             self.add_row(field, value, key=key)
         _restore_table_selection(self, selection, preserve_scroll=True, after_refresh=True)
