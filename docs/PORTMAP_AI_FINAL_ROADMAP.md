@@ -397,6 +397,10 @@ Implementation note: Phase 173.3 adds deterministic metadata-only cluster analys
 
 Implementation note: Phase 173.4 adds deterministic metadata-only temporal evolution summaries to existing behavior graph clusters, deriving cluster first seen, last seen, age, trend, evolution score, new and lost relationships, new and lost signals, evolution summary, and trend summary from existing timestamps, graph relationships, risk signals, learning profile history, drift, confidence change, and cluster metadata. Primary cluster evolution fields are exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add enforcement, blocking, remediation execution, packet capture, external connectivity, autonomous action, persistence redesign, machine learning, new collection, packet inspection, or payload analysis.
 
+#### 173.5 - Graph-Based Behavioral Insight Summaries (Completed)
+
+Implementation note: Phase 173.5 adds deterministic metadata-only graph insight summaries from existing behavior graph nodes, edges, inferred relationships, clusters, cluster analysis, temporal evolution, risk metadata, and learning profile metadata. Outputs include advisory insight counts, strongest insight identifiers, insight type and score summaries, operator-facing insight summaries, and read-only next-step guidance exposed through existing AI and Risk detail surfaces without layout changes. This remains advisory only and does not add enforcement, blocking, remediation execution, packet capture, external connectivity, autonomous action, new collectors, packet inspection, or payload analysis.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

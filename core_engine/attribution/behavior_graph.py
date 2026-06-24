@@ -42,6 +42,14 @@ GRAPH_CLUSTER_TYPES = {
     "profile_cluster",
     "risk_signal_cluster",
 }
+GRAPH_INSIGHT_TYPES = {
+    "emerging_risk_cluster",
+    "repeated_risk_signal",
+    "unstable_identity",
+    "ambiguous_application_cluster",
+    "high_relationship_density",
+    "low_confidence_high_risk",
+}
 
 
 def build_behavior_graph_model(
@@ -188,7 +196,8 @@ def _graph_record(
 ) -> dict[str, Any]:
     relationship_rows = relationships or []
     cluster_rows = clusters or []
-    summary = _graph_summary(nodes, edges, relationship_rows, cluster_rows, related)
+    insight_rows = _build_graph_insights(nodes, edges, relationship_rows, cluster_rows)
+    summary = _graph_summary(nodes, edges, relationship_rows, cluster_rows, insight_rows, related)
     return {
         "record_type": "graph_behavior_model",
         "record_version": BEHAVIOR_GRAPH_RECORD_VERSION,
@@ -201,6 +210,7 @@ def _graph_record(
                     for row in relationship_rows
                 ],
                 "clusters": [(row.get("cluster_type"), row.get("cluster_id")) for row in cluster_rows],
+                "insights": [(row.get("insight_type"), row.get("insight_id")) for row in insight_rows],
             }
         )[:16],
         "generated_at": timestamp,
@@ -208,6 +218,7 @@ def _graph_record(
         "edges": edges,
         "relationships": relationship_rows,
         "clusters": cluster_rows,
+        "insights": insight_rows,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -225,6 +236,7 @@ def _graph_summary(
     edges: list[dict[str, Any]],
     relationships: list[dict[str, Any]],
     clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -235,6 +247,7 @@ def _graph_summary(
     strongest = _strongest_relationship(relationships)
     strongest_cluster = _strongest_cluster(clusters)
     primary = _primary_cluster(clusters)
+    strongest_insight = _strongest_graph_insight(insights)
     return {
         "node_count": len(nodes),
         "edge_count": len(edges),
@@ -266,6 +279,12 @@ def _graph_summary(
         "primary_cluster_lost_signals": primary.get("lost_signals", "-"),
         "primary_cluster_evolution_summary": primary.get("evolution_summary", "-"),
         "primary_cluster_trend_summary": primary.get("trend_summary", "-"),
+        "graph_insight_count": len(insights),
+        "strongest_graph_insight": strongest_insight.get("insight_id", "-"),
+        "strongest_graph_insight_type": strongest_insight.get("insight_type", "-"),
+        "strongest_graph_insight_score": strongest_insight.get("insight_score", "-"),
+        "graph_insight_summary": _graph_insight_summary(insights),
+        "graph_operator_next_steps": _graph_operator_next_steps(strongest_insight),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -916,6 +935,297 @@ def _cluster_trend_summary(
         f"trend:{trend}; age:{age}; evolution:{evolution_score:.2f}; "
         f"relationships:{current_relationships}; signals:{current_signals}"
     )
+
+
+def _build_graph_insights(
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    insights: dict[str, dict[str, Any]] = {}
+    for cluster in clusters:
+        _maybe_add_graph_insight(
+            insights,
+            _emerging_risk_cluster_insight(cluster),
+        )
+        _maybe_add_graph_insight(
+            insights,
+            _repeated_risk_signal_insight(cluster),
+        )
+        _maybe_add_graph_insight(
+            insights,
+            _unstable_identity_insight(cluster),
+        )
+        _maybe_add_graph_insight(
+            insights,
+            _ambiguous_application_cluster_insight(cluster),
+        )
+        _maybe_add_graph_insight(
+            insights,
+            _low_confidence_high_risk_insight(cluster),
+        )
+    _maybe_add_graph_insight(
+        insights,
+        _high_relationship_density_insight(nodes, edges, relationships, clusters),
+    )
+    return sorted(
+        insights.values(),
+        key=lambda row: (-float(row.get("insight_score") or 0.0), str(row.get("insight_type") or ""), str(row.get("insight_id") or "")),
+    )
+
+
+def _maybe_add_graph_insight(insights: dict[str, dict[str, Any]], insight: dict[str, Any] | None) -> None:
+    if not insight:
+        return
+    insights.setdefault(str(insight.get("insight_id")), insight)
+
+
+def _emerging_risk_cluster_insight(cluster: dict[str, Any]) -> dict[str, Any] | None:
+    risk = _safe_text(cluster.get("cluster_risk_level"))
+    trend = _safe_text(cluster.get("cluster_trend"))
+    if risk not in {"high", "critical"} or trend not in {"emerging", "growing"}:
+        return None
+    score = _bounded_score(
+        0.42
+        + (_risk_rank(risk) * 0.14)
+        + (float(cluster.get("cluster_evolution_score") or 0.0) * 0.22)
+        + (float(cluster.get("cluster_confidence") or 0.0) * 0.12)
+    )
+    return _graph_insight(
+        "emerging_risk_cluster",
+        score,
+        cluster,
+        [
+            f"risk:{risk}",
+            f"trend:{trend}",
+            f"evolution:{float(cluster.get('cluster_evolution_score') or 0.0):.2f}",
+            f"relationships:{int(cluster.get('relationship_count') or 0)}",
+        ],
+        summary=f"{risk} {trend} cluster with active relationship or signal change",
+    )
+
+
+def _repeated_risk_signal_insight(cluster: dict[str, Any]) -> dict[str, Any] | None:
+    if _safe_text(cluster.get("cluster_type")) != "risk_signal_cluster":
+        return None
+    relationship_count = int(cluster.get("relationship_count") or 0)
+    if relationship_count <= 0:
+        return None
+    score = _bounded_score(
+        0.35
+        + min(relationship_count, 6) * 0.07
+        + (_risk_rank(cluster.get("cluster_risk_level")) * 0.10)
+        + (float(cluster.get("cluster_confidence") or 0.0) * 0.15)
+    )
+    return _graph_insight(
+        "repeated_risk_signal",
+        score,
+        cluster,
+        [
+            f"risk:{_safe_text(cluster.get('cluster_risk_level'))}",
+            f"relationships:{relationship_count}",
+            f"signals:{int(cluster.get('new_signals') or 0)}",
+        ],
+        summary="Risk signal relationships recur within the behavior graph",
+    )
+
+
+def _unstable_identity_insight(cluster: dict[str, Any]) -> dict[str, Any] | None:
+    stability = _safe_text(cluster.get("cluster_stability"))
+    drift = _safe_text(cluster.get("cluster_drift"))
+    if stability != "unstable" and drift not in {"medium", "high"}:
+        return None
+    score = _bounded_score(
+        0.38
+        + (0.18 if stability == "unstable" else 0.0)
+        + (_drift_rank(drift) * 0.13)
+        + (float(cluster.get("cluster_evolution_score") or 0.0) * 0.12)
+    )
+    return _graph_insight(
+        "unstable_identity",
+        score,
+        cluster,
+        [
+            f"stability:{stability}",
+            f"drift:{drift}",
+            f"confidence:{float(cluster.get('cluster_confidence') or 0.0):.2f}",
+        ],
+        summary="Cluster identity is unstable or drifting across observations",
+    )
+
+
+def _ambiguous_application_cluster_insight(cluster: dict[str, Any]) -> dict[str, Any] | None:
+    if _safe_text(cluster.get("cluster_type")) != "application_cluster":
+        return None
+    member_count = int(cluster.get("member_count") or 0)
+    confidence = float(cluster.get("cluster_confidence") or 0.0)
+    relationship_count = int(cluster.get("relationship_count") or 0)
+    if member_count < 2 and not (relationship_count >= 1 and confidence < 0.70):
+        return None
+    score = _bounded_score(0.32 + min(member_count, 5) * 0.08 + max(0.0, 0.70 - confidence) * 0.25)
+    return _graph_insight(
+        "ambiguous_application_cluster",
+        score,
+        cluster,
+        [
+            f"members:{member_count}",
+            f"confidence:{confidence:.2f}",
+            f"relationships:{relationship_count}",
+        ],
+        summary="Multiple application candidates remain plausible for this cluster",
+    )
+
+
+def _high_relationship_density_insight(
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    entity_count = max(_related_entity_count(relationships), len(nodes), 1)
+    relationship_count = len(relationships)
+    density = relationship_count / entity_count
+    if relationship_count < 4 or density < 0.75:
+        return None
+    primary = _primary_cluster(clusters)
+    score = _bounded_score(0.30 + min(density, 2.0) * 0.22 + min(len(edges), 8) * 0.025)
+    return _graph_insight(
+        "high_relationship_density",
+        score,
+        primary,
+        [
+            f"relationships:{relationship_count}",
+            f"entities:{entity_count}",
+            f"density:{density:.2f}",
+            f"edges:{len(edges)}",
+        ],
+        summary="Graph entities have dense relationship support",
+    )
+
+
+def _low_confidence_high_risk_insight(cluster: dict[str, Any]) -> dict[str, Any] | None:
+    risk = _safe_text(cluster.get("cluster_risk_level"))
+    confidence = float(cluster.get("cluster_confidence") or 0.0)
+    if risk not in {"high", "critical"} or confidence > 0.55:
+        return None
+    score = _bounded_score(0.40 + (_risk_rank(risk) * 0.13) + ((0.55 - confidence) * 0.30))
+    return _graph_insight(
+        "low_confidence_high_risk",
+        score,
+        cluster,
+        [
+            f"risk:{risk}",
+            f"confidence:{confidence:.2f}",
+            f"reason:{_safe_text(cluster.get('primary_reason'))}",
+        ],
+        summary="Risk is elevated while graph confidence remains limited",
+    )
+
+
+def _graph_insight(
+    insight_type: str,
+    score: float,
+    cluster: dict[str, Any],
+    evidence: Iterable[Any],
+    *,
+    summary: str,
+) -> dict[str, Any]:
+    safe_type = insight_type if insight_type in GRAPH_INSIGHT_TYPES else "high_relationship_density"
+    evidence_summary = _unique_text(evidence, limit=8)
+    cluster_id = _safe_text(cluster.get("cluster_id") if isinstance(cluster, dict) else None)
+    insight_id = "graph-insight-" + _digest(
+        {
+            "insight_type": safe_type,
+            "cluster_id": cluster_id,
+            "evidence": evidence_summary,
+        }
+    )[:16]
+    return {
+        "insight_id": insight_id,
+        "insight_type": safe_type,
+        "insight_score": round(min(max(score, 0.0), 1.0), 2),
+        "related_cluster": cluster_id,
+        "related_cluster_type": _safe_text(cluster.get("cluster_type") if isinstance(cluster, dict) else None),
+        "evidence_count": len(evidence_summary),
+        "evidence_summary": evidence_summary,
+        "summary": _safe_text(summary, limit=160),
+        "operator_next_steps": _insight_next_steps(safe_type),
+        "advisory_only": True,
+        "metadata_only": True,
+        "read_only": True,
+    }
+
+
+def _insight_next_steps(insight_type: str) -> str:
+    if insight_type == "emerging_risk_cluster":
+        return "Review the related cluster, recent signals, and expected service behavior."
+    if insight_type == "repeated_risk_signal":
+        return "Compare recurring signals against allowlists and historical observations."
+    if insight_type == "unstable_identity":
+        return "Review profile stability, drift, and identity evidence before trusting attribution."
+    if insight_type == "ambiguous_application_cluster":
+        return "Check process, service, and fingerprint evidence for competing application candidates."
+    if insight_type == "low_confidence_high_risk":
+        return "Gather more metadata before acting on elevated risk context."
+    return "Review dense graph relationships and confirm expected dependencies."
+
+
+def _strongest_graph_insight(insights: list[dict[str, Any]]) -> dict[str, Any]:
+    if not insights:
+        return {}
+    return sorted(
+        insights,
+        key=lambda row: (
+            -float(row.get("insight_score") or 0.0),
+            str(row.get("insight_type") or ""),
+            str(row.get("insight_id") or ""),
+        ),
+    )[0]
+
+
+def _graph_insight_summary(insights: list[dict[str, Any]]) -> str:
+    if not insights:
+        return "-"
+    rows = [
+        f"{_safe_text(row.get('insight_type'))}:{float(row.get('insight_score') or 0.0):.2f}"
+        for row in _top_graph_insights(insights)
+    ]
+    return "; ".join(rows)
+
+
+def _graph_operator_next_steps(strongest_insight: dict[str, Any]) -> str:
+    return _safe_text(strongest_insight.get("operator_next_steps") if strongest_insight else None, limit=160)
+
+
+def _top_graph_insights(insights: list[dict[str, Any]], *, limit: int = 3) -> list[dict[str, Any]]:
+    rows = sorted(
+        insights,
+        key=lambda row: (-float(row.get("insight_score") or 0.0), str(row.get("insight_type") or "")),
+    )
+    selected: list[dict[str, Any]] = []
+    seen_types: set[str] = set()
+    for row in rows:
+        insight_type = _safe_text(row.get("insight_type"))
+        if insight_type in seen_types:
+            continue
+        selected.append(row)
+        seen_types.add(insight_type)
+        if len(selected) >= limit:
+            break
+    return selected
+
+
+def _risk_rank(value: Any) -> int:
+    return {"low": 0, "medium": 1, "high": 2, "critical": 3}.get(_safe_text(value), 0)
+
+
+def _drift_rank(value: Any) -> int:
+    return {"none": 0, "low": 1, "medium": 2, "high": 3}.get(_safe_text(value), 0)
+
+
+def _bounded_score(value: float) -> float:
+    return round(min(max(float(value), 0.0), 1.0), 2)
 
 
 def _cluster_analysis_confidence(

@@ -1057,6 +1057,12 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Primary Cluster Lost Signals"] != "-"
     assert details["Primary Cluster Evolution Summary"] != "-"
     assert details["Primary Cluster Trend Summary"] != "-"
+    assert details["Graph Insight Count"] != "-"
+    assert details["Strongest Graph Insight"].startswith("graph-insight-")
+    assert details["Strongest Graph Insight Type"] != "-"
+    assert details["Strongest Graph Insight Score"] != "-"
+    assert details["Graph Insight Summary"] != "-"
+    assert details["Graph Operator Next Steps"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1248,6 +1254,8 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "primary_cluster_reason": "critical_risk_from_profile_drift:" + ("cluster-analysis-token" * 5),
         "primary_cluster_evolution_summary": "application_cluster:growing;" + ("relationship-signal-delta-token" * 4),
         "primary_cluster_trend_summary": "trend:growing;" + ("temporal-evolution-token" * 5),
+        "graph_insight_summary": "emerging_risk_cluster:1.00;" + ("insight-summary-token" * 5),
+        "graph_operator_next_steps": "Review related cluster recent signals expected behavior " + ("operator-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1279,6 +1287,8 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Primary Cluster Reason" for row in rendered)
             assert any(row[0] == "Primary Cluster Evolution Summary" for row in rendered)
             assert any(row[0] == "Primary Cluster Trend Summary" for row in rendered)
+            assert any(row[0] == "Graph Insight Summary" for row in rendered)
+            assert any(row[0] == "Graph Operator Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -1857,6 +1867,12 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Primary Cluster Lost Signals"] != "-"
     assert details["Primary Cluster Evolution Summary"] != "-"
     assert details["Primary Cluster Trend Summary"] != "-"
+    assert details["Graph Insight Count"] != "-"
+    assert details["Strongest Graph Insight"].startswith("graph-insight-")
+    assert details["Strongest Graph Insight Type"] != "-"
+    assert details["Strongest Graph Insight Score"] != "-"
+    assert details["Graph Insight Summary"] != "-"
+    assert details["Graph Operator Next Steps"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -2027,6 +2043,8 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "primary_cluster_reason": "high_risk_from_service_score:" + ("cluster-analysis-token" * 5),
         "primary_cluster_evolution_summary": "profile_cluster:shrinking;" + ("relationship-signal-delta-token" * 4),
         "primary_cluster_trend_summary": "trend:shrinking;" + ("temporal-evolution-token" * 5),
+        "graph_insight_summary": "low_confidence_high_risk:0.82;" + ("insight-summary-token" * 5),
+        "graph_operator_next_steps": "Gather more metadata before acting on elevated risk context " + ("operator-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2058,6 +2076,8 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Primary Cluster Reason" for row in rendered)
             assert any(row[0] == "Primary Cluster Evolution Summary" for row in rendered)
             assert any(row[0] == "Primary Cluster Trend Summary" for row in rendered)
+            assert any(row[0] == "Graph Insight Summary" for row in rendered)
+            assert any(row[0] == "Graph Operator Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 

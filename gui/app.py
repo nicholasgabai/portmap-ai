@@ -1331,6 +1331,22 @@ def _active_risk_finding_rows(
                 "primary_cluster_trend_summary": _behavior_graph_text_field(
                     classification, "primary_cluster_trend_summary", limit=96
                 ),
+                "graph_insight_count": _behavior_graph_text_field(classification, "graph_insight_count", limit=12),
+                "strongest_graph_insight": _behavior_graph_text_field(
+                    classification, "strongest_graph_insight", limit=40
+                ),
+                "strongest_graph_insight_type": _behavior_graph_text_field(
+                    classification, "strongest_graph_insight_type", limit=40
+                ),
+                "strongest_graph_insight_score": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("strongest_graph_insight_score")
+                ),
+                "graph_insight_summary": _behavior_graph_text_field(
+                    classification, "graph_insight_summary", limit=96
+                ),
+                "graph_operator_next_steps": _behavior_graph_text_field(
+                    classification, "graph_operator_next_steps", limit=96
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1430,6 +1446,12 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Primary Cluster Lost Signals", row.get("primary_cluster_lost_signals", "-")),
         ("Primary Cluster Evolution Summary", row.get("primary_cluster_evolution_summary", "-")),
         ("Primary Cluster Trend Summary", row.get("primary_cluster_trend_summary", "-")),
+        ("Graph Insight Count", row.get("graph_insight_count", "-")),
+        ("Strongest Graph Insight", row.get("strongest_graph_insight", "-")),
+        ("Strongest Graph Insight Type", row.get("strongest_graph_insight_type", "-")),
+        ("Strongest Graph Insight Score", row.get("strongest_graph_insight_score", "-")),
+        ("Graph Insight Summary", row.get("graph_insight_summary", "-")),
+        ("Graph Operator Next Steps", row.get("graph_operator_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -2862,6 +2884,12 @@ def _ai_provider_model_rows(
                 "primary_cluster_lost_signals": "-",
                 "primary_cluster_evolution_summary": "-",
                 "primary_cluster_trend_summary": "-",
+                "graph_insight_count": "-",
+                "strongest_graph_insight": "-",
+                "strongest_graph_insight_type": "-",
+                "strongest_graph_insight_score": "-",
+                "graph_insight_summary": "-",
+                "graph_operator_next_steps": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -2984,6 +3012,22 @@ def _ai_provider_model_rows(
             row["primary_cluster_trend_summary"] = _behavior_graph_text_field(
                 model_record, "primary_cluster_trend_summary", limit=96
             )
+            row["graph_insight_count"] = _behavior_graph_text_field(model_record, "graph_insight_count", limit=12)
+            row["strongest_graph_insight"] = _behavior_graph_text_field(
+                model_record, "strongest_graph_insight", limit=40
+            )
+            row["strongest_graph_insight_type"] = _behavior_graph_text_field(
+                model_record, "strongest_graph_insight_type", limit=40
+            )
+            row["strongest_graph_insight_score"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("strongest_graph_insight_score")
+            )
+            row["graph_insight_summary"] = _behavior_graph_text_field(
+                model_record, "graph_insight_summary", limit=96
+            )
+            row["graph_operator_next_steps"] = _behavior_graph_text_field(
+                model_record, "graph_operator_next_steps", limit=96
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -3065,6 +3109,12 @@ def _ai_provider_model_rows(
             "primary_cluster_lost_signals": row["primary_cluster_lost_signals"],
             "primary_cluster_evolution_summary": row["primary_cluster_evolution_summary"],
             "primary_cluster_trend_summary": row["primary_cluster_trend_summary"],
+            "graph_insight_count": row["graph_insight_count"],
+            "strongest_graph_insight": row["strongest_graph_insight"],
+            "strongest_graph_insight_type": row["strongest_graph_insight_type"],
+            "strongest_graph_insight_score": row["strongest_graph_insight_score"],
+            "graph_insight_summary": row["graph_insight_summary"],
+            "graph_operator_next_steps": row["graph_operator_next_steps"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3160,6 +3210,12 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Primary Cluster Lost Signals", row.get("primary_cluster_lost_signals", "-")),
         ("Primary Cluster Evolution Summary", row.get("primary_cluster_evolution_summary", "-")),
         ("Primary Cluster Trend Summary", row.get("primary_cluster_trend_summary", "-")),
+        ("Graph Insight Count", row.get("graph_insight_count", "-")),
+        ("Strongest Graph Insight", row.get("strongest_graph_insight", "-")),
+        ("Strongest Graph Insight Type", row.get("strongest_graph_insight_type", "-")),
+        ("Strongest Graph Insight Score", row.get("strongest_graph_insight_score", "-")),
+        ("Graph Insight Summary", row.get("graph_insight_summary", "-")),
+        ("Graph Operator Next Steps", row.get("graph_operator_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),

@@ -1318,6 +1318,13 @@ def test_behavior_graph_empty_input_is_safe_and_empty():
     assert graph["summary"]["primary_cluster_lost_signals"] == "-"
     assert graph["summary"]["primary_cluster_evolution_summary"] == "-"
     assert graph["summary"]["primary_cluster_trend_summary"] == "-"
+    assert graph["summary"]["graph_insight_count"] == 0
+    assert graph["summary"]["strongest_graph_insight"] == "-"
+    assert graph["summary"]["strongest_graph_insight_type"] == "-"
+    assert graph["summary"]["strongest_graph_insight_score"] == "-"
+    assert graph["summary"]["graph_insight_summary"] == "-"
+    assert graph["summary"]["graph_operator_next_steps"] == "-"
+    assert graph["insights"] == []
     assert graph["summary"]["related_asset"] == "-"
     assert graph["summary"]["related_service"] == "-"
     assert graph["summary"]["related_profile"] == "-"
@@ -1401,6 +1408,13 @@ def test_behavior_graph_infers_relationships_from_existing_metadata():
     assert 0.0 <= graph["summary"]["primary_cluster_evolution_score"] <= 1.0
     assert graph["summary"]["primary_cluster_evolution_summary"] != "-"
     assert graph["summary"]["primary_cluster_trend_summary"] != "-"
+    assert graph["summary"]["graph_insight_count"] == len(graph["insights"])
+    assert graph["summary"]["graph_insight_count"] > 0
+    assert graph["summary"]["strongest_graph_insight"].startswith("graph-insight-")
+    assert graph["summary"]["strongest_graph_insight_type"] != "-"
+    assert 0.0 <= graph["summary"]["strongest_graph_insight_score"] <= 1.0
+    assert graph["summary"]["graph_insight_summary"] != "-"
+    assert graph["summary"]["graph_operator_next_steps"] != "-"
 
 
 def test_behavior_graph_relationship_ids_are_stable():
@@ -1772,6 +1786,144 @@ def test_behavior_graph_cluster_evolution_primary_summary_selects_primary_cluste
     assert graph["summary"]["primary_cluster_lost_signals"] == primary["lost_signals"]
     assert graph["summary"]["primary_cluster_evolution_summary"] == primary["evolution_summary"]
     assert graph["summary"]["primary_cluster_trend_summary"] == primary["trend_summary"]
+
+
+def test_behavior_graph_insights_are_generated_ranked_and_deterministic():
+    observation = {
+        "node_id": "asset-a",
+        "service_name": "frontend",
+        "protocol": "tcp",
+        "port": 443,
+        "flow_id": "flow-1",
+        "score": 0.92,
+        "score_factors": ["s1", "s2", "s3", "s4"],
+        "previous_relationship_count": 0,
+        "previous_signal_count": 0,
+        "previous_entity_count": 0,
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-02T00:00:00+00:00",
+        "source_mode": "live",
+    }
+    classifier = {
+        "top_classification": "nginx",
+        "confidence": 0.42,
+        "candidates": [
+            {"candidate": "nginx", "probability": 0.42},
+            {"candidate": "apache", "probability": 0.35},
+            {"candidate": "caddy", "probability": 0.23},
+        ],
+    }
+    history = {"historical_summary": {"stability_score": 0.20, "drift_score": 0.72, "historical_observations": 4}}
+
+    first = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at="2026-01-02T00:00:00+00:00",
+    )
+    second = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at="2026-01-02T00:00:00+00:00",
+    )
+    strongest = sorted(
+        first["insights"],
+        key=lambda row: (-float(row["insight_score"]), row["insight_type"], row["insight_id"]),
+    )[0]
+
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+    assert [row["insight_id"] for row in first["insights"]] == [row["insight_id"] for row in second["insights"]]
+    assert first["summary"]["graph_insight_count"] == len(first["insights"])
+    assert first["summary"]["strongest_graph_insight"] == strongest["insight_id"]
+    assert first["summary"]["strongest_graph_insight_score"] == strongest["insight_score"]
+    assert first["summary"]["strongest_graph_insight_type"] == strongest["insight_type"]
+    assert first["summary"]["graph_insight_summary"] != "-"
+    assert first["summary"]["graph_operator_next_steps"] == strongest["operator_next_steps"]
+    assert all(row["insight_id"].startswith("graph-insight-") for row in first["insights"])
+    assert all(0.0 <= row["insight_score"] <= 1.0 for row in first["insights"])
+    assert all(row["advisory_only"] is True and row["read_only"] is True for row in first["insights"])
+
+
+def test_behavior_graph_insights_cover_high_risk_repeated_and_dense_relationships():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "frontend",
+            "related_services": ["backend"],
+            "protocol": "tcp",
+            "port": 443,
+            "flow_id": "flow-1",
+            "score": 0.94,
+            "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+            "previous_relationship_count": 0,
+            "previous_signal_count": 0,
+            "previous_entity_count": 0,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.62},
+        learning_profile_history={"historical_summary": {"stability_score": 0.25, "drift_score": 0.65}},
+        generated_at="2026-01-02T00:00:00+00:00",
+    )
+    insight_types = {row["insight_type"] for row in graph["insights"]}
+
+    assert "emerging_risk_cluster" in insight_types
+    assert "repeated_risk_signal" in insight_types
+    assert "high_relationship_density" in insight_types
+    assert graph["summary"]["graph_insight_count"] >= 3
+    assert "emerging_risk_cluster" in graph["summary"]["graph_insight_summary"]
+
+
+def test_behavior_graph_insights_cover_ambiguous_application_clusters():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "web",
+            "protocol": "tcp",
+            "port": 443,
+            "flow_id": "flow-1",
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "nginx",
+            "confidence": 0.44,
+            "candidates": [
+                {"candidate": "nginx", "probability": 0.44},
+                {"candidate": "apache", "probability": 0.36},
+                {"candidate": "caddy", "probability": 0.20},
+            ],
+        },
+        generated_at=FIXED_TIME,
+    )
+    ambiguous = [row for row in graph["insights"] if row["insight_type"] == "ambiguous_application_cluster"]
+
+    assert ambiguous
+    assert ambiguous[0]["evidence_count"] >= 2
+    assert "Multiple application candidates" in ambiguous[0]["summary"]
+
+
+def test_behavior_graph_insights_cover_low_confidence_high_risk_clusters():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "unknown-admin",
+            "protocol": "tcp",
+            "port": 9443,
+            "score": 0.95,
+            "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "unknown_application", "confidence": 0.20},
+        learning_profile_history={"historical_summary": {"stability_score": 0.10, "drift_score": 0.82}},
+        generated_at=FIXED_TIME,
+    )
+    low_confidence = [row for row in graph["insights"] if row["insight_type"] == "low_confidence_high_risk"]
+
+    assert low_confidence
+    assert low_confidence[0]["insight_score"] > 0.50
+    assert "Gather more metadata" in low_confidence[0]["operator_next_steps"]
 
 
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
