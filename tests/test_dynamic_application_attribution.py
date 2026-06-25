@@ -2178,6 +2178,194 @@ def test_behavior_graph_behavioral_decision_explains_insufficient_context_and_so
     assert "Gather additional observations" in summary["behavioral_decision_next_steps"]
 
 
+def test_behavior_graph_investigation_recommendations_empty_input_has_no_rows():
+    graph = build_behavior_graph_model({}, generated_at=FIXED_TIME)
+    summary = graph["summary"]
+
+    assert graph["investigation_recommendations"] == []
+    assert summary["investigation_recommendation_count"] == 0
+    assert summary["top_investigation_recommendation"] == "-"
+    assert summary["top_investigation_priority"] == "-"
+    assert summary["top_investigation_category"] == "-"
+    assert summary["investigation_recommendation_summary"] == "-"
+    assert summary["investigation_operator_next_steps"] == "-"
+
+
+def test_behavior_graph_investigation_recommendations_are_stable_and_priority_sorted():
+    observation = {
+        "node_id": "asset-a",
+        "service_name": "admin",
+        "related_services": ["backend", "cache"],
+        "protocol": "tcp",
+        "port": 9443,
+        "score": 0.94,
+        "previous_risk_score": 0.40,
+        "risk_score_history": [0.40, 0.62, 0.94],
+        "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+        "previous_relationship_count": 0,
+        "previous_signal_count": 0,
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-02T00:00:00+00:00",
+        "count": 4,
+        "source_mode": "live",
+    }
+    classifier = {"top_classification": "nginx", "confidence": 0.76, "evidence_quality": "strong"}
+    history = {"historical_summary": {"stability_score": 0.40, "drift_score": 0.30}}
+
+    first = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+    second = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+    priority_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    priorities = [priority_rank[row["priority"]] for row in first["investigation_recommendations"]]
+
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+    assert [row["recommendation_id"] for row in first["investigation_recommendations"]] == [
+        row["recommendation_id"] for row in second["investigation_recommendations"]
+    ]
+    assert priorities == sorted(priorities)
+    assert all(row["recommendation_id"].startswith("investigation-rec-") for row in first["investigation_recommendations"])
+    assert all(row["advisory_only"] is True and row["read_only"] is True for row in first["investigation_recommendations"])
+    assert first["summary"]["top_investigation_priority"] == "critical"
+
+
+def test_behavior_graph_investigation_recommendations_cover_all_categories():
+    elevated = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "admin",
+            "related_services": ["backend", "cache"],
+            "protocol": "tcp",
+            "port": 9443,
+            "score": 0.94,
+            "previous_risk_score": 0.40,
+            "risk_score_history": [0.40, 0.62, 0.94],
+            "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+            "previous_relationship_count": 0,
+            "previous_signal_count": 0,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "count": 4,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.76, "evidence_quality": "strong"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.40, "drift_score": 0.30}},
+        generated_at=FIXED_TIME,
+    )
+    low_confidence = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "web",
+            "protocol": "tcp",
+            "port": 8080,
+            "score": 0.48,
+            "previous_risk_score": 0.45,
+            "risk_score_history": [0.45, 0.48],
+            "score_factors": ["risk-a"],
+            "count": 2,
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "unknown_application",
+            "confidence": 0.36,
+            "evidence_quality": "weak",
+            "missing_evidence": ["process_match", "service_fingerprint"],
+        },
+        learning_profile_history={"historical_summary": {"stability_score": 0.42, "drift_score": 0.18}},
+        generated_at=FIXED_TIME,
+    )
+    benign = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "ssh",
+            "protocol": "tcp",
+            "port": 22,
+            "score": 0.18,
+            "previous_risk_score": 0.20,
+            "risk_score_history": [0.20, 0.19, 0.18],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"},
+        learning_profile_history={
+            "historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}
+        },
+        generated_at=FIXED_TIME,
+    )
+    categories = {
+        row["category"]
+        for graph in (elevated, low_confidence, benign)
+        for row in graph["investigation_recommendations"]
+    }
+
+    assert {
+        "verify_service_identity",
+        "review_risk_cluster",
+        "inspect_graph_relationships",
+        "collect_additional_observations",
+        "validate_historical_change",
+        "review_missing_evidence",
+        "confirm_expected_behavior",
+    }.issubset(categories)
+    assert elevated["summary"]["top_investigation_priority"] in {"critical", "high"}
+    assert {"verify_service_identity", "collect_additional_observations"}.issubset(
+        {row["category"] for row in low_confidence["investigation_recommendations"]}
+    )
+    assert "validate_historical_change" in {row["category"] for row in elevated["investigation_recommendations"]}
+    assert "review_missing_evidence" in {row["category"] for row in low_confidence["investigation_recommendations"]}
+
+
+def test_behavior_graph_investigation_recommendation_rows_include_required_metadata():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "web",
+            "protocol": "tcp",
+            "port": 8080,
+            "score": 0.48,
+            "previous_risk_score": 0.45,
+            "risk_score_history": [0.45, 0.48],
+            "score_factors": ["risk-a"],
+            "count": 2,
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "unknown_application",
+            "confidence": 0.36,
+            "evidence_quality": "weak",
+            "missing_evidence": ["process_match", "service_fingerprint"],
+        },
+        learning_profile={"profile_id": "profile-web"},
+        generated_at=FIXED_TIME,
+    )
+    row = graph["investigation_recommendations"][0]
+
+    assert row["priority"] in {"critical", "high", "medium", "low"}
+    assert row["title"] != "-"
+    assert row["rationale"] != "-"
+    assert row["evidence"]
+    assert row["missing_evidence"]
+    assert row["suggested_operator_action"] != "-"
+    assert 0.0 <= row["expected_confidence_gain"] <= 1.0
+    assert row["blocking_conditions"]
+    assert row["related_asset"] == "asset-a"
+    assert row["related_service"] == "web"
+    assert row["related_profile"] == "profile-web"
+    assert row["related_cluster"].startswith("graph-cluster-")
+    assert row["related_relationship"].startswith("graph-rel-")
+    assert graph["summary"]["investigation_recommendation_count"] == len(graph["investigation_recommendations"])
+    assert graph["summary"]["investigation_recommendation_summary"] != "-"
+    assert graph["summary"]["investigation_operator_next_steps"] != "-"
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {

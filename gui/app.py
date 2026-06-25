@@ -1398,6 +1398,24 @@ def _active_risk_finding_rows(
                 "behavioral_decision_next_steps": _behavior_graph_text_field(
                     classification, "behavioral_decision_next_steps", limit=120
                 ),
+                "investigation_recommendation_count": _behavior_graph_text_field(
+                    classification, "investigation_recommendation_count", limit=12
+                ),
+                "top_investigation_recommendation": _behavior_graph_text_field(
+                    classification, "top_investigation_recommendation", limit=64
+                ),
+                "top_investigation_priority": _behavior_graph_text_field(
+                    classification, "top_investigation_priority", limit=16
+                ),
+                "top_investigation_category": _behavior_graph_text_field(
+                    classification, "top_investigation_category", limit=48
+                ),
+                "investigation_recommendation_summary": _behavior_graph_text_field(
+                    classification, "investigation_recommendation_summary", limit=140
+                ),
+                "investigation_operator_next_steps": _behavior_graph_text_field(
+                    classification, "investigation_operator_next_steps", limit=140
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1520,6 +1538,12 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Behavioral Decision Evidence", row.get("behavioral_decision_evidence", "-")),
         ("Behavioral Decision Limitations", row.get("behavioral_decision_limitations", "-")),
         ("Behavioral Decision Next Steps", row.get("behavioral_decision_next_steps", "-")),
+        ("Investigation Recommendation Count", row.get("investigation_recommendation_count", "-")),
+        ("Top Investigation Recommendation", row.get("top_investigation_recommendation", "-")),
+        ("Top Investigation Priority", row.get("top_investigation_priority", "-")),
+        ("Top Investigation Category", row.get("top_investigation_category", "-")),
+        ("Investigation Recommendation Summary", row.get("investigation_recommendation_summary", "-")),
+        ("Investigation Operator Next Steps", row.get("investigation_operator_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -2975,6 +2999,12 @@ def _ai_provider_model_rows(
                 "behavioral_decision_evidence": "-",
                 "behavioral_decision_limitations": "-",
                 "behavioral_decision_next_steps": "-",
+                "investigation_recommendation_count": "-",
+                "top_investigation_recommendation": "-",
+                "top_investigation_priority": "-",
+                "top_investigation_category": "-",
+                "investigation_recommendation_summary": "-",
+                "investigation_operator_next_steps": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -3164,6 +3194,24 @@ def _ai_provider_model_rows(
             row["behavioral_decision_next_steps"] = _behavior_graph_text_field(
                 model_record, "behavioral_decision_next_steps", limit=120
             )
+            row["investigation_recommendation_count"] = _behavior_graph_text_field(
+                model_record, "investigation_recommendation_count", limit=12
+            )
+            row["top_investigation_recommendation"] = _behavior_graph_text_field(
+                model_record, "top_investigation_recommendation", limit=64
+            )
+            row["top_investigation_priority"] = _behavior_graph_text_field(
+                model_record, "top_investigation_priority", limit=16
+            )
+            row["top_investigation_category"] = _behavior_graph_text_field(
+                model_record, "top_investigation_category", limit=48
+            )
+            row["investigation_recommendation_summary"] = _behavior_graph_text_field(
+                model_record, "investigation_recommendation_summary", limit=140
+            )
+            row["investigation_operator_next_steps"] = _behavior_graph_text_field(
+                model_record, "investigation_operator_next_steps", limit=140
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -3268,6 +3316,12 @@ def _ai_provider_model_rows(
             "behavioral_decision_evidence": row["behavioral_decision_evidence"],
             "behavioral_decision_limitations": row["behavioral_decision_limitations"],
             "behavioral_decision_next_steps": row["behavioral_decision_next_steps"],
+            "investigation_recommendation_count": row["investigation_recommendation_count"],
+            "top_investigation_recommendation": row["top_investigation_recommendation"],
+            "top_investigation_priority": row["top_investigation_priority"],
+            "top_investigation_category": row["top_investigation_category"],
+            "investigation_recommendation_summary": row["investigation_recommendation_summary"],
+            "investigation_operator_next_steps": row["investigation_operator_next_steps"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3386,6 +3440,12 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Behavioral Decision Evidence", row.get("behavioral_decision_evidence", "-")),
         ("Behavioral Decision Limitations", row.get("behavioral_decision_limitations", "-")),
         ("Behavioral Decision Next Steps", row.get("behavioral_decision_next_steps", "-")),
+        ("Investigation Recommendation Count", row.get("investigation_recommendation_count", "-")),
+        ("Top Investigation Recommendation", row.get("top_investigation_recommendation", "-")),
+        ("Top Investigation Priority", row.get("top_investigation_priority", "-")),
+        ("Top Investigation Category", row.get("top_investigation_category", "-")),
+        ("Investigation Recommendation Summary", row.get("investigation_recommendation_summary", "-")),
+        ("Investigation Operator Next Steps", row.get("investigation_operator_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),

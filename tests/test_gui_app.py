@@ -1089,6 +1089,12 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Behavioral Decision Evidence"] != "-"
     assert details["Behavioral Decision Limitations"] != "-"
     assert details["Behavioral Decision Next Steps"] != "-"
+    assert details["Investigation Recommendation Count"] != "-"
+    assert details["Top Investigation Recommendation"] != "-"
+    assert details["Top Investigation Priority"] in {"critical", "high", "medium", "low"}
+    assert details["Top Investigation Category"] != "-"
+    assert details["Investigation Recommendation Summary"] != "-"
+    assert details["Investigation Operator Next Steps"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1290,6 +1296,8 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "behavioral_decision_evidence": "primary_cluster:graph-cluster-token;" + ("behavior-evidence-token" * 5),
         "behavioral_decision_limitations": "limited_observation_history;" + ("behavior-limitation-token" * 5),
         "behavioral_decision_next_steps": "Review cluster risk graph insights and risk evolution " + ("behavior-next-step-token" * 5),
+        "investigation_recommendation_summary": "critical:review_risk_cluster:Review behavioral risk cluster;" + ("investigation-summary-token" * 5),
+        "investigation_operator_next_steps": "Inspect primary cluster graph insight and expected behavior " + ("investigation-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1331,6 +1339,8 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Behavioral Decision Evidence" for row in rendered)
             assert any(row[0] == "Behavioral Decision Limitations" for row in rendered)
             assert any(row[0] == "Behavioral Decision Next Steps" for row in rendered)
+            assert any(row[0] == "Investigation Recommendation Summary" for row in rendered)
+            assert any(row[0] == "Investigation Operator Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -1942,6 +1952,12 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Behavioral Decision Evidence"] != "-"
     assert details["Behavioral Decision Limitations"] != "-"
     assert details["Behavioral Decision Next Steps"] != "-"
+    assert details["Investigation Recommendation Count"] != "-"
+    assert details["Top Investigation Recommendation"] != "-"
+    assert details["Top Investigation Priority"] in {"critical", "high", "medium", "low"}
+    assert details["Top Investigation Category"] != "-"
+    assert details["Investigation Recommendation Summary"] != "-"
+    assert details["Investigation Operator Next Steps"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -2122,6 +2138,8 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "behavioral_decision_evidence": "strongest_graph_insight:low_confidence_high_risk;" + ("behavior-evidence-token" * 5),
         "behavioral_decision_limitations": "low_classification_confidence;" + ("behavior-limitation-token" * 5),
         "behavioral_decision_next_steps": "Inspect attribution evidence drift relationships and risk changes " + ("behavior-next-step-token" * 5),
+        "investigation_recommendation_summary": "high:validate_historical_change:Validate historical risk change;" + ("investigation-summary-token" * 5),
+        "investigation_operator_next_steps": "Compare risk delta change reasons and cluster trend " + ("investigation-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2163,6 +2181,8 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Behavioral Decision Evidence" for row in rendered)
             assert any(row[0] == "Behavioral Decision Limitations" for row in rendered)
             assert any(row[0] == "Behavioral Decision Next Steps" for row in rendered)
+            assert any(row[0] == "Investigation Recommendation Summary" for row in rendered)
+            assert any(row[0] == "Investigation Operator Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 

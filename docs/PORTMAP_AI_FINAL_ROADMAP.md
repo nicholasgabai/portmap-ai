@@ -409,6 +409,10 @@ Implementation note: Phase 173.6 adds deterministic metadata-only historical ris
 
 Implementation note: Phase 173.7 adds deterministic metadata-only behavioral decision explanations from existing attribution, confidence, alternatives, candidate reasoning, learning profile stability, profile drift, recommendations, graph relationships, clusters, primary cluster risk, temporal cluster evolution, graph insights, and historical risk evolution metadata. Outputs include advisory behavioral decision categories, confidence, summaries, sorted reasons, evidence, limitations, and operator next steps exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not alter risk scores, trigger remediation, enable enforcement, block traffic, perform packet capture or crafting, add external connectivity, introduce autonomous action, create new collectors, or inspect payloads.
 
+#### 173.8 - Operator Investigation Recommendations (Completed)
+
+Implementation note: Phase 173.8 adds deterministic metadata-only operator investigation recommendations from existing behavior graph relationships, cluster analysis, graph insights, historical risk evolution, and explainable behavioral decision metadata. Outputs include advisory recommendation IDs, priority, category, rationale, evidence, missing evidence, suggested operator actions, confidence-gain estimates, blocking conditions, related asset/service/profile/cluster/relationship/insight references, recommendation counts, top recommendation summaries, and operator next steps exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add packet capture, packet crafting, scanning changes, remediation execution, enforcement, blocking, scoring mutation, persistence changes, runtime behavior changes, external connectivity, new collectors, panes, tabs, tables, daemons, or autonomous action.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

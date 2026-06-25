@@ -50,6 +50,16 @@ GRAPH_INSIGHT_TYPES = {
     "high_relationship_density",
     "low_confidence_high_risk",
 }
+INVESTIGATION_RECOMMENDATION_CATEGORIES = {
+    "verify_service_identity",
+    "review_risk_cluster",
+    "inspect_graph_relationships",
+    "collect_additional_observations",
+    "validate_historical_change",
+    "review_missing_evidence",
+    "confirm_expected_behavior",
+}
+INVESTIGATION_RECOMMENDATION_PRIORITIES = {"critical", "high", "medium", "low"}
 
 
 def build_behavior_graph_model(
@@ -213,6 +223,15 @@ def _graph_record(
         risk_evolution,
         context=risk_context or {},
     )
+    investigation_recommendations = _build_investigation_recommendations(
+        relationship_rows,
+        cluster_rows,
+        insight_rows,
+        risk_evolution,
+        behavioral_decision,
+        context=risk_context or {},
+        related=related,
+    )
     summary = _graph_summary(
         nodes,
         edges,
@@ -221,6 +240,7 @@ def _graph_record(
         insight_rows,
         risk_evolution,
         behavioral_decision,
+        investigation_recommendations,
         related,
     )
     return {
@@ -247,6 +267,10 @@ def _graph_record(
                     "confidence": behavioral_decision.get("behavioral_decision_confidence"),
                     "reasons": behavioral_decision.get("behavioral_decision_reasons"),
                 },
+                "investigation_recommendations": [
+                    (row.get("category"), row.get("priority"), row.get("recommendation_id"))
+                    for row in investigation_recommendations
+                ],
             }
         )[:16],
         "generated_at": timestamp,
@@ -257,6 +281,7 @@ def _graph_record(
         "insights": insight_rows,
         "risk_evolution": risk_evolution,
         "behavioral_decision": behavioral_decision,
+        "investigation_recommendations": investigation_recommendations,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -277,6 +302,7 @@ def _graph_summary(
     insights: list[dict[str, Any]],
     risk_evolution: dict[str, Any],
     behavioral_decision: dict[str, Any],
+    investigation_recommendations: list[dict[str, Any]],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -288,6 +314,7 @@ def _graph_summary(
     strongest_cluster = _strongest_cluster(clusters)
     primary = _primary_cluster(clusters)
     strongest_insight = _strongest_graph_insight(insights)
+    top_investigation = _top_investigation_recommendation(investigation_recommendations)
     return {
         "node_count": len(nodes),
         "edge_count": len(edges),
@@ -344,6 +371,14 @@ def _graph_summary(
         "behavioral_decision_evidence": behavioral_decision.get("behavioral_decision_evidence", "-"),
         "behavioral_decision_limitations": behavioral_decision.get("behavioral_decision_limitations", "-"),
         "behavioral_decision_next_steps": behavioral_decision.get("behavioral_decision_next_steps", "-"),
+        "investigation_recommendation_count": len(investigation_recommendations),
+        "top_investigation_recommendation": top_investigation.get("title", "-"),
+        "top_investigation_priority": top_investigation.get("priority", "-"),
+        "top_investigation_category": top_investigation.get("category", "-"),
+        "investigation_recommendation_summary": _investigation_recommendation_summary(
+            investigation_recommendations
+        ),
+        "investigation_operator_next_steps": _investigation_operator_next_steps(top_investigation),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -731,6 +766,7 @@ def _cluster_context(
             or len(classification_model.get("candidates") or [])
             or len(classification_model.get("alternative_candidates") or [])
         ),
+        "missing_evidence": _classification_missing_evidence_values(classification_model),
         "has_profile_metadata": bool(learning_profile or learning_profile_history),
         "recommendation_count": _safe_int_value(
             history_summary.get("recommendation_count") or learning_profile_history.get("recommendation_count")
@@ -950,6 +986,362 @@ def _build_behavioral_decision_explanation(
         "metadata_only": True,
         "read_only": True,
     }
+
+
+def _build_investigation_recommendations(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    *,
+    context: dict[str, Any],
+    related: dict[str, str],
+) -> list[dict[str, Any]]:
+    if not relationships and not clusters and not insights and not _has_investigation_context(context):
+        return []
+    primary_cluster = _primary_cluster(clusters)
+    strongest_relationship = _strongest_relationship(relationships)
+    strongest_insight = _strongest_graph_insight(insights)
+    rows: list[dict[str, Any]] = []
+    candidate_confidence = float(context.get("candidate_confidence") or 0.0)
+    evidence_quality = _safe_text(context.get("evidence_quality")).lower()
+    missing_evidence = list(context.get("missing_evidence") or [])
+    observation_count = int(context.get("observation_count") or 0)
+    decision_category = _safe_text(behavioral_decision.get("behavioral_decision_category"))
+    cluster_risk = _safe_text(primary_cluster.get("cluster_risk_level"))
+    cluster_trend = _safe_text(primary_cluster.get("cluster_trend"))
+    insight_score = float(strongest_insight.get("insight_score") or 0.0)
+    risk_direction = _safe_text(risk_evolution.get("risk_evolution_direction"))
+
+    if candidate_confidence < 0.62 or int(context.get("candidate_count") or 0) > 1:
+        rows.append(
+            _investigation_recommendation(
+                "verify_service_identity",
+                _investigation_priority(
+                    base="medium",
+                    decision_category=decision_category,
+                    cluster_risk=cluster_risk,
+                    insight_score=insight_score,
+                    risk_direction=risk_direction,
+                    candidate_confidence=candidate_confidence,
+                ),
+                "Verify service identity",
+                "Attribution confidence or candidate ambiguity limits service identity certainty.",
+                [
+                    f"classification_confidence:{candidate_confidence:.2f}",
+                    f"candidate_count:{int(context.get('candidate_count') or 0)}",
+                    f"top_classification:{_safe_text(context.get('top_classification'))}",
+                ],
+                missing_evidence or ["process_or_service_confirmation"],
+                "Review process, service name, expected-service allowlist, and historical profile evidence.",
+                0.22,
+                ["no_process_or_service_confirmation"],
+                related=related,
+                primary_cluster=primary_cluster,
+                strongest_relationship=strongest_relationship,
+                strongest_insight=strongest_insight,
+            )
+        )
+    if cluster_risk in {"medium", "high", "critical"} or decision_category in {"investigate_behavior", "elevated_risk_behavior"}:
+        rows.append(
+            _investigation_recommendation(
+                "review_risk_cluster",
+                _investigation_priority(
+                    base="high" if cluster_risk in {"high", "critical"} else "medium",
+                    decision_category=decision_category,
+                    cluster_risk=cluster_risk,
+                    insight_score=insight_score,
+                    risk_direction=risk_direction,
+                    candidate_confidence=candidate_confidence,
+                ),
+                "Review behavioral risk cluster",
+                "Primary cluster risk or behavioral decision indicates operator review is warranted.",
+                [
+                    f"cluster_risk:{cluster_risk}",
+                    f"cluster_trend:{cluster_trend}",
+                    f"decision:{decision_category}",
+                ],
+                ["operator_cluster_review"],
+                "Inspect the primary cluster, risk reason, related graph insight, and expected behavior.",
+                0.18,
+                ["cluster_context_not_operator_verified"],
+                related=related,
+                primary_cluster=primary_cluster,
+                strongest_relationship=strongest_relationship,
+                strongest_insight=strongest_insight,
+            )
+        )
+    if relationships and (len(relationships) >= 3 or float(strongest_relationship.get("strength_score") or 0.0) >= 0.70):
+        rows.append(
+            _investigation_recommendation(
+                "inspect_graph_relationships",
+                _investigation_priority(
+                    base="medium",
+                    decision_category=decision_category,
+                    cluster_risk=cluster_risk,
+                    insight_score=insight_score,
+                    risk_direction=risk_direction,
+                    candidate_confidence=candidate_confidence,
+                ),
+                "Inspect graph relationships",
+                "Graph relationships provide meaningful context for the behavioral conclusion.",
+                [
+                    f"relationships:{len(relationships)}",
+                    f"strongest_relationship:{_safe_text(strongest_relationship.get('relationship_type'))}",
+                    f"relationship_score:{float(strongest_relationship.get('strength_score') or 0.0):.2f}",
+                ],
+                ["relationship_owner_context"],
+                "Review relationship endpoints, shared ports, shared protocols, and linked profile evidence.",
+                0.14,
+                ["relationship_context_not_confirmed"],
+                related=related,
+                primary_cluster=primary_cluster,
+                strongest_relationship=strongest_relationship,
+                strongest_insight=strongest_insight,
+            )
+        )
+    if observation_count <= 2 or decision_category == "insufficient_context" or risk_direction == "insufficient_history":
+        rows.append(
+            _investigation_recommendation(
+                "collect_additional_observations",
+                _investigation_priority(
+                    base="medium",
+                    decision_category=decision_category,
+                    cluster_risk=cluster_risk,
+                    insight_score=insight_score,
+                    risk_direction=risk_direction,
+                    candidate_confidence=candidate_confidence,
+                ),
+                "Collect additional observations",
+                "Observation history is limited or historical risk context is insufficient.",
+                [
+                    f"observations:{observation_count}",
+                    f"risk_direction:{risk_direction}",
+                    f"decision:{decision_category}",
+                ],
+                ["additional_history"],
+                "Continue metadata-only observation and compare future profile and graph summaries.",
+                0.26,
+                ["history_window_too_small"],
+                related=related,
+                primary_cluster=primary_cluster,
+                strongest_relationship=strongest_relationship,
+                strongest_insight=strongest_insight,
+            )
+        )
+    if risk_direction in {"increasing", "decreasing", "fluctuating"}:
+        rows.append(
+            _investigation_recommendation(
+                "validate_historical_change",
+                _investigation_priority(
+                    base="high" if risk_direction in {"increasing", "fluctuating"} else "medium",
+                    decision_category=decision_category,
+                    cluster_risk=cluster_risk,
+                    insight_score=insight_score,
+                    risk_direction=risk_direction,
+                    candidate_confidence=candidate_confidence,
+                ),
+                "Validate historical risk change",
+                "Historical risk evolution changed and should be compared against expected behavior.",
+                [
+                    f"risk_direction:{risk_direction}",
+                    f"risk_delta:{risk_evolution.get('risk_delta')}",
+                    f"risk_confidence:{float(risk_evolution.get('risk_evolution_confidence') or 0.0):.2f}",
+                ],
+                ["operator_validation_of_change"],
+                "Compare the risk delta, change reasons, and cluster trend against expected service behavior.",
+                0.17,
+                ["historical_change_not_operator_validated"],
+                related=related,
+                primary_cluster=primary_cluster,
+                strongest_relationship=strongest_relationship,
+                strongest_insight=strongest_insight,
+            )
+        )
+    if missing_evidence or evidence_quality in {"-", "weak", "limited", "low", "unknown"}:
+        rows.append(
+            _investigation_recommendation(
+                "review_missing_evidence",
+                _investigation_priority(
+                    base="medium",
+                    decision_category=decision_category,
+                    cluster_risk=cluster_risk,
+                    insight_score=insight_score,
+                    risk_direction=risk_direction,
+                    candidate_confidence=candidate_confidence,
+                ),
+                "Review missing attribution evidence",
+                "Missing or weak evidence limits confidence in the behavioral explanation.",
+                [
+                    f"evidence_quality:{evidence_quality}",
+                    f"missing_evidence:{len(missing_evidence)}",
+                    f"classification_confidence:{candidate_confidence:.2f}",
+                ],
+                missing_evidence or ["stronger_attribution_evidence"],
+                "Review process, service, fingerprint, and profile evidence gaps before relying on classification.",
+                0.24,
+                ["evidence_gaps_remain"],
+                related=related,
+                primary_cluster=primary_cluster,
+                strongest_relationship=strongest_relationship,
+                strongest_insight=strongest_insight,
+            )
+        )
+    if decision_category == "benign_observation" or (
+        cluster_risk in {"-", "low"} and risk_direction in {"stable", "decreasing"} and observation_count >= 3
+    ):
+        rows.append(
+            _investigation_recommendation(
+                "confirm_expected_behavior",
+                "low",
+                "Confirm expected behavior",
+                "Available metadata suggests stable or expected behavior that should be confirmed operationally.",
+                [
+                    f"decision:{decision_category}",
+                    f"cluster_risk:{cluster_risk}",
+                    f"risk_direction:{risk_direction}",
+                ],
+                ["operator_expectation_confirmation"],
+                "Confirm the service remains expected and continue routine metadata-only monitoring.",
+                0.08,
+                ["expected_behavior_not_operator_confirmed"],
+                related=related,
+                primary_cluster=primary_cluster,
+                strongest_relationship=strongest_relationship,
+                strongest_insight=strongest_insight,
+            )
+        )
+    return _dedupe_investigation_recommendations(rows)
+
+
+def _has_investigation_context(context: dict[str, Any]) -> bool:
+    return any(
+        _safe_text(context.get(key)) != "-"
+        for key in ("top_classification", "evidence_quality", "primary_recommendation")
+    ) or any(
+        _optional_float(context.get(key)) is not None
+        for key in ("current_risk_score", "previous_risk_score", "risk_score", "candidate_confidence")
+    )
+
+
+def _investigation_recommendation(
+    category: str,
+    priority: str,
+    title: str,
+    rationale: str,
+    evidence: Iterable[Any],
+    missing_evidence: Iterable[Any],
+    suggested_operator_action: str,
+    expected_confidence_gain: float,
+    blocking_conditions: Iterable[Any],
+    *,
+    related: dict[str, str],
+    primary_cluster: dict[str, Any],
+    strongest_relationship: dict[str, Any],
+    strongest_insight: dict[str, Any],
+) -> dict[str, Any]:
+    safe_category = category if category in INVESTIGATION_RECOMMENDATION_CATEGORIES else "collect_additional_observations"
+    safe_priority = priority if priority in INVESTIGATION_RECOMMENDATION_PRIORITIES else "medium"
+    evidence_rows = _unique_text(evidence, limit=10)
+    missing_rows = _unique_text(missing_evidence, limit=8)
+    blocking_rows = _unique_text(blocking_conditions, limit=8)
+    related_cluster = _safe_text(primary_cluster.get("cluster_id"))
+    related_relationship = _safe_text(strongest_relationship.get("relationship_id"))
+    related_insight = _safe_text(strongest_insight.get("insight_id"))
+    recommendation_id = "investigation-rec-" + _digest(
+        {
+            "category": safe_category,
+            "priority": safe_priority,
+            "evidence": evidence_rows,
+            "missing": missing_rows,
+            "cluster": related_cluster,
+            "relationship": related_relationship,
+            "insight": related_insight,
+        }
+    )[:16]
+    return {
+        "recommendation_id": recommendation_id,
+        "priority": safe_priority,
+        "category": safe_category,
+        "title": _safe_text(title, limit=96),
+        "rationale": _safe_text(rationale, limit=160),
+        "evidence": evidence_rows,
+        "missing_evidence": missing_rows,
+        "suggested_operator_action": _safe_text(suggested_operator_action, limit=180),
+        "expected_confidence_gain": _bounded_score(expected_confidence_gain),
+        "blocking_conditions": blocking_rows,
+        "related_asset": related.get("related_asset") or "-",
+        "related_service": related.get("related_service") or "-",
+        "related_profile": related.get("related_profile") or "-",
+        "related_cluster": related_cluster,
+        "related_relationship": related_relationship,
+        "related_insight": related_insight,
+        "advisory_only": True,
+        "metadata_only": True,
+        "read_only": True,
+    }
+
+
+def _investigation_priority(
+    *,
+    base: str,
+    decision_category: str,
+    cluster_risk: str,
+    insight_score: float,
+    risk_direction: str,
+    candidate_confidence: float,
+) -> str:
+    rank = {"low": 0, "medium": 1, "high": 2, "critical": 3}.get(base, 1)
+    if decision_category == "elevated_risk_behavior":
+        rank = max(rank, 2)
+    if cluster_risk == "critical":
+        rank = max(rank, 3)
+    elif cluster_risk == "high":
+        rank = max(rank, 2)
+    if insight_score >= 0.85:
+        rank = max(rank, 2)
+    if risk_direction in {"increasing", "fluctuating"}:
+        rank = max(rank, 2)
+    if candidate_confidence < 0.35 and rank < 3:
+        rank = max(rank, 1)
+    return ["low", "medium", "high", "critical"][rank]
+
+
+def _dedupe_investigation_recommendations(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_category: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        category = _safe_text(row.get("category"))
+        current = by_category.get(category)
+        if current is None or _investigation_sort_key(row) < _investigation_sort_key(current):
+            by_category[category] = row
+    return sorted(by_category.values(), key=_investigation_sort_key)
+
+
+def _investigation_sort_key(row: dict[str, Any]) -> tuple[int, str, str]:
+    priority_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(_safe_text(row.get("priority")), 2)
+    return (priority_rank, _safe_text(row.get("category")), _safe_text(row.get("recommendation_id")))
+
+
+def _top_investigation_recommendation(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    if not rows:
+        return {}
+    return sorted(rows, key=_investigation_sort_key)[0]
+
+
+def _investigation_recommendation_summary(rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return "-"
+    return "; ".join(
+        f"{_safe_text(row.get('priority'))}:{_safe_text(row.get('category'))}:{_safe_text(row.get('title'), limit=48)}"
+        for row in sorted(rows, key=_investigation_sort_key)[:3]
+    )
+
+
+def _investigation_operator_next_steps(top: dict[str, Any]) -> str:
+    if not top:
+        return "-"
+    return _safe_text(top.get("suggested_operator_action"), limit=180)
 
 
 def _behavioral_decision_category(
@@ -2085,6 +2477,19 @@ def _risk_signal_values(observation: dict[str, Any]) -> list[str]:
         if value != "-":
             values.append(value)
     return _unique_text(values)
+
+
+def _classification_missing_evidence_values(classification_model: dict[str, Any]) -> list[str]:
+    values = _list_text(
+        classification_model,
+        ("missing_evidence", "missing_evidence_summary", "missing_signals", "limitations"),
+    )
+    candidates = classification_model.get("candidates")
+    if isinstance(candidates, list):
+        for item in candidates:
+            if isinstance(item, dict):
+                values.extend(_list_text(item, ("missing_evidence", "missing_signals")))
+    return _unique_text(values, limit=8)
 
 
 def _list_text(observation: dict[str, Any], keys: tuple[str, ...]) -> list[str]:
