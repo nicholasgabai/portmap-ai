@@ -1117,6 +1117,33 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Prediction Reasons"] != "-"
     assert details["Prediction Limitations"] != "-"
     assert details["Prediction Next Steps"] != "-"
+    assert details["Federated Status"] in {"active", "conflict", "expired", "unknown"}
+    assert details["Consensus"] in {
+        "single_source",
+        "multi_source",
+        "strong_consensus",
+        "weak_consensus",
+        "conflicting",
+        "expired",
+        "unknown",
+    }
+    assert details["Agreement"] != "-"
+    assert details["Source Nodes"] != "-"
+    assert details["Contributors"] != "-"
+    assert details["Federated Confidence"] != "-"
+    assert details["Federated Confidence Trend"] != "-"
+    assert details["Observation Freshness"] != "-"
+    assert details["Expiration"] != "-"
+    assert details["Conflict Summary"] != "-"
+    assert details["Consensus Summary"] != "-"
+    assert details["Operator Recommendation"] != "-"
+    assert details["Federated Observation Count"] != "-"
+    assert details["Originating Nodes"] != "-"
+    assert details["Conflicts"] != "-"
+    assert details["Agreement Score"] != "-"
+    assert details["Federated Age"] != "-"
+    assert details["Source Count"] != "-"
+    assert details["Unique Contributors"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1172,6 +1199,9 @@ def test_ai_and_risk_detail_rows_preserve_review_queue_and_prediction_layout_ord
         "review_queue_summary": "required:yes; priority:medium; category:confidence_review",
         "prediction_category": "uncertain_prediction",
         "prediction_next_steps": "Gather more metadata",
+        "federated_status": "active",
+        "federated_consensus": "single_source",
+        "federated_operator_recommendation": "Treat as single-worker context",
         "related_asset": "asset-a",
     }
     ai_labels = [label for label, _ in gui_app._ai_detail_rows(row)]
@@ -1182,7 +1212,9 @@ def test_ai_and_risk_detail_rows_preserve_review_queue_and_prediction_layout_ord
         assert labels.index("Review Queue Required") < labels.index("Review Queue Summary")
         assert labels.index("Review Queue Summary") < labels.index("Predicted Risk Level")
         assert labels.index("Prediction Category") < labels.index("Prediction Next Steps")
-        assert labels.index("Prediction Next Steps") < labels.index("Related Asset")
+        assert labels.index("Prediction Next Steps") < labels.index("Federated Status")
+        assert labels.index("Federated Status") < labels.index("Operator Recommendation")
+        assert labels.index("Operator Recommendation") < labels.index("Related Asset")
 
 
 def test_ai_details_table_wraps_long_metadata_and_preserves_cursor_selection():
@@ -1353,6 +1385,10 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "prediction_reasons": "category:increasing_risk;cluster_risk:critical;" + ("prediction-reason-token" * 5),
         "prediction_limitations": "insufficient_risk_history;" + ("prediction-limitation-token" * 5),
         "prediction_next_steps": "Review risk evolution drift and cluster trend before approved action " + ("prediction-next-step-token" * 5),
+        "federated_conflict_summary": "prediction_summary:ssh:stable_behavior,increasing_risk;" + ("federated-conflict-token" * 5),
+        "federated_consensus_summary": "Conflicting classifications detected across federated metadata " + ("federated-consensus-token" * 5),
+        "federated_operator_recommendation": "Review conflicting worker metadata and preserve local authority " + ("federated-recommendation-token" * 5),
+        "federated_source_nodes": "worker-a;" + ("worker-with-very-long-node-id" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1404,6 +1440,10 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Prediction Reasons" for row in rendered)
             assert any(row[0] == "Prediction Limitations" for row in rendered)
             assert any(row[0] == "Prediction Next Steps" for row in rendered)
+            assert any(row[0] == "Conflict Summary" for row in rendered)
+            assert any(row[0] == "Consensus Summary" for row in rendered)
+            assert any(row[0] == "Operator Recommendation" for row in rendered)
+            assert any(row[0] == "Source Nodes" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -2043,6 +2083,33 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Prediction Reasons"] != "-"
     assert details["Prediction Limitations"] != "-"
     assert details["Prediction Next Steps"] != "-"
+    assert details["Federated Status"] in {"active", "conflict", "expired", "unknown"}
+    assert details["Consensus"] in {
+        "single_source",
+        "multi_source",
+        "strong_consensus",
+        "weak_consensus",
+        "conflicting",
+        "expired",
+        "unknown",
+    }
+    assert details["Agreement"] != "-"
+    assert details["Source Nodes"] != "-"
+    assert details["Contributors"] != "-"
+    assert details["Federated Confidence"] != "-"
+    assert details["Federated Confidence Trend"] != "-"
+    assert details["Observation Freshness"] != "-"
+    assert details["Expiration"] != "-"
+    assert details["Conflict Summary"] != "-"
+    assert details["Consensus Summary"] != "-"
+    assert details["Operator Recommendation"] != "-"
+    assert details["Federated Observation Count"] != "-"
+    assert details["Originating Nodes"] != "-"
+    assert details["Conflicts"] != "-"
+    assert details["Agreement Score"] != "-"
+    assert details["Federated Age"] != "-"
+    assert details["Source Count"] != "-"
+    assert details["Unique Contributors"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -2233,6 +2300,10 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "prediction_reasons": "category:emerging_behavior;cluster_trend:growing;" + ("prediction-reason-token" * 5),
         "prediction_limitations": "limited_graph_context;" + ("prediction-limitation-token" * 5),
         "prediction_next_steps": "Collect additional observations and verify expected service behavior " + ("prediction-next-step-token" * 5),
+        "federated_conflict_summary": "none;" + ("federated-conflict-token" * 5),
+        "federated_consensus_summary": "Observed independently by 5 workers " + ("federated-consensus-token" * 5),
+        "federated_operator_recommendation": "Use federated context as supporting evidence " + ("federated-recommendation-token" * 5),
+        "federated_source_nodes": "worker-a;" + ("worker-with-very-long-node-id" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2284,6 +2355,10 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Prediction Reasons" for row in rendered)
             assert any(row[0] == "Prediction Limitations" for row in rendered)
             assert any(row[0] == "Prediction Next Steps" for row in rendered)
+            assert any(row[0] == "Conflict Summary" for row in rendered)
+            assert any(row[0] == "Consensus Summary" for row in rendered)
+            assert any(row[0] == "Operator Recommendation" for row in rendered)
+            assert any(row[0] == "Source Nodes" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 

@@ -2816,6 +2816,152 @@ def test_behavior_graph_threat_prediction_is_reproducible_for_identical_input():
     assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
 
 
+def _federated_peer(node: str, value: str, confidence: float, *, created: str, expires: str) -> dict:
+    return {
+        "originating_node_id": node,
+        "creation_timestamp": created,
+        "expiration_timestamp": expires,
+        "observation_count": 2,
+        "confidence": confidence,
+        "intelligence_category": "prediction_summary",
+        "subject": "ssh",
+        "value": value,
+        "schema_version": "1.0",
+    }
+
+
+def test_behavior_graph_federated_intelligence_merges_duplicates_and_grows_confidence():
+    observation = {
+        "node_id": "worker-a",
+        "service_name": "ssh",
+        "protocol": "tcp",
+        "port": 22,
+        "score": 0.18,
+        "previous_risk_score": 0.20,
+        "risk_score_history": [0.20, 0.19, 0.18],
+        "count": 5,
+        "source_mode": "live",
+    }
+    classifier = {"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"}
+    history = {"historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}}
+    single = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+    merged = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        federated_intelligence=[
+            _federated_peer("worker-b", "stable_behavior", 0.62, created="2026-06-14T11:00:00+00:00", expires="2026-06-21T11:00:00+00:00"),
+            _federated_peer("worker-c", "stable_behavior", 0.72, created="2026-06-14T11:30:00+00:00", expires="2026-06-21T11:30:00+00:00"),
+        ],
+        generated_at=FIXED_TIME,
+    )
+
+    assert single["summary"]["consensus"] == "single_source"
+    assert merged["summary"]["consensus"] == "strong_consensus"
+    assert merged["summary"]["source_count"] == 3
+    assert merged["summary"]["unique_contributors"] == 3
+    assert merged["summary"]["federated_observation_count"] == 9
+    assert merged["summary"]["federated_confidence"] > single["summary"]["federated_confidence"]
+    assert merged["summary"]["agreement_score"] == 1.0
+    assert merged["summary"]["agreement_percentage"] == "100%"
+    assert len(merged["federated_intelligence"]["merged_objects"]) == 1
+    assert "Observed independently by 3 workers" in merged["summary"]["consensus_summary"]
+
+
+def test_behavior_graph_federated_intelligence_preserves_conflicts_without_overwrite():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "worker-a",
+            "service_name": "ssh",
+            "protocol": "tcp",
+            "port": 22,
+            "score": 0.18,
+            "previous_risk_score": 0.20,
+            "risk_score_history": [0.20, 0.19, 0.18],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"},
+        learning_profile_history={
+            "historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}
+        },
+        federated_intelligence=[
+            _federated_peer("worker-b", "increasing_risk", 0.82, created="2026-06-14T11:00:00+00:00", expires="2026-06-21T11:00:00+00:00"),
+            _federated_peer("worker-c", "stable_behavior", 0.72, created="2026-06-14T11:30:00+00:00", expires="2026-06-21T11:30:00+00:00"),
+        ],
+        generated_at=FIXED_TIME,
+    )
+
+    assert graph["summary"]["consensus"] == "conflicting"
+    assert graph["summary"]["conflicts"] == 1
+    assert "Conflicting classifications detected" in graph["summary"]["consensus_summary"]
+    assert "increasing_risk" in graph["summary"]["conflict_summary"]
+    assert "stable_behavior" in graph["summary"]["conflict_summary"]
+    assert len(graph["federated_intelligence"]["merged_objects"]) == 2
+    assert all("originating_nodes" in row for row in graph["federated_intelligence"]["merged_objects"])
+
+
+def test_behavior_graph_federated_intelligence_expiration_and_weak_consensus_are_deterministic():
+    expired = build_behavior_graph_model(
+        {},
+        federated_intelligence=[
+            _federated_peer("worker-b", "stable_behavior", 0.62, created="2025-12-20T11:00:00+00:00", expires="2025-12-31T11:00:00+00:00"),
+        ],
+        generated_at=FIXED_TIME,
+    )
+    weak = build_behavior_graph_model(
+        {},
+        federated_intelligence=[
+            _federated_peer("worker-b", "stable_behavior", 0.25, created="2026-06-14T11:00:00+00:00", expires="2026-06-21T11:00:00+00:00"),
+            _federated_peer("worker-c", "stable_behavior", 0.20, created="2026-06-14T11:10:00+00:00", expires="2026-06-21T11:10:00+00:00"),
+        ],
+        generated_at=FIXED_TIME,
+    )
+    repeated = build_behavior_graph_model(
+        {},
+        federated_intelligence=[
+            _federated_peer("worker-b", "stable_behavior", 0.25, created="2026-06-14T11:00:00+00:00", expires="2026-06-21T11:00:00+00:00"),
+            _federated_peer("worker-c", "stable_behavior", 0.20, created="2026-06-14T11:10:00+00:00", expires="2026-06-21T11:10:00+00:00"),
+        ],
+        generated_at=FIXED_TIME,
+    )
+
+    assert expired["summary"]["consensus"] == "expired"
+    assert expired["summary"]["federated_status"] == "expired"
+    assert "Observation expired" in expired["summary"]["consensus_summary"]
+    assert weak["summary"]["consensus"] == "weak_consensus"
+    assert weak["summary"]["source_count"] == 2
+    assert weak["summary"]["agreement_score"] == 1.0
+    assert deterministic_behavior_graph_json(weak) == deterministic_behavior_graph_json(repeated)
+    assert weak["federated_intelligence"]["packets_shared"] is False
+    assert weak["federated_intelligence"]["payloads_shared"] is False
+    assert weak["federated_intelligence"]["credentials_shared"] is False
+
+
+def test_behavior_graph_federated_intelligence_confidence_trend_and_ordering_are_stable():
+    graph = build_behavior_graph_model(
+        {},
+        federated_intelligence=[
+            _federated_peer("worker-c", "stable_behavior", 0.48, created="2026-06-14T11:10:00+00:00", expires="2026-06-21T11:10:00+00:00"),
+            _federated_peer("worker-b", "stable_behavior", 0.30, created="2026-06-14T10:00:00+00:00", expires="2026-06-21T10:00:00+00:00"),
+            _federated_peer("worker-d", "stable_behavior", 0.58, created="2026-06-14T11:40:00+00:00", expires="2026-06-21T11:40:00+00:00"),
+        ],
+        generated_at=FIXED_TIME,
+    )
+    nodes = graph["summary"]["originating_nodes"].split("; ")
+
+    assert graph["summary"]["confidence_trend"] == "increasing"
+    assert nodes == sorted(nodes)
+    assert graph["summary"]["consensus"] in {"multi_source", "strong_consensus"}
+    assert graph["summary"]["federated_age"] != "-"
+    assert graph["summary"]["federated_freshness"] in {"fresh", "recent", "stale"}
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {

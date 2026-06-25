@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from typing import Any, Iterable
 
@@ -60,6 +60,26 @@ INVESTIGATION_RECOMMENDATION_CATEGORIES = {
     "confirm_expected_behavior",
 }
 INVESTIGATION_RECOMMENDATION_PRIORITIES = {"critical", "high", "medium", "low"}
+FEDERATED_INTELLIGENCE_CATEGORIES = {
+    "learned_application_fingerprint",
+    "behavioral_summary",
+    "service_metadata",
+    "threat_indicator",
+    "confidence_observation",
+    "graph_metadata",
+    "cluster_summary",
+    "prediction_summary",
+}
+FEDERATED_CONSENSUS_CATEGORIES = {
+    "single_source",
+    "multi_source",
+    "strong_consensus",
+    "weak_consensus",
+    "conflicting",
+    "expired",
+    "unknown",
+}
+FEDERATED_INTELLIGENCE_SCHEMA_VERSION = "1.0"
 
 
 def build_behavior_graph_model(
@@ -70,16 +90,28 @@ def build_behavior_graph_model(
     learning_profile_history: dict[str, Any] | None = None,
     flows: Iterable[dict[str, Any]] | None = None,
     findings: Iterable[dict[str, Any]] | None = None,
+    federated_intelligence: Iterable[dict[str, Any]] | None = None,
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     """Build a deterministic metadata-only behavior graph for one observed service."""
     timestamp = generated_at or _now()
-    if not isinstance(observation, dict) or not observation:
-        return _graph_record(timestamp=timestamp, nodes=[], edges=[], related={})
-
     classifier = classification_model if isinstance(classification_model, dict) else {}
     profile = learning_profile if isinstance(learning_profile, dict) else {}
     history = learning_profile_history if isinstance(learning_profile_history, dict) else {}
+    peer_intelligence = _federated_intelligence_inputs(
+        observation if isinstance(observation, dict) else {},
+        classifier,
+        history,
+        federated_intelligence,
+    )
+    if not isinstance(observation, dict) or not observation:
+        return _graph_record(
+            timestamp=timestamp,
+            nodes=[],
+            edges=[],
+            related={},
+            peer_intelligence=peer_intelligence,
+        )
 
     related_asset = _asset_label(observation)
     related_service = _service_label(observation, classifier)
@@ -190,6 +222,7 @@ def build_behavior_graph_model(
             "related_service": related_service,
             "related_profile": related_profile,
         },
+        peer_intelligence=peer_intelligence,
     )
 
 
@@ -205,6 +238,7 @@ def _graph_record(
     relationships: list[dict[str, Any]] | None = None,
     clusters: list[dict[str, Any]] | None = None,
     risk_context: dict[str, Any] | None = None,
+    peer_intelligence: Iterable[dict[str, Any]] | None = None,
     related: dict[str, str],
 ) -> dict[str, Any]:
     relationship_rows = relationships or []
@@ -251,6 +285,20 @@ def _graph_record(
         review_queue,
         context=risk_context or {},
     )
+    federated_model = _build_federated_intelligence_model(
+        relationship_rows,
+        cluster_rows,
+        insight_rows,
+        risk_evolution,
+        behavioral_decision,
+        investigation_recommendations,
+        review_queue,
+        threat_prediction,
+        context=risk_context or {},
+        related=related,
+        generated_at=timestamp,
+        peer_intelligence=peer_intelligence,
+    )
     summary = _graph_summary(
         nodes,
         edges,
@@ -262,6 +310,7 @@ def _graph_record(
         investigation_recommendations,
         review_queue,
         threat_prediction,
+        federated_model,
         related,
     )
     return {
@@ -305,6 +354,13 @@ def _graph_record(
                     "horizon": threat_prediction.get("prediction_horizon"),
                     "reasons": threat_prediction.get("prediction_reasons"),
                 },
+                "federated_intelligence": {
+                    "consensus": federated_model.get("consensus"),
+                    "confidence": federated_model.get("federated_confidence"),
+                    "agreement": federated_model.get("agreement_score"),
+                    "contributors": federated_model.get("unique_contributors"),
+                    "conflicts": federated_model.get("conflicts"),
+                },
             }
         )[:16],
         "generated_at": timestamp,
@@ -318,6 +374,7 @@ def _graph_record(
         "investigation_recommendations": investigation_recommendations,
         "review_queue": review_queue,
         "threat_prediction": threat_prediction,
+        "federated_intelligence": federated_model,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -341,6 +398,7 @@ def _graph_summary(
     investigation_recommendations: list[dict[str, Any]],
     review_queue: dict[str, Any],
     threat_prediction: dict[str, Any],
+    federated_model: dict[str, Any],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -433,6 +491,25 @@ def _graph_summary(
         "prediction_reasons": threat_prediction.get("prediction_reasons", "-"),
         "prediction_limitations": threat_prediction.get("prediction_limitations", "-"),
         "prediction_next_steps": threat_prediction.get("prediction_next_steps", "-"),
+        "federated_status": federated_model.get("federated_status", "unknown"),
+        "federated_confidence": federated_model.get("federated_confidence", 0.0),
+        "federated_observation_count": federated_model.get("federated_observation_count", 0),
+        "originating_nodes": federated_model.get("originating_nodes", "-"),
+        "consensus": federated_model.get("consensus", "unknown"),
+        "conflicts": federated_model.get("conflicts", 0),
+        "agreement_score": federated_model.get("agreement_score", 0.0),
+        "agreement_percentage": federated_model.get("agreement_percentage", "0%"),
+        "confidence_trend": federated_model.get("confidence_trend", "stable"),
+        "federated_age": federated_model.get("federated_age", "-"),
+        "federated_freshness": federated_model.get("federated_freshness", "unknown"),
+        "expiration": federated_model.get("expiration", "-"),
+        "source_count": federated_model.get("source_count", 0),
+        "unique_contributors": federated_model.get("unique_contributors", 0),
+        "source_nodes": federated_model.get("source_nodes", "-"),
+        "contributors": federated_model.get("contributors", "-"),
+        "conflict_summary": federated_model.get("conflict_summary", "-"),
+        "consensus_summary": federated_model.get("consensus_summary", "-"),
+        "federated_operator_recommendation": federated_model.get("operator_recommendation", "-"),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -813,6 +890,9 @@ def _cluster_context(
         "risk_score_history": _risk_score_history_values(observation, history_summary),
         "risk_signals": risk_signals,
         "previous_risk_signals": previous_risk_signals,
+        "originating_node": _safe_text(
+            observation.get("node_id") or observation.get("node") or observation.get("asset") or "local_node"
+        ),
         "top_classification": _safe_text(classification_model.get("top_classification")),
         "evidence_quality": _safe_text(classification_model.get("evidence_quality")).lower(),
         "candidate_count": _safe_int_value(
@@ -2054,6 +2134,442 @@ def _prediction_direction_score(value: Any) -> float:
         "stable": 0.22,
         "decreasing": 0.08,
     }.get(_safe_text(value), 0.30)
+
+
+def _federated_intelligence_inputs(
+    observation: dict[str, Any],
+    classification_model: dict[str, Any],
+    learning_profile_history: dict[str, Any],
+    explicit: Iterable[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for source in (
+        explicit,
+        observation.get("federated_intelligence"),
+        observation.get("federated_metadata"),
+        observation.get("peer_intelligence"),
+        classification_model.get("federated_intelligence"),
+        learning_profile_history.get("federated_intelligence"),
+    ):
+        if isinstance(source, dict):
+            source = source.get("items") or source.get("records") or source.get("intelligence") or [source]
+        if not isinstance(source, Iterable) or isinstance(source, (str, bytes)):
+            continue
+        for item in source:
+            if isinstance(item, dict):
+                rows.append(dict(item))
+    return rows
+
+
+def _build_federated_intelligence_model(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    investigation_recommendations: list[dict[str, Any]],
+    review_queue: dict[str, Any],
+    threat_prediction: dict[str, Any],
+    *,
+    context: dict[str, Any],
+    related: dict[str, str],
+    generated_at: str,
+    peer_intelligence: Iterable[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    peer_rows = list(peer_intelligence or [])
+    has_local_metadata = bool(
+        relationships
+        or clusters
+        or insights
+        or context
+        or any(_safe_text(value) != "-" for value in related.values())
+    )
+    objects = []
+    if has_local_metadata:
+        objects.append(
+            _local_federated_intelligence_object(
+                relationships,
+                clusters,
+                insights,
+                risk_evolution,
+                behavioral_decision,
+                investigation_recommendations,
+                review_queue,
+                threat_prediction,
+                context=context,
+                related=related,
+                generated_at=generated_at,
+            )
+        )
+    for item in peer_rows:
+        normalized = _normalize_federated_intelligence_object(item, generated_at=generated_at)
+        if normalized:
+            objects.append(normalized)
+    objects = sorted(objects, key=lambda row: (row["intelligence_category"], row["subject"], row["value"], row["originating_node_id"]))
+    merged = _merge_federated_intelligence(objects, generated_at=generated_at)
+    return {
+        "record_type": "federated_intelligence_summary",
+        "record_version": FEDERATED_INTELLIGENCE_SCHEMA_VERSION,
+        "federated_status": merged["status"],
+        "consensus": merged["consensus"],
+        "agreement_score": merged["agreement_score"],
+        "agreement_percentage": f"{int(round(merged['agreement_score'] * 100))}%",
+        "federated_confidence": merged["confidence"],
+        "federated_observation_count": merged["observation_count"],
+        "originating_nodes": "; ".join(merged["nodes"]) if merged["nodes"] else "-",
+        "source_nodes": "; ".join(merged["nodes"]) if merged["nodes"] else "-",
+        "contributors": "; ".join(merged["contributors"]) if merged["contributors"] else "-",
+        "source_count": len(merged["nodes"]),
+        "unique_contributors": len(merged["contributors"]),
+        "conflicts": len(merged["conflicts"]),
+        "conflict_summary": _federated_conflict_summary(merged["conflicts"]),
+        "consensus_summary": _federated_consensus_summary(merged),
+        "confidence_trend": _federated_confidence_trend(objects),
+        "federated_age": _duration_label(merged["first_seen"], generated_at),
+        "federated_freshness": _federated_freshness(merged["last_seen"], generated_at),
+        "expiration": merged["expiration"],
+        "operator_recommendation": _federated_operator_recommendation(merged),
+        "objects": objects,
+        "merged_objects": merged["merged_objects"],
+        "metadata_only": True,
+        "read_only": True,
+        "advisory_only": True,
+        "packets_shared": False,
+        "payloads_shared": False,
+        "credentials_shared": False,
+        "external_connectivity": False,
+    }
+
+
+def _local_federated_intelligence_object(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    investigation_recommendations: list[dict[str, Any]],
+    review_queue: dict[str, Any],
+    threat_prediction: dict[str, Any],
+    *,
+    context: dict[str, Any],
+    related: dict[str, str],
+    generated_at: str,
+) -> dict[str, Any]:
+    category = "prediction_summary" if threat_prediction else "behavioral_summary"
+    subject = _safe_text(related.get("related_service") or context.get("top_classification") or "observed_service")
+    value = _safe_text(
+        threat_prediction.get("prediction_category")
+        or behavioral_decision.get("behavioral_decision_category")
+        or context.get("top_classification")
+    )
+    confidence = float(
+        threat_prediction.get("prediction_confidence")
+        or behavioral_decision.get("behavioral_decision_confidence")
+        or context.get("candidate_confidence")
+        or 0.0
+    )
+    expiration = _iso_timestamp(_parse_time(generated_at) + timedelta(days=7) if _parse_time(generated_at) else None)
+    return _normalize_federated_intelligence_object(
+        {
+            "originating_node_id": context.get("originating_node") or "local_node",
+            "created_at": generated_at,
+            "observation_count": int(context.get("observation_count") or 1),
+            "confidence": confidence,
+            "expiration": expiration,
+            "intelligence_category": category,
+            "subject": subject,
+            "value": value,
+            "metadata": {
+                "top_classification": context.get("top_classification"),
+                "relationships": len(relationships),
+                "clusters": len(clusters),
+                "insights": len(insights),
+                "risk_direction": risk_evolution.get("risk_evolution_direction"),
+                "review_priority": review_queue.get("review_queue_priority"),
+                "investigation_count": len(investigation_recommendations),
+            },
+        },
+        generated_at=generated_at,
+    )
+
+
+def _normalize_federated_intelligence_object(raw: dict[str, Any], *, generated_at: str) -> dict[str, Any] | None:
+    category = _safe_text(raw.get("intelligence_category") or raw.get("category"))
+    if category not in FEDERATED_INTELLIGENCE_CATEGORIES:
+        category = "behavioral_summary"
+    node_id = _safe_text(raw.get("originating_node_id") or raw.get("node_id") or raw.get("originating_node"))
+    if node_id == "-":
+        node_id = "unknown_node"
+    created_at = _safe_text(raw.get("creation_timestamp") or raw.get("created_at") or raw.get("timestamp") or generated_at)
+    subject = _safe_text(raw.get("subject") or raw.get("service") or raw.get("profile") or raw.get("application"))
+    if subject == "-":
+        subject = "observed_service"
+    value = _safe_text(
+        raw.get("value")
+        or raw.get("classification")
+        or raw.get("prediction_category")
+        or raw.get("indicator")
+        or raw.get("summary")
+    )
+    if value == "-":
+        value = "observed_metadata"
+    observation_count = max(_optional_int(raw.get("observation_count") or raw.get("observations")) or 1, 1)
+    confidence = _bounded_score(float(raw.get("confidence") or raw.get("confidence_score") or 0.0))
+    expiration = _safe_text(raw.get("expiration_timestamp") or raw.get("expiration") or raw.get("expires_at"))
+    if expiration == "-":
+        parsed = _parse_time(created_at) or _parse_time(generated_at)
+        expiration = _iso_timestamp(parsed + timedelta(days=7) if parsed else None)
+    schema_version = _safe_text(raw.get("schema_version") or FEDERATED_INTELLIGENCE_SCHEMA_VERSION)
+    intelligence_id = _safe_text(raw.get("intelligence_id") or raw.get("id"))
+    if intelligence_id == "-":
+        intelligence_id = "federated-intel-" + _digest(
+            {
+                "node": node_id,
+                "created_at": created_at,
+                "category": category,
+                "subject": subject,
+                "value": value,
+            }
+        )[:16]
+    return {
+        "intelligence_id": intelligence_id,
+        "originating_node_id": node_id,
+        "creation_timestamp": created_at,
+        "observation_count": observation_count,
+        "confidence": confidence,
+        "expiration_timestamp": expiration,
+        "intelligence_category": category,
+        "schema_version": schema_version,
+        "subject": subject,
+        "value": value,
+        "metadata": _safe_metadata(raw.get("metadata") if isinstance(raw.get("metadata"), dict) else {}),
+        "metadata_only": True,
+        "read_only": True,
+    }
+
+
+def _merge_federated_intelligence(objects: list[dict[str, Any]], *, generated_at: str) -> dict[str, Any]:
+    if not objects:
+        return _empty_federated_merge(generated_at)
+    groups: dict[tuple[str, str], dict[str, Any]] = {}
+    for item in objects:
+        key = (item["intelligence_category"], item["subject"])
+        group = groups.setdefault(key, {"values": {}, "items": []})
+        group["items"].append(item)
+        group["values"].setdefault(item["value"], []).append(item)
+    merged_objects = []
+    conflicts = []
+    confidence_values = []
+    total_observations = 0
+    nodes = set()
+    for key, group in sorted(groups.items()):
+        value_groups = group["values"]
+        if len(value_groups) > 1:
+            conflicts.append(
+                {
+                    "category": key[0],
+                    "subject": key[1],
+                    "reason": "conflicting_values",
+                    "values": sorted(value_groups),
+                }
+            )
+        for value, rows in sorted(value_groups.items()):
+            nodes_for_value = sorted({row["originating_node_id"] for row in rows})
+            observations = sum(int(row["observation_count"]) for row in rows)
+            confidence = _federated_weighted_confidence(rows)
+            confidence_values.append(confidence)
+            total_observations += observations
+            nodes.update(nodes_for_value)
+            merged_objects.append(
+                {
+                    "merge_key": "|".join([key[0], key[1], value]),
+                    "category": key[0],
+                    "subject": key[1],
+                    "value": value,
+                    "source_count": len(nodes_for_value),
+                    "observation_count": observations,
+                    "merged_confidence": confidence,
+                    "originating_nodes": nodes_for_value,
+                    "conflict": len(value_groups) > 1,
+                }
+            )
+    best_group_size = max((row["source_count"] for row in merged_objects), default=0)
+    source_count = len(nodes)
+    agreement_score = _bounded_score(best_group_size / max(source_count, 1))
+    expiration = _federated_expiration(objects)
+    consensus = _federated_consensus(
+        source_count=source_count,
+        agreement_score=agreement_score,
+        confidence=max(confidence_values) if confidence_values else 0.0,
+        conflicts=conflicts,
+        expiration=expiration,
+        generated_at=generated_at,
+    )
+    status = "expired" if consensus == "expired" else ("conflict" if conflicts else "active")
+    return {
+        "status": status,
+        "consensus": consensus,
+        "agreement_score": agreement_score,
+        "confidence": max(confidence_values) if confidence_values else 0.0,
+        "observation_count": total_observations,
+        "nodes": sorted(nodes),
+        "contributors": sorted(nodes),
+        "conflicts": conflicts,
+        "merged_objects": merged_objects,
+        "first_seen": _federated_first_seen(objects),
+        "last_seen": _federated_last_seen(objects),
+        "expiration": expiration,
+    }
+
+
+def _federated_weighted_confidence(rows: list[dict[str, Any]]) -> float:
+    remaining = 1.0
+    for row in sorted(rows, key=lambda item: (item["originating_node_id"], item["intelligence_id"])):
+        confidence = _bounded_score(float(row.get("confidence") or 0.0))
+        observations = min(int(row.get("observation_count") or 1), 10)
+        weighted = min(confidence + (observations - 1) * 0.015, 0.95)
+        remaining *= 1.0 - weighted
+    return _bounded_score(1.0 - remaining)
+
+
+def _federated_consensus(
+    *,
+    source_count: int,
+    agreement_score: float,
+    confidence: float,
+    conflicts: list[dict[str, Any]],
+    expiration: str,
+    generated_at: str,
+) -> str:
+    if source_count <= 0:
+        return "unknown"
+    if _is_expired(expiration, generated_at):
+        return "expired"
+    if conflicts:
+        return "conflicting"
+    if source_count == 1:
+        return "single_source"
+    if source_count >= 3 and agreement_score >= 0.75 and confidence >= 0.70:
+        return "strong_consensus"
+    if agreement_score < 0.60 or confidence < 0.45:
+        return "weak_consensus"
+    return "multi_source"
+
+
+def _federated_confidence_trend(objects: list[dict[str, Any]]) -> str:
+    rows = sorted(objects, key=lambda row: (row["creation_timestamp"], row["originating_node_id"], row["intelligence_id"]))
+    values = [float(row.get("confidence") or 0.0) for row in rows]
+    if len(values) < 2:
+        return "stable"
+    delta = values[-1] - values[0]
+    if max(values) - min(values) >= 0.35:
+        return "volatile"
+    if delta >= 0.08:
+        return "increasing"
+    if delta <= -0.08:
+        return "decreasing"
+    return "stable"
+
+
+def _federated_consensus_summary(merged: dict[str, Any]) -> str:
+    consensus = merged["consensus"]
+    source_count = len(merged["nodes"])
+    if consensus == "expired":
+        return "Observation expired."
+    if consensus == "conflicting":
+        return "Conflicting classifications detected."
+    if consensus == "single_source":
+        return "Observed by one worker only."
+    if consensus == "strong_consensus":
+        return f"Observed independently by {source_count} workers."
+    if consensus == "multi_source":
+        return f"Observed by {source_count} workers with compatible metadata."
+    if consensus == "weak_consensus":
+        return f"Observed by {source_count} workers with limited agreement."
+    return "No federated consensus available."
+
+
+def _federated_conflict_summary(conflicts: list[dict[str, Any]]) -> str:
+    if not conflicts:
+        return "none"
+    rows = []
+    for conflict in sorted(conflicts, key=lambda row: (row["category"], row["subject"]))[:3]:
+        rows.append(f"{conflict['category']}:{conflict['subject']}:{','.join(conflict['values'])}")
+    return _safe_text("; ".join(rows), limit=180)
+
+
+def _federated_operator_recommendation(merged: dict[str, Any]) -> str:
+    consensus = merged["consensus"]
+    if consensus == "expired":
+        return "Refresh federated metadata before relying on this observation."
+    if consensus == "conflicting":
+        return "Review conflicting worker metadata and preserve local authority for decisions."
+    if consensus == "strong_consensus":
+        return "Use federated context as supporting evidence while keeping local decisions authoritative."
+    if consensus in {"multi_source", "weak_consensus"}:
+        return "Compare contributor metadata and continue local observation before escalation."
+    if consensus == "single_source":
+        return "Treat as single-worker context until additional nodes independently observe it."
+    return "Collect local metadata before using federated context."
+
+
+def _federated_freshness(last_seen: str, generated_at: str) -> str:
+    last = _parse_time(last_seen)
+    now = _parse_time(generated_at)
+    if not last or not now:
+        return "unknown"
+    seconds = max((now - last).total_seconds(), 0)
+    if seconds <= 3600:
+        return "fresh"
+    if seconds <= 86_400:
+        return "recent"
+    return "stale"
+
+
+def _federated_first_seen(objects: list[dict[str, Any]]) -> str:
+    values = sorted(value for value in (_parse_time(row.get("creation_timestamp")) for row in objects) if value)
+    return _iso_timestamp(values[0] if values else None)
+
+
+def _federated_last_seen(objects: list[dict[str, Any]]) -> str:
+    values = sorted(value for value in (_parse_time(row.get("creation_timestamp")) for row in objects) if value)
+    return _iso_timestamp(values[-1] if values else None)
+
+
+def _federated_expiration(objects: list[dict[str, Any]]) -> str:
+    values = sorted(value for value in (_parse_time(row.get("expiration_timestamp")) for row in objects) if value)
+    return _iso_timestamp(values[0] if values else None)
+
+
+def _is_expired(expiration: str, generated_at: str) -> bool:
+    expires = _parse_time(expiration)
+    now = _parse_time(generated_at)
+    return bool(expires and now and expires <= now)
+
+
+def _empty_federated_merge(generated_at: str) -> dict[str, Any]:
+    return {
+        "status": "unknown",
+        "consensus": "unknown",
+        "agreement_score": 0.0,
+        "confidence": 0.0,
+        "observation_count": 0,
+        "nodes": [],
+        "contributors": [],
+        "conflicts": [],
+        "merged_objects": [],
+        "first_seen": generated_at,
+        "last_seen": generated_at,
+        "expiration": "-",
+    }
+
+
+def _iso_timestamp(value: datetime | None) -> str:
+    if value is None:
+        return "-"
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.astimezone(UTC).isoformat()
 
 
 def _behavioral_decision_category(

@@ -1464,6 +1464,45 @@ def _active_risk_finding_rows(
                 "prediction_next_steps": _behavior_graph_text_field(
                     classification, "prediction_next_steps", limit=140
                 ),
+                "federated_status": _behavior_graph_text_field(classification, "federated_status", limit=24),
+                "federated_consensus": _behavior_graph_text_field(classification, "consensus", limit=24),
+                "federated_agreement": _behavior_graph_text_field(classification, "agreement_percentage", limit=12),
+                "federated_source_nodes": _behavior_graph_text_field(classification, "source_nodes", limit=96),
+                "federated_contributors": _behavior_graph_text_field(classification, "contributors", limit=96),
+                "federated_confidence": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("federated_confidence")
+                ),
+                "federated_confidence_trend": _behavior_graph_text_field(
+                    classification, "confidence_trend", limit=24
+                ),
+                "federated_observation_freshness": _behavior_graph_text_field(
+                    classification, "federated_freshness", limit=24
+                ),
+                "federated_expiration": _behavior_graph_text_field(classification, "expiration", limit=32),
+                "federated_conflict_summary": _behavior_graph_text_field(
+                    classification, "conflict_summary", limit=140
+                ),
+                "federated_consensus_summary": _behavior_graph_text_field(
+                    classification, "consensus_summary", limit=140
+                ),
+                "federated_operator_recommendation": _behavior_graph_text_field(
+                    classification, "federated_operator_recommendation", limit=140
+                ),
+                "federated_observation_count": _behavior_graph_text_field(
+                    classification, "federated_observation_count", limit=12
+                ),
+                "federated_originating_nodes": _behavior_graph_text_field(
+                    classification, "originating_nodes", limit=96
+                ),
+                "federated_conflicts": _behavior_graph_text_field(classification, "conflicts", limit=12),
+                "federated_agreement_score": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("agreement_score")
+                ),
+                "federated_age": _behavior_graph_text_field(classification, "federated_age", limit=24),
+                "federated_source_count": _behavior_graph_text_field(classification, "source_count", limit=12),
+                "federated_unique_contributors": _behavior_graph_text_field(
+                    classification, "unique_contributors", limit=12
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1608,6 +1647,25 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Prediction Reasons", row.get("prediction_reasons", "-")),
         ("Prediction Limitations", row.get("prediction_limitations", "-")),
         ("Prediction Next Steps", row.get("prediction_next_steps", "-")),
+        ("Federated Status", row.get("federated_status", "-")),
+        ("Consensus", row.get("federated_consensus", "-")),
+        ("Agreement", row.get("federated_agreement", "-")),
+        ("Source Nodes", row.get("federated_source_nodes", "-")),
+        ("Contributors", row.get("federated_contributors", "-")),
+        ("Federated Confidence", row.get("federated_confidence", "-")),
+        ("Federated Confidence Trend", row.get("federated_confidence_trend", "-")),
+        ("Observation Freshness", row.get("federated_observation_freshness", "-")),
+        ("Expiration", row.get("federated_expiration", "-")),
+        ("Conflict Summary", row.get("federated_conflict_summary", "-")),
+        ("Consensus Summary", row.get("federated_consensus_summary", "-")),
+        ("Operator Recommendation", row.get("federated_operator_recommendation", "-")),
+        ("Federated Observation Count", row.get("federated_observation_count", "-")),
+        ("Originating Nodes", row.get("federated_originating_nodes", "-")),
+        ("Conflicts", row.get("federated_conflicts", "-")),
+        ("Agreement Score", row.get("federated_agreement_score", "-")),
+        ("Federated Age", row.get("federated_age", "-")),
+        ("Source Count", row.get("federated_source_count", "-")),
+        ("Unique Contributors", row.get("federated_unique_contributors", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -3085,6 +3143,25 @@ def _ai_provider_model_rows(
                 "prediction_reasons": "-",
                 "prediction_limitations": "-",
                 "prediction_next_steps": "-",
+                "federated_status": "-",
+                "federated_consensus": "-",
+                "federated_agreement": "-",
+                "federated_source_nodes": "-",
+                "federated_contributors": "-",
+                "federated_confidence": "-",
+                "federated_confidence_trend": "-",
+                "federated_observation_freshness": "-",
+                "federated_expiration": "-",
+                "federated_conflict_summary": "-",
+                "federated_consensus_summary": "-",
+                "federated_operator_recommendation": "-",
+                "federated_observation_count": "-",
+                "federated_originating_nodes": "-",
+                "federated_conflicts": "-",
+                "federated_agreement_score": "-",
+                "federated_age": "-",
+                "federated_source_count": "-",
+                "federated_unique_contributors": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -3340,6 +3417,45 @@ def _ai_provider_model_rows(
             row["prediction_next_steps"] = _behavior_graph_text_field(
                 model_record, "prediction_next_steps", limit=140
             )
+            row["federated_status"] = _behavior_graph_text_field(model_record, "federated_status", limit=24)
+            row["federated_consensus"] = _behavior_graph_text_field(model_record, "consensus", limit=24)
+            row["federated_agreement"] = _behavior_graph_text_field(model_record, "agreement_percentage", limit=12)
+            row["federated_source_nodes"] = _behavior_graph_text_field(model_record, "source_nodes", limit=96)
+            row["federated_contributors"] = _behavior_graph_text_field(model_record, "contributors", limit=96)
+            row["federated_confidence"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("federated_confidence")
+            )
+            row["federated_confidence_trend"] = _behavior_graph_text_field(
+                model_record, "confidence_trend", limit=24
+            )
+            row["federated_observation_freshness"] = _behavior_graph_text_field(
+                model_record, "federated_freshness", limit=24
+            )
+            row["federated_expiration"] = _behavior_graph_text_field(model_record, "expiration", limit=32)
+            row["federated_conflict_summary"] = _behavior_graph_text_field(
+                model_record, "conflict_summary", limit=140
+            )
+            row["federated_consensus_summary"] = _behavior_graph_text_field(
+                model_record, "consensus_summary", limit=140
+            )
+            row["federated_operator_recommendation"] = _behavior_graph_text_field(
+                model_record, "federated_operator_recommendation", limit=140
+            )
+            row["federated_observation_count"] = _behavior_graph_text_field(
+                model_record, "federated_observation_count", limit=12
+            )
+            row["federated_originating_nodes"] = _behavior_graph_text_field(
+                model_record, "originating_nodes", limit=96
+            )
+            row["federated_conflicts"] = _behavior_graph_text_field(model_record, "conflicts", limit=12)
+            row["federated_agreement_score"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("agreement_score")
+            )
+            row["federated_age"] = _behavior_graph_text_field(model_record, "federated_age", limit=24)
+            row["federated_source_count"] = _behavior_graph_text_field(model_record, "source_count", limit=12)
+            row["federated_unique_contributors"] = _behavior_graph_text_field(
+                model_record, "unique_contributors", limit=12
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -3466,6 +3582,25 @@ def _ai_provider_model_rows(
             "prediction_reasons": row["prediction_reasons"],
             "prediction_limitations": row["prediction_limitations"],
             "prediction_next_steps": row["prediction_next_steps"],
+            "federated_status": row["federated_status"],
+            "federated_consensus": row["federated_consensus"],
+            "federated_agreement": row["federated_agreement"],
+            "federated_source_nodes": row["federated_source_nodes"],
+            "federated_contributors": row["federated_contributors"],
+            "federated_confidence": row["federated_confidence"],
+            "federated_confidence_trend": row["federated_confidence_trend"],
+            "federated_observation_freshness": row["federated_observation_freshness"],
+            "federated_expiration": row["federated_expiration"],
+            "federated_conflict_summary": row["federated_conflict_summary"],
+            "federated_consensus_summary": row["federated_consensus_summary"],
+            "federated_operator_recommendation": row["federated_operator_recommendation"],
+            "federated_observation_count": row["federated_observation_count"],
+            "federated_originating_nodes": row["federated_originating_nodes"],
+            "federated_conflicts": row["federated_conflicts"],
+            "federated_agreement_score": row["federated_agreement_score"],
+            "federated_age": row["federated_age"],
+            "federated_source_count": row["federated_source_count"],
+            "federated_unique_contributors": row["federated_unique_contributors"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3606,6 +3741,25 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Prediction Reasons", row.get("prediction_reasons", "-")),
         ("Prediction Limitations", row.get("prediction_limitations", "-")),
         ("Prediction Next Steps", row.get("prediction_next_steps", "-")),
+        ("Federated Status", row.get("federated_status", "-")),
+        ("Consensus", row.get("federated_consensus", "-")),
+        ("Agreement", row.get("federated_agreement", "-")),
+        ("Source Nodes", row.get("federated_source_nodes", "-")),
+        ("Contributors", row.get("federated_contributors", "-")),
+        ("Federated Confidence", row.get("federated_confidence", "-")),
+        ("Federated Confidence Trend", row.get("federated_confidence_trend", "-")),
+        ("Observation Freshness", row.get("federated_observation_freshness", "-")),
+        ("Expiration", row.get("federated_expiration", "-")),
+        ("Conflict Summary", row.get("federated_conflict_summary", "-")),
+        ("Consensus Summary", row.get("federated_consensus_summary", "-")),
+        ("Operator Recommendation", row.get("federated_operator_recommendation", "-")),
+        ("Federated Observation Count", row.get("federated_observation_count", "-")),
+        ("Originating Nodes", row.get("federated_originating_nodes", "-")),
+        ("Conflicts", row.get("federated_conflicts", "-")),
+        ("Agreement Score", row.get("federated_agreement_score", "-")),
+        ("Federated Age", row.get("federated_age", "-")),
+        ("Source Count", row.get("federated_source_count", "-")),
+        ("Unique Contributors", row.get("federated_unique_contributors", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
