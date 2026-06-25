@@ -241,6 +241,16 @@ def _graph_record(
         investigation_recommendations,
         context=risk_context or {},
     )
+    threat_prediction = _build_threat_prediction_model(
+        relationship_rows,
+        cluster_rows,
+        insight_rows,
+        risk_evolution,
+        behavioral_decision,
+        investigation_recommendations,
+        review_queue,
+        context=risk_context or {},
+    )
     summary = _graph_summary(
         nodes,
         edges,
@@ -251,6 +261,7 @@ def _graph_record(
         behavioral_decision,
         investigation_recommendations,
         review_queue,
+        threat_prediction,
         related,
     )
     return {
@@ -287,6 +298,13 @@ def _graph_record(
                     "category": review_queue.get("review_queue_category"),
                     "reason": review_queue.get("review_queue_reason"),
                 },
+                "threat_prediction": {
+                    "category": threat_prediction.get("prediction_category"),
+                    "score": threat_prediction.get("predicted_risk_score"),
+                    "confidence": threat_prediction.get("prediction_confidence"),
+                    "horizon": threat_prediction.get("prediction_horizon"),
+                    "reasons": threat_prediction.get("prediction_reasons"),
+                },
             }
         )[:16],
         "generated_at": timestamp,
@@ -299,6 +317,7 @@ def _graph_record(
         "behavioral_decision": behavioral_decision,
         "investigation_recommendations": investigation_recommendations,
         "review_queue": review_queue,
+        "threat_prediction": threat_prediction,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -321,6 +340,7 @@ def _graph_summary(
     behavioral_decision: dict[str, Any],
     investigation_recommendations: list[dict[str, Any]],
     review_queue: dict[str, Any],
+    threat_prediction: dict[str, Any],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -404,6 +424,15 @@ def _graph_summary(
         "review_queue_evidence": review_queue.get("review_queue_evidence", "-"),
         "review_queue_next_step": review_queue.get("review_queue_next_step", "-"),
         "review_queue_summary": review_queue.get("review_queue_summary", "-"),
+        "predicted_risk_level": threat_prediction.get("predicted_risk_level", "low"),
+        "predicted_risk_score": threat_prediction.get("predicted_risk_score", 0.0),
+        "prediction_confidence": threat_prediction.get("prediction_confidence", 0.0),
+        "prediction_horizon": threat_prediction.get("prediction_horizon", "medium_term"),
+        "prediction_category": threat_prediction.get("prediction_category", "uncertain_prediction"),
+        "prediction_summary": threat_prediction.get("prediction_summary", "-"),
+        "prediction_reasons": threat_prediction.get("prediction_reasons", "-"),
+        "prediction_limitations": threat_prediction.get("prediction_limitations", "-"),
+        "prediction_next_steps": threat_prediction.get("prediction_next_steps", "-"),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -1661,6 +1690,370 @@ def _review_queue_record(
         "read_only": True,
         "advisory_only": True,
     }
+
+
+def _build_threat_prediction_model(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    investigation_recommendations: list[dict[str, Any]],
+    review_queue: dict[str, Any],
+    *,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    primary_cluster = _primary_cluster(clusters)
+    strongest_insight = _strongest_graph_insight(insights)
+    top_investigation = _top_investigation_recommendation(investigation_recommendations)
+    current_risk = _prediction_current_risk(context, risk_evolution)
+    category = _prediction_category(
+        risk_evolution=risk_evolution,
+        behavioral_decision=behavioral_decision,
+        primary_cluster=primary_cluster,
+        strongest_insight=strongest_insight,
+        top_investigation=top_investigation,
+        review_queue=review_queue,
+        context=context,
+    )
+    score = _prediction_risk_score(
+        category=category,
+        current_risk=current_risk,
+        risk_evolution=risk_evolution,
+        primary_cluster=primary_cluster,
+        strongest_insight=strongest_insight,
+        review_queue=review_queue,
+        context=context,
+    )
+    confidence = _prediction_confidence(
+        category=category,
+        risk_evolution=risk_evolution,
+        primary_cluster=primary_cluster,
+        strongest_insight=strongest_insight,
+        context=context,
+        relationship_count=len(relationships),
+        cluster_count=len(clusters),
+        insight_count=len(insights),
+    )
+    reasons = _prediction_reasons(
+        category=category,
+        score=score,
+        risk_evolution=risk_evolution,
+        behavioral_decision=behavioral_decision,
+        primary_cluster=primary_cluster,
+        strongest_insight=strongest_insight,
+        top_investigation=top_investigation,
+        review_queue=review_queue,
+        context=context,
+    )
+    limitations = _prediction_limitations(
+        risk_evolution=risk_evolution,
+        primary_cluster=primary_cluster,
+        strongest_insight=strongest_insight,
+        context=context,
+        relationship_count=len(relationships),
+        cluster_count=len(clusters),
+        insight_count=len(insights),
+    )
+    horizon = _prediction_horizon(
+        category=category,
+        score=score,
+        risk_evolution=risk_evolution,
+        primary_cluster=primary_cluster,
+        review_queue=review_queue,
+    )
+    return {
+        "predicted_risk_level": _prediction_risk_level(score),
+        "predicted_risk_score": score,
+        "prediction_confidence": confidence,
+        "prediction_horizon": horizon,
+        "prediction_category": category,
+        "prediction_summary": _prediction_summary(category, score, horizon, reasons),
+        "prediction_reasons": "; ".join(reasons),
+        "prediction_limitations": "; ".join(limitations) if limitations else "no_major_limitations",
+        "prediction_next_steps": _prediction_next_steps(category),
+        "metadata_only": True,
+        "read_only": True,
+        "advisory_only": True,
+        "training_performed": False,
+        "automated_action": False,
+        "external_connectivity": False,
+    }
+
+
+def _prediction_current_risk(context: dict[str, Any], risk_evolution: dict[str, Any]) -> float:
+    current = _optional_float(risk_evolution.get("current_risk_score"))
+    if current is None:
+        current = _optional_float(context.get("current_risk_score"))
+    if current is None:
+        current = _optional_float(context.get("risk_score"))
+    return _bounded_score(current or 0.0)
+
+
+def _prediction_category(
+    *,
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    strongest_insight: dict[str, Any],
+    top_investigation: dict[str, Any],
+    review_queue: dict[str, Any],
+    context: dict[str, Any],
+) -> str:
+    confidence = float(context.get("candidate_confidence") or 0.0)
+    evidence_quality = _safe_text(context.get("evidence_quality")).lower()
+    observation_count = int(context.get("observation_count") or 0)
+    drift_score = float(context.get("drift_score") or 0.0)
+    stability = float(context.get("profile_stability") or 0.0)
+    stability_label = _safe_text(context.get("profile_stability_label"))
+    risk_direction = _safe_text(risk_evolution.get("risk_evolution_direction"))
+    cluster_risk = _safe_text(primary_cluster.get("cluster_risk_level"))
+    cluster_trend = _safe_text(primary_cluster.get("cluster_trend"))
+    decision = _safe_text(behavioral_decision.get("behavioral_decision_category"))
+    insight_score = float(strongest_insight.get("insight_score") or 0.0)
+    top_priority = _safe_text(top_investigation.get("priority"))
+    review_priority = _safe_text(review_queue.get("review_queue_priority"))
+
+    sparse_low_confidence = confidence < 0.50 and observation_count <= 2
+    weak_context = evidence_quality in {"-", "weak", "limited", "low", "unknown"} and observation_count <= 2
+    if sparse_low_confidence or weak_context:
+        return "uncertain_prediction"
+    if (
+        (drift_score >= 0.60 and risk_direction in {"increasing", "fluctuating"})
+        or (
+            cluster_trend in {"emerging", "growing"}
+            and (cluster_risk in {"high", "critical"} or review_priority in {"high", "critical"})
+        )
+        or (decision == "elevated_risk_behavior" and risk_direction in {"increasing", "fluctuating"})
+        or top_priority == "critical"
+        or insight_score >= 0.84
+    ):
+        return "increasing_risk"
+    if risk_direction == "decreasing" and drift_score <= 0.45 and cluster_risk not in {"high", "critical"}:
+        return "decreasing_risk"
+    if (
+        (stability_label == "stable" or stability >= 0.70)
+        and drift_score <= 0.25
+        and risk_direction in {"stable", "decreasing"}
+        and cluster_risk not in {"high", "critical"}
+    ):
+        return "stable_behavior"
+    if cluster_trend in {"emerging", "growing"} and confidence >= 0.50:
+        return "emerging_behavior"
+    if risk_direction == "insufficient_history" or observation_count <= 1:
+        return "uncertain_prediction"
+    return "stable_behavior"
+
+
+def _prediction_risk_score(
+    *,
+    category: str,
+    current_risk: float,
+    risk_evolution: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    strongest_insight: dict[str, Any],
+    review_queue: dict[str, Any],
+    context: dict[str, Any],
+) -> float:
+    drift_score = float(context.get("drift_score") or 0.0)
+    stability = float(context.get("profile_stability") or 0.0)
+    insight_score = float(strongest_insight.get("insight_score") or 0.0)
+    cluster_score = _prediction_cluster_risk_score(primary_cluster.get("cluster_risk_level"))
+    review_score = _prediction_priority_score(review_queue.get("review_queue_priority"))
+    direction_score = _prediction_direction_score(risk_evolution.get("risk_evolution_direction"))
+    score = (
+        current_risk * 0.32
+        + drift_score * 0.18
+        + insight_score * 0.14
+        + cluster_score * 0.14
+        + review_score * 0.10
+        + direction_score * 0.12
+    )
+    if category == "stable_behavior":
+        score -= 0.12 * min(stability, 1.0)
+    elif category == "decreasing_risk":
+        score -= 0.06
+    elif category == "emerging_behavior":
+        score += 0.08
+    elif category == "increasing_risk":
+        score += 0.10
+    elif category == "uncertain_prediction":
+        score = max(score, 0.28)
+    return _bounded_score(score)
+
+
+def _prediction_confidence(
+    *,
+    category: str,
+    risk_evolution: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    strongest_insight: dict[str, Any],
+    context: dict[str, Any],
+    relationship_count: int,
+    cluster_count: int,
+    insight_count: int,
+) -> float:
+    candidate_confidence = float(context.get("candidate_confidence") or 0.0)
+    stability = float(context.get("profile_stability") or 0.0)
+    risk_confidence = float(risk_evolution.get("risk_evolution_confidence") or 0.0)
+    cluster_confidence = float(primary_cluster.get("cluster_confidence") or primary_cluster.get("confidence_score") or 0.0)
+    insight_score = float(strongest_insight.get("insight_score") or 0.0)
+    observation_support = min(int(context.get("observation_count") or 0) / 6, 1.0)
+    graph_support = min((relationship_count + cluster_count + insight_count) / 8, 1.0)
+    confidence = (
+        0.20
+        + candidate_confidence * 0.18
+        + stability * 0.14
+        + risk_confidence * 0.14
+        + cluster_confidence * 0.12
+        + insight_score * 0.08
+        + observation_support * 0.08
+        + graph_support * 0.06
+    )
+    if category == "uncertain_prediction":
+        confidence = min(confidence, 0.58)
+    return _bounded_score(confidence)
+
+
+def _prediction_horizon(
+    *,
+    category: str,
+    score: float,
+    risk_evolution: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    review_queue: dict[str, Any],
+) -> str:
+    risk_direction = _safe_text(risk_evolution.get("risk_evolution_direction"))
+    cluster_risk = _safe_text(primary_cluster.get("cluster_risk_level"))
+    review_priority = _safe_text(review_queue.get("review_queue_priority"))
+    if category == "increasing_risk" and (
+        score >= 0.70 or cluster_risk in {"high", "critical"} or review_priority in {"high", "critical"}
+    ):
+        return "immediate"
+    if category in {"increasing_risk", "emerging_behavior", "uncertain_prediction"}:
+        return "short_term"
+    if category == "decreasing_risk" or risk_direction == "decreasing":
+        return "medium_term"
+    return "medium_term"
+
+
+def _prediction_reasons(
+    *,
+    category: str,
+    score: float,
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    strongest_insight: dict[str, Any],
+    top_investigation: dict[str, Any],
+    review_queue: dict[str, Any],
+    context: dict[str, Any],
+) -> list[str]:
+    reasons = [
+        f"category:{category}",
+        f"predicted_score:{score:.2f}",
+        f"risk_direction:{_safe_text(risk_evolution.get('risk_evolution_direction'))}",
+        f"cluster_risk:{_safe_text(primary_cluster.get('cluster_risk_level'))}",
+        f"cluster_trend:{_safe_text(primary_cluster.get('cluster_trend'))}",
+        f"drift_score:{float(context.get('drift_score') or 0.0):.2f}",
+        f"stability:{float(context.get('profile_stability') or 0.0):.2f}",
+        f"candidate_confidence:{float(context.get('candidate_confidence') or 0.0):.2f}",
+        f"behavioral_decision:{_safe_text(behavioral_decision.get('behavioral_decision_category'))}",
+        f"graph_insight:{_safe_text(strongest_insight.get('insight_type'))}",
+        f"graph_insight_score:{float(strongest_insight.get('insight_score') or 0.0):.2f}",
+        f"top_investigation_priority:{_safe_text(top_investigation.get('priority'))}",
+        f"review_priority:{_safe_text(review_queue.get('review_queue_priority'))}",
+        f"observations:{int(context.get('observation_count') or 0)}",
+    ]
+    return sorted(_unique_text(reasons, limit=18))
+
+
+def _prediction_limitations(
+    *,
+    risk_evolution: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    strongest_insight: dict[str, Any],
+    context: dict[str, Any],
+    relationship_count: int,
+    cluster_count: int,
+    insight_count: int,
+) -> list[str]:
+    limitations: list[str] = []
+    candidate_confidence = float(context.get("candidate_confidence") or 0.0)
+    evidence_quality = _safe_text(context.get("evidence_quality")).lower()
+    observation_count = int(context.get("observation_count") or 0)
+    if candidate_confidence < 0.50:
+        limitations.append("low_attribution_confidence")
+    if evidence_quality in {"-", "weak", "limited", "low", "unknown"}:
+        limitations.append("weak_evidence_quality")
+    if observation_count <= 2:
+        limitations.append("sparse_observation_history")
+    if _safe_text(risk_evolution.get("risk_evolution_direction")) == "insufficient_history":
+        limitations.append("insufficient_risk_history")
+    if not primary_cluster:
+        limitations.append("no_primary_cluster")
+    if not strongest_insight:
+        limitations.append("no_graph_insight")
+    if relationship_count == 0 or cluster_count == 0 or insight_count == 0:
+        limitations.append("limited_graph_context")
+    return sorted(_unique_text(limitations, limit=10))
+
+
+def _prediction_summary(category: str, score: float, horizon: str, reasons: list[str]) -> str:
+    if category == "stable_behavior":
+        prefix = "Predicted stable behavior from consistent metadata and low drift"
+    elif category == "increasing_risk":
+        prefix = "Predicted increasing behavioral risk from drift, risk evolution, and graph context"
+    elif category == "decreasing_risk":
+        prefix = "Predicted decreasing behavioral risk from historical risk reduction"
+    elif category == "emerging_behavior":
+        prefix = "Predicted emerging behavior from newly active cluster and relationship context"
+    else:
+        prefix = "Prediction remains uncertain because metadata support is limited"
+    return _safe_text(f"{prefix}; score:{score:.2f}; horizon:{horizon}; reasons:{len(reasons)}", limit=180)
+
+
+def _prediction_next_steps(category: str) -> str:
+    if category == "stable_behavior":
+        return "Continue routine observation and confirm the profile remains stable over future summaries."
+    if category == "increasing_risk":
+        return "Review risk evolution, drift, cluster trend, and investigation recommendations before taking any operator-approved action."
+    if category == "decreasing_risk":
+        return "Confirm the risk reduction is expected and continue observing for renewed drift or relationship growth."
+    if category == "emerging_behavior":
+        return "Collect additional observations and verify whether the emerging cluster matches expected service behavior."
+    return "Gather more metadata, review missing evidence, and reassess once additional observations are available."
+
+
+def _prediction_risk_level(score: float) -> str:
+    if score >= 0.82:
+        return "critical"
+    if score >= 0.62:
+        return "high"
+    if score >= 0.35:
+        return "medium"
+    return "low"
+
+
+def _prediction_cluster_risk_score(value: Any) -> float:
+    return {"critical": 1.0, "high": 0.74, "medium": 0.44, "low": 0.16}.get(_safe_text(value), 0.0)
+
+
+def _prediction_priority_score(value: Any) -> float:
+    return {"critical": 1.0, "high": 0.74, "medium": 0.44, "low": 0.16, "none": 0.0}.get(
+        _safe_text(value),
+        0.0,
+    )
+
+
+def _prediction_direction_score(value: Any) -> float:
+    return {
+        "increasing": 1.0,
+        "fluctuating": 0.78,
+        "insufficient_history": 0.40,
+        "stable": 0.22,
+        "decreasing": 0.08,
+    }.get(_safe_text(value), 0.30)
 
 
 def _behavioral_decision_category(

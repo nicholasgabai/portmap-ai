@@ -421,6 +421,10 @@ Implementation note: Phase 173.9 adds deterministic metadata-only operator revie
 
 Implementation note: Phase 173.10 stabilizes the deterministic metadata-only Phase 173 reasoning pipeline across attribution confidence, graph insights, historical risk evolution, behavioral decisions, investigation recommendations, review queue summaries, evidence ordering, reason ordering, summary ordering, deterministic IDs, priorities, and confidence outputs. The pass adds consistency normalization and regression coverage only, preserving existing AI and Risk detail surfaces without adding new intelligence, metadata collectors, panes, tabs, packet capture, packet crafting, telemetry, persistence changes, remediation, enforcement, blocking, runtime services, network communication, cloud services, scoring mutation, autonomous action, or future phase renumbering.
 
+### Phase 174 - Threat Prediction Models (Completed)
+
+Implementation note: Phase 174 adds deterministic metadata-only threat prediction summaries from existing attribution confidence, learning profile history, behavior graph relationships, clusters, graph insights, historical risk evolution, behavioral decisions, investigation recommendations, review queue metadata, stability, drift, and observation counts. Outputs include predicted risk level, score, confidence, horizon, category, summaries, sorted reasons, limitations, and operator next steps exposed through existing AI and Risk detail surfaces without layout changes. This introduces advisory prediction only and does not add packet capture, packet crafting, IDS signatures, malware detection, enforcement, firewall rules, process termination, remediation, automatic actions, cloud services, external APIs, telemetry, machine-learning training, stochastic prediction, external probability models, new collectors, packet inspection, or payload analysis.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

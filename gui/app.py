@@ -1437,6 +1437,33 @@ def _active_risk_finding_rows(
                 "review_queue_summary": _behavior_graph_text_field(
                     classification, "review_queue_summary", limit=140
                 ),
+                "predicted_risk_level": _behavior_graph_text_field(
+                    classification, "predicted_risk_level", limit=16
+                ),
+                "predicted_risk_score": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("predicted_risk_score")
+                ),
+                "prediction_confidence": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("prediction_confidence")
+                ),
+                "prediction_horizon": _behavior_graph_text_field(
+                    classification, "prediction_horizon", limit=24
+                ),
+                "prediction_category": _behavior_graph_text_field(
+                    classification, "prediction_category", limit=32
+                ),
+                "prediction_summary": _behavior_graph_text_field(
+                    classification, "prediction_summary", limit=140
+                ),
+                "prediction_reasons": _behavior_graph_text_field(
+                    classification, "prediction_reasons", limit=140
+                ),
+                "prediction_limitations": _behavior_graph_text_field(
+                    classification, "prediction_limitations", limit=140
+                ),
+                "prediction_next_steps": _behavior_graph_text_field(
+                    classification, "prediction_next_steps", limit=140
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1572,6 +1599,15 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Review Queue Evidence", row.get("review_queue_evidence", "-")),
         ("Review Queue Next Step", row.get("review_queue_next_step", "-")),
         ("Review Queue Summary", row.get("review_queue_summary", "-")),
+        ("Predicted Risk Level", row.get("predicted_risk_level", "-")),
+        ("Predicted Risk Score", row.get("predicted_risk_score", "-")),
+        ("Prediction Confidence", row.get("prediction_confidence", "-")),
+        ("Prediction Horizon", row.get("prediction_horizon", "-")),
+        ("Prediction Category", row.get("prediction_category", "-")),
+        ("Prediction Summary", row.get("prediction_summary", "-")),
+        ("Prediction Reasons", row.get("prediction_reasons", "-")),
+        ("Prediction Limitations", row.get("prediction_limitations", "-")),
+        ("Prediction Next Steps", row.get("prediction_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -3040,6 +3076,15 @@ def _ai_provider_model_rows(
                 "review_queue_evidence": "-",
                 "review_queue_next_step": "-",
                 "review_queue_summary": "-",
+                "predicted_risk_level": "-",
+                "predicted_risk_score": "-",
+                "prediction_confidence": "-",
+                "prediction_horizon": "-",
+                "prediction_category": "-",
+                "prediction_summary": "-",
+                "prediction_reasons": "-",
+                "prediction_limitations": "-",
+                "prediction_next_steps": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -3268,6 +3313,33 @@ def _ai_provider_model_rows(
             row["review_queue_summary"] = _behavior_graph_text_field(
                 model_record, "review_queue_summary", limit=140
             )
+            row["predicted_risk_level"] = _behavior_graph_text_field(
+                model_record, "predicted_risk_level", limit=16
+            )
+            row["predicted_risk_score"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("predicted_risk_score")
+            )
+            row["prediction_confidence"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("prediction_confidence")
+            )
+            row["prediction_horizon"] = _behavior_graph_text_field(
+                model_record, "prediction_horizon", limit=24
+            )
+            row["prediction_category"] = _behavior_graph_text_field(
+                model_record, "prediction_category", limit=32
+            )
+            row["prediction_summary"] = _behavior_graph_text_field(
+                model_record, "prediction_summary", limit=140
+            )
+            row["prediction_reasons"] = _behavior_graph_text_field(
+                model_record, "prediction_reasons", limit=140
+            )
+            row["prediction_limitations"] = _behavior_graph_text_field(
+                model_record, "prediction_limitations", limit=140
+            )
+            row["prediction_next_steps"] = _behavior_graph_text_field(
+                model_record, "prediction_next_steps", limit=140
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -3385,6 +3457,15 @@ def _ai_provider_model_rows(
             "review_queue_evidence": row["review_queue_evidence"],
             "review_queue_next_step": row["review_queue_next_step"],
             "review_queue_summary": row["review_queue_summary"],
+            "predicted_risk_level": row["predicted_risk_level"],
+            "predicted_risk_score": row["predicted_risk_score"],
+            "prediction_confidence": row["prediction_confidence"],
+            "prediction_horizon": row["prediction_horizon"],
+            "prediction_category": row["prediction_category"],
+            "prediction_summary": row["prediction_summary"],
+            "prediction_reasons": row["prediction_reasons"],
+            "prediction_limitations": row["prediction_limitations"],
+            "prediction_next_steps": row["prediction_next_steps"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3516,6 +3597,15 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Review Queue Evidence", row.get("review_queue_evidence", "-")),
         ("Review Queue Next Step", row.get("review_queue_next_step", "-")),
         ("Review Queue Summary", row.get("review_queue_summary", "-")),
+        ("Predicted Risk Level", row.get("predicted_risk_level", "-")),
+        ("Predicted Risk Score", row.get("predicted_risk_score", "-")),
+        ("Prediction Confidence", row.get("prediction_confidence", "-")),
+        ("Prediction Horizon", row.get("prediction_horizon", "-")),
+        ("Prediction Category", row.get("prediction_category", "-")),
+        ("Prediction Summary", row.get("prediction_summary", "-")),
+        ("Prediction Reasons", row.get("prediction_reasons", "-")),
+        ("Prediction Limitations", row.get("prediction_limitations", "-")),
+        ("Prediction Next Steps", row.get("prediction_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),

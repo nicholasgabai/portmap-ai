@@ -1102,6 +1102,21 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Review Queue Evidence"] != "-"
     assert details["Review Queue Next Step"] != "-"
     assert details["Review Queue Summary"] != "-"
+    assert details["Predicted Risk Level"] in {"low", "medium", "high", "critical"}
+    assert details["Predicted Risk Score"] != "-"
+    assert details["Prediction Confidence"] != "-"
+    assert details["Prediction Horizon"] in {"immediate", "short_term", "medium_term"}
+    assert details["Prediction Category"] in {
+        "stable_behavior",
+        "increasing_risk",
+        "decreasing_risk",
+        "emerging_behavior",
+        "uncertain_prediction",
+    }
+    assert details["Prediction Summary"] != "-"
+    assert details["Prediction Reasons"] != "-"
+    assert details["Prediction Limitations"] != "-"
+    assert details["Prediction Next Steps"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1145,7 +1160,7 @@ def test_wrapped_detail_rows_break_long_tokens_without_wrapping_short_values():
     assert all(len(row[1]) <= 24 for row in rows)
 
 
-def test_ai_and_risk_detail_rows_preserve_review_queue_layout_order():
+def test_ai_and_risk_detail_rows_preserve_review_queue_and_prediction_layout_order():
     row = {
         "investigation_operator_next_steps": "Review graph context",
         "review_queue_required": "yes",
@@ -1155,6 +1170,8 @@ def test_ai_and_risk_detail_rows_preserve_review_queue_layout_order():
         "review_queue_evidence": "priority:medium; category:confidence_review",
         "review_queue_next_step": "Queue for standard operator review",
         "review_queue_summary": "required:yes; priority:medium; category:confidence_review",
+        "prediction_category": "uncertain_prediction",
+        "prediction_next_steps": "Gather more metadata",
         "related_asset": "asset-a",
     }
     ai_labels = [label for label, _ in gui_app._ai_detail_rows(row)]
@@ -1163,7 +1180,9 @@ def test_ai_and_risk_detail_rows_preserve_review_queue_layout_order():
     for labels in (ai_labels, risk_labels):
         assert labels.index("Investigation Operator Next Steps") < labels.index("Review Queue Required")
         assert labels.index("Review Queue Required") < labels.index("Review Queue Summary")
-        assert labels.index("Review Queue Summary") < labels.index("Related Asset")
+        assert labels.index("Review Queue Summary") < labels.index("Predicted Risk Level")
+        assert labels.index("Prediction Category") < labels.index("Prediction Next Steps")
+        assert labels.index("Prediction Next Steps") < labels.index("Related Asset")
 
 
 def test_ai_details_table_wraps_long_metadata_and_preserves_cursor_selection():
@@ -1330,6 +1349,10 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "review_queue_evidence": "priority:critical;category:elevated_behavior_review;" + ("review-evidence-token" * 5),
         "review_queue_next_step": "Place at the top of operator review and inspect cluster risk evolution " + ("review-next-step-token" * 5),
         "review_queue_summary": "required:yes;priority:critical;category:elevated_behavior_review;" + ("review-summary-token" * 5),
+        "prediction_summary": "Predicted increasing behavioral risk from drift and graph context " + ("prediction-summary-token" * 5),
+        "prediction_reasons": "category:increasing_risk;cluster_risk:critical;" + ("prediction-reason-token" * 5),
+        "prediction_limitations": "insufficient_risk_history;" + ("prediction-limitation-token" * 5),
+        "prediction_next_steps": "Review risk evolution drift and cluster trend before approved action " + ("prediction-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1377,6 +1400,10 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Review Queue Evidence" for row in rendered)
             assert any(row[0] == "Review Queue Next Step" for row in rendered)
             assert any(row[0] == "Review Queue Summary" for row in rendered)
+            assert any(row[0] == "Prediction Summary" for row in rendered)
+            assert any(row[0] == "Prediction Reasons" for row in rendered)
+            assert any(row[0] == "Prediction Limitations" for row in rendered)
+            assert any(row[0] == "Prediction Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -2001,6 +2028,21 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Review Queue Evidence"] != "-"
     assert details["Review Queue Next Step"] != "-"
     assert details["Review Queue Summary"] != "-"
+    assert details["Predicted Risk Level"] in {"low", "medium", "high", "critical"}
+    assert details["Predicted Risk Score"] != "-"
+    assert details["Prediction Confidence"] != "-"
+    assert details["Prediction Horizon"] in {"immediate", "short_term", "medium_term"}
+    assert details["Prediction Category"] in {
+        "stable_behavior",
+        "increasing_risk",
+        "decreasing_risk",
+        "emerging_behavior",
+        "uncertain_prediction",
+    }
+    assert details["Prediction Summary"] != "-"
+    assert details["Prediction Reasons"] != "-"
+    assert details["Prediction Limitations"] != "-"
+    assert details["Prediction Next Steps"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -2187,6 +2229,10 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "review_queue_evidence": "risk_direction:increasing;top_investigation_priority:high;" + ("review-evidence-token" * 5),
         "review_queue_next_step": "Queue for near-term operator review of risk evolution graph insight " + ("review-next-step-token" * 5),
         "review_queue_summary": "required:yes;priority:high;category:historical_change_review;" + ("review-summary-token" * 5),
+        "prediction_summary": "Predicted emerging behavior from graph context " + ("prediction-summary-token" * 5),
+        "prediction_reasons": "category:emerging_behavior;cluster_trend:growing;" + ("prediction-reason-token" * 5),
+        "prediction_limitations": "limited_graph_context;" + ("prediction-limitation-token" * 5),
+        "prediction_next_steps": "Collect additional observations and verify expected service behavior " + ("prediction-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2234,6 +2280,10 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Review Queue Evidence" for row in rendered)
             assert any(row[0] == "Review Queue Next Step" for row in rendered)
             assert any(row[0] == "Review Queue Summary" for row in rendered)
+            assert any(row[0] == "Prediction Summary" for row in rendered)
+            assert any(row[0] == "Prediction Reasons" for row in rendered)
+            assert any(row[0] == "Prediction Limitations" for row in rendered)
+            assert any(row[0] == "Prediction Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 

@@ -2635,6 +2635,187 @@ def test_behavior_graph_stabilization_preserves_deterministic_ordering_and_outpu
     assert first["summary"]["behavioral_decision_confidence"] == second["summary"]["behavioral_decision_confidence"]
 
 
+def test_behavior_graph_threat_prediction_covers_stable_increasing_decreasing_emerging_and_uncertain():
+    stable = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "ssh",
+            "protocol": "tcp",
+            "port": 22,
+            "score": 0.18,
+            "previous_risk_score": 0.20,
+            "risk_score_history": [0.20, 0.19, 0.18],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"},
+        learning_profile_history={
+            "historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}
+        },
+        generated_at=FIXED_TIME,
+    )
+    increasing = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "admin",
+            "related_services": ["backend", "cache"],
+            "protocol": "tcp",
+            "port": 9443,
+            "score": 0.94,
+            "previous_risk_score": 0.40,
+            "risk_score_history": [0.40, 0.62, 0.94],
+            "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+            "previous_relationship_count": 0,
+            "previous_signal_count": 0,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "count": 4,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.76, "evidence_quality": "strong"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.40, "drift_score": 0.72}},
+        generated_at=FIXED_TIME,
+    )
+    decreasing = build_behavior_graph_model(
+        {
+            "node_id": "asset-b",
+            "service_name": "postgresql",
+            "protocol": "tcp",
+            "port": 5432,
+            "score": 0.30,
+            "previous_risk_score": 0.68,
+            "risk_score_history": [0.68, 0.48, 0.30],
+            "score_factors": ["expected-db"],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "postgresql",
+            "confidence": 0.78,
+            "evidence_quality": "strong",
+        },
+        learning_profile_history={
+            "historical_summary": {"stability_score": 0.72, "stability_label": "stable", "drift_score": 0.10}
+        },
+        generated_at=FIXED_TIME,
+    )
+    emerging = build_behavior_graph_model(
+        {
+            "node_id": "asset-c",
+            "service_name": "grafana",
+            "protocol": "tcp",
+            "port": 3000,
+            "score": 0.25,
+            "previous_relationship_count": 0,
+            "previous_signal_count": 0,
+            "first_seen": "2026-06-14T12:00:00+00:00",
+            "last_seen": "2026-06-14T12:00:00+00:00",
+            "count": 3,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "grafana", "confidence": 0.72, "evidence_quality": "moderate"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.38, "drift_score": 0.32}},
+        generated_at=FIXED_TIME,
+    )
+    uncertain = build_behavior_graph_model(
+        {
+            "node_id": "asset-d",
+            "service_name": "unknown",
+            "protocol": "tcp",
+            "port": 49152,
+            "score": 0.33,
+            "count": 1,
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "unknown_application",
+            "confidence": 0.31,
+            "evidence_quality": "weak",
+            "missing_evidence": ["process_match", "service_fingerprint"],
+        },
+        learning_profile_history={"historical_summary": {"stability_score": 0.10, "drift_score": 0.10}},
+        generated_at=FIXED_TIME,
+    )
+
+    assert stable["summary"]["prediction_category"] == "stable_behavior"
+    assert stable["summary"]["prediction_horizon"] == "medium_term"
+    assert stable["summary"]["predicted_risk_level"] == "low"
+    assert increasing["summary"]["prediction_category"] == "increasing_risk"
+    assert increasing["summary"]["prediction_horizon"] == "immediate"
+    assert increasing["summary"]["predicted_risk_level"] in {"high", "critical"}
+    assert decreasing["summary"]["prediction_category"] == "decreasing_risk"
+    assert decreasing["summary"]["prediction_horizon"] == "medium_term"
+    assert emerging["summary"]["prediction_category"] == "emerging_behavior"
+    assert emerging["summary"]["prediction_horizon"] == "short_term"
+    assert uncertain["summary"]["prediction_category"] == "uncertain_prediction"
+    assert uncertain["summary"]["prediction_horizon"] == "short_term"
+
+    for record in (stable, increasing, decreasing, emerging, uncertain):
+        summary = record["summary"]
+        assert 0.0 <= summary["predicted_risk_score"] <= 1.0
+        assert 0.0 <= summary["prediction_confidence"] <= 1.0
+        assert summary["prediction_summary"] != "-"
+        assert summary["prediction_reasons"].split("; ") == sorted(summary["prediction_reasons"].split("; "))
+        if summary["prediction_limitations"] != "no_major_limitations":
+            assert summary["prediction_limitations"].split("; ") == sorted(
+                summary["prediction_limitations"].split("; ")
+            )
+        assert record["threat_prediction"]["metadata_only"] is True
+        assert record["threat_prediction"]["read_only"] is True
+
+
+def test_behavior_graph_threat_prediction_is_reproducible_for_identical_input():
+    observation = {
+        "node_id": "asset-a",
+        "service_name": "admin",
+        "related_services": ["backend", "cache"],
+        "protocol": "tcp",
+        "port": 9443,
+        "score": 0.94,
+        "previous_risk_score": 0.40,
+        "risk_score_history": [0.40, 0.62, 0.94],
+        "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+        "previous_risk_signals": ["risk-a"],
+        "previous_relationship_count": 0,
+        "previous_signal_count": 0,
+        "previous_cluster_count": 0,
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-02T00:00:00+00:00",
+        "count": 4,
+        "source_mode": "live",
+    }
+    classifier = {
+        "top_classification": "nginx",
+        "confidence": 0.42,
+        "evidence_quality": "weak",
+        "missing_evidence": ["service_fingerprint", "process_owner"],
+        "candidates": [
+            {"candidate": "nginx", "probability": 0.42},
+            {"candidate": "apache", "probability": 0.35},
+        ],
+    }
+    history = {"historical_summary": {"stability_score": 0.20, "drift_score": 0.72, "historical_observations": 4}}
+
+    first = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+    second = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+
+    assert first["threat_prediction"] == second["threat_prediction"]
+    assert first["summary"]["prediction_category"] == second["summary"]["prediction_category"]
+    assert first["summary"]["prediction_confidence"] == second["summary"]["prediction_confidence"]
+    assert first["summary"]["prediction_summary"] == second["summary"]["prediction_summary"]
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {
