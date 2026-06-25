@@ -1075,6 +1075,20 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Risk Change Reasons"] != "-"
     assert details["Risk Evolution Summary"] != "-"
     assert details["Risk Operator Next Steps"] != "-"
+    assert details["Behavioral Decision"] in {
+        "benign_observation",
+        "monitor_behavior",
+        "investigate_behavior",
+        "elevated_risk_behavior",
+        "insufficient_context",
+    }
+    assert details["Behavioral Decision Category"] == details["Behavioral Decision"]
+    assert details["Behavioral Decision Confidence"] != "-"
+    assert details["Behavioral Decision Summary"] != "-"
+    assert details["Behavioral Decision Reasons"] != "-"
+    assert details["Behavioral Decision Evidence"] != "-"
+    assert details["Behavioral Decision Limitations"] != "-"
+    assert details["Behavioral Decision Next Steps"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1271,6 +1285,11 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "risk_change_reasons": "risk_score_increase:0.42;" + ("risk-change-reason-token" * 5),
         "risk_evolution_summary": "direction:increasing;velocity:rapid;" + ("risk-evolution-summary-token" * 5),
         "risk_operator_next_steps": "Review new signals relationships and cluster changes " + ("risk-next-step-token" * 5),
+        "behavioral_decision_summary": "Elevated behavioral risk supported by graph cluster context " + ("behavior-summary-token" * 5),
+        "behavioral_decision_reasons": "cluster_risk:critical;" + ("behavior-reason-token" * 5),
+        "behavioral_decision_evidence": "primary_cluster:graph-cluster-token;" + ("behavior-evidence-token" * 5),
+        "behavioral_decision_limitations": "limited_observation_history;" + ("behavior-limitation-token" * 5),
+        "behavioral_decision_next_steps": "Review cluster risk graph insights and risk evolution " + ("behavior-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1307,6 +1326,11 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Risk Change Reasons" for row in rendered)
             assert any(row[0] == "Risk Evolution Summary" for row in rendered)
             assert any(row[0] == "Risk Operator Next Steps" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Summary" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Reasons" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Evidence" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Limitations" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -1904,6 +1928,20 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Risk Change Reasons"] != "-"
     assert details["Risk Evolution Summary"] != "-"
     assert details["Risk Operator Next Steps"] != "-"
+    assert details["Behavioral Decision"] in {
+        "benign_observation",
+        "monitor_behavior",
+        "investigate_behavior",
+        "elevated_risk_behavior",
+        "insufficient_context",
+    }
+    assert details["Behavioral Decision Category"] == details["Behavioral Decision"]
+    assert details["Behavioral Decision Confidence"] != "-"
+    assert details["Behavioral Decision Summary"] != "-"
+    assert details["Behavioral Decision Reasons"] != "-"
+    assert details["Behavioral Decision Evidence"] != "-"
+    assert details["Behavioral Decision Limitations"] != "-"
+    assert details["Behavioral Decision Next Steps"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -2079,6 +2117,11 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "risk_change_reasons": "relationships_removed:4;" + ("risk-change-reason-token" * 5),
         "risk_evolution_summary": "direction:decreasing;velocity:moderate;" + ("risk-evolution-summary-token" * 5),
         "risk_operator_next_steps": "Continue observation and confirm expected behavior " + ("risk-next-step-token" * 5),
+        "behavioral_decision_summary": "Behavior warrants operator investigation based on graph evidence " + ("behavior-summary-token" * 5),
+        "behavioral_decision_reasons": "risk_score:0.82;" + ("behavior-reason-token" * 5),
+        "behavioral_decision_evidence": "strongest_graph_insight:low_confidence_high_risk;" + ("behavior-evidence-token" * 5),
+        "behavioral_decision_limitations": "low_classification_confidence;" + ("behavior-limitation-token" * 5),
+        "behavioral_decision_next_steps": "Inspect attribution evidence drift relationships and risk changes " + ("behavior-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2115,6 +2158,11 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Risk Change Reasons" for row in rendered)
             assert any(row[0] == "Risk Evolution Summary" for row in rendered)
             assert any(row[0] == "Risk Operator Next Steps" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Summary" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Reasons" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Evidence" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Limitations" for row in rendered)
+            assert any(row[0] == "Behavioral Decision Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 

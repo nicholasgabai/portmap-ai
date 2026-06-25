@@ -1374,6 +1374,30 @@ def _active_risk_finding_rows(
                 "risk_operator_next_steps": _behavior_graph_text_field(
                     classification, "risk_operator_next_steps", limit=120
                 ),
+                "behavioral_decision": _behavior_graph_text_field(
+                    classification, "behavioral_decision", limit=32
+                ),
+                "behavioral_decision_category": _behavior_graph_text_field(
+                    classification, "behavioral_decision_category", limit=32
+                ),
+                "behavioral_decision_confidence": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("behavioral_decision_confidence")
+                ),
+                "behavioral_decision_summary": _behavior_graph_text_field(
+                    classification, "behavioral_decision_summary", limit=120
+                ),
+                "behavioral_decision_reasons": _behavior_graph_text_field(
+                    classification, "behavioral_decision_reasons", limit=120
+                ),
+                "behavioral_decision_evidence": _behavior_graph_text_field(
+                    classification, "behavioral_decision_evidence", limit=120
+                ),
+                "behavioral_decision_limitations": _behavior_graph_text_field(
+                    classification, "behavioral_decision_limitations", limit=120
+                ),
+                "behavioral_decision_next_steps": _behavior_graph_text_field(
+                    classification, "behavioral_decision_next_steps", limit=120
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1488,6 +1512,14 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Risk Change Reasons", row.get("risk_change_reasons", "-")),
         ("Risk Evolution Summary", row.get("risk_evolution_summary", "-")),
         ("Risk Operator Next Steps", row.get("risk_operator_next_steps", "-")),
+        ("Behavioral Decision", row.get("behavioral_decision", "-")),
+        ("Behavioral Decision Category", row.get("behavioral_decision_category", "-")),
+        ("Behavioral Decision Confidence", row.get("behavioral_decision_confidence", "-")),
+        ("Behavioral Decision Summary", row.get("behavioral_decision_summary", "-")),
+        ("Behavioral Decision Reasons", row.get("behavioral_decision_reasons", "-")),
+        ("Behavioral Decision Evidence", row.get("behavioral_decision_evidence", "-")),
+        ("Behavioral Decision Limitations", row.get("behavioral_decision_limitations", "-")),
+        ("Behavioral Decision Next Steps", row.get("behavioral_decision_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -2935,6 +2967,14 @@ def _ai_provider_model_rows(
                 "risk_change_reasons": "-",
                 "risk_evolution_summary": "-",
                 "risk_operator_next_steps": "-",
+                "behavioral_decision": "-",
+                "behavioral_decision_category": "-",
+                "behavioral_decision_confidence": "-",
+                "behavioral_decision_summary": "-",
+                "behavioral_decision_reasons": "-",
+                "behavioral_decision_evidence": "-",
+                "behavioral_decision_limitations": "-",
+                "behavioral_decision_next_steps": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -3100,6 +3140,30 @@ def _ai_provider_model_rows(
             row["risk_operator_next_steps"] = _behavior_graph_text_field(
                 model_record, "risk_operator_next_steps", limit=120
             )
+            row["behavioral_decision"] = _behavior_graph_text_field(
+                model_record, "behavioral_decision", limit=32
+            )
+            row["behavioral_decision_category"] = _behavior_graph_text_field(
+                model_record, "behavioral_decision_category", limit=32
+            )
+            row["behavioral_decision_confidence"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("behavioral_decision_confidence")
+            )
+            row["behavioral_decision_summary"] = _behavior_graph_text_field(
+                model_record, "behavioral_decision_summary", limit=120
+            )
+            row["behavioral_decision_reasons"] = _behavior_graph_text_field(
+                model_record, "behavioral_decision_reasons", limit=120
+            )
+            row["behavioral_decision_evidence"] = _behavior_graph_text_field(
+                model_record, "behavioral_decision_evidence", limit=120
+            )
+            row["behavioral_decision_limitations"] = _behavior_graph_text_field(
+                model_record, "behavioral_decision_limitations", limit=120
+            )
+            row["behavioral_decision_next_steps"] = _behavior_graph_text_field(
+                model_record, "behavioral_decision_next_steps", limit=120
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -3196,6 +3260,14 @@ def _ai_provider_model_rows(
             "risk_change_reasons": row["risk_change_reasons"],
             "risk_evolution_summary": row["risk_evolution_summary"],
             "risk_operator_next_steps": row["risk_operator_next_steps"],
+            "behavioral_decision": row["behavioral_decision"],
+            "behavioral_decision_category": row["behavioral_decision_category"],
+            "behavioral_decision_confidence": row["behavioral_decision_confidence"],
+            "behavioral_decision_summary": row["behavioral_decision_summary"],
+            "behavioral_decision_reasons": row["behavioral_decision_reasons"],
+            "behavioral_decision_evidence": row["behavioral_decision_evidence"],
+            "behavioral_decision_limitations": row["behavioral_decision_limitations"],
+            "behavioral_decision_next_steps": row["behavioral_decision_next_steps"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3306,6 +3378,14 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Risk Change Reasons", row.get("risk_change_reasons", "-")),
         ("Risk Evolution Summary", row.get("risk_evolution_summary", "-")),
         ("Risk Operator Next Steps", row.get("risk_operator_next_steps", "-")),
+        ("Behavioral Decision", row.get("behavioral_decision", "-")),
+        ("Behavioral Decision Category", row.get("behavioral_decision_category", "-")),
+        ("Behavioral Decision Confidence", row.get("behavioral_decision_confidence", "-")),
+        ("Behavioral Decision Summary", row.get("behavioral_decision_summary", "-")),
+        ("Behavioral Decision Reasons", row.get("behavioral_decision_reasons", "-")),
+        ("Behavioral Decision Evidence", row.get("behavioral_decision_evidence", "-")),
+        ("Behavioral Decision Limitations", row.get("behavioral_decision_limitations", "-")),
+        ("Behavioral Decision Next Steps", row.get("behavioral_decision_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),

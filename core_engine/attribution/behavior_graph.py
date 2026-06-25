@@ -206,7 +206,23 @@ def _graph_record(
         insight_rows,
         context=risk_context or {},
     )
-    summary = _graph_summary(nodes, edges, relationship_rows, cluster_rows, insight_rows, risk_evolution, related)
+    behavioral_decision = _build_behavioral_decision_explanation(
+        relationship_rows,
+        cluster_rows,
+        insight_rows,
+        risk_evolution,
+        context=risk_context or {},
+    )
+    summary = _graph_summary(
+        nodes,
+        edges,
+        relationship_rows,
+        cluster_rows,
+        insight_rows,
+        risk_evolution,
+        behavioral_decision,
+        related,
+    )
     return {
         "record_type": "graph_behavior_model",
         "record_version": BEHAVIOR_GRAPH_RECORD_VERSION,
@@ -225,6 +241,12 @@ def _graph_record(
                     "delta": risk_evolution.get("risk_delta"),
                     "reasons": risk_evolution.get("risk_change_reasons"),
                 },
+                "behavioral_decision": {
+                    "decision": behavioral_decision.get("behavioral_decision"),
+                    "category": behavioral_decision.get("behavioral_decision_category"),
+                    "confidence": behavioral_decision.get("behavioral_decision_confidence"),
+                    "reasons": behavioral_decision.get("behavioral_decision_reasons"),
+                },
             }
         )[:16],
         "generated_at": timestamp,
@@ -234,6 +256,7 @@ def _graph_record(
         "clusters": cluster_rows,
         "insights": insight_rows,
         "risk_evolution": risk_evolution,
+        "behavioral_decision": behavioral_decision,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -253,6 +276,7 @@ def _graph_summary(
     clusters: list[dict[str, Any]],
     insights: list[dict[str, Any]],
     risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -310,6 +334,16 @@ def _graph_summary(
         "risk_change_reasons": risk_evolution.get("risk_change_reasons", "insufficient_history"),
         "risk_evolution_summary": risk_evolution.get("risk_evolution_summary", "-"),
         "risk_operator_next_steps": risk_evolution.get("risk_operator_next_steps", "-"),
+        "behavioral_decision": behavioral_decision.get("behavioral_decision", "-"),
+        "behavioral_decision_confidence": behavioral_decision.get("behavioral_decision_confidence", 0.0),
+        "behavioral_decision_category": behavioral_decision.get(
+            "behavioral_decision_category", "insufficient_context"
+        ),
+        "behavioral_decision_summary": behavioral_decision.get("behavioral_decision_summary", "-"),
+        "behavioral_decision_reasons": behavioral_decision.get("behavioral_decision_reasons", "-"),
+        "behavioral_decision_evidence": behavioral_decision.get("behavioral_decision_evidence", "-"),
+        "behavioral_decision_limitations": behavioral_decision.get("behavioral_decision_limitations", "-"),
+        "behavioral_decision_next_steps": behavioral_decision.get("behavioral_decision_next_steps", "-"),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -690,6 +724,20 @@ def _cluster_context(
         "risk_score_history": _risk_score_history_values(observation, history_summary),
         "risk_signals": risk_signals,
         "previous_risk_signals": previous_risk_signals,
+        "top_classification": _safe_text(classification_model.get("top_classification")),
+        "evidence_quality": _safe_text(classification_model.get("evidence_quality")).lower(),
+        "candidate_count": _safe_int_value(
+            classification_model.get("candidate_count")
+            or len(classification_model.get("candidates") or [])
+            or len(classification_model.get("alternative_candidates") or [])
+        ),
+        "has_profile_metadata": bool(learning_profile or learning_profile_history),
+        "recommendation_count": _safe_int_value(
+            history_summary.get("recommendation_count") or learning_profile_history.get("recommendation_count")
+        ),
+        "primary_recommendation": _safe_text(
+            history_summary.get("primary_recommendation") or learning_profile_history.get("primary_recommendation")
+        ),
         "profile_stability": _safe_float(
             history_summary.get("stability_score") or learning_profile.get("stability_score")
         ),
@@ -808,6 +856,283 @@ def _build_historical_risk_evolution(
         "read_only": True,
         "advisory_only": True,
     }
+
+
+def _build_behavioral_decision_explanation(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    *,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    primary_cluster = _primary_cluster(clusters)
+    strongest_insight = _strongest_graph_insight(insights)
+    risk_score = _optional_float(context.get("current_risk_score"))
+    if risk_score is None:
+        risk_score = _optional_float(context.get("risk_score")) or 0.0
+    candidate_confidence = float(context.get("candidate_confidence") or 0.0)
+    drift_score = float(context.get("drift_score") or 0.0)
+    observation_count = int(context.get("observation_count") or 0)
+    evidence_quality = _safe_text(context.get("evidence_quality")).lower()
+    cluster_risk = _safe_text(primary_cluster.get("cluster_risk_level"))
+    cluster_trend = _safe_text(primary_cluster.get("cluster_trend"))
+    stability_label = _safe_text(context.get("profile_stability_label"))
+    risk_direction = _safe_text(risk_evolution.get("risk_evolution_direction"))
+    insight_score = float(strongest_insight.get("insight_score") or 0.0)
+
+    category = _behavioral_decision_category(
+        risk_score=risk_score,
+        candidate_confidence=candidate_confidence,
+        cluster_risk=cluster_risk,
+        cluster_trend=cluster_trend,
+        insight_score=insight_score,
+        risk_direction=risk_direction,
+        drift_score=drift_score,
+        stability_label=stability_label,
+        observation_count=observation_count,
+        evidence_quality=evidence_quality,
+        relationship_count=len(relationships),
+        cluster_count=len(clusters),
+        has_profile_metadata=bool(context.get("has_profile_metadata")),
+    )
+    reasons = _behavioral_decision_reasons(
+        category=category,
+        risk_score=risk_score,
+        candidate_confidence=candidate_confidence,
+        cluster_risk=cluster_risk,
+        cluster_trend=cluster_trend,
+        insight_score=insight_score,
+        risk_direction=risk_direction,
+        drift_score=drift_score,
+        stability_label=stability_label,
+        observation_count=observation_count,
+        evidence_quality=evidence_quality,
+        relationship_count=len(relationships),
+        cluster_count=len(clusters),
+    )
+    evidence = _behavioral_decision_evidence(
+        primary_cluster=primary_cluster,
+        strongest_insight=strongest_insight,
+        risk_evolution=risk_evolution,
+        context=context,
+        relationship_count=len(relationships),
+        cluster_count=len(clusters),
+    )
+    limitations = _behavioral_decision_limitations(
+        candidate_confidence=candidate_confidence,
+        evidence_quality=evidence_quality,
+        observation_count=observation_count,
+        risk_direction=risk_direction,
+        has_profile_metadata=bool(context.get("has_profile_metadata")),
+    )
+    confidence = _behavioral_decision_confidence(
+        category=category,
+        candidate_confidence=candidate_confidence,
+        evidence_quality=evidence_quality,
+        observation_count=observation_count,
+        relationship_count=len(relationships),
+        cluster_count=len(clusters),
+        insight_score=insight_score,
+        risk_evolution_confidence=float(risk_evolution.get("risk_evolution_confidence") or 0.0),
+        limitation_count=len(limitations),
+    )
+    return {
+        "behavioral_decision": category,
+        "behavioral_decision_confidence": confidence,
+        "behavioral_decision_category": category,
+        "behavioral_decision_summary": _behavioral_decision_summary(category, reasons),
+        "behavioral_decision_reasons": "; ".join(reasons),
+        "behavioral_decision_evidence": "; ".join(evidence),
+        "behavioral_decision_limitations": "; ".join(limitations) if limitations else "no_major_limitations",
+        "behavioral_decision_next_steps": _behavioral_decision_next_steps(category),
+        "advisory_only": True,
+        "metadata_only": True,
+        "read_only": True,
+    }
+
+
+def _behavioral_decision_category(
+    *,
+    risk_score: float,
+    candidate_confidence: float,
+    cluster_risk: str,
+    cluster_trend: str,
+    insight_score: float,
+    risk_direction: str,
+    drift_score: float,
+    stability_label: str,
+    observation_count: int,
+    evidence_quality: str,
+    relationship_count: int,
+    cluster_count: int,
+    has_profile_metadata: bool,
+) -> str:
+    weak_evidence = evidence_quality in {"-", "weak", "limited", "low", "unknown"}
+    missing_context = (
+        observation_count <= 1
+        and candidate_confidence < 0.50
+        and weak_evidence
+        and (not has_profile_metadata or relationship_count == 0 or cluster_count == 0)
+    )
+    if missing_context:
+        return "insufficient_context"
+    if cluster_risk == "critical" and cluster_trend in {"emerging", "growing"} and risk_score >= 0.70:
+        return "elevated_risk_behavior"
+    if risk_score >= 0.86 or (cluster_risk in {"high", "critical"} and insight_score >= 0.70):
+        return "elevated_risk_behavior"
+    if risk_score >= 0.62 or cluster_risk == "high" or drift_score >= 0.60:
+        return "investigate_behavior"
+    if risk_direction in {"increasing", "fluctuating"} and insight_score >= 0.45:
+        return "investigate_behavior"
+    if risk_score <= 0.30 and stability_label == "stable" and drift_score <= 0.15 and observation_count >= 3:
+        return "benign_observation"
+    if risk_score <= 0.25 and cluster_risk in {"-", "low"} and risk_direction in {"stable", "decreasing"}:
+        return "benign_observation"
+    return "monitor_behavior"
+
+
+def _behavioral_decision_reasons(
+    *,
+    category: str,
+    risk_score: float,
+    candidate_confidence: float,
+    cluster_risk: str,
+    cluster_trend: str,
+    insight_score: float,
+    risk_direction: str,
+    drift_score: float,
+    stability_label: str,
+    observation_count: int,
+    evidence_quality: str,
+    relationship_count: int,
+    cluster_count: int,
+) -> list[str]:
+    reasons = [
+        f"category:{category}",
+        f"risk_score:{risk_score:.2f}",
+        f"classification_confidence:{candidate_confidence:.2f}",
+        f"evidence_quality:{evidence_quality or '-'}",
+        f"observations:{observation_count}",
+    ]
+    if cluster_risk != "-":
+        reasons.append(f"cluster_risk:{cluster_risk}")
+    if cluster_trend != "-":
+        reasons.append(f"cluster_trend:{cluster_trend}")
+    if insight_score:
+        reasons.append(f"graph_insight_score:{insight_score:.2f}")
+    if risk_direction != "-":
+        reasons.append(f"risk_direction:{risk_direction}")
+    if drift_score:
+        reasons.append(f"drift_score:{drift_score:.2f}")
+    if stability_label != "-":
+        reasons.append(f"profile_stability:{stability_label}")
+    if relationship_count:
+        reasons.append(f"relationships:{relationship_count}")
+    if cluster_count:
+        reasons.append(f"clusters:{cluster_count}")
+    return sorted(_unique_text(reasons, limit=16))
+
+
+def _behavioral_decision_evidence(
+    *,
+    primary_cluster: dict[str, Any],
+    strongest_insight: dict[str, Any],
+    risk_evolution: dict[str, Any],
+    context: dict[str, Any],
+    relationship_count: int,
+    cluster_count: int,
+) -> list[str]:
+    evidence = [
+        f"top_classification:{_safe_text(context.get('top_classification'))}",
+        f"primary_cluster:{_safe_text(primary_cluster.get('cluster_id'))}",
+        f"primary_cluster_risk:{_safe_text(primary_cluster.get('cluster_risk_level'))}",
+        f"primary_cluster_trend:{_safe_text(primary_cluster.get('cluster_trend'))}",
+        f"strongest_graph_insight:{_safe_text(strongest_insight.get('insight_type'))}",
+        f"risk_evolution:{_safe_text(risk_evolution.get('risk_evolution_direction'))}",
+        f"relationships:{relationship_count}",
+        f"clusters:{cluster_count}",
+    ]
+    recommendation = _safe_text(context.get("primary_recommendation"))
+    if recommendation != "-":
+        evidence.append(f"recommendation:{recommendation}")
+    return sorted(_unique_text(evidence, limit=12))
+
+
+def _behavioral_decision_limitations(
+    *,
+    candidate_confidence: float,
+    evidence_quality: str,
+    observation_count: int,
+    risk_direction: str,
+    has_profile_metadata: bool,
+) -> list[str]:
+    limitations: list[str] = []
+    if candidate_confidence < 0.50:
+        limitations.append("low_classification_confidence")
+    if evidence_quality in {"-", "weak", "limited", "low", "unknown"}:
+        limitations.append("weak_or_missing_evidence_quality")
+    if observation_count <= 1:
+        limitations.append("limited_observation_history")
+    if risk_direction == "insufficient_history":
+        limitations.append("insufficient_risk_history")
+    if not has_profile_metadata:
+        limitations.append("missing_learning_profile_context")
+    return sorted(_unique_text(limitations, limit=8))
+
+
+def _behavioral_decision_confidence(
+    *,
+    category: str,
+    candidate_confidence: float,
+    evidence_quality: str,
+    observation_count: int,
+    relationship_count: int,
+    cluster_count: int,
+    insight_score: float,
+    risk_evolution_confidence: float,
+    limitation_count: int,
+) -> float:
+    score = 0.34
+    score += min(max(candidate_confidence, 0.0), 1.0) * 0.20
+    score += min(observation_count, 6) / 6.0 * 0.12
+    score += min(relationship_count, 6) / 6.0 * 0.10
+    score += min(cluster_count, 5) / 5.0 * 0.08
+    score += min(max(insight_score, 0.0), 1.0) * 0.08
+    score += min(max(risk_evolution_confidence, 0.0), 1.0) * 0.08
+    if evidence_quality in {"strong", "high"}:
+        score += 0.08
+    elif evidence_quality in {"moderate", "medium"}:
+        score += 0.04
+    if category == "insufficient_context":
+        score = min(score, 0.42)
+    score -= min(limitation_count, 4) * 0.04
+    return _bounded_score(score)
+
+
+def _behavioral_decision_summary(category: str, reasons: list[str]) -> str:
+    reason_count = len(reasons)
+    if category == "elevated_risk_behavior":
+        return f"Elevated behavioral risk is supported by graph, cluster, or historical risk context ({reason_count} reasons)."
+    if category == "investigate_behavior":
+        return f"Behavior warrants operator investigation based on risk, drift, or graph evidence ({reason_count} reasons)."
+    if category == "benign_observation":
+        return f"Behavior currently appears expected or stable from available metadata ({reason_count} reasons)."
+    if category == "monitor_behavior":
+        return f"Behavior should remain under observation while additional metadata accumulates ({reason_count} reasons)."
+    return f"Behavioral context is insufficient for a stronger advisory conclusion ({reason_count} reasons)."
+
+
+def _behavioral_decision_next_steps(category: str) -> str:
+    if category == "elevated_risk_behavior":
+        return "Review cluster risk, graph insights, and risk evolution before approving any operator action."
+    if category == "investigate_behavior":
+        return "Inspect attribution evidence, drift, relationships, and recent risk changes."
+    if category == "benign_observation":
+        return "Continue routine observation and compare future changes against this stable context."
+    if category == "monitor_behavior":
+        return "Continue collecting metadata and recheck confidence, profile stability, and graph relationships."
+    return "Gather additional observations, profile history, and attribution evidence before drawing conclusions."
 
 
 def _risk_evolution_direction(*, delta: float | None, history: list[float], has_history: bool) -> str:

@@ -2055,6 +2055,129 @@ def test_behavior_graph_risk_evolution_tracks_relationship_removal_and_cluster_s
     assert any(reason.startswith("clusters_shrank:") for reason in reasons)
 
 
+def test_behavior_graph_behavioral_decision_explains_elevated_risk_behavior():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "admin",
+            "related_services": ["backend", "cache"],
+            "protocol": "tcp",
+            "port": 9443,
+            "score": 0.94,
+            "previous_risk_score": 0.40,
+            "risk_score_history": [0.40, 0.62, 0.94],
+            "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+            "previous_relationship_count": 0,
+            "previous_signal_count": 0,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "count": 4,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.76, "evidence_quality": "strong"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.40, "drift_score": 0.30}},
+        generated_at=FIXED_TIME,
+    )
+    summary = graph["summary"]
+
+    assert summary["behavioral_decision"] == "elevated_risk_behavior"
+    assert summary["behavioral_decision_category"] == "elevated_risk_behavior"
+    assert 0.0 <= summary["behavioral_decision_confidence"] <= 1.0
+    assert "cluster_risk:critical" in summary["behavioral_decision_reasons"]
+    assert "Review cluster risk" in summary["behavioral_decision_next_steps"]
+
+
+def test_behavior_graph_behavioral_decision_explains_investigate_behavior():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "database",
+            "protocol": "tcp",
+            "port": 5432,
+            "score": 0.63,
+            "previous_risk_score": 0.58,
+            "risk_score_history": [0.58, 0.61, 0.63],
+            "previous_relationship_count": 3,
+            "previous_signal_count": 0,
+            "previous_entity_count": 5,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "count": 3,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "postgresql", "confidence": 0.64, "evidence_quality": "moderate"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.50, "drift_score": 0.10}},
+        generated_at=FIXED_TIME,
+    )
+    summary = graph["summary"]
+
+    assert summary["behavioral_decision_category"] == "investigate_behavior"
+    assert "risk_score:0.63" in summary["behavioral_decision_reasons"]
+    assert "Inspect attribution evidence" in summary["behavioral_decision_next_steps"]
+
+
+def test_behavior_graph_behavioral_decision_explains_monitor_behavior():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "web",
+            "protocol": "tcp",
+            "port": 8080,
+            "score": 0.48,
+            "previous_risk_score": 0.45,
+            "risk_score_history": [0.45, 0.48],
+            "score_factors": ["risk-a"],
+            "count": 2,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "unknown_application", "confidence": 0.36, "evidence_quality": "weak"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.42, "drift_score": 0.18}},
+        generated_at=FIXED_TIME,
+    )
+    summary = graph["summary"]
+
+    assert summary["behavioral_decision_category"] == "monitor_behavior"
+    assert "classification_confidence:0.36" in summary["behavioral_decision_reasons"]
+    assert "Continue collecting metadata" in summary["behavioral_decision_next_steps"]
+
+
+def test_behavior_graph_behavioral_decision_explains_benign_observation():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "ssh",
+            "protocol": "tcp",
+            "port": 22,
+            "score": 0.18,
+            "previous_risk_score": 0.20,
+            "risk_score_history": [0.20, 0.19, 0.18],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}},
+        generated_at=FIXED_TIME,
+    )
+    summary = graph["summary"]
+
+    assert summary["behavioral_decision_category"] == "benign_observation"
+    assert "profile_stability:stable" in summary["behavioral_decision_reasons"]
+    assert "Continue routine observation" in summary["behavioral_decision_next_steps"]
+
+
+def test_behavior_graph_behavioral_decision_explains_insufficient_context_and_sorted_reasons():
+    graph = build_behavior_graph_model({}, generated_at=FIXED_TIME)
+    summary = graph["summary"]
+    reasons = summary["behavioral_decision_reasons"].split("; ")
+
+    assert summary["behavioral_decision_category"] == "insufficient_context"
+    assert summary["behavioral_decision"] == "insufficient_context"
+    assert 0.0 <= summary["behavioral_decision_confidence"] <= 1.0
+    assert reasons == sorted(reasons)
+    assert "limited_observation_history" in summary["behavioral_decision_limitations"]
+    assert "Gather additional observations" in summary["behavioral_decision_next_steps"]
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {
