@@ -232,6 +232,15 @@ def _graph_record(
         context=risk_context or {},
         related=related,
     )
+    review_queue = _build_review_queue_summary(
+        relationship_rows,
+        cluster_rows,
+        insight_rows,
+        risk_evolution,
+        behavioral_decision,
+        investigation_recommendations,
+        context=risk_context or {},
+    )
     summary = _graph_summary(
         nodes,
         edges,
@@ -241,6 +250,7 @@ def _graph_record(
         risk_evolution,
         behavioral_decision,
         investigation_recommendations,
+        review_queue,
         related,
     )
     return {
@@ -271,6 +281,12 @@ def _graph_record(
                     (row.get("category"), row.get("priority"), row.get("recommendation_id"))
                     for row in investigation_recommendations
                 ],
+                "review_queue": {
+                    "required": review_queue.get("review_queue_required"),
+                    "priority": review_queue.get("review_queue_priority"),
+                    "category": review_queue.get("review_queue_category"),
+                    "reason": review_queue.get("review_queue_reason"),
+                },
             }
         )[:16],
         "generated_at": timestamp,
@@ -282,6 +298,7 @@ def _graph_record(
         "risk_evolution": risk_evolution,
         "behavioral_decision": behavioral_decision,
         "investigation_recommendations": investigation_recommendations,
+        "review_queue": review_queue,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -303,6 +320,7 @@ def _graph_summary(
     risk_evolution: dict[str, Any],
     behavioral_decision: dict[str, Any],
     investigation_recommendations: list[dict[str, Any]],
+    review_queue: dict[str, Any],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -379,6 +397,13 @@ def _graph_summary(
             investigation_recommendations
         ),
         "investigation_operator_next_steps": _investigation_operator_next_steps(top_investigation),
+        "review_queue_required": review_queue.get("review_queue_required", "no"),
+        "review_queue_priority": review_queue.get("review_queue_priority", "none"),
+        "review_queue_category": review_queue.get("review_queue_category", "none"),
+        "review_queue_reason": review_queue.get("review_queue_reason", "-"),
+        "review_queue_evidence": review_queue.get("review_queue_evidence", "-"),
+        "review_queue_next_step": review_queue.get("review_queue_next_step", "-"),
+        "review_queue_summary": review_queue.get("review_queue_summary", "-"),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -1342,6 +1367,262 @@ def _investigation_operator_next_steps(top: dict[str, Any]) -> str:
     if not top:
         return "-"
     return _safe_text(top.get("suggested_operator_action"), limit=180)
+
+
+def _build_review_queue_summary(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    investigation_recommendations: list[dict[str, Any]],
+    *,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    primary_cluster = _primary_cluster(clusters)
+    strongest_insight = _strongest_graph_insight(insights)
+    top_investigation = _top_investigation_recommendation(investigation_recommendations)
+    if not _has_review_queue_context(
+        relationships,
+        clusters,
+        insights,
+        risk_evolution,
+        behavioral_decision,
+        investigation_recommendations,
+        context=context,
+    ):
+        return _review_queue_record(
+            required=False,
+            priority="none",
+            category="none",
+            reason="insufficient_evidence_for_operator_review",
+            evidence=[],
+            next_step="Collect additional metadata before adding this item to the operator review queue.",
+        )
+
+    priority = _review_queue_priority(
+        behavioral_decision=behavioral_decision,
+        risk_evolution=risk_evolution,
+        top_investigation=top_investigation,
+        primary_cluster=primary_cluster,
+        strongest_insight=strongest_insight,
+        context=context,
+    )
+    category = _review_queue_category(
+        priority=priority,
+        behavioral_decision=behavioral_decision,
+        risk_evolution=risk_evolution,
+        top_investigation=top_investigation,
+        primary_cluster=primary_cluster,
+        context=context,
+    )
+    evidence = _review_queue_evidence(
+        priority=priority,
+        category=category,
+        relationships=relationships,
+        clusters=clusters,
+        insights=insights,
+        risk_evolution=risk_evolution,
+        behavioral_decision=behavioral_decision,
+        top_investigation=top_investigation,
+        primary_cluster=primary_cluster,
+        strongest_insight=strongest_insight,
+        context=context,
+    )
+    reason = _review_queue_reason(priority, category, evidence)
+    return _review_queue_record(
+        required=priority != "none",
+        priority=priority,
+        category=category,
+        reason=reason,
+        evidence=evidence,
+        next_step=_review_queue_next_step(priority, category),
+    )
+
+
+def _has_review_queue_context(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    investigation_recommendations: list[dict[str, Any]],
+    *,
+    context: dict[str, Any],
+) -> bool:
+    if relationships or clusters or insights or investigation_recommendations:
+        return True
+    if _safe_text(behavioral_decision.get("behavioral_decision_category")) not in {"-", "insufficient_context"}:
+        return True
+    if _safe_text(risk_evolution.get("current_risk_score")) != "-":
+        return True
+    return _optional_float(context.get("current_risk_score")) is not None or _optional_float(context.get("risk_score")) is not None
+
+
+def _review_queue_priority(
+    *,
+    behavioral_decision: dict[str, Any],
+    risk_evolution: dict[str, Any],
+    top_investigation: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    strongest_insight: dict[str, Any],
+    context: dict[str, Any],
+) -> str:
+    decision = _safe_text(behavioral_decision.get("behavioral_decision_category"))
+    risk_direction = _safe_text(risk_evolution.get("risk_evolution_direction"))
+    cluster_risk = _safe_text(primary_cluster.get("cluster_risk_level"))
+    cluster_trend = _safe_text(primary_cluster.get("cluster_trend"))
+    top_priority = _safe_text(top_investigation.get("priority"))
+    candidate_confidence = float(context.get("candidate_confidence") or 0.0)
+    evidence_quality = _safe_text(context.get("evidence_quality")).lower()
+    observation_count = int(context.get("observation_count") or 0)
+    insight_score = float(strongest_insight.get("insight_score") or 0.0)
+    drift_score = float(context.get("drift_score") or 0.0)
+
+    if top_priority == "critical" or (decision == "elevated_risk_behavior" and cluster_risk == "critical"):
+        return "critical"
+    if (
+        decision == "elevated_risk_behavior"
+        or risk_direction in {"increasing", "fluctuating"}
+        or cluster_risk in {"high", "critical"}
+        or top_priority == "high"
+        or insight_score >= 0.80
+    ):
+        return "high"
+    if (
+        decision == "benign_observation"
+        or (
+            cluster_risk in {"-", "low"}
+            and cluster_trend in {"stable", "dormant", "unknown", "-"}
+            and risk_direction in {"stable", "decreasing"}
+            and candidate_confidence >= 0.50
+            and observation_count >= 3
+        )
+    ):
+        return "low"
+    if (
+        top_priority == "medium"
+        or candidate_confidence < 0.50
+        or evidence_quality in {"-", "weak", "limited", "low", "unknown"}
+        or observation_count <= 2
+        or risk_direction == "insufficient_history"
+        or drift_score >= 0.45
+    ):
+        return "medium"
+    return "medium"
+
+
+def _review_queue_category(
+    *,
+    priority: str,
+    behavioral_decision: dict[str, Any],
+    risk_evolution: dict[str, Any],
+    top_investigation: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    context: dict[str, Any],
+) -> str:
+    if priority == "none":
+        return "none"
+    decision = _safe_text(behavioral_decision.get("behavioral_decision_category"))
+    risk_direction = _safe_text(risk_evolution.get("risk_evolution_direction"))
+    cluster_risk = _safe_text(primary_cluster.get("cluster_risk_level"))
+    evidence_quality = _safe_text(context.get("evidence_quality")).lower()
+    if decision == "elevated_risk_behavior" or cluster_risk in {"high", "critical"}:
+        return "elevated_behavior_review"
+    if risk_direction in {"increasing", "decreasing", "fluctuating", "insufficient_history"}:
+        return "historical_change_review"
+    if _safe_text(top_investigation.get("category")) in {"verify_service_identity", "review_missing_evidence"}:
+        return "confidence_review"
+    if evidence_quality in {"-", "weak", "limited", "low", "unknown"}:
+        return "confidence_review"
+    if priority == "low":
+        return "stable_observation_review"
+    return "operator_attention_review"
+
+
+def _review_queue_evidence(
+    *,
+    priority: str,
+    category: str,
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    top_investigation: dict[str, Any],
+    primary_cluster: dict[str, Any],
+    strongest_insight: dict[str, Any],
+    context: dict[str, Any],
+) -> list[str]:
+    return _unique_text(
+        [
+            f"priority:{priority}",
+            f"category:{category}",
+            f"risk_direction:{_safe_text(risk_evolution.get('risk_evolution_direction'))}",
+            f"decision:{_safe_text(behavioral_decision.get('behavioral_decision_category'))}",
+            f"candidate_confidence:{float(context.get('candidate_confidence') or 0.0):.2f}",
+            f"evidence_quality:{_safe_text(context.get('evidence_quality')).lower()}",
+            f"observations:{int(context.get('observation_count') or 0)}",
+            f"cluster_risk:{_safe_text(primary_cluster.get('cluster_risk_level'))}",
+            f"cluster_trend:{_safe_text(primary_cluster.get('cluster_trend'))}",
+            f"top_investigation:{_safe_text(top_investigation.get('category'))}",
+            f"top_investigation_priority:{_safe_text(top_investigation.get('priority'))}",
+            f"decision_confidence:{float(behavioral_decision.get('behavioral_decision_confidence') or 0.0):.2f}",
+            f"risk_confidence:{float(risk_evolution.get('risk_evolution_confidence') or 0.0):.2f}",
+            f"insight:{_safe_text(strongest_insight.get('insight_type'))}",
+            f"insight_score:{float(strongest_insight.get('insight_score') or 0.0):.2f}",
+            f"relationships:{len(relationships)}",
+            f"clusters:{len(clusters)}",
+            f"insights:{len(insights)}",
+        ],
+        limit=18,
+    )
+
+
+def _review_queue_reason(priority: str, category: str, evidence: list[str]) -> str:
+    if priority == "none":
+        return "insufficient_evidence_for_operator_review"
+    return f"{priority}_{category}_from_{len(evidence)}_metadata_signals"
+
+
+def _review_queue_next_step(priority: str, category: str) -> str:
+    if priority == "critical":
+        return "Place at the top of operator review and inspect cluster, risk evolution, and investigation recommendations."
+    if priority == "high":
+        return "Queue for near-term operator review of risk evolution, graph insight, and primary cluster context."
+    if priority == "medium":
+        return "Queue for standard operator review after checking confidence, missing evidence, and observation history."
+    if priority == "low":
+        return "Keep in low-priority review for expected behavior confirmation during routine monitoring."
+    return "Do not queue yet; collect more metadata before operator review."
+
+
+def _review_queue_record(
+    *,
+    required: bool,
+    priority: str,
+    category: str,
+    reason: str,
+    evidence: list[str],
+    next_step: str,
+) -> dict[str, Any]:
+    evidence_text = "; ".join(evidence) if evidence else "-"
+    required_text = "yes" if required else "no"
+    return {
+        "review_queue_required": required_text,
+        "review_queue_priority": priority,
+        "review_queue_category": category,
+        "review_queue_reason": _safe_text(reason, limit=140),
+        "review_queue_evidence": _safe_text(evidence_text, limit=180),
+        "review_queue_next_step": _safe_text(next_step, limit=180),
+        "review_queue_summary": _safe_text(
+            f"required:{required_text}; priority:{priority}; category:{category}; reason:{reason}",
+            limit=180,
+        ),
+        "metadata_only": True,
+        "read_only": True,
+        "advisory_only": True,
+    }
 
 
 def _behavioral_decision_category(

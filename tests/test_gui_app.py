@@ -1095,6 +1095,13 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Top Investigation Category"] != "-"
     assert details["Investigation Recommendation Summary"] != "-"
     assert details["Investigation Operator Next Steps"] != "-"
+    assert details["Review Queue Required"] in {"yes", "no"}
+    assert details["Review Queue Priority"] in {"critical", "high", "medium", "low", "none"}
+    assert details["Review Queue Category"] != "-"
+    assert details["Review Queue Reason"] != "-"
+    assert details["Review Queue Evidence"] != "-"
+    assert details["Review Queue Next Step"] != "-"
+    assert details["Review Queue Summary"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1298,6 +1305,10 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "behavioral_decision_next_steps": "Review cluster risk graph insights and risk evolution " + ("behavior-next-step-token" * 5),
         "investigation_recommendation_summary": "critical:review_risk_cluster:Review behavioral risk cluster;" + ("investigation-summary-token" * 5),
         "investigation_operator_next_steps": "Inspect primary cluster graph insight and expected behavior " + ("investigation-next-step-token" * 5),
+        "review_queue_reason": "critical_elevated_behavior_review_from_18_metadata_signals:" + ("review-reason-token" * 5),
+        "review_queue_evidence": "priority:critical;category:elevated_behavior_review;" + ("review-evidence-token" * 5),
+        "review_queue_next_step": "Place at the top of operator review and inspect cluster risk evolution " + ("review-next-step-token" * 5),
+        "review_queue_summary": "required:yes;priority:critical;category:elevated_behavior_review;" + ("review-summary-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1341,6 +1352,10 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Behavioral Decision Next Steps" for row in rendered)
             assert any(row[0] == "Investigation Recommendation Summary" for row in rendered)
             assert any(row[0] == "Investigation Operator Next Steps" for row in rendered)
+            assert any(row[0] == "Review Queue Reason" for row in rendered)
+            assert any(row[0] == "Review Queue Evidence" for row in rendered)
+            assert any(row[0] == "Review Queue Next Step" for row in rendered)
+            assert any(row[0] == "Review Queue Summary" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -1958,6 +1973,13 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Top Investigation Category"] != "-"
     assert details["Investigation Recommendation Summary"] != "-"
     assert details["Investigation Operator Next Steps"] != "-"
+    assert details["Review Queue Required"] in {"yes", "no"}
+    assert details["Review Queue Priority"] in {"critical", "high", "medium", "low", "none"}
+    assert details["Review Queue Category"] != "-"
+    assert details["Review Queue Reason"] != "-"
+    assert details["Review Queue Evidence"] != "-"
+    assert details["Review Queue Next Step"] != "-"
+    assert details["Review Queue Summary"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -2140,6 +2162,10 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "behavioral_decision_next_steps": "Inspect attribution evidence drift relationships and risk changes " + ("behavior-next-step-token" * 5),
         "investigation_recommendation_summary": "high:validate_historical_change:Validate historical risk change;" + ("investigation-summary-token" * 5),
         "investigation_operator_next_steps": "Compare risk delta change reasons and cluster trend " + ("investigation-next-step-token" * 5),
+        "review_queue_reason": "high_historical_change_review_from_16_metadata_signals:" + ("review-reason-token" * 5),
+        "review_queue_evidence": "risk_direction:increasing;top_investigation_priority:high;" + ("review-evidence-token" * 5),
+        "review_queue_next_step": "Queue for near-term operator review of risk evolution graph insight " + ("review-next-step-token" * 5),
+        "review_queue_summary": "required:yes;priority:high;category:historical_change_review;" + ("review-summary-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2183,6 +2209,10 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Behavioral Decision Next Steps" for row in rendered)
             assert any(row[0] == "Investigation Recommendation Summary" for row in rendered)
             assert any(row[0] == "Investigation Operator Next Steps" for row in rendered)
+            assert any(row[0] == "Review Queue Reason" for row in rendered)
+            assert any(row[0] == "Review Queue Evidence" for row in rendered)
+            assert any(row[0] == "Review Queue Next Step" for row in rendered)
+            assert any(row[0] == "Review Queue Summary" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 

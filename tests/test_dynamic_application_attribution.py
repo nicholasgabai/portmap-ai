@@ -2366,6 +2366,155 @@ def test_behavior_graph_investigation_recommendation_rows_include_required_metad
     assert graph["summary"]["investigation_operator_next_steps"] != "-"
 
 
+def test_behavior_graph_review_queue_summarizes_none_low_medium_high_and_critical_outcomes():
+    empty = build_behavior_graph_model({}, generated_at=FIXED_TIME)
+    critical = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "admin",
+            "related_services": ["backend", "cache"],
+            "protocol": "tcp",
+            "port": 9443,
+            "score": 0.94,
+            "previous_risk_score": 0.40,
+            "risk_score_history": [0.40, 0.62, 0.94],
+            "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+            "previous_relationship_count": 0,
+            "previous_signal_count": 0,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "count": 4,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.76, "evidence_quality": "strong"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.40, "drift_score": 0.30}},
+        generated_at=FIXED_TIME,
+    )
+    high = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "database",
+            "protocol": "tcp",
+            "port": 5432,
+            "score": 0.70,
+            "previous_risk_score": 0.45,
+            "risk_score_history": [0.45, 0.55, 0.70],
+            "count": 4,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "postgresql", "confidence": 0.72, "evidence_quality": "moderate"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.60, "drift_score": 0.20}},
+        generated_at=FIXED_TIME,
+    )
+    medium = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "web",
+            "protocol": "tcp",
+            "port": 8080,
+            "score": 0.48,
+            "previous_risk_score": 0.45,
+            "risk_score_history": [0.45, 0.48],
+            "score_factors": ["risk-a"],
+            "count": 2,
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "unknown_application",
+            "confidence": 0.36,
+            "evidence_quality": "weak",
+            "missing_evidence": ["process_match", "service_fingerprint"],
+        },
+        learning_profile_history={"historical_summary": {"stability_score": 0.42, "drift_score": 0.18}},
+        generated_at=FIXED_TIME,
+    )
+    low = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "ssh",
+            "protocol": "tcp",
+            "port": 22,
+            "score": 0.18,
+            "previous_risk_score": 0.20,
+            "risk_score_history": [0.20, 0.19, 0.18],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"},
+        learning_profile_history={
+            "historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    assert empty["summary"]["review_queue_required"] == "no"
+    assert empty["summary"]["review_queue_priority"] == "none"
+    assert empty["summary"]["review_queue_category"] == "none"
+    assert critical["summary"]["review_queue_required"] == "yes"
+    assert critical["summary"]["review_queue_priority"] == "critical"
+    assert critical["summary"]["review_queue_category"] == "elevated_behavior_review"
+    assert high["summary"]["review_queue_priority"] == "high"
+    assert high["summary"]["review_queue_category"] == "historical_change_review"
+    assert medium["summary"]["review_queue_priority"] == "medium"
+    assert medium["summary"]["review_queue_category"] == "confidence_review"
+    assert low["summary"]["review_queue_priority"] == "low"
+    assert low["summary"]["review_queue_category"] == "stable_observation_review"
+
+
+def test_behavior_graph_review_queue_handles_insufficient_history_without_score_mutation():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "web",
+            "protocol": "tcp",
+            "port": 80,
+            "score": 0.40,
+            "count": 1,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.70, "evidence_quality": "moderate"},
+        generated_at=FIXED_TIME,
+    )
+    summary = graph["summary"]
+
+    assert summary["risk_evolution_direction"] == "insufficient_history"
+    assert summary["review_queue_required"] == "yes"
+    assert summary["review_queue_priority"] == "medium"
+    assert summary["review_queue_category"] == "historical_change_review"
+    assert "risk_direction:insufficient_history" in summary["review_queue_evidence"]
+    assert summary["current_risk_score"] == 0.40
+
+
+def test_behavior_graph_review_queue_output_is_deterministic():
+    observation = {
+        "node_id": "asset-a",
+        "service_name": "web",
+        "protocol": "tcp",
+        "port": 8080,
+        "score": 0.48,
+        "previous_risk_score": 0.45,
+        "risk_score_history": [0.45, 0.48],
+        "score_factors": ["risk-a"],
+        "count": 2,
+        "source_mode": "live",
+    }
+    classifier = {
+        "top_classification": "unknown_application",
+        "confidence": 0.36,
+        "evidence_quality": "weak",
+        "missing_evidence": ["process_match", "service_fingerprint"],
+    }
+    first = build_behavior_graph_model(observation, classification_model=classifier, generated_at=FIXED_TIME)
+    second = build_behavior_graph_model(observation, classification_model=classifier, generated_at=FIXED_TIME)
+
+    assert first["review_queue"] == second["review_queue"]
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+    assert first["review_queue"]["metadata_only"] is True
+    assert first["review_queue"]["read_only"] is True
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {

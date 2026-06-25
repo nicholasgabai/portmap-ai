@@ -413,6 +413,10 @@ Implementation note: Phase 173.7 adds deterministic metadata-only behavioral dec
 
 Implementation note: Phase 173.8 adds deterministic metadata-only operator investigation recommendations from existing behavior graph relationships, cluster analysis, graph insights, historical risk evolution, and explainable behavioral decision metadata. Outputs include advisory recommendation IDs, priority, category, rationale, evidence, missing evidence, suggested operator actions, confidence-gain estimates, blocking conditions, related asset/service/profile/cluster/relationship/insight references, recommendation counts, top recommendation summaries, and operator next steps exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add packet capture, packet crafting, scanning changes, remediation execution, enforcement, blocking, scoring mutation, persistence changes, runtime behavior changes, external connectivity, new collectors, panes, tabs, tables, daemons, or autonomous action.
 
+#### 173.9 - Operator Review Queue Summaries (Completed)
+
+Implementation note: Phase 173.9 adds deterministic metadata-only operator review queue summaries from existing behavioral decisions, investigation recommendations, historical risk evolution, graph insights, primary cluster metadata, confidence, stability, and drift context. Outputs include review queue required state, priority, category, reason, evidence, next step, and compact summary fields exposed through existing AI and Risk detail surfaces without layout changes. This remains read-only and does not add packet capture, collectors, persistence changes, enforcement, blocking, remediation execution, scoring mutation, runtime behavior changes, new panes, tabs, tables, network calls, or autonomous action.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

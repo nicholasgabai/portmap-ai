@@ -1416,6 +1416,27 @@ def _active_risk_finding_rows(
                 "investigation_operator_next_steps": _behavior_graph_text_field(
                     classification, "investigation_operator_next_steps", limit=140
                 ),
+                "review_queue_required": _behavior_graph_text_field(
+                    classification, "review_queue_required", limit=12
+                ),
+                "review_queue_priority": _behavior_graph_text_field(
+                    classification, "review_queue_priority", limit=16
+                ),
+                "review_queue_category": _behavior_graph_text_field(
+                    classification, "review_queue_category", limit=48
+                ),
+                "review_queue_reason": _behavior_graph_text_field(
+                    classification, "review_queue_reason", limit=140
+                ),
+                "review_queue_evidence": _behavior_graph_text_field(
+                    classification, "review_queue_evidence", limit=140
+                ),
+                "review_queue_next_step": _behavior_graph_text_field(
+                    classification, "review_queue_next_step", limit=140
+                ),
+                "review_queue_summary": _behavior_graph_text_field(
+                    classification, "review_queue_summary", limit=140
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1544,6 +1565,13 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Top Investigation Category", row.get("top_investigation_category", "-")),
         ("Investigation Recommendation Summary", row.get("investigation_recommendation_summary", "-")),
         ("Investigation Operator Next Steps", row.get("investigation_operator_next_steps", "-")),
+        ("Review Queue Required", row.get("review_queue_required", "-")),
+        ("Review Queue Priority", row.get("review_queue_priority", "-")),
+        ("Review Queue Category", row.get("review_queue_category", "-")),
+        ("Review Queue Reason", row.get("review_queue_reason", "-")),
+        ("Review Queue Evidence", row.get("review_queue_evidence", "-")),
+        ("Review Queue Next Step", row.get("review_queue_next_step", "-")),
+        ("Review Queue Summary", row.get("review_queue_summary", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -3005,6 +3033,13 @@ def _ai_provider_model_rows(
                 "top_investigation_category": "-",
                 "investigation_recommendation_summary": "-",
                 "investigation_operator_next_steps": "-",
+                "review_queue_required": "-",
+                "review_queue_priority": "-",
+                "review_queue_category": "-",
+                "review_queue_reason": "-",
+                "review_queue_evidence": "-",
+                "review_queue_next_step": "-",
+                "review_queue_summary": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -3212,6 +3247,27 @@ def _ai_provider_model_rows(
             row["investigation_operator_next_steps"] = _behavior_graph_text_field(
                 model_record, "investigation_operator_next_steps", limit=140
             )
+            row["review_queue_required"] = _behavior_graph_text_field(
+                model_record, "review_queue_required", limit=12
+            )
+            row["review_queue_priority"] = _behavior_graph_text_field(
+                model_record, "review_queue_priority", limit=16
+            )
+            row["review_queue_category"] = _behavior_graph_text_field(
+                model_record, "review_queue_category", limit=48
+            )
+            row["review_queue_reason"] = _behavior_graph_text_field(
+                model_record, "review_queue_reason", limit=140
+            )
+            row["review_queue_evidence"] = _behavior_graph_text_field(
+                model_record, "review_queue_evidence", limit=140
+            )
+            row["review_queue_next_step"] = _behavior_graph_text_field(
+                model_record, "review_queue_next_step", limit=140
+            )
+            row["review_queue_summary"] = _behavior_graph_text_field(
+                model_record, "review_queue_summary", limit=140
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -3322,6 +3378,13 @@ def _ai_provider_model_rows(
             "top_investigation_category": row["top_investigation_category"],
             "investigation_recommendation_summary": row["investigation_recommendation_summary"],
             "investigation_operator_next_steps": row["investigation_operator_next_steps"],
+            "review_queue_required": row["review_queue_required"],
+            "review_queue_priority": row["review_queue_priority"],
+            "review_queue_category": row["review_queue_category"],
+            "review_queue_reason": row["review_queue_reason"],
+            "review_queue_evidence": row["review_queue_evidence"],
+            "review_queue_next_step": row["review_queue_next_step"],
+            "review_queue_summary": row["review_queue_summary"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3446,6 +3509,13 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Top Investigation Category", row.get("top_investigation_category", "-")),
         ("Investigation Recommendation Summary", row.get("investigation_recommendation_summary", "-")),
         ("Investigation Operator Next Steps", row.get("investigation_operator_next_steps", "-")),
+        ("Review Queue Required", row.get("review_queue_required", "-")),
+        ("Review Queue Priority", row.get("review_queue_priority", "-")),
+        ("Review Queue Category", row.get("review_queue_category", "-")),
+        ("Review Queue Reason", row.get("review_queue_reason", "-")),
+        ("Review Queue Evidence", row.get("review_queue_evidence", "-")),
+        ("Review Queue Next Step", row.get("review_queue_next_step", "-")),
+        ("Review Queue Summary", row.get("review_queue_summary", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
