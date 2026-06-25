@@ -1926,6 +1926,135 @@ def test_behavior_graph_insights_cover_low_confidence_high_risk_clusters():
     assert "Gather more metadata" in low_confidence[0]["operator_next_steps"]
 
 
+def test_behavior_graph_risk_evolution_handles_insufficient_history():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "web",
+            "protocol": "tcp",
+            "port": 443,
+            "score": 0.62,
+            "score_factors": ["risk-a"],
+            "count": 1,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.58},
+        generated_at=FIXED_TIME,
+    )
+    summary = graph["summary"]
+
+    assert summary["previous_risk_score"] == "-"
+    assert summary["current_risk_score"] == 0.62
+    assert summary["risk_delta"] == "-"
+    assert summary["risk_evolution_direction"] == "insufficient_history"
+    assert summary["risk_evolution_velocity"] == "unknown"
+    assert summary["risk_evolution_confidence"] == 0.20
+    assert "insufficient_history" in summary["risk_change_reasons"]
+    assert "Collect additional observations" in summary["risk_operator_next_steps"]
+
+
+def test_behavior_graph_risk_evolution_derives_direction_and_velocity():
+    cases = [
+        (0.30, 0.74, [0.30, 0.52, 0.74], "increasing", "rapid"),
+        (0.82, 0.56, [0.82, 0.70, 0.56], "decreasing", "moderate"),
+        (0.50, 0.53, [0.50, 0.52, 0.53], "stable", "slow"),
+        (0.40, 0.78, [0.40, 0.72, 0.48, 0.78], "fluctuating", "rapid"),
+    ]
+
+    for previous, current, history, direction, velocity in cases:
+        graph = build_behavior_graph_model(
+            {
+                "node_id": "asset-a",
+                "service_name": "web",
+                "protocol": "tcp",
+                "port": 443,
+                "score": current,
+                "previous_risk_score": previous,
+                "risk_score_history": history,
+                "score_factors": ["risk-a", "risk-b"],
+                "count": len(history),
+                "source_mode": "live",
+            },
+            classification_model={"top_classification": "nginx", "confidence": 0.72},
+            generated_at=FIXED_TIME,
+        )
+        summary = graph["summary"]
+
+        assert summary["risk_evolution_direction"] == direction
+        assert summary["risk_evolution_velocity"] == velocity
+        assert 0.0 <= summary["risk_evolution_confidence"] <= 1.0
+        assert summary["risk_delta"] == round(current - previous, 2)
+
+
+def test_behavior_graph_risk_evolution_tracks_signal_relationship_and_cluster_changes():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "frontend",
+            "related_services": ["backend", "cache"],
+            "protocol": "tcp",
+            "port": 443,
+            "score": 0.88,
+            "previous_risk_score": 0.44,
+            "risk_score_history": [0.44, 0.60, 0.88],
+            "score_factors": ["risk-b", "risk-c"],
+            "previous_risk_signals": ["risk-a", "risk-b"],
+            "previous_relationship_count": 0,
+            "previous_signal_count": 4,
+            "previous_cluster_count": 0,
+            "count": 3,
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "nginx",
+            "confidence": 0.42,
+            "candidates": [
+                {"candidate": "nginx", "probability": 0.42},
+                {"candidate": "apache", "probability": 0.35},
+            ],
+        },
+        learning_profile_history={"historical_summary": {"stability_score": 0.20, "drift_score": 0.70}},
+        generated_at=FIXED_TIME,
+    )
+    reasons = graph["summary"]["risk_change_reasons"].split("; ")
+
+    assert reasons == sorted(reasons)
+    assert "signal_added:risk-c" in reasons
+    assert "signal_removed:risk-a" in reasons
+    assert any(reason.startswith("relationships_added:") for reason in reasons)
+    assert any(reason.startswith("signals_removed:") for reason in reasons)
+    assert any(reason.startswith("clusters_expanded:") for reason in reasons)
+    assert "classification_confidence:0.42" in reasons
+
+
+def test_behavior_graph_risk_evolution_tracks_relationship_removal_and_cluster_shrinkage():
+    graph = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "frontend",
+            "protocol": "tcp",
+            "port": 443,
+            "score": 0.30,
+            "previous_risk_score": 0.68,
+            "risk_score_history": [0.68, 0.44, 0.30],
+            "score_factors": ["risk-a"],
+            "previous_relationship_count": 20,
+            "previous_signal_count": 0,
+            "previous_cluster_count": 20,
+            "count": 4,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.74},
+        generated_at=FIXED_TIME,
+    )
+    reasons = graph["summary"]["risk_change_reasons"].split("; ")
+
+    assert graph["summary"]["risk_evolution_direction"] == "decreasing"
+    assert any(reason.startswith("relationships_removed:") for reason in reasons)
+    assert any(reason.startswith("signals_added:") for reason in reasons)
+    assert any(reason.startswith("clusters_shrank:") for reason in reasons)
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {

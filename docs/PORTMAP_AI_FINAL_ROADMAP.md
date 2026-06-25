@@ -401,6 +401,10 @@ Implementation note: Phase 173.4 adds deterministic metadata-only temporal evolu
 
 Implementation note: Phase 173.5 adds deterministic metadata-only graph insight summaries from existing behavior graph nodes, edges, inferred relationships, clusters, cluster analysis, temporal evolution, risk metadata, and learning profile metadata. Outputs include advisory insight counts, strongest insight identifiers, insight type and score summaries, operator-facing insight summaries, and read-only next-step guidance exposed through existing AI and Risk detail surfaces without layout changes. This remains advisory only and does not add enforcement, blocking, remediation execution, packet capture, external connectivity, autonomous action, new collectors, packet inspection, or payload analysis.
 
+#### 173.6 - Historical Risk Evolution (Completed)
+
+Implementation note: Phase 173.6 adds deterministic metadata-only historical risk evolution summaries from existing attribution, learning profile, behavior graph, cluster evolution, graph insight, and historical observation metadata. Outputs include previous and current risk scores, risk delta, evolution direction and velocity, confidence, sorted change reasons, operator summaries, and read-only next-step guidance exposed through existing AI and Risk detail surfaces without layout changes. Insufficient history is reported explicitly, and this remains advisory only without enforcement, blocking, remediation execution, packet capture, packet crafting, external connectivity, autonomous action, new collectors, learning mutation, score mutation, packet inspection, or payload analysis.
+
 ## Milestone AD - Commercial Launch Readiness
 
 Goal: prepare a business and enterprise launch path after the local-first product is technically hardened.

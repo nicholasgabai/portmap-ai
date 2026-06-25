@@ -1063,6 +1063,18 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Strongest Graph Insight Score"] != "-"
     assert details["Graph Insight Summary"] != "-"
     assert details["Graph Operator Next Steps"] != "-"
+    assert details["Risk Evolution Direction"] in {
+        "increasing",
+        "decreasing",
+        "stable",
+        "fluctuating",
+        "insufficient_history",
+    }
+    assert details["Risk Evolution Velocity"] in {"slow", "moderate", "rapid", "unknown"}
+    assert details["Risk Evolution Confidence"] != "-"
+    assert details["Risk Change Reasons"] != "-"
+    assert details["Risk Evolution Summary"] != "-"
+    assert details["Risk Operator Next Steps"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1256,6 +1268,9 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "primary_cluster_trend_summary": "trend:growing;" + ("temporal-evolution-token" * 5),
         "graph_insight_summary": "emerging_risk_cluster:1.00;" + ("insight-summary-token" * 5),
         "graph_operator_next_steps": "Review related cluster recent signals expected behavior " + ("operator-step-token" * 5),
+        "risk_change_reasons": "risk_score_increase:0.42;" + ("risk-change-reason-token" * 5),
+        "risk_evolution_summary": "direction:increasing;velocity:rapid;" + ("risk-evolution-summary-token" * 5),
+        "risk_operator_next_steps": "Review new signals relationships and cluster changes " + ("risk-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1289,6 +1304,9 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Primary Cluster Trend Summary" for row in rendered)
             assert any(row[0] == "Graph Insight Summary" for row in rendered)
             assert any(row[0] == "Graph Operator Next Steps" for row in rendered)
+            assert any(row[0] == "Risk Change Reasons" for row in rendered)
+            assert any(row[0] == "Risk Evolution Summary" for row in rendered)
+            assert any(row[0] == "Risk Operator Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -1873,6 +1891,19 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Strongest Graph Insight Score"] != "-"
     assert details["Graph Insight Summary"] != "-"
     assert details["Graph Operator Next Steps"] != "-"
+    assert details["Current Risk Score"] != "-"
+    assert details["Risk Evolution Direction"] in {
+        "increasing",
+        "decreasing",
+        "stable",
+        "fluctuating",
+        "insufficient_history",
+    }
+    assert details["Risk Evolution Velocity"] in {"slow", "moderate", "rapid", "unknown"}
+    assert details["Risk Evolution Confidence"] != "-"
+    assert details["Risk Change Reasons"] != "-"
+    assert details["Risk Evolution Summary"] != "-"
+    assert details["Risk Operator Next Steps"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -2045,6 +2076,9 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "primary_cluster_trend_summary": "trend:shrinking;" + ("temporal-evolution-token" * 5),
         "graph_insight_summary": "low_confidence_high_risk:0.82;" + ("insight-summary-token" * 5),
         "graph_operator_next_steps": "Gather more metadata before acting on elevated risk context " + ("operator-step-token" * 5),
+        "risk_change_reasons": "relationships_removed:4;" + ("risk-change-reason-token" * 5),
+        "risk_evolution_summary": "direction:decreasing;velocity:moderate;" + ("risk-evolution-summary-token" * 5),
+        "risk_operator_next_steps": "Continue observation and confirm expected behavior " + ("risk-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2078,6 +2112,9 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Primary Cluster Trend Summary" for row in rendered)
             assert any(row[0] == "Graph Insight Summary" for row in rendered)
             assert any(row[0] == "Graph Operator Next Steps" for row in rendered)
+            assert any(row[0] == "Risk Change Reasons" for row in rendered)
+            assert any(row[0] == "Risk Evolution Summary" for row in rendered)
+            assert any(row[0] == "Risk Operator Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 

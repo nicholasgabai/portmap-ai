@@ -1347,6 +1347,33 @@ def _active_risk_finding_rows(
                 "graph_operator_next_steps": _behavior_graph_text_field(
                     classification, "graph_operator_next_steps", limit=96
                 ),
+                "previous_risk_score": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("previous_risk_score")
+                ),
+                "current_risk_score": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("current_risk_score")
+                ),
+                "risk_delta": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("risk_delta")
+                ),
+                "risk_evolution_direction": _behavior_graph_text_field(
+                    classification, "risk_evolution_direction", limit=32
+                ),
+                "risk_evolution_velocity": _behavior_graph_text_field(
+                    classification, "risk_evolution_velocity", limit=24
+                ),
+                "risk_evolution_confidence": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("risk_evolution_confidence")
+                ),
+                "risk_change_reasons": _behavior_graph_text_field(
+                    classification, "risk_change_reasons", limit=120
+                ),
+                "risk_evolution_summary": _behavior_graph_text_field(
+                    classification, "risk_evolution_summary", limit=120
+                ),
+                "risk_operator_next_steps": _behavior_graph_text_field(
+                    classification, "risk_operator_next_steps", limit=120
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1452,6 +1479,15 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Strongest Graph Insight Score", row.get("strongest_graph_insight_score", "-")),
         ("Graph Insight Summary", row.get("graph_insight_summary", "-")),
         ("Graph Operator Next Steps", row.get("graph_operator_next_steps", "-")),
+        ("Previous Risk Score", row.get("previous_risk_score", "-")),
+        ("Current Risk Score", row.get("current_risk_score", "-")),
+        ("Risk Delta", row.get("risk_delta", "-")),
+        ("Risk Evolution Direction", row.get("risk_evolution_direction", "-")),
+        ("Risk Evolution Velocity", row.get("risk_evolution_velocity", "-")),
+        ("Risk Evolution Confidence", row.get("risk_evolution_confidence", "-")),
+        ("Risk Change Reasons", row.get("risk_change_reasons", "-")),
+        ("Risk Evolution Summary", row.get("risk_evolution_summary", "-")),
+        ("Risk Operator Next Steps", row.get("risk_operator_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -2890,6 +2926,15 @@ def _ai_provider_model_rows(
                 "strongest_graph_insight_score": "-",
                 "graph_insight_summary": "-",
                 "graph_operator_next_steps": "-",
+                "previous_risk_score": "-",
+                "current_risk_score": "-",
+                "risk_delta": "-",
+                "risk_evolution_direction": "-",
+                "risk_evolution_velocity": "-",
+                "risk_evolution_confidence": "-",
+                "risk_change_reasons": "-",
+                "risk_evolution_summary": "-",
+                "risk_operator_next_steps": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -3028,6 +3073,33 @@ def _ai_provider_model_rows(
             row["graph_operator_next_steps"] = _behavior_graph_text_field(
                 model_record, "graph_operator_next_steps", limit=96
             )
+            row["previous_risk_score"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("previous_risk_score")
+            )
+            row["current_risk_score"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("current_risk_score")
+            )
+            row["risk_delta"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("risk_delta")
+            )
+            row["risk_evolution_direction"] = _behavior_graph_text_field(
+                model_record, "risk_evolution_direction", limit=32
+            )
+            row["risk_evolution_velocity"] = _behavior_graph_text_field(
+                model_record, "risk_evolution_velocity", limit=24
+            )
+            row["risk_evolution_confidence"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("risk_evolution_confidence")
+            )
+            row["risk_change_reasons"] = _behavior_graph_text_field(
+                model_record, "risk_change_reasons", limit=120
+            )
+            row["risk_evolution_summary"] = _behavior_graph_text_field(
+                model_record, "risk_evolution_summary", limit=120
+            )
+            row["risk_operator_next_steps"] = _behavior_graph_text_field(
+                model_record, "risk_operator_next_steps", limit=120
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -3115,6 +3187,15 @@ def _ai_provider_model_rows(
             "strongest_graph_insight_score": row["strongest_graph_insight_score"],
             "graph_insight_summary": row["graph_insight_summary"],
             "graph_operator_next_steps": row["graph_operator_next_steps"],
+            "previous_risk_score": row["previous_risk_score"],
+            "current_risk_score": row["current_risk_score"],
+            "risk_delta": row["risk_delta"],
+            "risk_evolution_direction": row["risk_evolution_direction"],
+            "risk_evolution_velocity": row["risk_evolution_velocity"],
+            "risk_evolution_confidence": row["risk_evolution_confidence"],
+            "risk_change_reasons": row["risk_change_reasons"],
+            "risk_evolution_summary": row["risk_evolution_summary"],
+            "risk_operator_next_steps": row["risk_operator_next_steps"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3216,6 +3297,15 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Strongest Graph Insight Score", row.get("strongest_graph_insight_score", "-")),
         ("Graph Insight Summary", row.get("graph_insight_summary", "-")),
         ("Graph Operator Next Steps", row.get("graph_operator_next_steps", "-")),
+        ("Previous Risk Score", row.get("previous_risk_score", "-")),
+        ("Current Risk Score", row.get("current_risk_score", "-")),
+        ("Risk Delta", row.get("risk_delta", "-")),
+        ("Risk Evolution Direction", row.get("risk_evolution_direction", "-")),
+        ("Risk Evolution Velocity", row.get("risk_evolution_velocity", "-")),
+        ("Risk Evolution Confidence", row.get("risk_evolution_confidence", "-")),
+        ("Risk Change Reasons", row.get("risk_change_reasons", "-")),
+        ("Risk Evolution Summary", row.get("risk_evolution_summary", "-")),
+        ("Risk Operator Next Steps", row.get("risk_operator_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),

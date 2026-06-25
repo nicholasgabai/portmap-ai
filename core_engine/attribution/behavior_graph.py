@@ -160,11 +160,12 @@ def build_behavior_graph_model(
     relationship_rows = sorted(
         relationships.values(), key=lambda row: (row["relationship_type"], row["relationship_id"])
     )
+    cluster_context = _cluster_context(observation, classifier, profile, history, generated_at=generated_at)
     cluster_rows = _build_behavior_clusters(
         node_rows,
         edge_rows,
         relationship_rows,
-        context=_cluster_context(observation, classifier, profile, history, generated_at=generated_at),
+        context=cluster_context,
     )
 
     return _graph_record(
@@ -173,6 +174,7 @@ def build_behavior_graph_model(
         edges=edge_rows,
         relationships=relationship_rows,
         clusters=cluster_rows,
+        risk_context=cluster_context,
         related={
             "related_asset": related_asset,
             "related_service": related_service,
@@ -192,12 +194,19 @@ def _graph_record(
     edges: list[dict[str, Any]],
     relationships: list[dict[str, Any]] | None = None,
     clusters: list[dict[str, Any]] | None = None,
+    risk_context: dict[str, Any] | None = None,
     related: dict[str, str],
 ) -> dict[str, Any]:
     relationship_rows = relationships or []
     cluster_rows = clusters or []
     insight_rows = _build_graph_insights(nodes, edges, relationship_rows, cluster_rows)
-    summary = _graph_summary(nodes, edges, relationship_rows, cluster_rows, insight_rows, related)
+    risk_evolution = _build_historical_risk_evolution(
+        relationship_rows,
+        cluster_rows,
+        insight_rows,
+        context=risk_context or {},
+    )
+    summary = _graph_summary(nodes, edges, relationship_rows, cluster_rows, insight_rows, risk_evolution, related)
     return {
         "record_type": "graph_behavior_model",
         "record_version": BEHAVIOR_GRAPH_RECORD_VERSION,
@@ -211,6 +220,11 @@ def _graph_record(
                 ],
                 "clusters": [(row.get("cluster_type"), row.get("cluster_id")) for row in cluster_rows],
                 "insights": [(row.get("insight_type"), row.get("insight_id")) for row in insight_rows],
+                "risk_evolution": {
+                    "direction": risk_evolution.get("risk_evolution_direction"),
+                    "delta": risk_evolution.get("risk_delta"),
+                    "reasons": risk_evolution.get("risk_change_reasons"),
+                },
             }
         )[:16],
         "generated_at": timestamp,
@@ -219,6 +233,7 @@ def _graph_record(
         "relationships": relationship_rows,
         "clusters": cluster_rows,
         "insights": insight_rows,
+        "risk_evolution": risk_evolution,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -237,6 +252,7 @@ def _graph_summary(
     relationships: list[dict[str, Any]],
     clusters: list[dict[str, Any]],
     insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -285,6 +301,15 @@ def _graph_summary(
         "strongest_graph_insight_score": strongest_insight.get("insight_score", "-"),
         "graph_insight_summary": _graph_insight_summary(insights),
         "graph_operator_next_steps": _graph_operator_next_steps(strongest_insight),
+        "previous_risk_score": risk_evolution.get("previous_risk_score", "-"),
+        "current_risk_score": risk_evolution.get("current_risk_score", "-"),
+        "risk_delta": risk_evolution.get("risk_delta", "-"),
+        "risk_evolution_direction": risk_evolution.get("risk_evolution_direction", "insufficient_history"),
+        "risk_evolution_velocity": risk_evolution.get("risk_evolution_velocity", "unknown"),
+        "risk_evolution_confidence": risk_evolution.get("risk_evolution_confidence", 0.0),
+        "risk_change_reasons": risk_evolution.get("risk_change_reasons", "insufficient_history"),
+        "risk_evolution_summary": risk_evolution.get("risk_evolution_summary", "-"),
+        "risk_operator_next_steps": risk_evolution.get("risk_operator_next_steps", "-"),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -627,6 +652,7 @@ def _cluster_context(
     if not isinstance(history_summary, dict):
         history_summary = {}
     risk_signals = _risk_signal_values(observation)
+    previous_risk_signals = _previous_risk_signal_values(observation, history_summary)
     first_seen = _first_temporal_value(observation, learning_profile_history, generated_at=generated_at)
     last_seen = _last_temporal_value(observation, learning_profile_history, generated_at=generated_at)
     previous_confidence = _optional_float(
@@ -639,6 +665,19 @@ def _cluster_context(
     candidate_confidence = _safe_float(
         classification_model.get("confidence") or classification_model.get("confidence_score")
     )
+    current_risk_score = _optional_float(
+        _first_present_value(observation.get("risk_score"), observation.get("score"), observation.get("confidence"))
+    )
+    previous_risk_score = _optional_float(
+        _first_present_value(
+            observation.get("previous_risk_score"),
+            observation.get("prior_risk_score"),
+            observation.get("historical_risk_score"),
+            history_summary.get("previous_risk_score"),
+            history_summary.get("prior_risk_score"),
+            history_summary.get("risk_score_previous"),
+        )
+    )
     return {
         "risk_score": _safe_float(
             observation.get("risk_score")
@@ -646,7 +685,11 @@ def _cluster_context(
             or observation.get("confidence")
             or history_summary.get("risk_score")
         ),
+        "current_risk_score": current_risk_score,
+        "previous_risk_score": previous_risk_score,
+        "risk_score_history": _risk_score_history_values(observation, history_summary),
         "risk_signals": risk_signals,
+        "previous_risk_signals": previous_risk_signals,
         "profile_stability": _safe_float(
             history_summary.get("stability_score") or learning_profile.get("stability_score")
         ),
@@ -691,8 +734,276 @@ def _cluster_context(
                 history_summary.get("previous_entity_count"),
             )
         ),
+        "previous_cluster_count": _optional_int(
+            _first_present_value(
+                observation.get("previous_cluster_count"),
+                observation.get("prior_cluster_count"),
+                observation.get("historical_cluster_count"),
+                history_summary.get("previous_cluster_count"),
+            )
+        ),
         "signal_count": len(risk_signals),
     }
+
+
+def _build_historical_risk_evolution(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    *,
+    context: dict[str, Any],
+) -> dict[str, Any]:
+    current_score = _optional_float(context.get("current_risk_score"))
+    previous_score = _optional_float(context.get("previous_risk_score"))
+    history = [value for value in context.get("risk_score_history") or [] if isinstance(value, (int, float))]
+    observation_count = int(context.get("observation_count") or 0)
+    has_history = observation_count > 1 and current_score is not None and previous_score is not None
+    delta = round(current_score - previous_score, 2) if has_history else None
+    relationship_delta = _count_delta(len(relationships), context.get("previous_relationship_count"))
+    signal_delta = _count_delta(int(context.get("signal_count") or 0), context.get("previous_signal_count"))
+    cluster_delta = _count_delta(len(clusters), context.get("previous_cluster_count"))
+    direction = _risk_evolution_direction(
+        delta=delta,
+        history=history,
+        has_history=has_history,
+    )
+    velocity = _risk_evolution_velocity(
+        direction=direction,
+        delta=delta,
+        relationship_delta=relationship_delta,
+        signal_delta=signal_delta,
+        cluster_delta=cluster_delta,
+    )
+    reasons = _risk_change_reason_values(
+        direction=direction,
+        delta=delta,
+        relationships=relationships,
+        clusters=clusters,
+        insights=insights,
+        relationship_delta=relationship_delta,
+        signal_delta=signal_delta,
+        cluster_delta=cluster_delta,
+        context=context,
+    )
+    confidence = _risk_evolution_confidence(
+        has_history=has_history,
+        observation_count=observation_count,
+        history_count=len(history),
+        relationship_count=len(relationships),
+        cluster_count=len(clusters),
+        insight_count=len(insights),
+        reason_count=len(reasons),
+    )
+    return {
+        "previous_risk_score": round(previous_score, 2) if previous_score is not None else "-",
+        "current_risk_score": round(current_score, 2) if current_score is not None else "-",
+        "risk_delta": delta if delta is not None else "-",
+        "risk_evolution_direction": direction,
+        "risk_evolution_velocity": velocity,
+        "risk_evolution_confidence": confidence,
+        "risk_change_reasons": "; ".join(reasons),
+        "risk_evolution_summary": _risk_evolution_summary(direction, velocity, delta, reasons),
+        "risk_operator_next_steps": _risk_operator_next_steps(direction),
+        "metadata_only": True,
+        "read_only": True,
+        "advisory_only": True,
+    }
+
+
+def _risk_evolution_direction(*, delta: float | None, history: list[float], has_history: bool) -> str:
+    if not has_history:
+        return "insufficient_history"
+    if _risk_history_is_fluctuating(history):
+        return "fluctuating"
+    if delta is None or abs(delta) < 0.05:
+        return "stable"
+    if delta > 0:
+        return "increasing"
+    return "decreasing"
+
+
+def _risk_history_is_fluctuating(history: list[float]) -> bool:
+    if len(history) < 3:
+        return False
+    deltas = [round(history[index] - history[index - 1], 3) for index in range(1, len(history))]
+    positive = any(delta >= 0.08 for delta in deltas)
+    negative = any(delta <= -0.08 for delta in deltas)
+    spread = max(history) - min(history)
+    return positive and negative and spread >= 0.18
+
+
+def _risk_evolution_velocity(
+    *,
+    direction: str,
+    delta: float | None,
+    relationship_delta: int | None,
+    signal_delta: int | None,
+    cluster_delta: int | None,
+) -> str:
+    if direction == "insufficient_history":
+        return "unknown"
+    magnitude = abs(delta or 0.0)
+    structural_change = max(
+        abs(relationship_delta or 0),
+        abs(signal_delta or 0),
+        abs(cluster_delta or 0),
+    )
+    if direction == "fluctuating" or magnitude >= 0.35 or structural_change >= 4:
+        return "rapid"
+    if magnitude >= 0.15 or structural_change >= 2:
+        return "moderate"
+    return "slow"
+
+
+def _risk_evolution_confidence(
+    *,
+    has_history: bool,
+    observation_count: int,
+    history_count: int,
+    relationship_count: int,
+    cluster_count: int,
+    insight_count: int,
+    reason_count: int,
+) -> float:
+    if not has_history:
+        return 0.20 if observation_count <= 1 else 0.35
+    score = 0.35
+    if observation_count >= 3:
+        score += 0.18
+    if history_count >= 3:
+        score += 0.14
+    if relationship_count:
+        score += 0.10
+    if cluster_count:
+        score += 0.08
+    if insight_count:
+        score += 0.08
+    if reason_count > 1:
+        score += 0.07
+    return _bounded_score(score)
+
+
+def _risk_change_reason_values(
+    *,
+    direction: str,
+    delta: float | None,
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    relationship_delta: int | None,
+    signal_delta: int | None,
+    cluster_delta: int | None,
+    context: dict[str, Any],
+) -> list[str]:
+    reasons: list[str] = []
+    if direction == "insufficient_history":
+        reasons.append("insufficient_history")
+    elif direction == "fluctuating":
+        reasons.append("risk_score_fluctuation")
+    elif direction == "increasing":
+        reasons.append(f"risk_score_increase:{delta:.2f}")
+    elif direction == "decreasing":
+        reasons.append(f"risk_score_decrease:{delta:.2f}")
+    else:
+        reasons.append(f"risk_score_stable:{(delta or 0.0):.2f}")
+
+    current_signals = set(context.get("risk_signals") or [])
+    previous_signals = set(context.get("previous_risk_signals") or [])
+    if previous_signals:
+        for signal in sorted(current_signals - previous_signals)[:4]:
+            reasons.append(f"signal_added:{signal}")
+        for signal in sorted(previous_signals - current_signals)[:4]:
+            reasons.append(f"signal_removed:{signal}")
+    if relationship_delta is not None:
+        if relationship_delta > 0:
+            reasons.append(f"relationships_added:{relationship_delta}")
+        elif relationship_delta < 0:
+            reasons.append(f"relationships_removed:{abs(relationship_delta)}")
+    if signal_delta is not None:
+        if signal_delta > 0:
+            reasons.append(f"signals_added:{signal_delta}")
+        elif signal_delta < 0:
+            reasons.append(f"signals_removed:{abs(signal_delta)}")
+    if cluster_delta is not None:
+        if cluster_delta > 0:
+            reasons.append(f"clusters_expanded:{cluster_delta}")
+        elif cluster_delta < 0:
+            reasons.append(f"clusters_shrank:{abs(cluster_delta)}")
+    drift_label = _safe_text(context.get("drift_label"))
+    if drift_label in {"medium", "high"}:
+        reasons.append(f"profile_drift:{drift_label}")
+    stability_label = _safe_text(context.get("profile_stability_label"))
+    if stability_label in {"unstable", "sparse"}:
+        reasons.append(f"profile_stability:{stability_label}")
+    if insights:
+        reasons.append(f"graph_insights:{len(insights)}")
+    if relationships:
+        reasons.append(f"relationships:{len(relationships)}")
+    if clusters:
+        reasons.append(f"clusters:{len(clusters)}")
+    candidate_confidence = float(context.get("candidate_confidence") or 0.0)
+    if candidate_confidence and candidate_confidence < 0.50:
+        reasons.append(f"classification_confidence:{candidate_confidence:.2f}")
+    return sorted(_unique_text(reasons, limit=16))
+
+
+def _risk_evolution_summary(direction: str, velocity: str, delta: float | None, reasons: list[str]) -> str:
+    delta_text = f"{delta:+.2f}" if delta is not None else "-"
+    return f"direction:{direction}; delta:{delta_text}; velocity:{velocity}; reasons:{len(reasons)}"
+
+
+def _risk_operator_next_steps(direction: str) -> str:
+    if direction == "increasing":
+        return "Review new signals, relationships, and cluster changes before taking any action."
+    if direction == "decreasing":
+        return "Continue observation and confirm the reduction matches expected behavior."
+    if direction == "stable":
+        return "Continue monitoring and compare against future observations."
+    if direction == "fluctuating":
+        return "Review alternating risk drivers and recent metadata changes."
+    return "Collect additional observations before interpreting risk evolution."
+
+
+def _count_delta(current: int, previous: Any) -> int | None:
+    prior = _optional_int(previous)
+    if prior is None:
+        return None
+    return int(current) - prior
+
+
+def _previous_risk_signal_values(observation: dict[str, Any], history_summary: dict[str, Any]) -> list[str]:
+    values = _list_text(
+        observation,
+        ("previous_risk_signals", "prior_risk_signals", "historical_risk_signals", "previous_signals"),
+    )
+    values.extend(
+        _list_text(
+            history_summary,
+            ("previous_risk_signals", "prior_risk_signals", "historical_risk_signals", "previous_signals"),
+        )
+    )
+    return _unique_text(values)
+
+
+def _risk_score_history_values(observation: dict[str, Any], history_summary: dict[str, Any]) -> list[float]:
+    rows: list[float] = []
+    for container in (observation, history_summary):
+        for key in ("risk_score_history", "historical_risk_scores", "risk_history", "risk_scores"):
+            value = container.get(key)
+            if isinstance(value, list):
+                for item in value:
+                    score = _risk_history_score_value(item)
+                    if score is not None:
+                        rows.append(score)
+    return rows
+
+
+def _risk_history_score_value(value: Any) -> float | None:
+    if isinstance(value, dict):
+        return _optional_float(
+            _first_present_value(value.get("risk_score"), value.get("score"), value.get("value"), value.get("confidence"))
+        )
+    return _optional_float(value)
 
 
 def _cluster_analysis(
