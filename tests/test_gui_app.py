@@ -1145,6 +1145,27 @@ def test_wrapped_detail_rows_break_long_tokens_without_wrapping_short_values():
     assert all(len(row[1]) <= 24 for row in rows)
 
 
+def test_ai_and_risk_detail_rows_preserve_review_queue_layout_order():
+    row = {
+        "investigation_operator_next_steps": "Review graph context",
+        "review_queue_required": "yes",
+        "review_queue_priority": "medium",
+        "review_queue_category": "confidence_review",
+        "review_queue_reason": "medium_confidence_review_from_metadata",
+        "review_queue_evidence": "priority:medium; category:confidence_review",
+        "review_queue_next_step": "Queue for standard operator review",
+        "review_queue_summary": "required:yes; priority:medium; category:confidence_review",
+        "related_asset": "asset-a",
+    }
+    ai_labels = [label for label, _ in gui_app._ai_detail_rows(row)]
+    risk_labels = [label for label, _ in gui_app._finding_detail_rows(row)]
+
+    for labels in (ai_labels, risk_labels):
+        assert labels.index("Investigation Operator Next Steps") < labels.index("Review Queue Required")
+        assert labels.index("Review Queue Required") < labels.index("Review Queue Summary")
+        assert labels.index("Review Queue Summary") < labels.index("Related Asset")
+
+
 def test_ai_details_table_wraps_long_metadata_and_preserves_cursor_selection():
     class Harness(gui_app.App):
         def compose(self):

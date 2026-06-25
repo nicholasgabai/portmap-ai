@@ -1480,16 +1480,16 @@ def _review_queue_priority(
     drift_score = float(context.get("drift_score") or 0.0)
 
     if top_priority == "critical" or (decision == "elevated_risk_behavior" and cluster_risk == "critical"):
-        return "critical"
-    if (
+        priority = "critical"
+    elif (
         decision == "elevated_risk_behavior"
         or risk_direction in {"increasing", "fluctuating"}
         or cluster_risk in {"high", "critical"}
         or top_priority == "high"
         or insight_score >= 0.80
     ):
-        return "high"
-    if (
+        priority = "high"
+    elif (
         decision == "benign_observation"
         or (
             cluster_risk in {"-", "low"}
@@ -1499,8 +1499,8 @@ def _review_queue_priority(
             and observation_count >= 3
         )
     ):
-        return "low"
-    if (
+        priority = "low"
+    elif (
         top_priority == "medium"
         or candidate_confidence < 0.50
         or evidence_quality in {"-", "weak", "limited", "low", "unknown"}
@@ -1508,8 +1508,46 @@ def _review_queue_priority(
         or risk_direction == "insufficient_history"
         or drift_score >= 0.45
     ):
+        priority = "medium"
+    else:
+        priority = "medium"
+    return _normalized_review_queue_priority(
+        priority,
+        decision=decision,
+        top_priority=top_priority,
+        risk_direction=risk_direction,
+        cluster_risk=cluster_risk,
+        cluster_trend=cluster_trend,
+        observation_count=observation_count,
+    )
+
+
+def _normalized_review_queue_priority(
+    priority: str,
+    *,
+    decision: str,
+    top_priority: str,
+    risk_direction: str,
+    cluster_risk: str,
+    cluster_trend: str,
+    observation_count: int,
+) -> str:
+    if top_priority == "critical":
+        return "critical"
+    if decision == "elevated_risk_behavior" and priority in {"none", "low", "medium"}:
+        return "high"
+    stable_low_context = (
+        decision == "benign_observation"
+        and cluster_risk not in {"high", "critical"}
+        and risk_direction in {"stable", "decreasing"}
+        and cluster_trend in {"stable", "dormant", "unknown", "-"}
+        and observation_count >= 3
+    )
+    if stable_low_context:
+        return "low"
+    if priority not in {"critical", "high", "medium", "low", "none"}:
         return "medium"
-    return "medium"
+    return priority
 
 
 def _review_queue_category(

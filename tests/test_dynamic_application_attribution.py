@@ -2515,6 +2515,126 @@ def test_behavior_graph_review_queue_output_is_deterministic():
     assert first["review_queue"]["read_only"] is True
 
 
+def test_behavior_graph_stabilization_prevents_decision_review_queue_contradictions():
+    benign = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "ssh",
+            "protocol": "tcp",
+            "port": 22,
+            "score": 0.18,
+            "previous_risk_score": 0.20,
+            "risk_score_history": [0.20, 0.19, 0.18],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"},
+        learning_profile_history={
+            "historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}
+        },
+        generated_at=FIXED_TIME,
+    )
+    elevated = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "admin",
+            "related_services": ["backend", "cache"],
+            "protocol": "tcp",
+            "port": 9443,
+            "score": 0.94,
+            "previous_risk_score": 0.40,
+            "risk_score_history": [0.40, 0.62, 0.94],
+            "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+            "previous_relationship_count": 0,
+            "previous_signal_count": 0,
+            "first_seen": "2026-01-01T00:00:00+00:00",
+            "last_seen": "2026-01-02T00:00:00+00:00",
+            "count": 4,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.76, "evidence_quality": "strong"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.40, "drift_score": 0.30}},
+        generated_at=FIXED_TIME,
+    )
+
+    assert benign["summary"]["behavioral_decision_category"] == "benign_observation"
+    assert benign["summary"]["review_queue_priority"] == "low"
+    assert benign["summary"]["review_queue_priority"] != "critical"
+    assert elevated["summary"]["behavioral_decision_category"] == "elevated_risk_behavior"
+    assert elevated["summary"]["top_investigation_priority"] == "critical"
+    assert elevated["summary"]["review_queue_priority"] == "critical"
+
+
+def test_behavior_graph_stabilization_preserves_deterministic_ordering_and_output():
+    observation = {
+        "node_id": "asset-a",
+        "service_name": "admin",
+        "related_services": ["backend", "cache"],
+        "protocol": "tcp",
+        "port": 9443,
+        "score": 0.94,
+        "previous_risk_score": 0.40,
+        "risk_score_history": [0.40, 0.62, 0.94],
+        "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+        "previous_risk_signals": ["risk-a"],
+        "previous_relationship_count": 0,
+        "previous_signal_count": 0,
+        "previous_cluster_count": 0,
+        "first_seen": "2026-01-01T00:00:00+00:00",
+        "last_seen": "2026-01-02T00:00:00+00:00",
+        "count": 4,
+        "source_mode": "live",
+    }
+    classifier = {
+        "top_classification": "nginx",
+        "confidence": 0.42,
+        "evidence_quality": "weak",
+        "missing_evidence": ["service_fingerprint", "process_owner"],
+        "candidates": [
+            {"candidate": "nginx", "probability": 0.42},
+            {"candidate": "apache", "probability": 0.35},
+        ],
+    }
+    history = {"historical_summary": {"stability_score": 0.20, "drift_score": 0.72, "historical_observations": 4}}
+
+    first = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+    second = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+    insight_scores = [row["insight_score"] for row in first["insights"]]
+    investigation_priorities = [
+        {"critical": 0, "high": 1, "medium": 2, "low": 3}[row["priority"]]
+        for row in first["investigation_recommendations"]
+    ]
+
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+    assert insight_scores == sorted(insight_scores, reverse=True)
+    assert investigation_priorities == sorted(investigation_priorities)
+    assert first["summary"]["risk_change_reasons"].split("; ") == sorted(
+        first["summary"]["risk_change_reasons"].split("; ")
+    )
+    assert first["summary"]["behavioral_decision_reasons"].split("; ") == sorted(
+        first["summary"]["behavioral_decision_reasons"].split("; ")
+    )
+    assert first["summary"]["review_queue_evidence"].split("; ")[:3] == [
+        "priority:critical",
+        "category:elevated_behavior_review",
+        "risk_direction:increasing",
+    ]
+    assert first["summary"]["graph_insight_summary"] == second["summary"]["graph_insight_summary"]
+    assert first["summary"]["investigation_recommendation_summary"] == second["summary"]["investigation_recommendation_summary"]
+    assert first["summary"]["review_queue_summary"] == second["summary"]["review_queue_summary"]
+    assert first["summary"]["behavioral_decision_confidence"] == second["summary"]["behavioral_decision_confidence"]
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {
