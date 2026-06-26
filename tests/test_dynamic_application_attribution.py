@@ -2962,6 +2962,179 @@ def test_behavior_graph_federated_intelligence_confidence_trend_and_ordering_are
     assert graph["summary"]["federated_freshness"] in {"fresh", "recent", "stale"}
 
 
+def test_behavior_graph_autonomous_investigation_chains_empty_input_has_no_rows():
+    graph = build_behavior_graph_model({}, generated_at=FIXED_TIME)
+
+    assert graph["investigation_chains"] == []
+    assert graph["summary"]["investigation_chain_count"] == 0
+    assert graph["summary"]["top_investigation_chain"] == "-"
+    assert graph["summary"]["investigation_chain_summary"] == "-"
+
+
+def test_behavior_graph_autonomous_investigation_chains_cover_categories_and_priorities():
+    critical = build_behavior_graph_model(
+        {
+            "node_id": "asset-a",
+            "service_name": "admin",
+            "related_services": ["backend", "cache"],
+            "protocol": "tcp",
+            "port": 9443,
+            "score": 0.94,
+            "previous_risk_score": 0.40,
+            "risk_score_history": [0.40, 0.62, 0.94],
+            "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+            "previous_relationship_count": 0,
+            "previous_signal_count": 0,
+            "count": 4,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "nginx", "confidence": 0.76, "evidence_quality": "strong"},
+        learning_profile_history={"historical_summary": {"stability_score": 0.40, "drift_score": 0.72}},
+        generated_at=FIXED_TIME,
+    )
+    missing = build_behavior_graph_model(
+        {
+            "node_id": "asset-b",
+            "service_name": "unknown",
+            "protocol": "tcp",
+            "port": 49152,
+            "score": 0.33,
+            "count": 1,
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "unknown_application",
+            "confidence": 0.31,
+            "evidence_quality": "weak",
+            "missing_evidence": ["process_match", "service_fingerprint"],
+        },
+        learning_profile_history={"historical_summary": {"stability_score": 0.10, "drift_score": 0.10}},
+        generated_at=FIXED_TIME,
+    )
+    identity = build_behavior_graph_model(
+        {
+            "node_id": "asset-c",
+            "service_name": "https",
+            "protocol": "tcp",
+            "port": 443,
+            "score": 0.42,
+            "count": 3,
+            "source_mode": "live",
+        },
+        classification_model={
+            "top_classification": "nginx",
+            "confidence": 0.55,
+            "evidence_quality": "moderate",
+            "candidates": [{"candidate": "nginx"}, {"candidate": "apache"}],
+        },
+        generated_at=FIXED_TIME,
+    )
+    federated = build_behavior_graph_model(
+        {
+            "node_id": "asset-d",
+            "service_name": "ssh",
+            "protocol": "tcp",
+            "port": 22,
+            "score": 0.18,
+            "previous_risk_score": 0.20,
+            "risk_score_history": [0.20, 0.19, 0.18],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"},
+        learning_profile_history={
+            "historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}
+        },
+        federated_intelligence=[
+            _federated_peer("worker-b", "increasing_risk", 0.82, created=FIXED_TIME, expires="2026-01-08T00:00:00+00:00"),
+        ],
+        generated_at=FIXED_TIME,
+    )
+    stable = build_behavior_graph_model(
+        {
+            "node_id": "asset-e",
+            "service_name": "ssh",
+            "protocol": "tcp",
+            "port": 22,
+            "score": 0.18,
+            "previous_risk_score": 0.20,
+            "risk_score_history": [0.20, 0.19, 0.18],
+            "count": 5,
+            "source_mode": "live",
+        },
+        classification_model={"top_classification": "ssh", "confidence": 0.84, "evidence_quality": "strong"},
+        learning_profile_history={
+            "historical_summary": {"stability_score": 0.86, "stability_label": "stable", "drift_score": 0.0}
+        },
+        generated_at=FIXED_TIME,
+    )
+    categories = {
+        row["chain_category"]
+        for graph in (critical, missing, identity, federated, stable)
+        for row in graph["investigation_chains"]
+    }
+
+    assert {
+        "behavior_review_chain",
+        "risk_evolution_chain",
+        "prediction_validation_chain",
+        "federated_consensus_chain",
+        "missing_evidence_chain",
+        "identity_verification_chain",
+        "stability_monitoring_chain",
+    }.issubset(categories)
+    assert critical["summary"]["top_investigation_chain_priority"] == "critical"
+    assert missing["summary"]["top_investigation_chain_priority"] == "medium"
+    assert federated["summary"]["top_investigation_chain_category"] == "federated_consensus_chain"
+    assert stable["summary"]["top_investigation_chain_priority"] == "low"
+
+
+def test_behavior_graph_autonomous_investigation_chains_are_deterministic_and_do_not_mutate_inputs():
+    observation = {
+        "node_id": "asset-a",
+        "service_name": "admin",
+        "related_services": ["backend", "cache"],
+        "protocol": "tcp",
+        "port": 9443,
+        "score": 0.94,
+        "previous_risk_score": 0.40,
+        "risk_score_history": [0.40, 0.62, 0.94],
+        "score_factors": ["risk-a", "risk-b", "risk-c", "risk-d"],
+        "previous_relationship_count": 0,
+        "previous_signal_count": 0,
+        "count": 4,
+        "source_mode": "live",
+    }
+    classifier = {"top_classification": "nginx", "confidence": 0.76, "evidence_quality": "strong"}
+    history = {"historical_summary": {"stability_score": 0.40, "drift_score": 0.72}}
+    first = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+    second = build_behavior_graph_model(
+        observation,
+        classification_model=classifier,
+        learning_profile_history=history,
+        generated_at=FIXED_TIME,
+    )
+    chain_ids = [row["chain_id"] for row in first["investigation_chains"]]
+    chain_priorities = [
+        {"critical": 0, "high": 1, "medium": 2, "low": 3}[row["chain_priority"]]
+        for row in first["investigation_chains"]
+    ]
+
+    assert deterministic_behavior_graph_json(first) == deterministic_behavior_graph_json(second)
+    assert chain_ids == [row["chain_id"] for row in second["investigation_chains"]]
+    assert chain_priorities == sorted(chain_priorities)
+    assert first["summary"]["prediction_category"] == first["threat_prediction"]["prediction_category"]
+    assert first["summary"]["review_queue_priority"] == first["review_queue"]["review_queue_priority"]
+    assert first["summary"]["consensus"] == first["federated_intelligence"]["consensus"]
+    assert first["summary"]["top_investigation_priority"] == first["investigation_recommendations"][0]["priority"]
+    assert all(row["metadata_only"] and row["read_only"] and row["advisory_only"] for row in first["investigation_chains"])
+
+
 def test_probabilistic_application_catalog_confidence_scales_with_evidence_strength():
     strong = build_probabilistic_application_model(
         {

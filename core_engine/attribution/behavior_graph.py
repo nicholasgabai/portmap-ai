@@ -80,6 +80,16 @@ FEDERATED_CONSENSUS_CATEGORIES = {
     "unknown",
 }
 FEDERATED_INTELLIGENCE_SCHEMA_VERSION = "1.0"
+INVESTIGATION_CHAIN_CATEGORIES = {
+    "identity_verification_chain",
+    "risk_evolution_chain",
+    "prediction_validation_chain",
+    "federated_consensus_chain",
+    "missing_evidence_chain",
+    "behavior_review_chain",
+    "stability_monitoring_chain",
+}
+INVESTIGATION_CHAIN_PRIORITIES = {"critical", "high", "medium", "low"}
 
 
 def build_behavior_graph_model(
@@ -299,6 +309,19 @@ def _graph_record(
         generated_at=timestamp,
         peer_intelligence=peer_intelligence,
     )
+    investigation_chains = _build_autonomous_investigation_chains(
+        relationship_rows,
+        cluster_rows,
+        insight_rows,
+        risk_evolution,
+        behavioral_decision,
+        investigation_recommendations,
+        review_queue,
+        threat_prediction,
+        federated_model,
+        context=risk_context or {},
+        related=related,
+    )
     summary = _graph_summary(
         nodes,
         edges,
@@ -311,6 +334,7 @@ def _graph_record(
         review_queue,
         threat_prediction,
         federated_model,
+        investigation_chains,
         related,
     )
     return {
@@ -361,6 +385,10 @@ def _graph_record(
                     "contributors": federated_model.get("unique_contributors"),
                     "conflicts": federated_model.get("conflicts"),
                 },
+                "investigation_chains": [
+                    (row.get("chain_category"), row.get("chain_priority"), row.get("chain_id"))
+                    for row in investigation_chains
+                ],
             }
         )[:16],
         "generated_at": timestamp,
@@ -375,6 +403,7 @@ def _graph_record(
         "review_queue": review_queue,
         "threat_prediction": threat_prediction,
         "federated_intelligence": federated_model,
+        "investigation_chains": investigation_chains,
         "summary": summary,
         "metadata_only": True,
         "read_only": True,
@@ -399,6 +428,7 @@ def _graph_summary(
     review_queue: dict[str, Any],
     threat_prediction: dict[str, Any],
     federated_model: dict[str, Any],
+    investigation_chains: list[dict[str, Any]],
     related: dict[str, str],
 ) -> dict[str, Any]:
     counts: dict[str, int] = {node_type: 0 for node_type in GRAPH_NODE_TYPES}
@@ -411,6 +441,7 @@ def _graph_summary(
     primary = _primary_cluster(clusters)
     strongest_insight = _strongest_graph_insight(insights)
     top_investigation = _top_investigation_recommendation(investigation_recommendations)
+    top_chain = _top_investigation_chain(investigation_chains)
     return {
         "node_count": len(nodes),
         "edge_count": len(edges),
@@ -510,6 +541,13 @@ def _graph_summary(
         "conflict_summary": federated_model.get("conflict_summary", "-"),
         "consensus_summary": federated_model.get("consensus_summary", "-"),
         "federated_operator_recommendation": federated_model.get("operator_recommendation", "-"),
+        "investigation_chain_count": len(investigation_chains),
+        "top_investigation_chain": top_chain.get("chain_id", "-"),
+        "top_investigation_chain_category": top_chain.get("chain_category", "-"),
+        "top_investigation_chain_priority": top_chain.get("chain_priority", "-"),
+        "top_investigation_chain_confidence": top_chain.get("chain_confidence", 0.0),
+        "investigation_chain_summary": _investigation_chain_summary(investigation_chains),
+        "investigation_chain_next_steps": _investigation_chain_next_steps(top_chain),
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -2570,6 +2608,398 @@ def _iso_timestamp(value: datetime | None) -> str:
     if value.tzinfo is None:
         value = value.replace(tzinfo=UTC)
     return value.astimezone(UTC).isoformat()
+
+
+def _build_autonomous_investigation_chains(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    investigation_recommendations: list[dict[str, Any]],
+    review_queue: dict[str, Any],
+    threat_prediction: dict[str, Any],
+    federated_model: dict[str, Any],
+    *,
+    context: dict[str, Any],
+    related: dict[str, str],
+) -> list[dict[str, Any]]:
+    if not _has_investigation_chain_context(
+        relationships,
+        clusters,
+        insights,
+        risk_evolution,
+        behavioral_decision,
+        investigation_recommendations,
+        review_queue,
+        threat_prediction,
+        federated_model,
+        context=context,
+        related=related,
+    ):
+        return []
+
+    rows: list[dict[str, Any]] = []
+    decision = _safe_text(behavioral_decision.get("behavioral_decision_category"))
+    review_priority = _safe_text(review_queue.get("review_queue_priority"))
+    risk_direction = _safe_text(risk_evolution.get("risk_evolution_direction"))
+    prediction_category = _safe_text(threat_prediction.get("prediction_category"))
+    consensus = _safe_text(federated_model.get("consensus"))
+    evidence_quality = _safe_text(context.get("evidence_quality")).lower()
+    missing_evidence = context.get("missing_evidence")
+    if not isinstance(missing_evidence, list):
+        missing_evidence = []
+    candidate_confidence = float(context.get("candidate_confidence") or 0.0)
+    stability_label = _safe_text(context.get("profile_stability_label"))
+    drift_score = float(context.get("drift_score") or 0.0)
+
+    if review_priority in {"critical", "high"} or decision in {"elevated_risk_behavior", "investigate_behavior"}:
+        rows.append(
+            _investigation_chain_record(
+                "behavior_review_chain",
+                _chain_priority_from_review(review_priority, decision),
+                confidence=_chain_confidence(behavioral_decision.get("behavioral_decision_confidence"), review_queue.get("review_queue_priority")),
+                reason=f"decision:{decision}; review_priority:{review_priority}",
+                evidence=[
+                    f"behavioral_decision:{decision}",
+                    f"review_queue:{review_priority}",
+                    f"review_reason:{_safe_text(review_queue.get('review_queue_reason'))}",
+                ],
+                limitations=_chain_limitations(context, risk_evolution, federated_model),
+                next_steps="Review behavioral decision, queue context, and supporting evidence before any operator-approved action.",
+                related=related,
+                threat_prediction=threat_prediction,
+                review_queue=review_queue,
+                federated_model=federated_model,
+            )
+        )
+    if risk_direction in {"increasing", "decreasing", "fluctuating", "insufficient_history"}:
+        rows.append(
+            _investigation_chain_record(
+                "risk_evolution_chain",
+                _chain_priority_from_risk_direction(risk_direction),
+                confidence=_chain_confidence(risk_evolution.get("risk_evolution_confidence"), context.get("candidate_confidence")),
+                reason=f"risk_direction:{risk_direction}; risk_delta:{risk_evolution.get('risk_delta', '-')}",
+                evidence=[
+                    f"risk_direction:{risk_direction}",
+                    f"risk_velocity:{_safe_text(risk_evolution.get('risk_evolution_velocity'))}",
+                    f"risk_reasons:{_safe_text(risk_evolution.get('risk_change_reasons'))}",
+                ],
+                limitations=_chain_limitations(context, risk_evolution, federated_model),
+                next_steps=(
+                    "Collect more observations before drawing conclusions."
+                    if risk_direction == "insufficient_history"
+                    else "Compare current and historical risk metadata for expected behavior changes."
+                ),
+                related=related,
+                threat_prediction=threat_prediction,
+                review_queue=review_queue,
+                federated_model=federated_model,
+            )
+        )
+    if prediction_category in {"increasing_risk", "emerging_behavior", "uncertain_prediction", "decreasing_risk"}:
+        rows.append(
+            _investigation_chain_record(
+                "prediction_validation_chain",
+                _chain_priority_from_prediction(prediction_category, threat_prediction),
+                confidence=_chain_confidence(threat_prediction.get("prediction_confidence"), threat_prediction.get("predicted_risk_score")),
+                reason=f"prediction:{prediction_category}; horizon:{_safe_text(threat_prediction.get('prediction_horizon'))}",
+                evidence=[
+                    f"prediction:{prediction_category}",
+                    f"predicted_level:{_safe_text(threat_prediction.get('predicted_risk_level'))}",
+                    f"prediction_reasons:{_safe_text(threat_prediction.get('prediction_reasons'))}",
+                ],
+                limitations=_chain_text_list(threat_prediction.get("prediction_limitations")),
+                next_steps="Validate prediction inputs against risk evolution, graph insights, and future local observations.",
+                related=related,
+                threat_prediction=threat_prediction,
+                review_queue=review_queue,
+                federated_model=federated_model,
+            )
+        )
+    if consensus in {"conflicting", "expired", "weak_consensus", "strong_consensus"}:
+        rows.append(
+            _investigation_chain_record(
+                "federated_consensus_chain",
+                _chain_priority_from_consensus(consensus),
+                confidence=_chain_confidence(federated_model.get("federated_confidence"), federated_model.get("agreement_score")),
+                reason=f"federated_consensus:{consensus}; conflicts:{federated_model.get('conflicts', 0)}",
+                evidence=[
+                    f"consensus:{consensus}",
+                    f"agreement:{federated_model.get('agreement_percentage', '-')}",
+                    f"conflicts:{federated_model.get('conflict_summary', '-')}",
+                ],
+                limitations=["federated_metadata_is_supporting_context_only"],
+                next_steps="Validate federated context locally and preserve node-authoritative decisions.",
+                related=related,
+                threat_prediction=threat_prediction,
+                review_queue=review_queue,
+                federated_model=federated_model,
+            )
+        )
+    if missing_evidence or evidence_quality in {"-", "weak", "limited", "low", "unknown"} or candidate_confidence < 0.50:
+        rows.append(
+            _investigation_chain_record(
+                "missing_evidence_chain",
+                "medium" if candidate_confidence < 0.50 else "low",
+                confidence=_chain_confidence(candidate_confidence, 0.45),
+                reason=f"evidence_quality:{evidence_quality}; missing:{len(missing_evidence)}",
+                evidence=[f"missing:{item}" for item in missing_evidence[:6]] or [f"evidence_quality:{evidence_quality}"],
+                limitations=["classification_requires_more_metadata"],
+                next_steps="Verify service identity, process evidence, expected-service records, and historical observations.",
+                related=related,
+                threat_prediction=threat_prediction,
+                review_queue=review_queue,
+                federated_model=federated_model,
+            )
+        )
+    top_investigation = _top_investigation_recommendation(investigation_recommendations)
+    top_category = _safe_text(top_investigation.get("category"))
+    if top_category in {"verify_service_identity", "review_missing_evidence"} or int(context.get("candidate_count") or 0) > 1:
+        rows.append(
+            _investigation_chain_record(
+                "identity_verification_chain",
+                _safe_text(top_investigation.get("priority")) if top_investigation else "medium",
+                confidence=_chain_confidence(context.get("candidate_confidence"), top_investigation.get("expected_confidence_gain")),
+                reason=f"top_recommendation:{top_category}; candidates:{int(context.get('candidate_count') or 0)}",
+                evidence=[
+                    f"top_classification:{_safe_text(context.get('top_classification'))}",
+                    f"candidate_count:{int(context.get('candidate_count') or 0)}",
+                    f"top_recommendation:{top_category}",
+                ],
+                limitations=_chain_limitations(context, risk_evolution, federated_model),
+                next_steps="Confirm the service/application identity using existing metadata and operator expectations.",
+                related=related,
+                threat_prediction=threat_prediction,
+                review_queue=review_queue,
+                federated_model=federated_model,
+            )
+        )
+    if (
+        prediction_category == "stable_behavior"
+        or decision == "benign_observation"
+        or stability_label in {"stable", "highly_stable"}
+    ) and drift_score <= 0.25:
+        rows.append(
+            _investigation_chain_record(
+                "stability_monitoring_chain",
+                "low",
+                confidence=_chain_confidence(context.get("profile_stability"), threat_prediction.get("prediction_confidence")),
+                reason=f"stable_context:{stability_label}; drift:{drift_score:.2f}",
+                evidence=[
+                    f"prediction:{prediction_category}",
+                    f"decision:{decision}",
+                    f"stability:{stability_label}",
+                    f"drift:{drift_score:.2f}",
+                ],
+                limitations=["routine_monitoring_only"],
+                next_steps="Continue local observation and watch for drift, prediction changes, or federated conflicts.",
+                related=related,
+                threat_prediction=threat_prediction,
+                review_queue=review_queue,
+                federated_model=federated_model,
+            )
+        )
+    return _dedupe_investigation_chains(rows)
+
+
+def _has_investigation_chain_context(
+    relationships: list[dict[str, Any]],
+    clusters: list[dict[str, Any]],
+    insights: list[dict[str, Any]],
+    risk_evolution: dict[str, Any],
+    behavioral_decision: dict[str, Any],
+    investigation_recommendations: list[dict[str, Any]],
+    review_queue: dict[str, Any],
+    threat_prediction: dict[str, Any],
+    federated_model: dict[str, Any],
+    *,
+    context: dict[str, Any],
+    related: dict[str, str],
+) -> bool:
+    if relationships or clusters or insights or investigation_recommendations or context:
+        return True
+    if any(_safe_text(value) != "-" for value in related.values()):
+        return True
+    return any(
+        _safe_text(row.get(field))
+        not in {"-", "unknown", "none", "insufficient_context", "insufficient_history", "uncertain_prediction"}
+        for row, field in (
+            (risk_evolution, "risk_evolution_direction"),
+            (behavioral_decision, "behavioral_decision_category"),
+            (review_queue, "review_queue_priority"),
+            (threat_prediction, "prediction_category"),
+            (federated_model, "consensus"),
+        )
+    )
+
+
+def _investigation_chain_record(
+    category: str,
+    priority: str,
+    *,
+    confidence: float,
+    reason: str,
+    evidence: list[str],
+    limitations: list[str],
+    next_steps: str,
+    related: dict[str, str],
+    threat_prediction: dict[str, Any],
+    review_queue: dict[str, Any],
+    federated_model: dict[str, Any],
+) -> dict[str, Any]:
+    safe_category = category if category in INVESTIGATION_CHAIN_CATEGORIES else "behavior_review_chain"
+    safe_priority = priority if priority in INVESTIGATION_CHAIN_PRIORITIES else "medium"
+    safe_evidence = sorted(_unique_text(evidence, limit=10))
+    safe_limitations = sorted(_unique_text(limitations, limit=8)) or ["no_major_limitations"]
+    chain_id = "investigation-chain-" + _digest(
+        {
+            "category": safe_category,
+            "priority": safe_priority,
+            "reason": reason,
+            "evidence": safe_evidence,
+            "related_asset": related.get("related_asset"),
+            "related_service": related.get("related_service"),
+            "related_profile": related.get("related_profile"),
+            "prediction": threat_prediction.get("prediction_category"),
+            "review": review_queue.get("review_queue_priority"),
+            "consensus": federated_model.get("consensus"),
+        }
+    )[:16]
+    return {
+        "chain_id": chain_id,
+        "chain_category": safe_category,
+        "chain_priority": safe_priority,
+        "chain_confidence": _bounded_score(confidence),
+        "chain_status": "advisory_pending_review" if safe_priority in {"critical", "high"} else "advisory_observe",
+        "chain_reason": _safe_text(reason, limit=160),
+        "chain_evidence": _safe_text("; ".join(safe_evidence), limit=220),
+        "chain_limitations": _safe_text("; ".join(safe_limitations), limit=180),
+        "chain_next_steps": _safe_text(next_steps, limit=200),
+        "related_asset": related.get("related_asset") or "-",
+        "related_service": related.get("related_service") or "-",
+        "related_profile": related.get("related_profile") or "-",
+        "related_prediction": threat_prediction.get("prediction_category", "-"),
+        "related_review_queue": review_queue.get("review_queue_priority", "-"),
+        "related_federated_consensus": federated_model.get("consensus", "-"),
+        "metadata_only": True,
+        "read_only": True,
+        "advisory_only": True,
+        "automated_action": False,
+        "enforcement_enabled": False,
+    }
+
+
+def _dedupe_investigation_chains(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    deduped: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in rows:
+        key = (row["chain_category"], row["chain_reason"])
+        current = deduped.get(key)
+        if current is None or _investigation_chain_sort_key(row) < _investigation_chain_sort_key(current):
+            deduped[key] = row
+    return sorted(deduped.values(), key=_investigation_chain_sort_key)
+
+
+def _investigation_chain_sort_key(row: dict[str, Any]) -> tuple[int, float, str, str]:
+    priority_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    return (
+        priority_rank.get(_safe_text(row.get("chain_priority")), 2),
+        -float(row.get("chain_confidence") or 0.0),
+        _safe_text(row.get("chain_category")),
+        _safe_text(row.get("chain_id")),
+    )
+
+
+def _top_investigation_chain(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    return rows[0] if rows else {}
+
+
+def _investigation_chain_summary(rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return "-"
+    return "; ".join(
+        f"{row['chain_priority']}:{row['chain_category']}:{row['chain_id']}"
+        for row in sorted(rows, key=_investigation_chain_sort_key)[:3]
+    )
+
+
+def _investigation_chain_next_steps(top: dict[str, Any]) -> str:
+    if not top:
+        return "-"
+    return _safe_text(top.get("chain_next_steps"), limit=200)
+
+
+def _chain_confidence(*values: Any) -> float:
+    parsed = [_optional_float(value) for value in values]
+    parsed = [value for value in parsed if value is not None]
+    if not parsed:
+        return 0.35
+    return _bounded_score((sum(parsed) / len(parsed)) * 0.75 + max(parsed) * 0.25)
+
+
+def _chain_priority_from_review(review_priority: str, decision: str) -> str:
+    if review_priority == "critical":
+        return "critical"
+    if review_priority == "high" or decision == "elevated_risk_behavior":
+        return "high"
+    if review_priority == "medium" or decision == "investigate_behavior":
+        return "medium"
+    return "low"
+
+
+def _chain_priority_from_risk_direction(direction: str) -> str:
+    if direction == "increasing":
+        return "high"
+    if direction in {"fluctuating", "insufficient_history"}:
+        return "medium"
+    if direction == "decreasing":
+        return "low"
+    return "low"
+
+
+def _chain_priority_from_prediction(category: str, prediction: dict[str, Any]) -> str:
+    level = _safe_text(prediction.get("predicted_risk_level"))
+    if category == "increasing_risk" and level in {"critical", "high"}:
+        return "high"
+    if category == "uncertain_prediction":
+        return "medium"
+    if category == "emerging_behavior":
+        return "medium"
+    return "low"
+
+
+def _chain_priority_from_consensus(consensus: str) -> str:
+    if consensus == "conflicting":
+        return "high"
+    if consensus in {"expired", "weak_consensus"}:
+        return "medium"
+    return "low"
+
+
+def _chain_limitations(
+    context: dict[str, Any],
+    risk_evolution: dict[str, Any],
+    federated_model: dict[str, Any],
+) -> list[str]:
+    limitations: list[str] = []
+    if int(context.get("observation_count") or 0) <= 2:
+        limitations.append("limited_observation_history")
+    if float(context.get("candidate_confidence") or 0.0) < 0.50:
+        limitations.append("low_attribution_confidence")
+    if _safe_text(risk_evolution.get("risk_evolution_direction")) == "insufficient_history":
+        limitations.append("insufficient_risk_history")
+    if _safe_text(federated_model.get("consensus")) in {"unknown", "single_source"}:
+        limitations.append("limited_federated_context")
+    return limitations or ["operator_review_only"]
+
+
+def _chain_text_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [_safe_text(item) for item in value if _safe_text(item) != "-"]
+    text = _safe_text(value)
+    if text == "-":
+        return []
+    return [part.strip() for part in text.split(";") if part.strip()]
 
 
 def _behavioral_decision_category(

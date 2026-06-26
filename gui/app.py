@@ -1503,6 +1503,27 @@ def _active_risk_finding_rows(
                 "federated_unique_contributors": _behavior_graph_text_field(
                     classification, "unique_contributors", limit=12
                 ),
+                "investigation_chain_count": _behavior_graph_text_field(
+                    classification, "investigation_chain_count", limit=12
+                ),
+                "top_investigation_chain": _behavior_graph_text_field(
+                    classification, "top_investigation_chain", limit=48
+                ),
+                "top_investigation_chain_category": _behavior_graph_text_field(
+                    classification, "top_investigation_chain_category", limit=48
+                ),
+                "top_investigation_chain_priority": _behavior_graph_text_field(
+                    classification, "top_investigation_chain_priority", limit=16
+                ),
+                "top_investigation_chain_confidence": _format_probability(
+                    _classification_behavior_graph_summary(classification).get("top_investigation_chain_confidence")
+                ),
+                "investigation_chain_summary": _behavior_graph_text_field(
+                    classification, "investigation_chain_summary", limit=140
+                ),
+                "investigation_chain_next_steps": _behavior_graph_text_field(
+                    classification, "investigation_chain_next_steps", limit=140
+                ),
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
@@ -1666,6 +1687,13 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Federated Age", row.get("federated_age", "-")),
         ("Source Count", row.get("federated_source_count", "-")),
         ("Unique Contributors", row.get("federated_unique_contributors", "-")),
+        ("Investigation Chain Count", row.get("investigation_chain_count", "-")),
+        ("Top Investigation Chain", row.get("top_investigation_chain", "-")),
+        ("Top Investigation Chain Category", row.get("top_investigation_chain_category", "-")),
+        ("Top Investigation Chain Priority", row.get("top_investigation_chain_priority", "-")),
+        ("Top Investigation Chain Confidence", row.get("top_investigation_chain_confidence", "-")),
+        ("Investigation Chain Summary", row.get("investigation_chain_summary", "-")),
+        ("Investigation Chain Next Steps", row.get("investigation_chain_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -3162,6 +3190,13 @@ def _ai_provider_model_rows(
                 "federated_age": "-",
                 "federated_source_count": "-",
                 "federated_unique_contributors": "-",
+                "investigation_chain_count": "-",
+                "top_investigation_chain": "-",
+                "top_investigation_chain_category": "-",
+                "top_investigation_chain_priority": "-",
+                "top_investigation_chain_confidence": "-",
+                "investigation_chain_summary": "-",
+                "investigation_chain_next_steps": "-",
                 "related_asset": "-",
                 "related_service": "-",
                 "related_profile": "-",
@@ -3456,6 +3491,27 @@ def _ai_provider_model_rows(
             row["federated_unique_contributors"] = _behavior_graph_text_field(
                 model_record, "unique_contributors", limit=12
             )
+            row["investigation_chain_count"] = _behavior_graph_text_field(
+                model_record, "investigation_chain_count", limit=12
+            )
+            row["top_investigation_chain"] = _behavior_graph_text_field(
+                model_record, "top_investigation_chain", limit=48
+            )
+            row["top_investigation_chain_category"] = _behavior_graph_text_field(
+                model_record, "top_investigation_chain_category", limit=48
+            )
+            row["top_investigation_chain_priority"] = _behavior_graph_text_field(
+                model_record, "top_investigation_chain_priority", limit=16
+            )
+            row["top_investigation_chain_confidence"] = _format_probability(
+                _classification_behavior_graph_summary(model_record).get("top_investigation_chain_confidence")
+            )
+            row["investigation_chain_summary"] = _behavior_graph_text_field(
+                model_record, "investigation_chain_summary", limit=140
+            )
+            row["investigation_chain_next_steps"] = _behavior_graph_text_field(
+                model_record, "investigation_chain_next_steps", limit=140
+            )
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
@@ -3601,6 +3657,13 @@ def _ai_provider_model_rows(
             "federated_age": row["federated_age"],
             "federated_source_count": row["federated_source_count"],
             "federated_unique_contributors": row["federated_unique_contributors"],
+            "investigation_chain_count": row["investigation_chain_count"],
+            "top_investigation_chain": row["top_investigation_chain"],
+            "top_investigation_chain_category": row["top_investigation_chain_category"],
+            "top_investigation_chain_priority": row["top_investigation_chain_priority"],
+            "top_investigation_chain_confidence": row["top_investigation_chain_confidence"],
+            "investigation_chain_summary": row["investigation_chain_summary"],
+            "investigation_chain_next_steps": row["investigation_chain_next_steps"],
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
@@ -3760,6 +3823,13 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Federated Age", row.get("federated_age", "-")),
         ("Source Count", row.get("federated_source_count", "-")),
         ("Unique Contributors", row.get("federated_unique_contributors", "-")),
+        ("Investigation Chain Count", row.get("investigation_chain_count", "-")),
+        ("Top Investigation Chain", row.get("top_investigation_chain", "-")),
+        ("Top Investigation Chain Category", row.get("top_investigation_chain_category", "-")),
+        ("Top Investigation Chain Priority", row.get("top_investigation_chain_priority", "-")),
+        ("Top Investigation Chain Confidence", row.get("top_investigation_chain_confidence", "-")),
+        ("Investigation Chain Summary", row.get("investigation_chain_summary", "-")),
+        ("Investigation Chain Next Steps", row.get("investigation_chain_next_steps", "-")),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),

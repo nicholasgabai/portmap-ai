@@ -1144,6 +1144,13 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Federated Age"] != "-"
     assert details["Source Count"] != "-"
     assert details["Unique Contributors"] != "-"
+    assert details["Investigation Chain Count"] != "-"
+    assert details["Top Investigation Chain"].startswith("investigation-chain-") or details["Top Investigation Chain"] == "-"
+    assert details["Top Investigation Chain Category"] != "-"
+    assert details["Top Investigation Chain Priority"] in {"critical", "high", "medium", "low", "-"}
+    assert details["Top Investigation Chain Confidence"] != "-"
+    assert details["Investigation Chain Summary"] != "-"
+    assert details["Investigation Chain Next Steps"] != "-"
     assert details["Related Asset"] == "-"
     assert details["Related Service"] == "https"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -1202,6 +1209,8 @@ def test_ai_and_risk_detail_rows_preserve_review_queue_and_prediction_layout_ord
         "federated_status": "active",
         "federated_consensus": "single_source",
         "federated_operator_recommendation": "Treat as single-worker context",
+        "top_investigation_chain": "investigation-chain-layout",
+        "investigation_chain_next_steps": "Review chain context",
         "related_asset": "asset-a",
     }
     ai_labels = [label for label, _ in gui_app._ai_detail_rows(row)]
@@ -1214,7 +1223,9 @@ def test_ai_and_risk_detail_rows_preserve_review_queue_and_prediction_layout_ord
         assert labels.index("Prediction Category") < labels.index("Prediction Next Steps")
         assert labels.index("Prediction Next Steps") < labels.index("Federated Status")
         assert labels.index("Federated Status") < labels.index("Operator Recommendation")
-        assert labels.index("Operator Recommendation") < labels.index("Related Asset")
+        assert labels.index("Operator Recommendation") < labels.index("Investigation Chain Count")
+        assert labels.index("Investigation Chain Count") < labels.index("Investigation Chain Next Steps")
+        assert labels.index("Investigation Chain Next Steps") < labels.index("Related Asset")
 
 
 def test_ai_details_table_wraps_long_metadata_and_preserves_cursor_selection():
@@ -1389,6 +1400,9 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
         "federated_consensus_summary": "Conflicting classifications detected across federated metadata " + ("federated-consensus-token" * 5),
         "federated_operator_recommendation": "Review conflicting worker metadata and preserve local authority " + ("federated-recommendation-token" * 5),
         "federated_source_nodes": "worker-a;" + ("worker-with-very-long-node-id" * 5),
+        "top_investigation_chain": "investigation-chain-" + ("abcdef1234567890" * 4),
+        "investigation_chain_summary": "critical:behavior_review_chain:investigation-chain-token;" + ("chain-summary-token" * 5),
+        "investigation_chain_next_steps": "Review chain evidence limitations and related federated consensus " + ("chain-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("abcdef1234567890" * 4),
     }
 
@@ -1444,6 +1458,9 @@ def test_ai_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Consensus Summary" for row in rendered)
             assert any(row[0] == "Operator Recommendation" for row in rendered)
             assert any(row[0] == "Source Nodes" for row in rendered)
+            assert any(row[0] == "Top Investigation Chain" for row in rendered)
+            assert any(row[0] == "Investigation Chain Summary" for row in rendered)
+            assert any(row[0] == "Investigation Chain Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
@@ -2110,6 +2127,13 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Federated Age"] != "-"
     assert details["Source Count"] != "-"
     assert details["Unique Contributors"] != "-"
+    assert details["Investigation Chain Count"] != "-"
+    assert details["Top Investigation Chain"].startswith("investigation-chain-") or details["Top Investigation Chain"] == "-"
+    assert details["Top Investigation Chain Category"] != "-"
+    assert details["Top Investigation Chain Priority"] in {"critical", "high", "medium", "low", "-"}
+    assert details["Top Investigation Chain Confidence"] != "-"
+    assert details["Investigation Chain Summary"] != "-"
+    assert details["Investigation Chain Next Steps"] != "-"
     assert details["Related Asset"] == "worker-1"
     assert details["Related Service"] == "ssh"
     assert details["Related Profile"].startswith("learning-profile-")
@@ -2304,6 +2328,9 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
         "federated_consensus_summary": "Observed independently by 5 workers " + ("federated-consensus-token" * 5),
         "federated_operator_recommendation": "Use federated context as supporting evidence " + ("federated-recommendation-token" * 5),
         "federated_source_nodes": "worker-a;" + ("worker-with-very-long-node-id" * 5),
+        "top_investigation_chain": "investigation-chain-" + ("1234567890abcdef" * 4),
+        "investigation_chain_summary": "high:federated_consensus_chain:investigation-chain-token;" + ("chain-summary-token" * 5),
+        "investigation_chain_next_steps": "Validate chain evidence and preserve local authority " + ("chain-next-step-token" * 5),
         "learning_profile_id": "learning-profile-" + ("1234567890abcdef" * 4),
     }
 
@@ -2359,6 +2386,9 @@ def test_risk_details_table_prevents_horizontal_overflow_for_long_values():
             assert any(row[0] == "Consensus Summary" for row in rendered)
             assert any(row[0] == "Operator Recommendation" for row in rendered)
             assert any(row[0] == "Source Nodes" for row in rendered)
+            assert any(row[0] == "Top Investigation Chain" for row in rendered)
+            assert any(row[0] == "Investigation Chain Summary" for row in rendered)
+            assert any(row[0] == "Investigation Chain Next Steps" for row in rendered)
             assert any(row[0] == "Learning Profile ID" for row in rendered)
             assert any(row[0] == "" for row in rendered)
 
