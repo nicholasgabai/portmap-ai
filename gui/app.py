@@ -106,36 +106,48 @@ DETAIL_TABLE_GUTTER_WIDTH = 10
 WORKSPACE_INTRODUCTIONS: Dict[str, Dict[str, str]] = {
     "risk": {
         "title": "Risk Workspace",
+        "question": "What requires my attention?",
+        "hero": "Critical / High / Medium / Low, Needs Review, Predicted Trend",
         "purpose": "Summarizes current findings, behavioral analysis, risk evolution, predictions, federated intelligence, investigation chains, and recommended operator actions.",
         "workflow": "Start with Risk Status, select an Active Risk Finding, then read Finding Details before reviewing Signals, Feed, and Timeline.",
         "use": "Use when triaging current risk, validating behavior changes, and deciding what needs operator review.",
     },
     "exports": {
         "title": "Exports Workspace",
+        "question": "Can I safely use these exports?",
+        "hero": "Exports, Validation, Storage, Latest Report",
         "purpose": "Manages generated reports, validation state, integrity context, export history, and evidence packages.",
         "workflow": "Review Export Status, select a Recent Export, then confirm details, types, events, and validation timeline.",
         "use": "Use when preparing reports, checking export completeness, or reviewing evidence package history.",
     },
     "governance": {
         "title": "Governance Workspace",
+        "question": "Can I trust these results?",
+        "hero": "Evidence, Compliance, Exceptions, Integrity",
         "purpose": "Provides operational governance, evidence, policy validation, compliance status, decision history, and audit information.",
         "workflow": "Review Governance Status, select evidence, then inspect categories, recent events, and the governance timeline.",
         "use": "Use when validating audit readiness, policy evidence, exceptions, and operator accountability.",
     },
     "deployment": {
         "title": "Deployment Workspace",
+        "question": "Can I deploy?",
+        "hero": "Ready, Warnings, Blocked, Compatibility, Workers",
         "purpose": "Summarizes deployment readiness, node health context, worker state readiness, compatibility, synchronization, and production readiness.",
         "workflow": "Review the readiness catalog, select a deployment target, then check details, platform types, events, and blockers.",
         "use": "Use before packaging, upgrade, install, or production-readiness review. This workspace is metadata-only.",
     },
     "ai": {
         "title": "AI Workspace",
+        "question": "What does the AI believe?",
+        "hero": "Top Classification, Confidence, Learning State, Prediction",
         "purpose": "Explains PortMap-AI reasoning, confidence calculations, attribution, learning history, predictions, federated observations, and behavioral decisions.",
         "workflow": "Review AI Summary, select a provider/model row, then inspect details, provider summary, activity, and timeline.",
         "use": "Use when investigating why a classification, prediction, decision, recommendation, or review queue result exists.",
     },
     "packet": {
         "title": "Packet Workspace",
+        "question": "What traffic is moving?",
+        "hero": "Flows, Protocols, Top Talker, Top Conversation, Traffic Trend",
         "purpose": "Summarizes observed packet metadata, protocol activity, flow reconstruction, and communication analysis from existing flow summaries.",
         "workflow": "Review Packet Summary, select Packet Activity, then inspect details, protocol totals, recent activity, and timeline.",
         "use": "Use when validating flow and protocol metadata. This workspace does not capture, decode, or store payloads.",
@@ -150,10 +162,14 @@ def _wrapped_detail_rows(
     max_lines: int = DETAIL_WRAP_MAX_LINES,
 ) -> List[tuple[str, str, str]]:
     rendered: List[tuple[str, str, str]] = []
+    field_counts: Dict[str, int] = {}
     for field, value in rows:
+        count = field_counts.get(field, 0)
+        field_counts[field] = count + 1
+        base_key = field if count == 0 else f"{field}@{count + 1}"
         text = " ".join(str(value or "-").replace("\n", " ").replace("\r", " ").split()) or "-"
         if text == "-" or len(text) <= width:
-            rendered.append((field, text, field))
+            rendered.append((field, text, base_key))
             continue
         pieces = wrap(text, width=width, break_long_words=True, break_on_hyphens=False) or [text]
         truncated = len(pieces) > max_lines
@@ -163,7 +179,7 @@ def _wrapped_detail_rows(
             pieces[-1] = pieces[-1][: max(width - len(ellipsis), 0)].rstrip() + ellipsis
         for index, piece in enumerate(pieces):
             row_field = field if index == 0 else ""
-            key = field if index == 0 else f"{field}#{index}"
+            key = base_key if index == 0 else f"{base_key}#{index}"
             rendered.append((row_field, piece, key))
     return rendered
 
@@ -243,12 +259,55 @@ def _detail_section(title: str, summary: str) -> tuple[str, str]:
     return (f"[{title}]", summary)
 
 
+def _operator_detail_rows(
+    *,
+    summary: List[tuple[str, Any]],
+    highlights: List[tuple[str, Any]],
+    advanced: List[tuple[str, Any]],
+    metadata: List[tuple[str, Any]] | None = None,
+) -> List[tuple[str, str]]:
+    return [
+        _detail_section("Operator Summary", "Decision first."),
+        *[(field, _detail_text(value)) for field, value in summary],
+        _detail_section("Operational Highlights", "What matters now."),
+        *[(field, _detail_text(value)) for field, value in highlights],
+        _detail_section("Advanced Details", "Full forensic context."),
+        *[(field, _detail_text(value)) for field, value in advanced],
+        _detail_section("Metadata", "Raw supporting metadata."),
+        *[(field, _detail_text(value)) for field, value in (metadata or [])],
+    ]
+
+
+def _detail_text(value: Any) -> str:
+    text = " ".join(str(value or "-").replace("\n", " ").replace("\r", " ").split())
+    return text or "-"
+
+
+def _first_nonempty(*values: Any) -> str:
+    for value in values:
+        text = _detail_text(value)
+        if text != "-":
+            return text
+    return "-"
+
+
+def _attention_required(*values: Any) -> str:
+    joined = " ".join(_detail_text(value).lower() for value in values)
+    if any(term in joined for term in ("critical", "high", "blocked", "expired", "invalid", "review", "degraded")):
+        return "yes"
+    if joined.strip("- "):
+        return "no"
+    return "-"
+
+
 def workspace_intro_text(tab_id: str) -> str:
     intro = WORKSPACE_INTRODUCTIONS.get(tab_id)
     if intro is None:
         return ""
     return (
         f"{intro['title']}\n"
+        f"Question: {intro['question']}\n"
+        f"Hero: {intro['hero']}\n"
         f"Purpose: {intro['purpose']}\n"
         f"Workflow: {intro['workflow']}\n"
         f"When to use: {intro['use']}"
@@ -1629,7 +1688,7 @@ def _active_risk_finding_rows(
 
 def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]]:
     row = finding or {}
-    return [
+    advanced = [
         _detail_section("Classification", "Context."),
         ("Asset", row.get("asset", "-")),
         ("Service", row.get("service", "-")),
@@ -1799,6 +1858,24 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Risk Source", row.get("risk_source", "-")),
         ("Current Status", row.get("current_status", "-")),
     ]
+    return _operator_detail_rows(
+        summary=[
+            ("Critical Finding", _first_nonempty(row.get("finding"), row.get("top_signal"), row.get("service"))),
+            ("Severity", row.get("severity", "-")),
+            ("Risk Score", row.get("score", "-")),
+            ("Why This Was Flagged", _first_nonempty(row.get("explanation_summary"), row.get("risk_change_reasons"), row.get("top_signal"))),
+            ("Recommended Action", _first_nonempty(row.get("review_queue_next_step"), row.get("investigation_operator_next_steps"), row.get("action"))),
+        ],
+        highlights=[
+            ("Evidence Observed", _first_nonempty(row.get("supporting_evidence"), row.get("evidence_signals"), row.get("related_signals"))),
+            ("Evidence Missing", _first_nonempty(row.get("missing_evidence_summary"), row.get("missing_evidence"))),
+            ("Prediction", _first_nonempty(row.get("prediction_category"), row.get("predicted_risk_level"))),
+            ("Confidence", _first_nonempty(row.get("classification_confidence"), row.get("prediction_confidence"))),
+            ("Related Signals", _first_nonempty(row.get("related_signals"), row.get("top_signal"))),
+            ("Attention Required", _attention_required(row.get("review_queue_required"), row.get("review_queue_priority"), row.get("severity"))),
+        ],
+        advanced=advanced,
+    )
 
 
 def _format_remediation_feed(events: List[Dict[str, Any]], *, limit: int = 9) -> str:
@@ -2233,7 +2310,7 @@ def _export_status_table_row(export_rows: List[Dict[str, str]], export_dir: Path
 
 def _export_detail_rows(export_row: Dict[str, str] | None) -> List[tuple[str, str]]:
     row = export_row or {}
-    return [
+    metadata = [
         ("Export ID", row.get("export_id", "-")),
         ("Export Type", row.get("export_type", "-")),
         ("Started", row.get("started", "-")),
@@ -2245,6 +2322,26 @@ def _export_detail_rows(export_row: Dict[str, str] | None) -> List[tuple[str, st
         ("Duration", row.get("duration", "-")),
         ("Size", row.get("size", "-")),
     ]
+    validation = row.get("validation_result", "-")
+    failures = "yes" if validation not in {"-", "valid"} else "no" if validation == "valid" else "-"
+    recommendation = "Use export after operator review." if validation == "valid" else "Review validation result before use."
+    return _operator_detail_rows(
+        summary=[
+            ("Latest Export", row.get("export_id", "-")),
+            ("Validation", validation),
+            ("Storage Usage", row.get("size", "-")),
+            ("Recent Failures", failures),
+            ("Operator Recommendation", recommendation if row else "-"),
+        ],
+        highlights=[
+            ("Export Success Rate", "100%" if validation == "valid" else "0%" if validation not in {"-", "valid"} else "-"),
+            ("Integrity Status", validation),
+            ("Status", row.get("status", "-")),
+            ("Destination", row.get("destination", "-")),
+        ],
+        advanced=[],
+        metadata=metadata,
+    )
 
 
 def _export_type_rows(export_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
@@ -2432,7 +2529,7 @@ def _governance_status_table_row(governance_rows: List[Dict[str, str]]) -> Dict[
 
 def _governance_detail_rows(governance_row: Dict[str, str] | None) -> List[tuple[str, str]]:
     row = governance_row or {}
-    return [
+    metadata = [
         ("Time", row.get("time", "-")),
         ("Category", row.get("category", "-")),
         ("Event Type", row.get("event_type", "-")),
@@ -2445,6 +2542,25 @@ def _governance_detail_rows(governance_row: Dict[str, str] | None) -> List[tuple
         ("Preview Only", row.get("preview_only", "-")),
         ("Destructive Action", row.get("destructive_action", "-")),
     ]
+    state = row.get("state", "-")
+    exception = "yes" if state not in {"-", "valid", "recorded", "applied", "ready"} else "no" if state != "-" else "-"
+    return _operator_detail_rows(
+        summary=[
+            ("Compliance Status", _first_nonempty(state, row.get("category"))),
+            ("Evidence Integrity", "intact" if row.get("destructive_action") == "False" else "-"),
+            ("Evidence Completeness", row.get("evidence", "-")),
+            ("Audit Readiness", "ready" if row.get("preview_only") == "True" else "review"),
+            ("Validation Result", state),
+        ],
+        highlights=[
+            ("Exceptions", exception),
+            ("Decision Confidence", "metadata-backed" if row else "-"),
+            ("Operator Accountability", _first_nonempty(row.get("actor"), row.get("action"))),
+            ("Source", row.get("source", "-")),
+        ],
+        advanced=[],
+        metadata=metadata,
+    )
 
 
 def _governance_category_rows(governance_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
@@ -2758,7 +2874,7 @@ def _deployment_status_table_row(deployment_rows: List[Dict[str, str]]) -> Dict[
 
 def _deployment_detail_rows(deployment_row: Dict[str, str] | None) -> List[tuple[str, str]]:
     row = deployment_row or {}
-    return [
+    metadata = [
         ("Platform", row.get("platform", "-")),
         ("Method", row.get("method", "-")),
         ("Status", row.get("status", "-")),
@@ -2773,6 +2889,27 @@ def _deployment_detail_rows(deployment_row: Dict[str, str] | None) -> List[tuple
         ("Safety Mode", row.get("safety_mode", "-")),
         ("Notes", row.get("notes", "-")),
     ]
+    blockers = row.get("blocker_details", "-")
+    warnings = row.get("warning_details", "-")
+    next_step = "Ready for operator-approved deployment review." if row.get("status") == "ready" else _first_nonempty(blockers, warnings, "Review readiness warnings and blockers.")
+    return _operator_detail_rows(
+        summary=[
+            ("Deployment Readiness", row.get("readiness", "-")),
+            ("Ready Systems", "1" if row.get("status") == "ready" else "0" if row else "-"),
+            ("Warning Count", row.get("warnings", "-")),
+            ("Blocked Systems", row.get("blockers", "-")),
+            ("Recommended Next Step", next_step if row else "-"),
+        ],
+        highlights=[
+            ("Compatibility", row.get("readiness", "-")),
+            ("Version Status", row.get("updated", "-")),
+            ("Worker Status", row.get("tested_locally", "-")),
+            ("Deployment Confidence", "high" if row.get("status") == "ready" else "review" if row else "-"),
+            ("Execution", row.get("execution", "-")),
+        ],
+        advanced=[],
+        metadata=metadata,
+    )
 
 
 def _deployment_platform_type_rows(deployment_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
@@ -3781,7 +3918,7 @@ def _ai_status_table_row(ai_rows: List[Dict[str, str]]) -> Dict[str, str]:
 
 def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
     row = ai_row or {}
-    return [
+    advanced = [
         _detail_section("Classification", "Context."),
         ("Provider", row.get("provider", "-")),
         ("Model", row.get("model", "-")),
@@ -3939,6 +4076,24 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Mode", row.get("mode", "-")),
         ("Execution", row.get("execution", "-")),
     ]
+    return _operator_detail_rows(
+        summary=[
+            ("Classification", row.get("top_classification", "-")),
+            ("Confidence", row.get("confidence", "-")),
+            ("Top Candidate", row.get("top_classification", "-")),
+            ("Why AI Reached This Conclusion", _first_nonempty(row.get("explanation_summary"), row.get("confidence_rationale"))),
+            ("Operator Recommendation", _first_nonempty(row.get("operator_next_steps"), row.get("investigation_operator_next_steps"))),
+        ],
+        highlights=[
+            ("Alternative Candidates", row.get("alternative_candidates", "-")),
+            ("Evidence Supporting It", _first_nonempty(row.get("supporting_evidence"), row.get("evidence_signals"))),
+            ("Evidence Still Missing", _first_nonempty(row.get("missing_evidence_summary"), row.get("missing_evidence"))),
+            ("Learning Status", _first_nonempty(row.get("stability_label"), row.get("learning_profile_stability"))),
+            ("Prediction", _first_nonempty(row.get("prediction_category"), row.get("predicted_risk_level"))),
+            ("Attention Required", _attention_required(row.get("review_queue_required"), row.get("top_investigation_priority"))),
+        ],
+        advanced=advanced,
+    )
 
 
 def _ai_provider_summary_rows(ai_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
@@ -4106,7 +4261,9 @@ def _packet_status_table_row(packet_rows: List[Dict[str, str]]) -> Dict[str, str
 
 def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, str]]:
     row = packet_row or {}
-    return [
+    flow = row.get("flow", "-")
+    source, destination = _packet_flow_endpoints(flow)
+    metadata = [
         ("Flow", row.get("flow", "-")),
         ("Transport", row.get("transport", "-")),
         ("Packets", row.get("packets", "-")),
@@ -4118,6 +4275,81 @@ def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, st
         ("Mode", row.get("mode", "-")),
         ("Execution", row.get("execution", "-")),
     ]
+    return _operator_detail_rows(
+        summary=[
+            ("Operator Summary", _first_nonempty(flow, "No packet metadata selected.")),
+            ("Top Flow", flow),
+            ("Top Protocol", row.get("transport", "-")),
+            ("Top Talker", source),
+            ("Top Conversation", flow),
+        ],
+        highlights=[
+            ("Most Frequent Source", source),
+            ("Most Frequent Destination", destination),
+            ("Most Active Ports", _packet_flow_ports(flow)),
+            ("Traffic Direction", _packet_flow_direction(source, destination)),
+            ("Conversation Duration", _conversation_duration(row.get("first_seen"), row.get("last_seen"))),
+            ("Session Counts", row.get("packets", "-")),
+            ("Observed Services", _first_nonempty(row.get("status"), row.get("transport"))),
+            ("Recent Traffic Trends", _packet_traffic_trend(row)),
+            ("Packet Timeline Summary", _first_nonempty(row.get("last_seen"), row.get("first_seen"))),
+            ("Largest Conversation", row.get("bytes", "-")),
+            ("Top Application", _first_nonempty(row.get("status"), row.get("transport"))),
+            ("Flow Distribution", "selected flow"),
+            ("Protocol Distribution", row.get("transport", "-")),
+        ],
+        advanced=[],
+        metadata=metadata,
+    )
+
+
+def _packet_flow_endpoints(flow: Any) -> tuple[str, str]:
+    text = _detail_text(flow)
+    if " -> " not in text:
+        return "-", "-"
+    source, destination = text.split(" -> ", 1)
+    return source.strip() or "-", destination.strip() or "-"
+
+
+def _packet_flow_ports(flow: Any) -> str:
+    source, destination = _packet_flow_endpoints(flow)
+    ports = []
+    for endpoint in (source, destination):
+        if ":" in endpoint:
+            ports.append(endpoint.rsplit(":", 1)[-1])
+    return ", ".join(port for port in ports if port and port != "-") or "-"
+
+
+def _packet_flow_direction(source: str, destination: str) -> str:
+    if source == "-" or destination == "-":
+        return "-"
+    return "outbound" if _is_private_endpoint(source) and not _is_private_endpoint(destination) else "inbound" if not _is_private_endpoint(source) and _is_private_endpoint(destination) else "internal_or_unknown"
+
+
+def _is_private_endpoint(endpoint: str) -> bool:
+    host = endpoint.rsplit(":", 1)[0]
+    return host.startswith(("10.", "172.16.", "172.17.", "172.18.", "172.19.", "172.2", "172.30.", "172.31.", "192.168.", "127."))
+
+
+def _conversation_duration(first_seen: Any, last_seen: Any) -> str:
+    first = _timestamp_to_datetime(first_seen)
+    last = _timestamp_to_datetime(last_seen)
+    if first is None or last is None:
+        return "-"
+    seconds = max(int((last - first).total_seconds()), 0)
+    if seconds < 60:
+        return f"{seconds}s"
+    minutes, rem = divmod(seconds, 60)
+    return f"{minutes}m {rem}s" if rem else f"{minutes}m"
+
+
+def _packet_traffic_trend(row: Dict[str, str]) -> str:
+    packets = _deployment_int(row.get("packets"))
+    if packets >= 100:
+        return "high_activity"
+    if packets > 0:
+        return "observed"
+    return "-"
 
 
 def _packet_summary_rows(packet_rows: List[Dict[str, str]], *, limit: int = 9) -> List[Dict[str, str]]:
@@ -4841,17 +5073,17 @@ class ExportActivityTable(DataTable):
 
 
 class ExportDetailsTable(DataTable):
+    @property
+    def allow_horizontal_scroll(self) -> bool:
+        return False
+
     def on_mount(self) -> None:
-        self.add_column("Field")
-        self.add_column("Value")
+        self.add_column("Field", width=DETAIL_FIELD_WIDTH, key="field")
+        self.add_column("Value", width=DETAIL_WRAP_WIDTH, key="value")
         self.update_details(None)
 
     def update_details(self, export_row: Dict[str, str] | None) -> None:
-        selection = _capture_table_selection(self)
-        self.clear()
-        for field, value in _export_detail_rows(export_row):
-            self.add_row(field, value, key=field)
-        _restore_table_selection(self, selection)
+        _update_wrapped_detail_table(self, _export_detail_rows(export_row))
 
 
 class ExportTypesTable(DataTable):
@@ -5004,17 +5236,17 @@ class GovernanceEvidenceTable(DataTable):
 
 
 class GovernanceDetailsTable(DataTable):
+    @property
+    def allow_horizontal_scroll(self) -> bool:
+        return False
+
     def on_mount(self) -> None:
-        self.add_column("Field")
-        self.add_column("Value")
+        self.add_column("Field", width=DETAIL_FIELD_WIDTH, key="field")
+        self.add_column("Value", width=DETAIL_WRAP_WIDTH, key="value")
         self.update_details(None)
 
     def update_details(self, governance_row: Dict[str, str] | None) -> None:
-        selection = _capture_table_selection(self)
-        self.clear()
-        for field, value in _governance_detail_rows(governance_row):
-            self.add_row(field, value, key=field)
-        _restore_table_selection(self, selection)
+        _update_wrapped_detail_table(self, _governance_detail_rows(governance_row))
 
 
 class GovernanceCategoriesTable(DataTable):
@@ -5163,17 +5395,17 @@ class DeploymentReadinessTable(DataTable):
 
 
 class DeploymentDetailsTable(DataTable):
+    @property
+    def allow_horizontal_scroll(self) -> bool:
+        return False
+
     def on_mount(self) -> None:
-        self.add_column("Field")
-        self.add_column("Value")
+        self.add_column("Field", width=DETAIL_FIELD_WIDTH, key="field")
+        self.add_column("Value", width=DETAIL_WRAP_WIDTH, key="value")
         self.update_details(None)
 
     def update_details(self, deployment_row: Dict[str, str] | None) -> None:
-        selection = _capture_table_selection(self)
-        self.clear()
-        for field, value in _deployment_detail_rows(deployment_row):
-            self.add_row(field, value, key=field)
-        _restore_table_selection(self, selection)
+        _update_wrapped_detail_table(self, _deployment_detail_rows(deployment_row))
 
 
 class DeploymentPlatformTypesTable(DataTable):
@@ -5486,17 +5718,17 @@ class PacketActivityTable(DataTable):
 
 
 class PacketDetailsTable(DataTable):
+    @property
+    def allow_horizontal_scroll(self) -> bool:
+        return False
+
     def on_mount(self) -> None:
-        self.add_column("Field")
-        self.add_column("Value")
+        self.add_column("Field", width=DETAIL_FIELD_WIDTH, key="field")
+        self.add_column("Value", width=DETAIL_WRAP_WIDTH, key="value")
         self.update_details(None)
 
     def update_details(self, packet_row: Dict[str, str] | None) -> None:
-        selection = _capture_table_selection(self)
-        self.clear()
-        for field, value in _packet_detail_rows(packet_row):
-            self.add_row(field, value, key=field)
-        _restore_table_selection(self, selection)
+        _update_wrapped_detail_table(self, _packet_detail_rows(packet_row))
 
 
 class PacketSummaryTable(DataTable):
@@ -5674,8 +5906,8 @@ class PortMapDashboard(App):
         color: $text-muted;
         background: $surface;
         overflow: hidden;
-        height: 4;
-        max-height: 4;
+        height: 6;
+        max-height: 6;
     }
     #tab-risk {
         height: 1fr;
@@ -5699,7 +5931,7 @@ class PortMapDashboard(App):
         layout: grid;
         grid-size: 3 6;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 4 3 1 13fr 7fr 2;
+        grid-rows: 6 3 1 13fr 7fr 2;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5751,7 +5983,7 @@ class PortMapDashboard(App):
         layout: grid;
         grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 4 3 1 13fr 7fr;
+        grid-rows: 6 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5799,7 +6031,7 @@ class PortMapDashboard(App):
         layout: grid;
         grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 4 3 1 13fr 7fr;
+        grid-rows: 6 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5847,7 +6079,7 @@ class PortMapDashboard(App):
         layout: grid;
         grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 4 3 1 13fr 7fr;
+        grid-rows: 6 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5895,7 +6127,7 @@ class PortMapDashboard(App):
         layout: grid;
         grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 4 3 1 13fr 7fr;
+        grid-rows: 6 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5943,7 +6175,7 @@ class PortMapDashboard(App):
         layout: grid;
         grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 4 3 1 13fr 7fr;
+        grid-rows: 6 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;

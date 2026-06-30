@@ -200,16 +200,25 @@ def test_workspace_introductions_cover_major_workspaces():
 
     for tab_id in gui_app.workspace_intro_labels():
         intro = gui_app.workspace_intro_text(tab_id)
+        assert "Question:" in intro
+        assert "Hero:" in intro
         assert "Purpose:" in intro
         assert "Workflow:" in intro
         assert "When to use:" in intro
 
     assert "behavioral analysis" in gui_app.workspace_intro_text("risk")
+    assert "What requires my attention?" in gui_app.workspace_intro_text("risk")
+    assert "Critical / High / Medium / Low" in gui_app.workspace_intro_text("risk")
     assert "reasoning" in gui_app.workspace_intro_text("ai")
+    assert "Top Classification" in gui_app.workspace_intro_text("ai")
     assert "deployment readiness" in gui_app.workspace_intro_text("deployment")
+    assert "Can I deploy?" in gui_app.workspace_intro_text("deployment")
     assert "evidence packages" in gui_app.workspace_intro_text("exports")
+    assert "Can I safely use these exports?" in gui_app.workspace_intro_text("exports")
     assert "audit readiness" in gui_app.workspace_intro_text("governance")
+    assert "Can I trust these results?" in gui_app.workspace_intro_text("governance")
     assert "does not capture" in gui_app.workspace_intro_text("packet")
+    assert "Top Talker" in gui_app.workspace_intro_text("packet")
 
 
 def test_risk_tab_text_is_live_read_only_not_placeholder_only():
@@ -276,7 +285,7 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
     assert "layout: grid;" in css
     assert "grid-size: 3 6;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 4 3 1 13fr 7fr 2;" in css
+    assert "grid-rows: 6 3 1 13fr 7fr 2;" in css
     assert "risk-section" in css
     assert "risk-active-row" not in css
     assert "risk-bottom-row" not in css
@@ -342,7 +351,7 @@ def test_exports_workspace_layout_mounts_correctly():
     assert "layout: grid;" in css
     assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 4 3 1 13fr 7fr;" in css
+    assert "grid-rows: 6 3 1 13fr 7fr;" in css
     assert "export-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -524,7 +533,7 @@ def test_governance_workspace_layout_mounts_correctly():
     assert "layout: grid;" in css
     assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 4 3 1 13fr 7fr;" in css
+    assert "grid-rows: 6 3 1 13fr 7fr;" in css
     assert "governance-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -601,7 +610,7 @@ def test_deployment_workspace_layout_mounts_correctly():
     assert "layout: grid;" in css
     assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 4 3 1 13fr 7fr;" in css
+    assert "grid-rows: 6 3 1 13fr 7fr;" in css
     assert "deployment-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -773,7 +782,9 @@ def test_deployment_details_rows_use_selected_readiness_with_placeholders():
     assert details["Notes"] == "review package metadata"
 
     placeholders = dict(gui_app._deployment_detail_rows(None))
-    assert all(value == "-" for value in placeholders.values())
+    assert placeholders["Platform"] == "-"
+    assert placeholders["Method"] == "-"
+    assert placeholders["Readiness"] == "-"
 
 
 def test_default_deployment_rows_use_existing_preview_only_readiness_sources():
@@ -861,7 +872,7 @@ def test_ai_workspace_layout_mounts_correctly():
     assert "layout: grid;" in css
     assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 4 3 1 13fr 7fr;" in css
+    assert "grid-rows: 6 3 1 13fr 7fr;" in css
     assert "ai-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -1200,6 +1211,9 @@ def test_ai_and_risk_detail_rows_are_sectioned_without_removing_fields():
     risk_details = dict(gui_app._finding_detail_rows(gui_app._active_risk_finding_rows(remediation_events, [])[0]))
 
     for section in (
+        "[Operator Summary]",
+        "[Operational Highlights]",
+        "[Advanced Details]",
         "[Classification]",
         "[Evidence]",
         "[Learning]",
@@ -1221,6 +1235,65 @@ def test_ai_and_risk_detail_rows_are_sectioned_without_removing_fields():
     assert ai_details["Graph Insight Summary"] != "-"
     assert risk_details["Top Classification"] != "-"
     assert risk_details["Review Queue Summary"] != "-"
+
+
+def _assert_operator_detail_hierarchy(rows):
+    labels = [field for field, _ in rows]
+
+    assert labels[0] == "[Operator Summary]"
+    assert labels.index("[Operator Summary]") < labels.index("[Operational Highlights]")
+    assert labels.index("[Operational Highlights]") < labels.index("[Advanced Details]")
+    assert labels.index("[Advanced Details]") < labels.index("[Metadata]")
+
+
+def test_detail_panes_start_with_operator_summary_and_preserve_metadata():
+    remediation_events = [
+        {
+            "timestamp": "2026-06-14T12:03:00+00:00",
+            "node_id": "worker-1",
+            "action": "prompt_operator",
+            "status": "preview",
+            "program": "nginx",
+            "service_name": "https",
+            "protocol": "tcp",
+            "port": 443,
+            "score": 0.82,
+            "score_factors": ["sensitive_port:443", "service_match"],
+        }
+    ]
+    detail_sets = {
+        "risk": (
+            gui_app._finding_detail_rows(gui_app._active_risk_finding_rows(remediation_events, [])[0]),
+            ("Critical Finding", "Severity", "Risk Score", "Evidence Observed", "Current Status"),
+        ),
+        "ai": (
+            gui_app._ai_detail_rows(gui_app._ai_provider_model_rows(_sample_ai_events())[0]),
+            ("Classification", "Confidence", "Top Candidate", "Evidence Supporting It", "Execution"),
+        ),
+        "exports": (
+            gui_app._export_detail_rows(_sample_export_rows()[0]),
+            ("Latest Export", "Validation", "Storage Usage", "Export ID", "Completed"),
+        ),
+        "governance": (
+            gui_app._governance_detail_rows(_sample_governance_rows()[0]),
+            ("Compliance Status", "Evidence Integrity", "Audit Readiness", "Category", "Destructive Action"),
+        ),
+        "deployment": (
+            gui_app._deployment_detail_rows(_sample_deployment_rows()[0]),
+            ("Deployment Readiness", "Ready Systems", "Recommended Next Step", "Platform", "Safety Mode"),
+        ),
+        "packet": (
+            gui_app._packet_detail_rows(gui_app._packet_activity_rows(_sample_packet_flows())[0]),
+            ("Operator Summary", "Top Flow", "Top Protocol", "Traffic Direction", "Execution"),
+        ),
+    }
+
+    for rows, preserved_fields in detail_sets.values():
+        _assert_operator_detail_hierarchy(rows)
+        details = dict(rows)
+        for field in preserved_fields:
+            assert field in details
+            assert details[field] != ""
 
 
 def test_wrapped_detail_rows_wrap_and_bound_long_metadata_values():
@@ -1297,6 +1370,42 @@ def test_risk_details_skip_rebuild_for_unchanged_rendered_rows():
     asyncio.run(run_case())
 
 
+@pytest.mark.parametrize(
+    ("table_cls", "row_factory"),
+    [
+        (gui_app.ExportDetailsTable, lambda: _sample_export_rows()[0]),
+        (gui_app.GovernanceDetailsTable, lambda: _sample_governance_rows()[0]),
+        (gui_app.DeploymentDetailsTable, lambda: _sample_deployment_rows()[0]),
+        (gui_app.PacketDetailsTable, lambda: gui_app._packet_activity_rows(_sample_packet_flows())[0]),
+    ],
+)
+def test_operator_detail_tables_skip_rebuild_for_unchanged_rendered_rows(table_cls, row_factory):
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = table_cls()
+            yield self.details
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test():
+            details = app.query_one(table_cls)
+            row = row_factory()
+
+            details.update_details(row)
+            details.move_cursor(row=2, column=0)
+            first_row_count = details.row_count
+            rebuilds = details._detail_refresh_rebuilds
+
+            details.update_details(row)
+
+            assert details.row_count == first_row_count
+            assert details.cursor_row == 2
+            assert details._detail_refresh_rebuilds == rebuilds
+            assert details._detail_refresh_skips >= 1
+
+    asyncio.run(run_case())
+
+
 def test_wrapped_detail_rows_break_long_tokens_without_wrapping_short_values():
     long_token = "learning-profile-" + ("abcdef" * 12)
     rows = gui_app._wrapped_detail_rows(
@@ -1342,8 +1451,10 @@ def test_ai_and_risk_detail_rows_preserve_review_queue_and_prediction_layout_ord
         assert labels.index("Review Queue Summary") < labels.index("Predicted Risk Level")
         assert labels.index("Prediction Category") < labels.index("Prediction Next Steps")
         assert labels.index("Prediction Next Steps") < labels.index("Federated Status")
-        assert labels.index("Federated Status") < labels.index("Operator Recommendation")
-        assert labels.index("Operator Recommendation") < labels.index("Investigation Chain Count")
+        federated_status_index = labels.index("Federated Status")
+        federated_recommendation_index = labels.index("Operator Recommendation", federated_status_index)
+        assert federated_status_index < federated_recommendation_index
+        assert federated_recommendation_index < labels.index("Investigation Chain Count")
         assert labels.index("Investigation Chain Count") < labels.index("Investigation Chain Next Steps")
         assert labels.index("Investigation Chain Next Steps") < labels.index("Related Asset")
 
@@ -1678,7 +1789,7 @@ def test_packet_workspace_layout_mounts_correctly():
     assert "layout: grid;" in css
     assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 4 3 1 13fr 7fr;" in css
+    assert "grid-rows: 6 3 1 13fr 7fr;" in css
     assert "packet-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -1820,7 +1931,9 @@ def test_packet_details_rows_use_selected_activity_with_placeholders():
     assert details["Execution"] == "not performed"
 
     placeholders = dict(gui_app._packet_detail_rows(None))
-    assert all(value == "-" for value in placeholders.values())
+    assert placeholders["Flow"] == "-"
+    assert placeholders["Transport"] == "-"
+    assert placeholders["Packets"] == "-"
 
 
 def test_packet_tables_handle_empty_metadata_without_crashing():
@@ -1971,7 +2084,9 @@ def test_governance_details_rows_use_selected_evidence_with_placeholders():
     assert details["Destructive Action"] == "False"
 
     placeholders = dict(gui_app._governance_detail_rows(None))
-    assert all(value == "-" for value in placeholders.values())
+    assert placeholders["Category"] == "-"
+    assert placeholders["Event Type"] == "-"
+    assert placeholders["Evidence Count"] == "-"
 
 
 def test_risk_workspace_layout_supports_wide_and_narrow_rendering():
