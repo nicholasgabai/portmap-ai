@@ -103,6 +103,45 @@ DETAIL_FIELD_MIN_WIDTH = 12
 DETAIL_FIELD_MAX_WIDTH = 32
 DETAIL_TABLE_GUTTER_WIDTH = 10
 
+WORKSPACE_INTRODUCTIONS: Dict[str, Dict[str, str]] = {
+    "risk": {
+        "title": "Risk Workspace",
+        "purpose": "Summarizes current findings, behavioral analysis, risk evolution, predictions, federated intelligence, investigation chains, and recommended operator actions.",
+        "workflow": "Start with Risk Status, select an Active Risk Finding, then read Finding Details before reviewing Signals, Feed, and Timeline.",
+        "use": "Use when triaging current risk, validating behavior changes, and deciding what needs operator review.",
+    },
+    "exports": {
+        "title": "Exports Workspace",
+        "purpose": "Manages generated reports, validation state, integrity context, export history, and evidence packages.",
+        "workflow": "Review Export Status, select a Recent Export, then confirm details, types, events, and validation timeline.",
+        "use": "Use when preparing reports, checking export completeness, or reviewing evidence package history.",
+    },
+    "governance": {
+        "title": "Governance Workspace",
+        "purpose": "Provides operational governance, evidence, policy validation, compliance status, decision history, and audit information.",
+        "workflow": "Review Governance Status, select evidence, then inspect categories, recent events, and the governance timeline.",
+        "use": "Use when validating audit readiness, policy evidence, exceptions, and operator accountability.",
+    },
+    "deployment": {
+        "title": "Deployment Workspace",
+        "purpose": "Summarizes deployment readiness, node health context, worker state readiness, compatibility, synchronization, and production readiness.",
+        "workflow": "Review the readiness catalog, select a deployment target, then check details, platform types, events, and blockers.",
+        "use": "Use before packaging, upgrade, install, or production-readiness review. This workspace is metadata-only.",
+    },
+    "ai": {
+        "title": "AI Workspace",
+        "purpose": "Explains PortMap-AI reasoning, confidence calculations, attribution, learning history, predictions, federated observations, and behavioral decisions.",
+        "workflow": "Review AI Summary, select a provider/model row, then inspect details, provider summary, activity, and timeline.",
+        "use": "Use when investigating why a classification, prediction, decision, recommendation, or review queue result exists.",
+    },
+    "packet": {
+        "title": "Packet Workspace",
+        "purpose": "Summarizes observed packet metadata, protocol activity, flow reconstruction, and communication analysis from existing flow summaries.",
+        "workflow": "Review Packet Summary, select Packet Activity, then inspect details, protocol totals, recent activity, and timeline.",
+        "use": "Use when validating flow and protocol metadata. This workspace does not capture, decode, or store payloads.",
+    },
+}
+
 
 def _wrapped_detail_rows(
     rows: List[tuple[str, str]],
@@ -181,6 +220,43 @@ def _configure_detail_table_columns(table: DataTable, rows: List[tuple[str, str]
     except Exception:
         pass
     return value_width
+
+
+def _update_wrapped_detail_table(table: DataTable, rows: List[tuple[str, str]]) -> None:
+    selection = _capture_table_selection(table)
+    value_width = _configure_detail_table_columns(table, rows)
+    rendered = _wrapped_detail_rows(rows, width=value_width)
+    signature = (value_width, tuple(rendered))
+    if getattr(table, "_detail_render_signature", None) == signature:
+        table._detail_refresh_skips = getattr(table, "_detail_refresh_skips", 0) + 1
+        _restore_table_selection(table, selection, preserve_scroll=True, after_refresh=True)
+        return
+    table._detail_render_signature = signature
+    table._detail_refresh_rebuilds = getattr(table, "_detail_refresh_rebuilds", 0) + 1
+    table.clear()
+    for field, value, key in rendered:
+        table.add_row(field, value, key=key)
+    _restore_table_selection(table, selection, preserve_scroll=True, after_refresh=True)
+
+
+def _detail_section(title: str, summary: str) -> tuple[str, str]:
+    return (f"[{title}]", summary)
+
+
+def workspace_intro_text(tab_id: str) -> str:
+    intro = WORKSPACE_INTRODUCTIONS.get(tab_id)
+    if intro is None:
+        return ""
+    return (
+        f"{intro['title']}\n"
+        f"Purpose: {intro['purpose']}\n"
+        f"Workflow: {intro['workflow']}\n"
+        f"When to use: {intro['use']}"
+    )
+
+
+def workspace_intro_labels() -> tuple[str, ...]:
+    return tuple(WORKSPACE_INTRODUCTIONS)
 
 
 def _format_risk_score(value: Any) -> str:
@@ -1554,6 +1630,7 @@ def _active_risk_finding_rows(
 def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]]:
     row = finding or {}
     return [
+        _detail_section("Classification", "Context."),
         ("Asset", row.get("asset", "-")),
         ("Service", row.get("service", "-")),
         ("Node", row.get("node", "-")),
@@ -1565,6 +1642,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Top Classification", row.get("top_classification", "-")),
         ("Classification Confidence", row.get("classification_confidence", "-")),
         ("Alternative Candidates", row.get("alternative_candidates", "-")),
+        _detail_section("Evidence", "Evidence."),
         ("Evidence Signals", row.get("evidence_signals", "-")),
         ("Candidate Reasoning", row.get("candidate_reasoning", "-")),
         ("Supporting Evidence", row.get("supporting_evidence", "-")),
@@ -1575,6 +1653,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Ambiguity Reason", row.get("ambiguity_reason", "-")),
         ("Missing Evidence Summary", row.get("missing_evidence_summary", "-")),
         ("Operator Next Steps", row.get("operator_next_steps", "-")),
+        _detail_section("Learning", "Learning."),
         ("Learning Profile ID", row.get("learning_profile_id", "-")),
         ("Learning Profile Name", row.get("learning_profile_name", "-")),
         ("Learning Profile Observations", row.get("learning_profile_observations", "-")),
@@ -1597,6 +1676,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Recommendation Count", row.get("recommendation_count", "-")),
         ("Primary Recommendation", row.get("primary_recommendation", "-")),
         ("Recommendation List", row.get("recommendation_list", "-")),
+        _detail_section("Behavior Graph", "Graph."),
         ("Graph Nodes", row.get("graph_nodes", "-")),
         ("Graph Edges", row.get("graph_edges", "-")),
         ("Graph Relationships", row.get("graph_relationships", "-")),
@@ -1629,6 +1709,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Strongest Graph Insight Score", row.get("strongest_graph_insight_score", "-")),
         ("Graph Insight Summary", row.get("graph_insight_summary", "-")),
         ("Graph Operator Next Steps", row.get("graph_operator_next_steps", "-")),
+        _detail_section("Risk Evolution", "Evolution."),
         ("Previous Risk Score", row.get("previous_risk_score", "-")),
         ("Current Risk Score", row.get("current_risk_score", "-")),
         ("Risk Delta", row.get("risk_delta", "-")),
@@ -1638,6 +1719,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Risk Change Reasons", row.get("risk_change_reasons", "-")),
         ("Risk Evolution Summary", row.get("risk_evolution_summary", "-")),
         ("Risk Operator Next Steps", row.get("risk_operator_next_steps", "-")),
+        _detail_section("Behavioral Decisions", "Decision."),
         ("Behavioral Decision", row.get("behavioral_decision", "-")),
         ("Behavioral Decision Category", row.get("behavioral_decision_category", "-")),
         ("Behavioral Decision Confidence", row.get("behavioral_decision_confidence", "-")),
@@ -1646,6 +1728,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Behavioral Decision Evidence", row.get("behavioral_decision_evidence", "-")),
         ("Behavioral Decision Limitations", row.get("behavioral_decision_limitations", "-")),
         ("Behavioral Decision Next Steps", row.get("behavioral_decision_next_steps", "-")),
+        _detail_section("Operator Recommendations", "Guidance."),
         ("Investigation Recommendation Count", row.get("investigation_recommendation_count", "-")),
         ("Top Investigation Recommendation", row.get("top_investigation_recommendation", "-")),
         ("Top Investigation Priority", row.get("top_investigation_priority", "-")),
@@ -1659,6 +1742,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Review Queue Evidence", row.get("review_queue_evidence", "-")),
         ("Review Queue Next Step", row.get("review_queue_next_step", "-")),
         ("Review Queue Summary", row.get("review_queue_summary", "-")),
+        _detail_section("Predictions", "Prediction."),
         ("Predicted Risk Level", row.get("predicted_risk_level", "-")),
         ("Predicted Risk Score", row.get("predicted_risk_score", "-")),
         ("Prediction Confidence", row.get("prediction_confidence", "-")),
@@ -1668,6 +1752,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Prediction Reasons", row.get("prediction_reasons", "-")),
         ("Prediction Limitations", row.get("prediction_limitations", "-")),
         ("Prediction Next Steps", row.get("prediction_next_steps", "-")),
+        _detail_section("Federated Intelligence", "Consensus."),
         ("Federated Status", row.get("federated_status", "-")),
         ("Consensus", row.get("federated_consensus", "-")),
         ("Agreement", row.get("federated_agreement", "-")),
@@ -1687,6 +1772,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Federated Age", row.get("federated_age", "-")),
         ("Source Count", row.get("federated_source_count", "-")),
         ("Unique Contributors", row.get("federated_unique_contributors", "-")),
+        _detail_section("Investigation Chains", "Chains."),
         ("Investigation Chain Count", row.get("investigation_chain_count", "-")),
         ("Top Investigation Chain", row.get("top_investigation_chain", "-")),
         ("Top Investigation Chain Category", row.get("top_investigation_chain_category", "-")),
@@ -1694,6 +1780,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Top Investigation Chain Confidence", row.get("top_investigation_chain_confidence", "-")),
         ("Investigation Chain Summary", row.get("investigation_chain_summary", "-")),
         ("Investigation Chain Next Steps", row.get("investigation_chain_next_steps", "-")),
+        _detail_section("Metadata", "Metadata."),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -3695,12 +3782,14 @@ def _ai_status_table_row(ai_rows: List[Dict[str, str]]) -> Dict[str, str]:
 def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
     row = ai_row or {}
     return [
+        _detail_section("Classification", "Context."),
         ("Provider", row.get("provider", "-")),
         ("Model", row.get("model", "-")),
         ("Top Classification", row.get("top_classification", "-")),
         ("Confidence", row.get("confidence", "-")),
         ("Alternative Candidates", row.get("alternative_candidates", "-")),
         ("Evidence Count", row.get("evidence_count", "-")),
+        _detail_section("Evidence", "Evidence."),
         ("Evidence Signals", row.get("evidence_signals", "-")),
         ("Candidate Reasoning", row.get("candidate_reasoning", "-")),
         ("Supporting Evidence", row.get("supporting_evidence", "-")),
@@ -3711,6 +3800,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Ambiguity Reason", row.get("ambiguity_reason", "-")),
         ("Missing Evidence Summary", row.get("missing_evidence_summary", "-")),
         ("Operator Next Steps", row.get("operator_next_steps", "-")),
+        _detail_section("Learning", "Learning."),
         ("Learning Profile ID", row.get("learning_profile_id", "-")),
         ("Learning Profile Name", row.get("learning_profile_name", "-")),
         ("Learning Profile Observations", row.get("learning_profile_observations", "-")),
@@ -3733,6 +3823,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Recommendation Count", row.get("recommendation_count", "-")),
         ("Primary Recommendation", row.get("primary_recommendation", "-")),
         ("Recommendation List", row.get("recommendation_list", "-")),
+        _detail_section("Behavior Graph", "Graph."),
         ("Graph Nodes", row.get("graph_nodes", "-")),
         ("Graph Edges", row.get("graph_edges", "-")),
         ("Graph Relationships", row.get("graph_relationships", "-")),
@@ -3765,6 +3856,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Strongest Graph Insight Score", row.get("strongest_graph_insight_score", "-")),
         ("Graph Insight Summary", row.get("graph_insight_summary", "-")),
         ("Graph Operator Next Steps", row.get("graph_operator_next_steps", "-")),
+        _detail_section("Risk Evolution", "Evolution."),
         ("Previous Risk Score", row.get("previous_risk_score", "-")),
         ("Current Risk Score", row.get("current_risk_score", "-")),
         ("Risk Delta", row.get("risk_delta", "-")),
@@ -3774,6 +3866,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Risk Change Reasons", row.get("risk_change_reasons", "-")),
         ("Risk Evolution Summary", row.get("risk_evolution_summary", "-")),
         ("Risk Operator Next Steps", row.get("risk_operator_next_steps", "-")),
+        _detail_section("Behavioral Decisions", "Decision."),
         ("Behavioral Decision", row.get("behavioral_decision", "-")),
         ("Behavioral Decision Category", row.get("behavioral_decision_category", "-")),
         ("Behavioral Decision Confidence", row.get("behavioral_decision_confidence", "-")),
@@ -3782,6 +3875,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Behavioral Decision Evidence", row.get("behavioral_decision_evidence", "-")),
         ("Behavioral Decision Limitations", row.get("behavioral_decision_limitations", "-")),
         ("Behavioral Decision Next Steps", row.get("behavioral_decision_next_steps", "-")),
+        _detail_section("Operator Recommendations", "Guidance."),
         ("Investigation Recommendation Count", row.get("investigation_recommendation_count", "-")),
         ("Top Investigation Recommendation", row.get("top_investigation_recommendation", "-")),
         ("Top Investigation Priority", row.get("top_investigation_priority", "-")),
@@ -3795,6 +3889,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Review Queue Evidence", row.get("review_queue_evidence", "-")),
         ("Review Queue Next Step", row.get("review_queue_next_step", "-")),
         ("Review Queue Summary", row.get("review_queue_summary", "-")),
+        _detail_section("Predictions", "Prediction."),
         ("Predicted Risk Level", row.get("predicted_risk_level", "-")),
         ("Predicted Risk Score", row.get("predicted_risk_score", "-")),
         ("Prediction Confidence", row.get("prediction_confidence", "-")),
@@ -3804,6 +3899,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Prediction Reasons", row.get("prediction_reasons", "-")),
         ("Prediction Limitations", row.get("prediction_limitations", "-")),
         ("Prediction Next Steps", row.get("prediction_next_steps", "-")),
+        _detail_section("Federated Intelligence", "Consensus."),
         ("Federated Status", row.get("federated_status", "-")),
         ("Consensus", row.get("federated_consensus", "-")),
         ("Agreement", row.get("federated_agreement", "-")),
@@ -3823,6 +3919,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Federated Age", row.get("federated_age", "-")),
         ("Source Count", row.get("federated_source_count", "-")),
         ("Unique Contributors", row.get("federated_unique_contributors", "-")),
+        _detail_section("Investigation Chains", "Chains."),
         ("Investigation Chain Count", row.get("investigation_chain_count", "-")),
         ("Top Investigation Chain", row.get("top_investigation_chain", "-")),
         ("Top Investigation Chain Category", row.get("top_investigation_chain_category", "-")),
@@ -3830,6 +3927,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Top Investigation Chain Confidence", row.get("top_investigation_chain_confidence", "-")),
         ("Investigation Chain Summary", row.get("investigation_chain_summary", "-")),
         ("Investigation Chain Next Steps", row.get("investigation_chain_next_steps", "-")),
+        _detail_section("Metadata", "Metadata."),
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
@@ -4572,16 +4670,8 @@ class FindingDetailsTable(DataTable):
         self.update_details(None)
 
     def update_details(self, finding: Dict[str, str] | None) -> None:
-        selection = _capture_table_selection(self)
         rows = _finding_detail_rows(finding)
-        value_width = _configure_detail_table_columns(self, rows)
-        self.clear()
-        for field, value, key in _wrapped_detail_rows(
-            rows,
-            width=value_width,
-        ):
-            self.add_row(field, value, key=key)
-        _restore_table_selection(self, selection, preserve_scroll=True, after_refresh=True)
+        _update_wrapped_detail_table(self, rows)
 
 
 class RiskSignalsTable(DataTable):
@@ -5244,16 +5334,8 @@ class AIDetailsTable(DataTable):
         self.update_details(None)
 
     def update_details(self, ai_row: Dict[str, str] | None) -> None:
-        selection = _capture_table_selection(self)
         rows = _ai_detail_rows(ai_row)
-        value_width = _configure_detail_table_columns(self, rows)
-        self.clear()
-        for field, value, key in _wrapped_detail_rows(
-            rows,
-            width=value_width,
-        ):
-            self.add_row(field, value, key=key)
-        _restore_table_selection(self, selection, preserve_scroll=True, after_refresh=True)
+        _update_wrapped_detail_table(self, rows)
 
 
 class AIProviderSummaryTable(DataTable):
@@ -5587,6 +5669,14 @@ class PortMapDashboard(App):
     .placeholder-tab {
         padding: 1 2;
     }
+    .workspace-intro {
+        padding: 0 1;
+        color: $text-muted;
+        background: $surface;
+        overflow: hidden;
+        height: 4;
+        max-height: 4;
+    }
     #tab-risk {
         height: 1fr;
     }
@@ -5607,9 +5697,9 @@ class PortMapDashboard(App):
     }
     #risk-screen {
         layout: grid;
-        grid-size: 3 5;
+        grid-size: 3 6;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 3 1 13fr 7fr 2;
+        grid-rows: 4 3 1 13fr 7fr 2;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5659,9 +5749,9 @@ class PortMapDashboard(App):
     }
     #exports-screen {
         layout: grid;
-        grid-size: 3 4;
+        grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 3 1 13fr 7fr;
+        grid-rows: 4 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5707,9 +5797,9 @@ class PortMapDashboard(App):
     }
     #governance-screen {
         layout: grid;
-        grid-size: 3 4;
+        grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 3 1 13fr 7fr;
+        grid-rows: 4 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5755,9 +5845,9 @@ class PortMapDashboard(App):
     }
     #deployment-screen {
         layout: grid;
-        grid-size: 3 4;
+        grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 3 1 13fr 7fr;
+        grid-rows: 4 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5803,9 +5893,9 @@ class PortMapDashboard(App):
     }
     #ai-screen {
         layout: grid;
-        grid-size: 3 4;
+        grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 3 1 13fr 7fr;
+        grid-rows: 4 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -5851,9 +5941,9 @@ class PortMapDashboard(App):
     }
     #packet-screen {
         layout: grid;
-        grid-size: 3 4;
+        grid-size: 3 5;
         grid-columns: 2fr 5fr 3fr;
-        grid-rows: 3 1 13fr 7fr;
+        grid-rows: 4 3 1 13fr 7fr;
         overflow: hidden;
         height: 1fr;
         padding: 0 1;
@@ -6062,6 +6152,7 @@ class PortMapDashboard(App):
 
     def _compose_risk_tab(self) -> ComposeResult:
         with Grid(id="risk-screen"):
+            yield Static(workspace_intro_text("risk"), classes="workspace-intro risk-grid-span-3")
             with Container(classes="risk-grid-cell risk-grid-span-3"):
                 yield Static(
                     _panel_heading("Risk Status", "Score, queue, provider, and mode from the current refresh."),
@@ -6124,6 +6215,7 @@ class PortMapDashboard(App):
 
     def _compose_exports_tab(self) -> ComposeResult:
         with Grid(id="exports-screen"):
+            yield Static(workspace_intro_text("exports"), classes="workspace-intro exports-grid-span-3")
             with Container(classes="exports-grid-cell exports-grid-span-3"):
                 yield Static(
                     _panel_heading("Export Status", "Last export, totals, destination, and validation state."),
@@ -6182,6 +6274,7 @@ class PortMapDashboard(App):
 
     def _compose_governance_tab(self) -> ComposeResult:
         with Grid(id="governance-screen"):
+            yield Static(workspace_intro_text("governance"), classes="workspace-intro governance-grid-span-3")
             with Container(classes="governance-grid-cell governance-grid-span-3"):
                 yield Static(
                     _panel_heading("Governance Status", "Audit evidence, preview safety, and readiness state."),
@@ -6240,6 +6333,7 @@ class PortMapDashboard(App):
 
     def _compose_deployment_tab(self) -> ComposeResult:
         with Grid(id="deployment-screen"):
+            yield Static(workspace_intro_text("deployment"), classes="workspace-intro deployment-grid-span-3")
             with Container(classes="deployment-grid-cell deployment-grid-span-3"):
                 yield Static(
                     _panel_heading(
@@ -6301,6 +6395,7 @@ class PortMapDashboard(App):
 
     def _compose_ai_tab(self) -> ComposeResult:
         with Grid(id="ai-screen"):
+            yield Static(workspace_intro_text("ai"), classes="workspace-intro ai-grid-span-3")
             with Container(classes="ai-grid-cell ai-grid-span-3"):
                 yield Static(
                     _panel_heading(
@@ -6354,6 +6449,7 @@ class PortMapDashboard(App):
 
     def _compose_packet_tab(self) -> ComposeResult:
         with Grid(id="packet-screen"):
+            yield Static(workspace_intro_text("packet"), classes="workspace-intro packet-grid-span-3")
             with Container(classes="packet-grid-cell packet-grid-span-3"):
                 yield Static(
                     _panel_heading(
@@ -6461,13 +6557,14 @@ class PortMapDashboard(App):
             self.risk_timeline_panel.update_timeline(risk_timeline)
         if hasattr(self, "compact_risk_panel"):
             self.compact_risk_panel.update_risk(remediation_events, scan_results)
+        export_rows = self._load_export_rows(limit=max(self.tail_size * 4, EXPORT_ACTIVITY_LIMIT))
         if hasattr(self, "exports_status_panel"):
-            self._update_exports_workspace(self._load_export_rows(limit=max(self.tail_size * 4, EXPORT_ACTIVITY_LIMIT)))
+            self._update_exports_workspace(export_rows)
         if hasattr(self, "governance_status_panel"):
             self._update_governance_workspace(
                 self._load_governance_rows(
                     remediation_events=remediation_events,
-                    export_rows=self._load_export_rows(limit=max(self.tail_size * 4, EXPORT_ACTIVITY_LIMIT)),
+                    export_rows=export_rows,
                     limit=max(self.tail_size * 4, GOVERNANCE_EVIDENCE_LIMIT),
                 )
             )

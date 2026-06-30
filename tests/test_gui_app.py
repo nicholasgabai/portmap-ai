@@ -195,6 +195,23 @@ def test_placeholder_tabs_render_safe_labels_and_serialization():
     json.dumps(gui_app.serialize_tui_tab_registry(), sort_keys=True)
 
 
+def test_workspace_introductions_cover_major_workspaces():
+    assert gui_app.workspace_intro_labels() == ("risk", "exports", "governance", "deployment", "ai", "packet")
+
+    for tab_id in gui_app.workspace_intro_labels():
+        intro = gui_app.workspace_intro_text(tab_id)
+        assert "Purpose:" in intro
+        assert "Workflow:" in intro
+        assert "When to use:" in intro
+
+    assert "behavioral analysis" in gui_app.workspace_intro_text("risk")
+    assert "reasoning" in gui_app.workspace_intro_text("ai")
+    assert "deployment readiness" in gui_app.workspace_intro_text("deployment")
+    assert "evidence packages" in gui_app.workspace_intro_text("exports")
+    assert "audit readiness" in gui_app.workspace_intro_text("governance")
+    assert "does not capture" in gui_app.workspace_intro_text("packet")
+
+
 def test_risk_tab_text_is_live_read_only_not_placeholder_only():
     text = gui_app.build_risk_tab_text()
 
@@ -257,9 +274,9 @@ def test_risk_workspace_uses_dashboard_style_dense_sections():
     assert "panel-heading" in css
     assert "#risk-screen" in css
     assert "layout: grid;" in css
-    assert "grid-size: 3 5;" in css
+    assert "grid-size: 3 6;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 3 1 13fr 7fr 2;" in css
+    assert "grid-rows: 4 3 1 13fr 7fr 2;" in css
     assert "risk-section" in css
     assert "risk-active-row" not in css
     assert "risk-bottom-row" not in css
@@ -323,9 +340,9 @@ def test_exports_workspace_layout_mounts_correctly():
     css = gui_app.PortMapDashboard.CSS
     assert "#exports-screen" in css
     assert "layout: grid;" in css
-    assert "grid-size: 3 4;" in css
+    assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "grid-rows: 4 3 1 13fr 7fr;" in css
     assert "export-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -505,9 +522,9 @@ def test_governance_workspace_layout_mounts_correctly():
     css = gui_app.PortMapDashboard.CSS
     assert "#governance-screen" in css
     assert "layout: grid;" in css
-    assert "grid-size: 3 4;" in css
+    assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "grid-rows: 4 3 1 13fr 7fr;" in css
     assert "governance-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -582,9 +599,9 @@ def test_deployment_workspace_layout_mounts_correctly():
     css = gui_app.PortMapDashboard.CSS
     assert "#deployment-screen" in css
     assert "layout: grid;" in css
-    assert "grid-size: 3 4;" in css
+    assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "grid-rows: 4 3 1 13fr 7fr;" in css
     assert "deployment-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -842,9 +859,9 @@ def test_ai_workspace_layout_mounts_correctly():
     css = gui_app.PortMapDashboard.CSS
     assert "#ai-screen" in css
     assert "layout: grid;" in css
-    assert "grid-size: 3 4;" in css
+    assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "grid-rows: 4 3 1 13fr 7fr;" in css
     assert "ai-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -1161,7 +1178,49 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Execution"] == "not performed"
 
     placeholders = dict(gui_app._ai_detail_rows(None))
-    assert all(value == "-" for value in placeholders.values())
+    assert all(value == "-" for field, value in placeholders.items() if not field.startswith("["))
+
+
+def test_ai_and_risk_detail_rows_are_sectioned_without_removing_fields():
+    remediation_events = [
+        {
+            "timestamp": "2026-06-14T12:03:00+00:00",
+            "node_id": "worker-1",
+            "action": "prompt_operator",
+            "status": "preview",
+            "program": "nginx",
+            "service_name": "https",
+            "protocol": "tcp",
+            "port": 443,
+            "score": 0.82,
+            "score_factors": ["sensitive_port:443", "service_match"],
+        }
+    ]
+    ai_details = dict(gui_app._ai_detail_rows(gui_app._ai_provider_model_rows(_sample_ai_events())[0]))
+    risk_details = dict(gui_app._finding_detail_rows(gui_app._active_risk_finding_rows(remediation_events, [])[0]))
+
+    for section in (
+        "[Classification]",
+        "[Evidence]",
+        "[Learning]",
+        "[Behavior Graph]",
+        "[Risk Evolution]",
+        "[Behavioral Decisions]",
+        "[Operator Recommendations]",
+        "[Predictions]",
+        "[Federated Intelligence]",
+        "[Investigation Chains]",
+        "[Metadata]",
+    ):
+        assert section in ai_details
+        assert section in risk_details
+        assert ai_details[section] != "-"
+        assert risk_details[section] != "-"
+
+    assert ai_details["Top Classification"] != "-"
+    assert ai_details["Graph Insight Summary"] != "-"
+    assert risk_details["Top Classification"] != "-"
+    assert risk_details["Review Queue Summary"] != "-"
 
 
 def test_wrapped_detail_rows_wrap_and_bound_long_metadata_values():
@@ -1175,6 +1234,67 @@ def test_wrapped_detail_rows_wrap_and_bound_long_metadata_values():
     assert rows[2][1].endswith("...")
     assert rows[0][2] == "Alternative Candidates"
     assert rows[1][2] == "Alternative Candidates#1"
+
+
+def test_ai_details_skip_rebuild_for_unchanged_rendered_rows():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.AIDetailsTable()
+            yield self.details
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test():
+            details = app.query_one(gui_app.AIDetailsTable)
+            row = gui_app._ai_provider_model_rows(_sample_ai_events())[0]
+
+            details.update_details(row)
+            details.move_cursor(row=5, column=0)
+            first_row_count = details.row_count
+            rebuilds = details._detail_refresh_rebuilds
+
+            details.update_details(row)
+
+            assert details.row_count == first_row_count
+            assert details.cursor_row == 5
+            assert details._detail_refresh_rebuilds == rebuilds
+            assert details._detail_refresh_skips >= 1
+
+    asyncio.run(run_case())
+
+
+def test_risk_details_skip_rebuild_for_unchanged_rendered_rows():
+    class Harness(gui_app.App):
+        def compose(self):
+            self.details = gui_app.FindingDetailsTable()
+            yield self.details
+
+    async def run_case():
+        app = Harness()
+        async with app.run_test():
+            details = app.query_one(gui_app.FindingDetailsTable)
+            finding = {
+                "asset": "worker-1",
+                "service": "tcp/443",
+                "top_classification": "nginx",
+                "classification_confidence": ".82",
+                "candidate_reasoning": "nginx matched process, service, and repeated observations",
+                "review_queue_summary": "operator review queue summary",
+            }
+
+            details.update_details(finding)
+            details.move_cursor(row=6, column=0)
+            first_row_count = details.row_count
+            rebuilds = details._detail_refresh_rebuilds
+
+            details.update_details(finding)
+
+            assert details.row_count == first_row_count
+            assert details.cursor_row == 6
+            assert details._detail_refresh_rebuilds == rebuilds
+            assert details._detail_refresh_skips >= 1
+
+    asyncio.run(run_case())
 
 
 def test_wrapped_detail_rows_break_long_tokens_without_wrapping_short_values():
@@ -1556,9 +1676,9 @@ def test_packet_workspace_layout_mounts_correctly():
     css = gui_app.PortMapDashboard.CSS
     assert "#packet-screen" in css
     assert "layout: grid;" in css
-    assert "grid-size: 3 4;" in css
+    assert "grid-size: 3 5;" in css
     assert "grid-columns: 2fr 5fr 3fr;" in css
-    assert "grid-rows: 3 1 13fr 7fr;" in css
+    assert "grid-rows: 4 3 1 13fr 7fr;" in css
     assert "packet-section" in css
 
     source = Path(gui_app.__file__).read_text()
@@ -2153,7 +2273,7 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Current Status"] == "LISTEN"
 
     placeholders = dict(gui_app._finding_detail_rows(None))
-    assert all(value == "-" for value in placeholders.values())
+    assert all(value == "-" for field, value in placeholders.items() if not field.startswith("["))
 
 
 def test_risk_details_table_wraps_long_metadata_and_preserves_cursor_selection():
