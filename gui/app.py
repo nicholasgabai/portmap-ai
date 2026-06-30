@@ -104,6 +104,14 @@ DETAIL_FIELD_MAX_WIDTH = 32
 DETAIL_TABLE_GUTTER_WIDTH = 10
 
 WORKSPACE_INTRODUCTIONS: Dict[str, Dict[str, str]] = {
+    "dashboard": {
+        "title": "Dashboard",
+        "question": "What is happening right now?",
+        "hero": "Network Health, Nodes Online, Highest Risk, Latest Scan, Safe Mode",
+        "purpose": "Summarizes live worker state, current risk, recent changes, traffic visibility, and safe operating mode.",
+        "workflow": "Start here, confirm workers and risk posture, then move to Risk or AI for investigation details.",
+        "use": "Use for executive triage before drilling into any operator workspace.",
+    },
     "risk": {
         "title": "Risk Workspace",
         "question": "What requires my attention?",
@@ -263,6 +271,7 @@ def _operator_detail_rows(
     *,
     summary: List[tuple[str, Any]],
     highlights: List[tuple[str, Any]],
+    action: List[tuple[str, Any]] | None = None,
     advanced: List[tuple[str, Any]],
     metadata: List[tuple[str, Any]] | None = None,
 ) -> List[tuple[str, str]]:
@@ -271,6 +280,8 @@ def _operator_detail_rows(
         *[(field, _detail_text(value)) for field, value in summary],
         _detail_section("Operational Highlights", "What matters now."),
         *[(field, _detail_text(value)) for field, value in highlights],
+        _detail_section("Primary Operator Action", "Best next step from existing guidance."),
+        *[(field, _detail_text(value)) for field, value in (action or [])],
         _detail_section("Advanced Details", "Full forensic context."),
         *[(field, _detail_text(value)) for field, value in advanced],
         _detail_section("Metadata", "Raw supporting metadata."),
@@ -300,22 +311,271 @@ def _attention_required(*values: Any) -> str:
     return "-"
 
 
-def workspace_intro_text(tab_id: str) -> str:
+def _consolidated_operator_action(row: Dict[str, Any]) -> List[tuple[str, str]]:
+    action = _first_nonempty(
+        row.get("review_queue_next_step"),
+        row.get("investigation_operator_next_steps"),
+        row.get("operator_next_steps"),
+        row.get("prediction_next_steps"),
+        row.get("federated_operator_recommendation"),
+        row.get("risk_operator_next_steps"),
+        row.get("operator_recommendation"),
+        row.get("action"),
+        "Continue observation in read-only mode.",
+    )
+    reason = _first_nonempty(
+        row.get("review_queue_reason"),
+        row.get("behavioral_decision_summary"),
+        row.get("prediction_summary"),
+        row.get("risk_evolution_summary"),
+        row.get("confidence_rationale"),
+        row.get("explanation_summary"),
+        row.get("missing_evidence_summary"),
+        "No stronger recommendation is available from current metadata.",
+    )
+    signals = _first_nonempty(
+        row.get("review_queue_evidence"),
+        row.get("supporting_evidence"),
+        row.get("evidence_signals"),
+        row.get("related_signals"),
+        row.get("top_signal"),
+        row.get("score_factors"),
+        row.get("missing_evidence_summary"),
+        "No high-confidence supporting signal is available.",
+    )
+    return [
+        ("Primary Operator Action", action),
+        ("Reason", reason),
+        ("Supporting Signals", signals),
+    ]
+
+
+def _risk_operator_narrative(row: Dict[str, Any]) -> List[tuple[str, str]]:
+    finding = _first_nonempty(row.get("finding"), row.get("service"), row.get("top_signal"), "No finding selected.")
+    severity = _first_nonempty(row.get("severity"), _risk_severity_label(_numeric_risk_score(row)))
+    score = _first_nonempty(row.get("score"), row.get("predicted_risk_score"))
+    confidence = _first_nonempty(row.get("classification_confidence"), row.get("prediction_confidence"))
+    return [
+        ("What Happened", f"{finding} is the selected risk context."),
+        ("Why This Matters", f"Severity {severity} with score {score} and confidence {confidence}."),
+        ("What To Do Next", _consolidated_operator_action(row)[0][1]),
+    ]
+
+
+def _ai_operator_narrative(row: Dict[str, Any]) -> List[tuple[str, str]]:
+    classification = _first_nonempty(row.get("top_classification"), row.get("prediction_category"), "No classification selected.")
+    confidence = _first_nonempty(row.get("confidence"), row.get("classification_confidence"), row.get("prediction_confidence"))
+    missing = _first_nonempty(row.get("missing_evidence_summary"), row.get("missing_evidence"))
+    why = (
+        f"AI currently favors {classification} with confidence {confidence}."
+        if missing == "-"
+        else f"AI favors {classification}, but missing evidence remains: {missing}."
+    )
+    return [
+        ("What Happened", classification),
+        ("Why This Matters", why),
+        ("What To Do Next", _consolidated_operator_action(row)[0][1]),
+    ]
+
+
+def workspace_intro_text(tab_id: str, summary: Dict[str, Any] | None = None) -> str:
     intro = WORKSPACE_INTRODUCTIONS.get(tab_id)
     if intro is None:
         return ""
+    summary = summary or {}
+    state = _first_nonempty(summary.get("state"), intro["hero"])
+    matters = _first_nonempty(summary.get("matters"), intro["purpose"])
+    next_step = _first_nonempty(summary.get("next_step"), intro["workflow"])
+    hero = _first_nonempty(summary.get("hero"), intro["hero"])
     return (
         f"{intro['title']}\n"
         f"Question: {intro['question']}\n"
-        f"Hero: {intro['hero']}\n"
-        f"Purpose: {intro['purpose']}\n"
-        f"Workflow: {intro['workflow']}\n"
-        f"When to use: {intro['use']}"
+        f"State: {state}\n"
+        f"Matters: {matters}\n"
+        f"Next: {next_step}\n"
+        f"Hero: {hero}"
     )
 
 
 def workspace_intro_labels() -> tuple[str, ...]:
     return tuple(WORKSPACE_INTRODUCTIONS)
+
+
+def _update_static_if_changed(widget: Static, text: str) -> None:
+    if getattr(widget, "_last_rendered_text", None) == text:
+        return
+    widget._last_rendered_text = text
+    widget.update(text)
+
+
+def _dashboard_network_health(
+    nodes: List[Dict[str, Any]],
+    remediation_events: List[Dict[str, Any]],
+    scan_results: List[Dict[str, Any]],
+) -> str:
+    total = len(nodes)
+    online = sum(1 for node in nodes if str(node.get("status") or "").lower() in {"online", "ready"})
+    scores = [
+        score
+        for event in [*remediation_events, *scan_results]
+        if (score := _numeric_risk_score(event)) is not None
+    ]
+    counts = _risk_action_counts(remediation_events)
+    if any(score >= 0.75 for score in scores) or counts.get("block", 0):
+        return "Critical"
+    if (total and online < total) or counts.get("review", 0) or any(score >= 0.4 for score in scores):
+        return "Needs Review"
+    if total or scores:
+        return "Good"
+    return "No Data"
+
+
+def _highest_risk_summary(remediation_events: List[Dict[str, Any]], scan_results: List[Dict[str, Any]]) -> str:
+    events = [*remediation_events, *scan_results]
+    scored = [(event, _numeric_risk_score(event)) for event in events]
+    scored = [(event, score) for event, score in scored if score is not None]
+    if not scored:
+        return "-"
+    event, score = max(scored, key=lambda item: item[1])
+    label = _first_nonempty(event.get("program"), event.get("service_name"), event.get("port"), event.get("action"))
+    return f"{_risk_severity_label(score)} {score:.2f} {label}"
+
+
+def _latest_observation_time(*rows: List[Dict[str, Any]]) -> str:
+    values: list[Any] = []
+    for group in rows:
+        values.extend(
+            row.get("timestamp") or row.get("updated") or row.get("last_seen") or row.get("time")
+            for row in group
+            if isinstance(row, dict)
+        )
+    parsed = [_timestamp_to_datetime(value) for value in values if value not in {"", "-", None}]
+    parsed = [value for value in parsed if value is not None]
+    return _format_timestamp(max(parsed).isoformat()) if parsed else "-"
+
+
+def _dashboard_intro_summary(
+    *,
+    nodes: List[Dict[str, Any]],
+    remediation_events: List[Dict[str, Any]],
+    scan_results: List[Dict[str, Any]],
+    risk_timeline: List[Dict[str, Any]],
+    flow_visualization: Dict[str, Any],
+    command_events: List[Dict[str, Any]],
+) -> Dict[str, str]:
+    total = len(nodes)
+    online = sum(1 for node in nodes if str(node.get("status") or "").lower() in {"online", "ready"})
+    health = _dashboard_network_health(nodes, remediation_events, scan_results)
+    highest = _highest_risk_summary(remediation_events, scan_results)
+    latest = _latest_observation_time(remediation_events, scan_results, command_events)
+    recent_change = _first_nonempty(
+        f"{len(risk_timeline)} risk buckets" if risk_timeline else "-",
+        f"{len(command_events)} command events" if command_events else "-",
+    )
+    if health == "Critical":
+        next_step = "Open Risk and review the highest severity finding first."
+    elif online < total:
+        next_step = "Verify offline workers before acting on risk summaries."
+    elif highest != "-":
+        next_step = "Review Risk or AI details for the highest current finding."
+    else:
+        next_step = "Continue monitoring or run a scan when operator-approved."
+    visualization = visualization_summary(
+        nodes=nodes,
+        risk_timeline=risk_timeline,
+        flows=flow_visualization.get("flows") or [],
+        topology=flow_visualization.get("topology"),
+    )
+    return {
+        "state": f"Network Health: {health} | Nodes Online: {online}/{total} | Safe Mode: read-only/preview",
+        "matters": f"Highest Risk: {highest} | Latest Scan: {latest} | Changed: {recent_change}",
+        "next_step": next_step,
+        "hero": (
+            f"Flows: {visualization.get('flow_count', 0)} | "
+            f"Topology: {visualization.get('topology_nodes', 0)} nodes/"
+            f"{visualization.get('topology_edges', 0)} edges"
+        ),
+    }
+
+
+def _risk_intro_summary(remediation_events: List[Dict[str, Any]], scan_results: List[Dict[str, Any]]) -> Dict[str, str]:
+    status = _risk_status_table_row(remediation_events, scan_results)
+    highest = _highest_risk_summary(remediation_events, scan_results)
+    action = "Review queued findings." if status["review"] != "0" else "Monitor current findings in preview mode."
+    if status["block"] != "0":
+        action = "Review block previews before any operator-approved action."
+    return {
+        "state": f"Highest Severity: {highest} | Current Risk Score: {status['latest']}",
+        "matters": f"Review Queue: {status['review']} review / {status['block']} block previews",
+        "next_step": action,
+        "hero": f"Current: {status['current']} | Max: {status['max']} | Provider: {status['provider']}",
+    }
+
+
+def _exports_intro_summary(export_rows: List[Dict[str, str]], export_dir: Path) -> Dict[str, str]:
+    status = _export_status_table_row(export_rows, export_dir)
+    next_step = "Review export validation before sharing." if status["validation_state"] == "attention" else "Use latest valid export if needed."
+    if status["validation_state"] == "no_exports":
+        next_step = "Generate an export when operator-approved."
+    return {
+        "state": f"Latest Export: {status['last_export']} | Validation: {status['validation_state']}",
+        "matters": f"Exports: {status['export_count']} | Failures: {status['failure_count']}",
+        "next_step": next_step,
+        "hero": f"Storage: {status['destination']}",
+    }
+
+
+def _governance_intro_summary(governance_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    status = _governance_status_table_row(governance_rows)
+    next_step = "Review governance exceptions." if status["exception_count"] != "0" else "Evidence is ready for audit review."
+    return {
+        "state": f"Audit Readiness: {status['readiness']} | Evidence: {status['evidence_count']}",
+        "matters": f"Exceptions: {status['exception_count']} | Preview Evidence: {status['preview_count']}",
+        "next_step": next_step,
+        "hero": f"Integrity: metadata-only | Categories: {status['category_count']}",
+    }
+
+
+def _deployment_intro_summary(deployment_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    status = _deployment_status_table_row(deployment_rows)
+    if status["blockers"] != "0":
+        next_step = "Resolve blockers before deployment review."
+    elif status["warnings"] != "0":
+        next_step = "Review warnings before deployment review."
+    else:
+        next_step = "Ready for operator-approved deployment review."
+    return {
+        "state": f"Readiness: {status['ready']} ready / {status['platforms']} platforms",
+        "matters": f"Warnings: {status['warnings']} | Blockers: {status['blockers']}",
+        "next_step": next_step,
+        "hero": f"Workers: metadata-only | Updated: {status['last_updated']}",
+    }
+
+
+def _ai_intro_summary(ai_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    top = ai_rows[0] if ai_rows else {}
+    classification = _first_nonempty(top.get("top_classification"), top.get("prediction_category"))
+    confidence = _first_nonempty(top.get("confidence"), top.get("prediction_confidence"))
+    prediction = _first_nonempty(top.get("prediction_category"), top.get("predicted_risk_level"))
+    action = _consolidated_operator_action(top)[0][1] if top else "Review AI details when observations are available."
+    return {
+        "state": f"Top Classification: {classification} | Confidence: {confidence}",
+        "matters": f"Prediction: {prediction} | Decision: {_first_nonempty(top.get('behavioral_decision'))}",
+        "next_step": action,
+        "hero": f"Learning: {_first_nonempty(top.get('stability_label'))} | Drift: {_first_nonempty(top.get('drift_label'))}",
+    }
+
+
+def _packet_intro_summary(packet_rows: List[Dict[str, str]]) -> Dict[str, str]:
+    status = _packet_status_table_row(packet_rows)
+    top = packet_rows[0] if packet_rows else {}
+    source, destination = _packet_flow_endpoints(top.get("flow"))
+    return {
+        "state": f"Top Flow: {_first_nonempty(top.get('flow'))} | Top Protocol: {_first_nonempty(top.get('transport'))}",
+        "matters": f"Flow Count: {status['flows']} | Packets: {status['packets']}",
+        "next_step": "Review top conversation metadata; no packet capture is active.",
+        "hero": f"Traffic Direction: {_packet_flow_direction(source, destination)} | Updated: {status['updated']}",
+    }
 
 
 def _format_risk_score(value: Any) -> str:
@@ -626,6 +886,7 @@ TUI_TAB_REGISTRY: tuple[TuiTab, ...] = (
 DEFAULT_TUI_TAB = "dashboard"
 TUI_TAB_IDS = {tab.tab_id for tab in TUI_TAB_REGISTRY}
 DASHBOARD_SECTION_LABELS: tuple[str, ...] = (
+    "Executive Summary",
     "Start Here",
     "Node Overview",
     "Metrics",
@@ -1860,6 +2121,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
     ]
     return _operator_detail_rows(
         summary=[
+            *_risk_operator_narrative(row),
             ("Critical Finding", _first_nonempty(row.get("finding"), row.get("top_signal"), row.get("service"))),
             ("Severity", row.get("severity", "-")),
             ("Risk Score", row.get("score", "-")),
@@ -1874,6 +2136,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
             ("Related Signals", _first_nonempty(row.get("related_signals"), row.get("top_signal"))),
             ("Attention Required", _attention_required(row.get("review_queue_required"), row.get("review_queue_priority"), row.get("severity"))),
         ],
+        action=_consolidated_operator_action(row),
         advanced=advanced,
     )
 
@@ -2339,6 +2602,14 @@ def _export_detail_rows(export_row: Dict[str, str] | None) -> List[tuple[str, st
             ("Status", row.get("status", "-")),
             ("Destination", row.get("destination", "-")),
         ],
+        action=_consolidated_operator_action(
+            {
+                **row,
+                "operator_recommendation": recommendation if row else "-",
+                "review_queue_reason": validation,
+                "supporting_evidence": row.get("validation_result", "-"),
+            }
+        ),
         advanced=[],
         metadata=metadata,
     )
@@ -2558,6 +2829,14 @@ def _governance_detail_rows(governance_row: Dict[str, str] | None) -> List[tuple
             ("Operator Accountability", _first_nonempty(row.get("actor"), row.get("action"))),
             ("Source", row.get("source", "-")),
         ],
+        action=_consolidated_operator_action(
+            {
+                **row,
+                "operator_recommendation": "Review governance exception." if exception == "yes" else "Use evidence for audit review.",
+                "review_queue_reason": state,
+                "supporting_evidence": row.get("evidence", "-"),
+            }
+        ),
         advanced=[],
         metadata=metadata,
     )
@@ -2907,6 +3186,14 @@ def _deployment_detail_rows(deployment_row: Dict[str, str] | None) -> List[tuple
             ("Deployment Confidence", "high" if row.get("status") == "ready" else "review" if row else "-"),
             ("Execution", row.get("execution", "-")),
         ],
+        action=_consolidated_operator_action(
+            {
+                **row,
+                "operator_recommendation": next_step if row else "-",
+                "review_queue_reason": _first_nonempty(blockers, warnings, row.get("readiness")),
+                "supporting_evidence": _first_nonempty(row.get("required_steps"), row.get("notes")),
+            }
+        ),
         advanced=[],
         metadata=metadata,
     )
@@ -4078,6 +4365,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
     ]
     return _operator_detail_rows(
         summary=[
+            *_ai_operator_narrative(row),
             ("Classification", row.get("top_classification", "-")),
             ("Confidence", row.get("confidence", "-")),
             ("Top Candidate", row.get("top_classification", "-")),
@@ -4092,6 +4380,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
             ("Prediction", _first_nonempty(row.get("prediction_category"), row.get("predicted_risk_level"))),
             ("Attention Required", _attention_required(row.get("review_queue_required"), row.get("top_investigation_priority"))),
         ],
+        action=_consolidated_operator_action(row),
         advanced=advanced,
     )
 
@@ -4298,6 +4587,13 @@ def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, st
             ("Flow Distribution", "selected flow"),
             ("Protocol Distribution", row.get("transport", "-")),
         ],
+        action=_consolidated_operator_action(
+            {
+                **row,
+                "operator_recommendation": "Review top conversation metadata; no packet capture is active." if row else "-",
+                "supporting_evidence": _first_nonempty(row.get("flow"), row.get("transport")),
+            }
+        ),
         advanced=[],
         metadata=metadata,
     )
@@ -6303,6 +6599,11 @@ class PortMapDashboard(App):
         yield Footer()
 
     def _compose_dashboard_tab(self) -> ComposeResult:
+        self.dashboard_intro_panel = Static(
+            workspace_intro_text("dashboard"),
+            classes="workspace-intro",
+        )
+        yield self.dashboard_intro_panel
         yield Static(
             _panel_heading(
                 "Start Here",
@@ -6384,7 +6685,8 @@ class PortMapDashboard(App):
 
     def _compose_risk_tab(self) -> ComposeResult:
         with Grid(id="risk-screen"):
-            yield Static(workspace_intro_text("risk"), classes="workspace-intro risk-grid-span-3")
+            self.risk_intro_panel = Static(workspace_intro_text("risk"), classes="workspace-intro risk-grid-span-3")
+            yield self.risk_intro_panel
             with Container(classes="risk-grid-cell risk-grid-span-3"):
                 yield Static(
                     _panel_heading("Risk Status", "Score, queue, provider, and mode from the current refresh."),
@@ -6447,7 +6749,11 @@ class PortMapDashboard(App):
 
     def _compose_exports_tab(self) -> ComposeResult:
         with Grid(id="exports-screen"):
-            yield Static(workspace_intro_text("exports"), classes="workspace-intro exports-grid-span-3")
+            self.exports_intro_panel = Static(
+                workspace_intro_text("exports"),
+                classes="workspace-intro exports-grid-span-3",
+            )
+            yield self.exports_intro_panel
             with Container(classes="exports-grid-cell exports-grid-span-3"):
                 yield Static(
                     _panel_heading("Export Status", "Last export, totals, destination, and validation state."),
@@ -6506,7 +6812,11 @@ class PortMapDashboard(App):
 
     def _compose_governance_tab(self) -> ComposeResult:
         with Grid(id="governance-screen"):
-            yield Static(workspace_intro_text("governance"), classes="workspace-intro governance-grid-span-3")
+            self.governance_intro_panel = Static(
+                workspace_intro_text("governance"),
+                classes="workspace-intro governance-grid-span-3",
+            )
+            yield self.governance_intro_panel
             with Container(classes="governance-grid-cell governance-grid-span-3"):
                 yield Static(
                     _panel_heading("Governance Status", "Audit evidence, preview safety, and readiness state."),
@@ -6565,7 +6875,11 @@ class PortMapDashboard(App):
 
     def _compose_deployment_tab(self) -> ComposeResult:
         with Grid(id="deployment-screen"):
-            yield Static(workspace_intro_text("deployment"), classes="workspace-intro deployment-grid-span-3")
+            self.deployment_intro_panel = Static(
+                workspace_intro_text("deployment"),
+                classes="workspace-intro deployment-grid-span-3",
+            )
+            yield self.deployment_intro_panel
             with Container(classes="deployment-grid-cell deployment-grid-span-3"):
                 yield Static(
                     _panel_heading(
@@ -6627,7 +6941,8 @@ class PortMapDashboard(App):
 
     def _compose_ai_tab(self) -> ComposeResult:
         with Grid(id="ai-screen"):
-            yield Static(workspace_intro_text("ai"), classes="workspace-intro ai-grid-span-3")
+            self.ai_intro_panel = Static(workspace_intro_text("ai"), classes="workspace-intro ai-grid-span-3")
+            yield self.ai_intro_panel
             with Container(classes="ai-grid-cell ai-grid-span-3"):
                 yield Static(
                     _panel_heading(
@@ -6681,7 +6996,11 @@ class PortMapDashboard(App):
 
     def _compose_packet_tab(self) -> ComposeResult:
         with Grid(id="packet-screen"):
-            yield Static(workspace_intro_text("packet"), classes="workspace-intro packet-grid-span-3")
+            self.packet_intro_panel = Static(
+                workspace_intro_text("packet"),
+                classes="workspace-intro packet-grid-span-3",
+            )
+            yield self.packet_intro_panel
             with Container(classes="packet-grid-cell packet-grid-span-3"):
                 yield Static(
                     _panel_heading(
@@ -6792,27 +7111,29 @@ class PortMapDashboard(App):
         export_rows = self._load_export_rows(limit=max(self.tail_size * 4, EXPORT_ACTIVITY_LIMIT))
         if hasattr(self, "exports_status_panel"):
             self._update_exports_workspace(export_rows)
+        governance_rows: List[Dict[str, str]] = []
         if hasattr(self, "governance_status_panel"):
-            self._update_governance_workspace(
-                self._load_governance_rows(
-                    remediation_events=remediation_events,
-                    export_rows=export_rows,
-                    limit=max(self.tail_size * 4, GOVERNANCE_EVIDENCE_LIMIT),
-                )
+            governance_rows = self._load_governance_rows(
+                remediation_events=remediation_events,
+                export_rows=export_rows,
+                limit=max(self.tail_size * 4, GOVERNANCE_EVIDENCE_LIMIT),
             )
+            self._update_governance_workspace(governance_rows)
+        deployment_rows: List[Dict[str, str]] = []
         if hasattr(self, "deployment_status_panel"):
-            self._update_deployment_workspace(
-                self._load_deployment_rows(limit=max(self.tail_size * 4, DEPLOYMENT_READINESS_LIMIT))
-            )
+            deployment_rows = self._load_deployment_rows(limit=max(self.tail_size * 4, DEPLOYMENT_READINESS_LIMIT))
+            self._update_deployment_workspace(deployment_rows)
+        ai_events: List[Dict[str, Any]] = []
         if hasattr(self, "ai_status_panel"):
-            self._update_ai_workspace(
-                self._load_ai_events(
-                    remediation_events=remediation_events,
-                    scan_results=scan_results,
-                    limit=max(self.tail_size * 4, AI_ACTIVITY_LIMIT),
-                )
+            ai_events = self._load_ai_events(
+                remediation_events=remediation_events,
+                scan_results=scan_results,
+                limit=max(self.tail_size * 4, AI_ACTIVITY_LIMIT),
             )
+            self._update_ai_workspace(ai_events)
+        packet_rows: List[Dict[str, str]] = []
         if hasattr(self, "packet_status_panel"):
+            packet_rows = _packet_activity_rows(flow_visualization.get("flows") or [], limit=PACKET_ACTIVITY_LIMIT)
             self._update_packet_workspace(flow_visualization)
         if hasattr(self, "topology_panel"):
             self.topology_panel.update_topology(topology_edge_rows(flow_visualization.get("topology"), limit=self.tail_size))
@@ -6844,6 +7165,55 @@ class PortMapDashboard(App):
                 topology=flow_visualization.get("topology"),
             )
             self.metrics_panel.update_metrics(metrics)
+        self._update_workspace_intro_panels(
+            nodes=nodes,
+            remediation_events=remediation_events,
+            scan_results=scan_results,
+            risk_timeline=risk_timeline,
+            flow_visualization=flow_visualization,
+            command_events=command_events,
+            export_rows=export_rows,
+            governance_rows=governance_rows,
+            deployment_rows=deployment_rows,
+            ai_rows=_ai_provider_model_rows(ai_events, limit=AI_ACTIVITY_LIMIT) if ai_events else [],
+            packet_rows=packet_rows,
+        )
+
+    def _update_workspace_intro_panels(
+        self,
+        *,
+        nodes: List[Dict[str, Any]],
+        remediation_events: List[Dict[str, Any]],
+        scan_results: List[Dict[str, Any]],
+        risk_timeline: List[Dict[str, Any]],
+        flow_visualization: Dict[str, Any],
+        command_events: List[Dict[str, Any]],
+        export_rows: List[Dict[str, str]],
+        governance_rows: List[Dict[str, str]],
+        deployment_rows: List[Dict[str, str]],
+        ai_rows: List[Dict[str, str]],
+        packet_rows: List[Dict[str, str]],
+    ) -> None:
+        summaries = {
+            "dashboard": _dashboard_intro_summary(
+                nodes=nodes,
+                remediation_events=remediation_events,
+                scan_results=scan_results,
+                risk_timeline=risk_timeline,
+                flow_visualization=flow_visualization,
+                command_events=command_events,
+            ),
+            "risk": _risk_intro_summary(remediation_events, scan_results),
+            "exports": _exports_intro_summary(export_rows, getattr(self, "export_dir", resolve_export_dir())),
+            "governance": _governance_intro_summary(governance_rows),
+            "deployment": _deployment_intro_summary(deployment_rows),
+            "ai": _ai_intro_summary(ai_rows),
+            "packet": _packet_intro_summary(packet_rows),
+        }
+        for tab_id, summary in summaries.items():
+            panel = getattr(self, f"{tab_id}_intro_panel", None)
+            if panel is not None:
+                _update_static_if_changed(panel, workspace_intro_text(tab_id, summary))
 
     def _load_export_rows(self, limit: int = EXPORT_ACTIVITY_LIMIT) -> List[Dict[str, str]]:
         return _export_rows_from_dir(getattr(self, "export_dir", resolve_export_dir()), limit=limit)

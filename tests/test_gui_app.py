@@ -177,7 +177,8 @@ def test_tui_tab_registry_and_shortcut_mapping_are_stable():
 def test_dashboard_section_labels_keep_risk_details_on_risk_tab():
     labels = gui_app.dashboard_section_labels()
 
-    assert labels[0] == "Start Here"
+    assert labels[0] == "Executive Summary"
+    assert "Start Here" in labels
     assert "Risk Overview" in labels
     assert "Remediation Feed" not in labels
     assert "Risk Timeline" not in labels
@@ -196,29 +197,84 @@ def test_placeholder_tabs_render_safe_labels_and_serialization():
 
 
 def test_workspace_introductions_cover_major_workspaces():
-    assert gui_app.workspace_intro_labels() == ("risk", "exports", "governance", "deployment", "ai", "packet")
+    assert gui_app.workspace_intro_labels() == (
+        "dashboard",
+        "risk",
+        "exports",
+        "governance",
+        "deployment",
+        "ai",
+        "packet",
+    )
 
     for tab_id in gui_app.workspace_intro_labels():
         intro = gui_app.workspace_intro_text(tab_id)
         assert "Question:" in intro
+        assert "State:" in intro
+        assert "Matters:" in intro
+        assert "Next:" in intro
         assert "Hero:" in intro
-        assert "Purpose:" in intro
-        assert "Workflow:" in intro
-        assert "When to use:" in intro
 
-    assert "behavioral analysis" in gui_app.workspace_intro_text("risk")
+    assert "Network Health" in gui_app.workspace_intro_text("dashboard")
     assert "What requires my attention?" in gui_app.workspace_intro_text("risk")
     assert "Critical / High / Medium / Low" in gui_app.workspace_intro_text("risk")
-    assert "reasoning" in gui_app.workspace_intro_text("ai")
     assert "Top Classification" in gui_app.workspace_intro_text("ai")
-    assert "deployment readiness" in gui_app.workspace_intro_text("deployment")
     assert "Can I deploy?" in gui_app.workspace_intro_text("deployment")
-    assert "evidence packages" in gui_app.workspace_intro_text("exports")
     assert "Can I safely use these exports?" in gui_app.workspace_intro_text("exports")
-    assert "audit readiness" in gui_app.workspace_intro_text("governance")
     assert "Can I trust these results?" in gui_app.workspace_intro_text("governance")
-    assert "does not capture" in gui_app.workspace_intro_text("packet")
     assert "Top Talker" in gui_app.workspace_intro_text("packet")
+
+
+def test_dynamic_workspace_intro_summaries_are_operator_facing():
+    risk_events = [
+        {
+            "timestamp": "2026-06-14T12:03:00+00:00",
+            "node_id": "worker-1",
+            "action": "review",
+            "program": "sshd",
+            "port": 22,
+            "score": 0.82,
+            "score_factors": ["sensitive_port:22"],
+        }
+    ]
+    scan_rows = []
+    export_rows = _sample_export_rows()
+    governance_rows = _sample_governance_rows()
+    deployment_rows = _sample_deployment_rows()
+    ai_rows = gui_app._ai_provider_model_rows(_sample_ai_events())
+    packet_rows = gui_app._packet_activity_rows(_sample_packet_flows())
+
+    dashboard = gui_app.workspace_intro_text(
+        "dashboard",
+        gui_app._dashboard_intro_summary(
+            nodes=[{"node_id": "worker-1", "status": "online"}],
+            remediation_events=risk_events,
+            scan_results=scan_rows,
+            risk_timeline=[{"time": "2026-06-14"}],
+            flow_visualization=visualization.build_flow_visualization([]),
+            command_events=[],
+        ),
+    )
+    assert "Network Health:" in dashboard
+    assert "Nodes Online: 1/1" in dashboard
+    assert "Highest Risk:" in dashboard
+    assert "Recommended" not in dashboard
+
+    assert "Highest Severity:" in gui_app.workspace_intro_text("risk", gui_app._risk_intro_summary(risk_events, scan_rows))
+    assert "Latest Export:" in gui_app.workspace_intro_text(
+        "exports",
+        gui_app._exports_intro_summary(export_rows, Path("/tmp/exports")),
+    )
+    assert "Audit Readiness:" in gui_app.workspace_intro_text(
+        "governance",
+        gui_app._governance_intro_summary(governance_rows),
+    )
+    assert "Readiness:" in gui_app.workspace_intro_text(
+        "deployment",
+        gui_app._deployment_intro_summary(deployment_rows),
+    )
+    assert "Top Classification:" in gui_app.workspace_intro_text("ai", gui_app._ai_intro_summary(ai_rows))
+    assert "Top Flow:" in gui_app.workspace_intro_text("packet", gui_app._packet_intro_summary(packet_rows))
 
 
 def test_risk_tab_text_is_live_read_only_not_placeholder_only():
@@ -1189,7 +1245,9 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Execution"] == "not performed"
 
     placeholders = dict(gui_app._ai_detail_rows(None))
-    assert all(value == "-" for field, value in placeholders.items() if not field.startswith("["))
+    assert placeholders["Provider"] == "-"
+    assert placeholders["Model"] == "-"
+    assert placeholders["Top Classification"] == "-"
 
 
 def test_ai_and_risk_detail_rows_are_sectioned_without_removing_fields():
@@ -1213,6 +1271,7 @@ def test_ai_and_risk_detail_rows_are_sectioned_without_removing_fields():
     for section in (
         "[Operator Summary]",
         "[Operational Highlights]",
+        "[Primary Operator Action]",
         "[Advanced Details]",
         "[Classification]",
         "[Evidence]",
@@ -1237,12 +1296,34 @@ def test_ai_and_risk_detail_rows_are_sectioned_without_removing_fields():
     assert risk_details["Review Queue Summary"] != "-"
 
 
+def test_consolidated_operator_action_is_deterministic_and_prioritized():
+    row = {
+        "operator_next_steps": "Review low-priority operator notes.",
+        "review_queue_next_step": "Queue for standard operator review.",
+        "investigation_operator_next_steps": "Inspect graph context.",
+        "prediction_next_steps": "Gather more observations.",
+        "review_queue_reason": "medium_confidence_review_from_metadata",
+        "behavioral_decision_summary": "Monitor behavior due to weak evidence.",
+        "review_queue_evidence": "priority:medium; category:confidence_review",
+        "supporting_evidence": "tcp; LISTEN",
+    }
+
+    first = gui_app._consolidated_operator_action(row)
+    second = gui_app._consolidated_operator_action(dict(reversed(list(row.items()))))
+
+    assert first == second
+    assert dict(first)["Primary Operator Action"] == "Queue for standard operator review."
+    assert dict(first)["Reason"] == "medium_confidence_review_from_metadata"
+    assert dict(first)["Supporting Signals"] == "priority:medium; category:confidence_review"
+
+
 def _assert_operator_detail_hierarchy(rows):
     labels = [field for field, _ in rows]
 
     assert labels[0] == "[Operator Summary]"
     assert labels.index("[Operator Summary]") < labels.index("[Operational Highlights]")
-    assert labels.index("[Operational Highlights]") < labels.index("[Advanced Details]")
+    assert labels.index("[Operational Highlights]") < labels.index("[Primary Operator Action]")
+    assert labels.index("[Primary Operator Action]") < labels.index("[Advanced Details]")
     assert labels.index("[Advanced Details]") < labels.index("[Metadata]")
 
 
@@ -1264,27 +1345,27 @@ def test_detail_panes_start_with_operator_summary_and_preserve_metadata():
     detail_sets = {
         "risk": (
             gui_app._finding_detail_rows(gui_app._active_risk_finding_rows(remediation_events, [])[0]),
-            ("Critical Finding", "Severity", "Risk Score", "Evidence Observed", "Current Status"),
+            ("What Happened", "Why This Matters", "Primary Operator Action", "Critical Finding", "Current Status"),
         ),
         "ai": (
             gui_app._ai_detail_rows(gui_app._ai_provider_model_rows(_sample_ai_events())[0]),
-            ("Classification", "Confidence", "Top Candidate", "Evidence Supporting It", "Execution"),
+            ("What Happened", "Why This Matters", "Primary Operator Action", "Classification", "Execution"),
         ),
         "exports": (
             gui_app._export_detail_rows(_sample_export_rows()[0]),
-            ("Latest Export", "Validation", "Storage Usage", "Export ID", "Completed"),
+            ("Latest Export", "Validation", "Primary Operator Action", "Export ID", "Completed"),
         ),
         "governance": (
             gui_app._governance_detail_rows(_sample_governance_rows()[0]),
-            ("Compliance Status", "Evidence Integrity", "Audit Readiness", "Category", "Destructive Action"),
+            ("Compliance Status", "Evidence Integrity", "Primary Operator Action", "Category", "Destructive Action"),
         ),
         "deployment": (
             gui_app._deployment_detail_rows(_sample_deployment_rows()[0]),
-            ("Deployment Readiness", "Ready Systems", "Recommended Next Step", "Platform", "Safety Mode"),
+            ("Deployment Readiness", "Ready Systems", "Primary Operator Action", "Platform", "Safety Mode"),
         ),
         "packet": (
             gui_app._packet_detail_rows(gui_app._packet_activity_rows(_sample_packet_flows())[0]),
-            ("Operator Summary", "Top Flow", "Top Protocol", "Traffic Direction", "Execution"),
+            ("Operator Summary", "Top Flow", "Primary Operator Action", "Traffic Direction", "Execution"),
         ),
     }
 
@@ -2388,7 +2469,9 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Current Status"] == "LISTEN"
 
     placeholders = dict(gui_app._finding_detail_rows(None))
-    assert all(value == "-" for field, value in placeholders.items() if not field.startswith("["))
+    assert placeholders["Asset"] == "-"
+    assert placeholders["Service"] == "-"
+    assert placeholders["Top Classification"] == "-"
 
 
 def test_risk_details_table_wraps_long_metadata_and_preserves_cursor_selection():
