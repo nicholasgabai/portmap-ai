@@ -464,6 +464,10 @@ Implementation note: Phase 179 adds a deterministic local customer provisioning 
 
 Implementation note: Phase 180 adds a local metadata-only packet capture framework foundation with normalized packet metadata models, deterministic packet and flow identifiers, capture session lifecycle records, safe filter descriptions, mock and offline metadata adapters, an in-memory capture manager, and deterministic packet/session statistics. This foundation does not capture, decode, store, or display packet payload contents, require root privileges in tests, invoke shell capture tools, contact networks, craft packets, enforce policy, block traffic, execute remediation, or add SaaS behavior.
 
+### Phase 181 - Protocol Intelligence (Completed)
+
+Implementation note: Phase 181 adds deterministic metadata-only protocol intelligence on top of the local capture framework, including protocol classification records, confidence and evidence summaries, deterministic protocol IDs, conversation summaries, safe empty outputs, and JSON-safe reporting for Ethernet, ARP, IPv4, IPv6, ICMP, TCP, UDP, DNS, HTTP, HTTPS, SSH, TLS, SMB, and unknown metadata. This remains local, read-only, metadata-only, and does not add packet payload storage or display, packet crafting, injection, enforcement, blocking, remediation execution, privileged live capture, external calls, cloud services, or DPI requiring payload retention.
+
 ## Milestone AE - Packet Intelligence And Deep Visibility
 
 Goal: add packet-level metadata visibility and TUI packet views after scalability, packaging, compliance, AI evolution, and launch-readiness groundwork is established.

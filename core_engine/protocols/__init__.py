@@ -5,6 +5,14 @@ from typing import Any
 from core_engine.modules.packet_capture import extract_packet_metadata
 from core_engine.protocols import dhcp, dns, ftp, http, icmp, smb, smtp, ssh, tls
 from core_engine.protocols.common import failed, unknown
+from core_engine.protocols.intelligence import (
+    ConversationSummary,
+    ProtocolRecord,
+    classify_packet_protocol as classify_packet_metadata_protocol,
+    classify_packets,
+    protocol_intelligence_summary,
+    summarize_conversations,
+)
 
 
 PORT_PROTOCOLS = {
@@ -150,8 +158,14 @@ def _ipv6_payload(raw: bytes, offset: int) -> bytes:
 
 
 __all__ = [
+    "ConversationSummary",
+    "ProtocolRecord",
+    "classify_packet_metadata_protocol",
+    "classify_packets",
     "classify_protocol",
     "dissect_packet",
     "dissect_payload",
     "extract_transport_payload",
+    "protocol_intelligence_summary",
+    "summarize_conversations",
 ]
