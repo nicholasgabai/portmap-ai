@@ -480,6 +480,10 @@ Implementation note: Phase 183 adds deterministic metadata-only visualization mo
 
 Implementation note: Phase 184 adds a deterministic metadata-only packet hunting and search backend on top of packet metadata, protocol intelligence, timeline events, conversation summaries, session summaries, and visualization models. Outputs include immutable hunt queries, saved query models, exact/contains/prefix/suffix search helpers, filter combinations, set operations, deduplication, stable sorting, search result summaries, correlation metadata, hunting statistics, and reusable common hunt helpers. This remains local, read-only, metadata-only, and does not add GUI rendering, CLI parsing, packet payload inspection, DPI, packet crafting, injection, blocking, remediation, enforcement, cloud services, SaaS behavior, collectors, network calls, or persistence.
 
+### Phase 185 - Packet Intelligence Integration (Completed)
+
+Implementation note: Phase 185 adds deterministic metadata-only packet intelligence summaries that connect capture metadata, protocol intelligence, timeline events, visualization models, and hunting results into attribution, risk, behavior graph, AI detail, and future TUI/API-ready summary records. Outputs include compact packet activity summaries, protocol and port distributions, hunting and timeline summaries, visualization summaries, risk-relevant signals, attribution hints, behavior graph hints, evidence, limitations, confidence, operator summaries, and next steps. This remains local, read-only, metadata-only, and does not add packet payload storage or display, DPI, packet crafting, injection, enforcement, blocking, remediation execution, live privileged capture, external calls, cloud services, SaaS behavior, GUI rendering, collectors, or runtime mutation.
+
 ## Milestone AE - Packet Intelligence And Deep Visibility
 
 Goal: add packet-level metadata visibility and TUI packet views after scalability, packaging, compliance, AI evolution, and launch-readiness groundwork is established.
