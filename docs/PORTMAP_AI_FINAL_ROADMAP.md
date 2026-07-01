@@ -460,6 +460,10 @@ Implementation note: Phase 178 adds a deterministic local SaaS control-plane mod
 
 Implementation note: Phase 179 adds a deterministic local customer provisioning model that composes Phase 177 licensing summaries and Phase 178 control-plane summaries for customer profile metadata, tenant and deployment identifiers, license and edition attachment, feature and limit assignment, readiness evaluation, validation summaries, mismatch detection, expiration handling, and blocked or ready provisioning states. This remains local, read-only, metadata-only, and does not add real SaaS onboarding, hosted APIs, billing, authentication providers, SSO, payment processing, remote execution, cloud databases, customer portals, network services, daemons, HTTP servers, sockets, background jobs, automatic provisioning actions, or runtime mutation.
 
+### Phase 180 - Packet Capture Framework (Completed)
+
+Implementation note: Phase 180 adds a local metadata-only packet capture framework foundation with normalized packet metadata models, deterministic packet and flow identifiers, capture session lifecycle records, safe filter descriptions, mock and offline metadata adapters, an in-memory capture manager, and deterministic packet/session statistics. This foundation does not capture, decode, store, or display packet payload contents, require root privileges in tests, invoke shell capture tools, contact networks, craft packets, enforce policy, block traffic, execute remediation, or add SaaS behavior.
+
 ## Milestone AE - Packet Intelligence And Deep Visibility
 
 Goal: add packet-level metadata visibility and TUI packet views after scalability, packaging, compliance, AI evolution, and launch-readiness groundwork is established.
