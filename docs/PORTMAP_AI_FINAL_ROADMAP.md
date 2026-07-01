@@ -476,6 +476,10 @@ Implementation note: Phase 182 adds a deterministic metadata-only packet timelin
 
 Implementation note: Phase 183 adds deterministic metadata-only visualization model structures on top of the Phase 180 capture framework, Phase 181 protocol intelligence, and Phase 182 packet timeline engine. Outputs include timeline models and lanes, host graphs, flow graphs, conversation graphs, protocol and port distributions, bandwidth models, activity heatmaps, communication matrices, top talkers, session and conversation visualizations, network snapshots, and aggregate visualization statistics. These reusable models describe what future TUI, desktop, web, API, or export surfaces can visualize without rendering graphics, widgets, HTML, SVG, charts, packet payloads, DPI, packet crafting, injection, blocking, remediation, firewall interaction, cloud services, SaaS behavior, or external calls.
 
+### Phase 184 - Packet Hunting And Search (Completed)
+
+Implementation note: Phase 184 adds a deterministic metadata-only packet hunting and search backend on top of packet metadata, protocol intelligence, timeline events, conversation summaries, session summaries, and visualization models. Outputs include immutable hunt queries, saved query models, exact/contains/prefix/suffix search helpers, filter combinations, set operations, deduplication, stable sorting, search result summaries, correlation metadata, hunting statistics, and reusable common hunt helpers. This remains local, read-only, metadata-only, and does not add GUI rendering, CLI parsing, packet payload inspection, DPI, packet crafting, injection, blocking, remediation, enforcement, cloud services, SaaS behavior, collectors, network calls, or persistence.
+
 ## Milestone AE - Packet Intelligence And Deep Visibility
 
 Goal: add packet-level metadata visibility and TUI packet views after scalability, packaging, compliance, AI evolution, and launch-readiness groundwork is established.
