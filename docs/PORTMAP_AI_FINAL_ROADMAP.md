@@ -484,6 +484,10 @@ Implementation note: Phase 184 adds a deterministic metadata-only packet hunting
 
 Implementation note: Phase 185 adds deterministic metadata-only packet intelligence summaries that connect capture metadata, protocol intelligence, timeline events, visualization models, and hunting results into attribution, risk, behavior graph, AI detail, and future TUI/API-ready summary records. Outputs include compact packet activity summaries, protocol and port distributions, hunting and timeline summaries, visualization summaries, risk-relevant signals, attribution hints, behavior graph hints, evidence, limitations, confidence, operator summaries, and next steps. This remains local, read-only, metadata-only, and does not add packet payload storage or display, DPI, packet crafting, injection, enforcement, blocking, remediation execution, live privileged capture, external calls, cloud services, SaaS behavior, GUI rendering, collectors, or runtime mutation.
 
+### Phase 186 - Documentation Portal (Completed)
+
+Implementation note: Phase 186 adds a local static documentation portal foundation under `docs/portal` with a deterministic manifest and concise operator, developer, architecture, installation, Raspberry Pi, packet intelligence, AI intelligence, deployment, governance, export, troubleshooting, release candidate, and open-source/enterprise model guides. This remains documentation-only, local, static, and deterministic, and does not add hosted documentation services, web servers, SaaS portals, authentication, billing, telemetry, cloud hosting, remote APIs, external network calls, online generated documentation dependencies, destructive file operations, runtime behavior, packet capture, enforcement, or remediation.
+
 ## Milestone AE - Packet Intelligence And Deep Visibility
 
 Goal: add packet-level metadata visibility and TUI packet views after scalability, packaging, compliance, AI evolution, and launch-readiness groundwork is established.

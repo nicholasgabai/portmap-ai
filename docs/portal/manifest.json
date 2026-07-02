@@ -1,0 +1,123 @@
+{
+  "portal_version": "1.0",
+  "generated_at": "2026-07-01T00:00:00Z",
+  "sections": [
+    {
+      "section_id": "operator_guide",
+      "title": "Operator Guide",
+      "description": "Daily operator workflow, safety boundaries, and local visibility concepts.",
+      "path": "docs/portal/operator_guide.md",
+      "audience": "operators",
+      "status": "active",
+      "order": 1
+    },
+    {
+      "section_id": "developer_guide",
+      "title": "Developer Guide",
+      "description": "Repository structure, testing workflow, and contribution conventions.",
+      "path": "docs/portal/developer_guide.md",
+      "audience": "developers",
+      "status": "active",
+      "order": 2
+    },
+    {
+      "section_id": "architecture_guide",
+      "title": "Architecture Guide",
+      "description": "Local-first architecture, subsystem boundaries, and data flow overview.",
+      "path": "docs/portal/architecture_guide.md",
+      "audience": "developers",
+      "status": "active",
+      "order": 3
+    },
+    {
+      "section_id": "installation_guide",
+      "title": "Installation Guide",
+      "description": "Local setup, validation commands, and packaging expectations.",
+      "path": "docs/portal/installation_guide.md",
+      "audience": "operators",
+      "status": "active",
+      "order": 4
+    },
+    {
+      "section_id": "raspberry_pi_guide",
+      "title": "Raspberry Pi Guide",
+      "description": "Resource-aware Raspberry Pi operation and validation guidance.",
+      "path": "docs/portal/raspberry_pi_guide.md",
+      "audience": "operators",
+      "status": "active",
+      "order": 5
+    },
+    {
+      "section_id": "packet_intelligence_guide",
+      "title": "Packet Intelligence Guide",
+      "description": "Metadata-only packet capture, protocol, timeline, visualization, hunting, and integration layers.",
+      "path": "docs/portal/packet_intelligence_guide.md",
+      "audience": "operators",
+      "status": "active",
+      "order": 6
+    },
+    {
+      "section_id": "ai_intelligence_guide",
+      "title": "AI Intelligence Guide",
+      "description": "Deterministic attribution, learning profile, behavior graph, prediction, federation, and investigation summaries.",
+      "path": "docs/portal/ai_intelligence_guide.md",
+      "audience": "operators",
+      "status": "active",
+      "order": 7
+    },
+    {
+      "section_id": "deployment_guide",
+      "title": "Deployment Guide",
+      "description": "Local deployment planning, profiles, service lifecycle readiness, and control-plane metadata.",
+      "path": "docs/portal/deployment_guide.md",
+      "audience": "enterprise_evaluators",
+      "status": "active",
+      "order": 8
+    },
+    {
+      "section_id": "governance_guide",
+      "title": "Governance Guide",
+      "description": "Privacy, compliance, audit, review, and accountability documentation.",
+      "path": "docs/portal/governance_guide.md",
+      "audience": "enterprise_evaluators",
+      "status": "active",
+      "order": 9
+    },
+    {
+      "section_id": "exports_guide",
+      "title": "Export Guide",
+      "description": "Export bundle, redaction, review, and local evidence handling guidance.",
+      "path": "docs/portal/exports_guide.md",
+      "audience": "operators",
+      "status": "active",
+      "order": 10
+    },
+    {
+      "section_id": "troubleshooting_guide",
+      "title": "Troubleshooting Guide",
+      "description": "Validation workflow, common runtime checks, and safe diagnostic steps.",
+      "path": "docs/portal/troubleshooting_guide.md",
+      "audience": "operators",
+      "status": "active",
+      "order": 11
+    },
+    {
+      "section_id": "release_candidate_checklist",
+      "title": "Release Candidate Checklist",
+      "description": "Local release readiness checklist for stabilization and validation.",
+      "path": "docs/portal/release_candidate_checklist.md",
+      "audience": "enterprise_evaluators",
+      "status": "active",
+      "order": 12
+    },
+    {
+      "section_id": "open_source_enterprise_model",
+      "title": "Open Source / Enterprise Model Guide",
+      "description": "Boundaries between local open-source capabilities and future enterprise packaging.",
+      "path": "docs/portal/open_source_enterprise_model.md",
+      "audience": "enterprise_evaluators",
+      "status": "active",
+      "order": 13
+    }
+  ]
+}
