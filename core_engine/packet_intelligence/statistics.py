@@ -67,6 +67,48 @@ def packet_activity_summary(packets: Iterable[Dict[str, Any]], conversations: It
     }
 
 
+def historical_flow_aggregation(
+    conversations: Iterable[Dict[str, Any]],
+    protocol_records: Iterable[Dict[str, Any]] | None = None,
+) -> Dict[str, Any]:
+    conversation_rows = [safe_metadata(dict(row or {})) for row in conversations]
+    protocol_rows = [safe_metadata(dict(row or {})) for row in protocol_records or []]
+    times = sorted(
+        time
+        for row in conversation_rows
+        for time in (_time({"first_observed": row.get("first_observed")}), _time({"first_observed": row.get("last_observed")}))
+        if time != "-"
+    )
+    flow_keys = sorted({safe_text(row.get("flow_key")) for row in conversation_rows if safe_text(row.get("flow_key")) != "-"})
+    protocols = sorted({safe_text(row.get("protocol"), "unknown") for row in conversation_rows if safe_text(row.get("protocol")) != "-"})
+    service_candidates = sorted(
+        {
+            _service_candidate(row)
+            for row in [*conversation_rows, *protocol_rows]
+            if _service_candidate(row) != "-"
+        }
+    )
+    short_lived = [
+        row
+        for row in conversation_rows
+        if _duration_seconds(row.get("first_observed"), row.get("last_observed")) <= 2
+    ]
+    burst = len(short_lived) >= 10 or len(conversation_rows) >= 50
+    return {
+        "observation_count": sum(safe_int(row.get("packet_count"), 1) for row in conversation_rows),
+        "connection_count": len(conversation_rows),
+        "session_count": len(conversation_rows),
+        "unique_flow_count": len(flow_keys),
+        "first_seen": times[0] if times else "-",
+        "last_seen": times[-1] if times else "-",
+        "status": "historical_aggregate" if conversation_rows else "empty",
+        "protocols": protocols,
+        "service_candidates": service_candidates,
+        "trend_indicators": ["short_lived_flow_burst"] if burst else [],
+        "active_vs_historical": "historical_summary_preserved" if conversation_rows else "no_flow_history",
+    }
+
+
 def hunting_summary(hunt_results: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
     rows = [safe_metadata(dict(row or {})) for row in hunt_results]
     packet_matches = sum(safe_int((row.get("statistics") or {}).get("packet_matches")) for row in rows)
@@ -151,3 +193,25 @@ def _visualization_type(row: Dict[str, Any]) -> str:
         if key in row:
             return name
     return "unknown"
+
+
+def _service_candidate(row: Dict[str, Any]) -> str:
+    protocol = safe_text(row.get("application_protocol") or row.get("protocol"), "unknown").lower()
+    if protocol == "dns":
+        return "dns"
+    if protocol == "ssh":
+        return "ssh"
+    if protocol in {"https", "tls"}:
+        return "https_service"
+    if protocol == "http":
+        return "http_service"
+    for port in (safe_int(row.get("src_port")), safe_int(row.get("dst_port"))):
+        if port == 53:
+            return "dns"
+        if port == 22:
+            return "ssh"
+        if port == 80:
+            return "http_service"
+        if port == 443:
+            return "https_service"
+    return "-"

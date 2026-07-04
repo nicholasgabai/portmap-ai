@@ -8,6 +8,8 @@ from core_engine.packet_intelligence import (
     derive_attribution_hints,
     derive_behavior_graph_hints,
     derive_risk_relevant_signals,
+    derive_service_candidates,
+    historical_flow_aggregation,
 )
 from core_engine.protocols import classify_packets, summarize_conversations
 from core_engine.timeline import build_packet_timeline
@@ -286,3 +288,82 @@ def test_no_network_calls(monkeypatch):
     summary = build_packet_intelligence_summary(packets=_packets())
 
     assert summary["packet_count"] == 4
+
+
+def test_validated_tcp_flow_direction_is_preserved_for_outbound_https():
+    packet = _packet(
+        packet_id="validated-tcp-direction",
+        session_id="curl-session",
+        src_ip="10.10.10.20",
+        src_port=53984,
+        dst_ip="198.51.100.44",
+        dst_port=443,
+        protocol="TCP",
+        direction="outbound",
+    )
+    conversation = summarize_conversations([packet])[0]
+
+    assert conversation["src_ip"] == "10.10.10.20"
+    assert conversation["src_port"] == 53984
+    assert conversation["dst_ip"] == "198.51.100.44"
+    assert conversation["dst_port"] == 443
+    assert conversation["direction"] == "outbound"
+    assert conversation["flow_key"] == "tcp|10.10.10.20|53984|198.51.100.44|443"
+
+
+def test_dns_service_candidates_cover_udp_tcp_local_resolver_and_repetition():
+    packets = []
+    for index in range(6):
+        protocol = "UDP" if index < 5 else "TCP"
+        packets.append(
+            _packet(
+                packet_id=f"dns-{index}",
+                session_id=f"dns-session-{index}",
+                observed_at=f"2026-06-14T12:00:{index:02d}+00:00",
+                protocol=protocol,
+                src_ip="10.0.0.15",
+                dst_ip="10.0.0.1",
+                src_port=53000 + index,
+                dst_port=53,
+                length=72,
+            )
+        )
+    records = classify_packets(packets)
+    conversations = summarize_conversations(packets)
+    candidates = derive_service_candidates(records, conversations)
+    summary = build_packet_intelligence_summary(packets=packets)
+
+    dns = next(row for row in candidates if row["service_candidate"] == "dns")
+    assert "dns" in {row["protocol"] for row in records}
+    assert dns["ports"] == [53]
+    assert dns["flow_count"] == 6
+    assert {"protocol:dns", "port:53"}.issubset(set(dns["evidence"]))
+    assert any(row["service_candidate"] == "dns" for row in summary["metadata"]["service_candidates"])
+
+
+def test_short_lived_https_burst_is_preserved_as_historical_aggregate():
+    packets = [
+        _packet(
+            packet_id=f"https-burst-{index:02d}",
+            session_id=f"https-session-{index:02d}",
+            observed_at=f"2026-06-14T12:00:{index % 50:02d}+00:00",
+            protocol="TCP",
+            src_ip="10.0.0.15",
+            src_port=54000 + index,
+            dst_ip="198.51.100.44",
+            dst_port=443,
+            length=60 + index,
+        )
+        for index in range(50)
+    ]
+    records = classify_packets(packets)
+    conversations = summarize_conversations(packets)
+    aggregate = historical_flow_aggregation(conversations, protocol_records=records)
+    summary = build_packet_intelligence_summary(packets=packets)
+
+    assert aggregate["connection_count"] == 50
+    assert aggregate["unique_flow_count"] == 50
+    assert aggregate["active_vs_historical"] == "historical_summary_preserved"
+    assert "short_lived_flow_burst" in aggregate["trend_indicators"]
+    assert "https_service" in aggregate["service_candidates"]
+    assert summary["metadata"]["historical_flow_aggregation"] == aggregate

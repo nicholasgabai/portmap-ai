@@ -364,6 +364,7 @@ def build_probabilistic_application_model(
     timestamp = generated_at or _now()
     mode = normalize_source_mode(observation.get("source_mode") or observation.get("data_source") or "unknown")
     evidence = _probabilistic_evidence(observation, source_mode=mode)
+    observation_context = _observation_context(observation, evidence)
     raw_scores = _probabilistic_candidate_scores(evidence)
     calibration = _probabilistic_calibration(evidence, raw_scores)
     scores = _calibrated_candidate_scores(raw_scores, evidence, calibration)
@@ -423,6 +424,7 @@ def build_probabilistic_application_model(
         )[:16],
         "generated_at": timestamp,
         "observed_entity_reference": _entity_ref(observation),
+        "observation_context": observation_context,
         "top_classification": top["candidate"],
         "confidence": float(top["probability"]),
         "candidates": candidates,
@@ -549,6 +551,7 @@ def _hint_confidence(value: str) -> float:
 
 
 def _probabilistic_evidence(observation: dict[str, Any], *, source_mode: str) -> dict[str, Any]:
+    external_signals = _existing_signal_values(observation)
     process = _safe_candidate(
         observation.get("process_hint")
         or observation.get("program")
@@ -565,6 +568,10 @@ def _probabilistic_evidence(observation: dict[str, Any], *, source_mode: str) ->
         source_mode=source_mode,
         fallback="Unattributed",
     )
+    if service in {"Unknown", "Unattributed"}:
+        inferred_service = _service_candidate_from_signals(external_signals)
+        if inferred_service:
+            service = inferred_service
     protocol = _safe_token(
         observation.get("protocol_hint")
         or observation.get("protocol")
@@ -591,11 +598,9 @@ def _probabilistic_evidence(observation: dict[str, Any], *, source_mode: str) ->
         signals.append(f"port:{port}")
     if state != "unknown":
         signals.append(f"state:{state}")
-    external_signals = []
-    for signal in _existing_signal_values(observation):
+    for signal in external_signals:
         if signal not in signals:
             signals.append(signal)
-        external_signals.append(signal)
     return {
         "process": process,
         "service": service,
@@ -606,6 +611,53 @@ def _probabilistic_evidence(observation: dict[str, Any], *, source_mode: str) ->
         "external_signals": external_signals[:12],
         "candidate_evidence": {},
     }
+
+
+def _observation_context(observation: dict[str, Any], evidence: dict[str, Any]) -> dict[str, Any]:
+    local_port = _first_nonempty(
+        observation.get("local_port"),
+        observation.get("src_port"),
+        observation.get("port"),
+        observation.get("service_port"),
+    )
+    remote_port = _first_nonempty(
+        observation.get("remote_port"),
+        observation.get("dst_port"),
+        observation.get("destination_port"),
+    )
+    flow_key = _safe_context_text(observation.get("flow_key") or observation.get("flow_id"))
+    observation_id = _safe_context_text(
+        observation.get("observation_id")
+        or observation.get("event_id")
+        or observation.get("finding_id")
+        or observation.get("packet_id")
+        or observation.get("session_id")
+        or flow_key
+        or _entity_ref(observation)
+    )
+    service_candidate = _safe_context_text(evidence.get("service"))
+    if service_candidate in {"-", "Unknown", "Unattributed"}:
+        port = evidence.get("port")
+        labels = APPLICATION_PORT_CANDIDATES.get(port, ()) if port is not None else ()
+        service_candidate = _safe_context_text(labels[0] if labels else "-")
+    context = {
+        "observation_id": observation_id,
+        "flow_key": flow_key,
+        "node": _safe_context_text(observation.get("node_id") or observation.get("node")),
+        "asset": _safe_context_text(observation.get("asset") or observation.get("target") or observation.get("host")),
+        "protocol": _safe_context_text(evidence.get("protocol")).upper()
+        if _safe_context_text(evidence.get("protocol")) != "-"
+        else "-",
+        "local_port": _safe_context_text(local_port),
+        "remote_port": _safe_context_text(remote_port),
+        "state": _safe_context_text(evidence.get("state")),
+        "service_candidate": service_candidate,
+    }
+    context["identity"] = "|".join(
+        context[key]
+        for key in ("node", "asset", "protocol", "local_port", "remote_port", "state", "service_candidate", "observation_id")
+    )
+    return context
 
 
 def _probabilistic_candidate_scores(evidence: dict[str, Any]) -> dict[str, float]:
@@ -1015,6 +1067,32 @@ def _candidate_labels_from_text(value: Any) -> list[str]:
         if any(token in text for token in tokens):
             labels.append(label)
     return labels
+
+
+def _service_candidate_from_signals(signals: Iterable[Any]) -> str:
+    for signal in signals:
+        text = _safe_token(signal)
+        if text.startswith("risky_port:"):
+            parts = text.split(":")
+            if len(parts) >= 3:
+                service = parts[2].lower()
+                if service:
+                    return service
+        for label in _candidate_labels_from_text(text):
+            return label
+    return ""
+
+
+def _first_nonempty(*values: Any) -> Any:
+    for value in values:
+        if value not in {"", "-", None}:
+            return value
+    return "-"
+
+
+def _safe_context_text(value: Any) -> str:
+    text = str(value or "").strip()
+    return text if text and text != "-" else "-"
 
 
 def _is_blank_signal(value: Any) -> bool:

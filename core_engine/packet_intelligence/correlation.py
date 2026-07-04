@@ -17,6 +17,14 @@ KNOWN_PROTOCOL_HINTS = {
     "ssh": "likely_ssh",
     "smb": "likely_smb",
 }
+KNOWN_SERVICE_CANDIDATES = {
+    "dns": "dns",
+    "http": "http_service",
+    "https": "https_service",
+    "tls": "https_service",
+    "ssh": "ssh",
+    "smb": "smb",
+}
 
 
 def derive_attribution_hints(
@@ -39,6 +47,74 @@ def derive_attribution_hints(
     if any(count > 1 for count in flow_counts.values()) or any(safe_int(row.get("packet_count")) > 1 for row in conversation_rows):
         hints.add("repeated_flow_observation")
     return sorted(hints)
+
+
+def derive_service_candidates(
+    protocol_records: Iterable[Dict[str, Any]],
+    conversations: Iterable[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    records = [safe_metadata(dict(row or {})) for row in protocol_records]
+    conversation_rows = [safe_metadata(dict(row or {})) for row in conversations]
+    by_service: dict[str, dict[str, Any]] = {}
+    for row in [*records, *conversation_rows]:
+        protocol = safe_text(row.get("application_protocol") or row.get("protocol"), "unknown").lower()
+        service = KNOWN_SERVICE_CANDIDATES.get(protocol)
+        if not service:
+            for port in (safe_int(row.get("src_port")), safe_int(row.get("dst_port"))):
+                if port == 53:
+                    service = "dns"
+                elif port == 22:
+                    service = "ssh"
+                elif port == 80:
+                    service = "http_service"
+                elif port == 443:
+                    service = "https_service"
+                if service:
+                    break
+        if not service:
+            continue
+        item = by_service.setdefault(
+            service,
+            {
+                "service_candidate": service,
+                "protocols": set(),
+                "ports": set(),
+                "flow_keys": set(),
+                "evidence": set(),
+            },
+        )
+        if protocol != "unknown":
+            item["protocols"].add(protocol)
+            item["evidence"].add(f"protocol:{protocol}")
+        for port in (safe_int(row.get("src_port")), safe_int(row.get("dst_port"))):
+            if port and _port_supports_service(port, service):
+                item["ports"].add(port)
+                item["evidence"].add(f"port:{port}")
+        flow_key = safe_text(row.get("flow_key"))
+        if flow_key != "-":
+            item["flow_keys"].add(flow_key)
+    rows = []
+    for service, item in by_service.items():
+        rows.append(
+            {
+                "service_candidate": service,
+                "protocols": sorted(item["protocols"]),
+                "ports": sorted(item["ports"]),
+                "flow_count": len(item["flow_keys"]),
+                "evidence": sorted(item["evidence"]),
+            }
+        )
+    return sorted(rows, key=lambda row: (row["service_candidate"], row["ports"], row["protocols"]))
+
+
+def _port_supports_service(port: int, service: str) -> bool:
+    return (
+        (service == "dns" and port == 53)
+        or (service == "ssh" and port == 22)
+        or (service == "http_service" and port in {80, 8080})
+        or (service == "https_service" and port in {443, 8443})
+        or (service == "smb" and port in {139, 445})
+    )
 
 
 def derive_risk_relevant_signals(

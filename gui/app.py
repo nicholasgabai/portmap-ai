@@ -1625,6 +1625,11 @@ def _active_risk_finding_rows(
                 "protocol": _risk_finding_protocol(event),
                 "service_name": _risk_finding_service_name(event),
                 "provider": _risk_finding_provider(event),
+                "observation_id": _context_text_field(classification, "observation_id", limit=64),
+                "flow_key": _context_text_field(classification, "flow_key", limit=96),
+                "local_port": _context_text_field(classification, "local_port", limit=12),
+                "remote_port": _context_text_field(classification, "remote_port", limit=12),
+                "service_candidate": _context_text_field(classification, "service_candidate", limit=32),
                 "top_classification": _short_text(classification.get("top_classification"), limit=24),
                 "classification_confidence": _format_probability(classification.get("confidence")),
                 "alternative_candidates": _classification_alternatives_text(classification),
@@ -1959,6 +1964,11 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Service Name", row.get("service_name", "-")),
         ("Finding", row.get("finding", "-")),
         ("Provider", row.get("provider", "-")),
+        ("Observation ID", row.get("observation_id", "-")),
+        ("Flow Key", row.get("flow_key", "-")),
+        ("Local Port", row.get("local_port", "-")),
+        ("Remote Port", row.get("remote_port", "-")),
+        ("Service Candidate", row.get("service_candidate", "-")),
         ("Top Classification", row.get("top_classification", "-")),
         ("Classification Confidence", row.get("classification_confidence", "-")),
         ("Alternative Candidates", row.get("alternative_candidates", "-")),
@@ -3505,6 +3515,48 @@ def _classification_behavior_graph_summary(model: Dict[str, Any]) -> Dict[str, A
     return summary if isinstance(summary, dict) else {}
 
 
+def _classification_observation_context(model: Dict[str, Any]) -> Dict[str, Any]:
+    context = model.get("observation_context")
+    return context if isinstance(context, dict) else {}
+
+
+def _context_text_field(model: Dict[str, Any], field: str, *, limit: int = 64) -> str:
+    return _short_text(_classification_observation_context(model).get(field), limit=limit)
+
+
+def _event_observation_identity(event: Dict[str, Any], model: Dict[str, Any] | None = None) -> str:
+    context = _classification_observation_context(model or {})
+    values = [
+        context.get("identity"),
+        event.get("observation_id"),
+        event.get("event_id"),
+        event.get("finding_id"),
+        event.get("packet_id"),
+        event.get("session_id"),
+        event.get("flow_key"),
+        _risk_finding_identity(event),
+    ]
+    return _short_text(_first_nonempty(*values), limit=96)
+
+
+def _explicit_observation_identity(event: Dict[str, Any], model: Dict[str, Any] | None = None) -> str:
+    context = _classification_observation_context(model or {})
+    for value in (
+        event.get("observation_id"),
+        event.get("event_id"),
+        event.get("finding_id"),
+        event.get("packet_id"),
+        event.get("session_id"),
+        event.get("flow_key"),
+        context.get("observation_id"),
+        context.get("flow_key"),
+    ):
+        text = _short_text(value, limit=96)
+        if text != "-":
+            return text
+    return "-"
+
+
 def _behavior_graph_text_field(model: Dict[str, Any], field: str, *, limit: int = 64) -> str:
     value = _classification_behavior_graph_summary(model).get(field)
     if value in {"", "-", None}:
@@ -3561,7 +3613,13 @@ def _ai_provider_model_rows(
     for event in events:
         provider = _ai_provider_value(event)
         model = _ai_model_value(event)
-        identity = "|".join([provider, model])
+        model_record = (
+            event.get("probabilistic_application_model")
+            if isinstance(event.get("probabilistic_application_model"), dict)
+            else _probabilistic_application_model(event)
+        )
+        explicit_identity = _explicit_observation_identity(event, model_record)
+        identity = "|".join([provider, model, explicit_identity]) if explicit_identity != "-" else "|".join([provider, model])
         row = grouped.setdefault(
             identity,
             {
@@ -3573,6 +3631,15 @@ def _ai_provider_model_rows(
                 "status": "-",
                 "source": "-",
                 "latest_activity": "-",
+                "observation_id": "-",
+                "flow_key": "-",
+                "node": "-",
+                "asset": "-",
+                "protocol": "-",
+                "local_port": "-",
+                "remote_port": "-",
+                "state": "-",
+                "service_candidate": "-",
                 "candidate_models": "-",
                 "confidence": "-",
                 "evidence_count": "0",
@@ -3721,11 +3788,15 @@ def _ai_provider_model_rows(
             row["status"] = _ai_status_value(event)
             row["source"] = _ai_source_value(event)
             row["latest_activity"] = _ai_activity_value(event)
-            model_record = (
-                event.get("probabilistic_application_model")
-                if isinstance(event.get("probabilistic_application_model"), dict)
-                else _probabilistic_application_model(event)
-            )
+            row["observation_id"] = _context_text_field(model_record, "observation_id", limit=64)
+            row["flow_key"] = _context_text_field(model_record, "flow_key", limit=96)
+            row["node"] = _context_text_field(model_record, "node", limit=24)
+            row["asset"] = _context_text_field(model_record, "asset", limit=24)
+            row["protocol"] = _context_text_field(model_record, "protocol", limit=12)
+            row["local_port"] = _context_text_field(model_record, "local_port", limit=12)
+            row["remote_port"] = _context_text_field(model_record, "remote_port", limit=12)
+            row["state"] = _context_text_field(model_record, "state", limit=24)
+            row["service_candidate"] = _context_text_field(model_record, "service_candidate", limit=32)
             row["candidate_models"] = _classification_candidates_text(model_record)
             row["confidence"] = _format_probability(model_record.get("confidence"))
             row["evidence_count"] = str(model_record.get("evidence_count", 0))
@@ -4043,6 +4114,15 @@ def _ai_provider_model_rows(
             "updated": row["updated"],
             "source": row["source"],
             "latest_activity": row["latest_activity"],
+            "observation_id": row["observation_id"],
+            "flow_key": row["flow_key"],
+            "node": row["node"],
+            "asset": row["asset"],
+            "protocol": row["protocol"],
+            "local_port": row["local_port"],
+            "remote_port": row["remote_port"],
+            "state": row["state"],
+            "service_candidate": row["service_candidate"],
             "top_classification": row["top_classification"],
             "alternative_candidates": row["alternative_candidates"],
             "evidence_signals": row["evidence_signals"],
@@ -4180,7 +4260,9 @@ def _ai_provider_model_rows(
             "related_profile": row["related_profile"],
             "mode": "read_only",
             "execution": "not performed",
-            "key": "|".join([row["provider"], row["model"]]),
+            "key": "|".join([row["provider"], row["model"], row["observation_id"]])
+            if row["observation_id"] != "-"
+            else "|".join([row["provider"], row["model"]]),
         }
         for row in rows[: max(limit, 0)]
     ]
@@ -4209,6 +4291,15 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         _detail_section("Classification", "Context."),
         ("Provider", row.get("provider", "-")),
         ("Model", row.get("model", "-")),
+        ("Observation ID", row.get("observation_id", "-")),
+        ("Flow Key", row.get("flow_key", "-")),
+        ("Node", row.get("node", "-")),
+        ("Asset", row.get("asset", "-")),
+        ("Protocol", row.get("protocol", "-")),
+        ("Local Port", row.get("local_port", "-")),
+        ("Remote Port", row.get("remote_port", "-")),
+        ("State", row.get("state", "-")),
+        ("Service Candidate", row.get("service_candidate", "-")),
         ("Top Classification", row.get("top_classification", "-")),
         ("Confidence", row.get("confidence", "-")),
         ("Alternative Candidates", row.get("alternative_candidates", "-")),

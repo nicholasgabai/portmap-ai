@@ -133,6 +133,72 @@ def test_expected_service_helpers():
     assert settings["expected_services"] == []
 
 
+def test_ai_rows_preserve_observation_identity_across_different_ports():
+    events = [
+        {
+            "event_type": "ai_decision",
+            "ai_provider": "heuristic",
+            "ai_model": "probabilistic",
+            "observation_id": "ssh-observation",
+            "node_id": "linux-worker",
+            "protocol": "tcp",
+            "port": 22,
+            "state": "LISTEN",
+            "score_factors": ["risky_port:22:SSH:medium", "sensitive_port:22", "listening_socket"],
+            "timestamp": "2026-07-04T10:00:00Z",
+        },
+        {
+            "event_type": "ai_decision",
+            "ai_provider": "heuristic",
+            "ai_model": "probabilistic",
+            "observation_id": "http-observation",
+            "node_id": "linux-worker",
+            "protocol": "tcp",
+            "port": 80,
+            "service_name": "apache",
+            "state": "LISTEN",
+            "timestamp": "2026-07-04T10:01:00Z",
+        },
+    ]
+
+    rows = gui_app._ai_provider_model_rows(gui_app._ai_events_from_sources(master_events=events))
+    by_observation = {row["observation_id"]: row for row in rows}
+
+    assert set(by_observation) == {"ssh-observation", "http-observation"}
+    assert by_observation["ssh-observation"]["service_candidate"] == "ssh"
+    assert by_observation["ssh-observation"]["local_port"] == "22"
+    assert by_observation["http-observation"]["local_port"] == "80"
+    assert by_observation["ssh-observation"]["key"] != by_observation["http-observation"]["key"]
+
+
+def test_ai_and_risk_details_expose_correlation_context_for_ssh():
+    event = {
+        "event_type": "worker_risk",
+        "node_id": "linux-worker",
+        "observation_id": "risk-ssh",
+        "flow_key": "tcp|10.0.0.15|22|10.0.0.30|55000",
+        "protocol": "tcp",
+        "port": 22,
+        "state": "ESTABLISHED",
+        "score_factors": ["risky_port:22:SSH:medium", "sensitive_port:22", "listening_socket"],
+        "risk_score": 0.78,
+        "ai_provider": "heuristic",
+        "ai_model": "probabilistic",
+        "timestamp": "2026-07-04T10:00:00Z",
+    }
+    ai_row = gui_app._ai_provider_model_rows(gui_app._ai_events_from_sources(master_events=[event]))[0]
+    risk_row = gui_app._active_risk_finding_rows([], [event])[0]
+    ai_details = dict(row for row in gui_app._ai_detail_rows(ai_row) if len(row) == 2)
+    risk_details = dict(row for row in gui_app._finding_detail_rows(risk_row) if len(row) == 2)
+
+    assert ai_details["Observation ID"] == "risk-ssh"
+    assert ai_details["Flow Key"] == "tcp|10.0.0.15|22|10.0.0.30|55000"
+    assert ai_details["Service Candidate"] == "ssh"
+    assert risk_details["Observation ID"] == "risk-ssh"
+    assert risk_details["Flow Key"] == "tcp|10.0.0.15|22|10.0.0.30|55000"
+    assert risk_details["Service Candidate"] == "ssh"
+
+
 def test_operator_help_text_defines_key_terms(tmp_path):
     text = gui_app._operator_help_text(
         tmp_path / "exports",

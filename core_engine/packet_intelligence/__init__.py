@@ -6,11 +6,13 @@ from .correlation import (
     derive_attribution_hints,
     derive_behavior_graph_hints,
     derive_risk_relevant_signals,
+    derive_service_candidates,
 )
 from .engine import PacketIntelligenceEngine, build_packet_intelligence_summary
 from .models import PacketIntelligenceSummary
 from .statistics import (
     hunting_summary,
+    historical_flow_aggregation,
     packet_activity_summary,
     timeline_summary,
     top_conversation,
@@ -42,7 +44,9 @@ __all__ = [
     "derive_evidence",
     "derive_limitations",
     "derive_risk_relevant_signals",
+    "derive_service_candidates",
     "hunting_summary",
+    "historical_flow_aggregation",
     "packet_activity_summary",
     "timeline_summary",
     "top_conversation",

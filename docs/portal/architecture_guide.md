@@ -13,6 +13,7 @@ PortMap-AI is organized as a local-first platform. The core engine contains capt
 - Capture and packet layers produce metadata-only records.
 - Protocol, timeline, visualization, hunting, and packet intelligence layers compose those records into summaries.
 - Attribution and AI intelligence layers produce deterministic operator-readable reasoning.
+- Cross-engine observation identity is preserved with stable observation, flow, node, protocol, port, state, and service-candidate context so Risk and AI summaries can be correlated without implying a single global conclusion.
 - Governance and export layers focus on reviewability, redaction, and accountability.
 - Deployment and commercial-readiness models describe future operational structure without creating hosted services.
 

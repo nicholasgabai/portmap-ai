@@ -229,6 +229,8 @@ def summarize_license(
 ) -> dict[str, Any]:
     if isinstance(license_data, LicenseRecord):
         return license_data.to_dict()
+    if isinstance(license_data, dict) and license_data.get("record_type") == "license_validation_summary":
+        return deepcopy(license_data)
     return validate_license(license_data, current_time=current_time).to_dict()
 
 

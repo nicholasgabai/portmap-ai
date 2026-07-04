@@ -21,10 +21,12 @@ from .correlation import (
     derive_attribution_hints,
     derive_behavior_graph_hints,
     derive_risk_relevant_signals,
+    derive_service_candidates,
 )
 from .models import PacketIntelligenceSummary, safe_metadata, safe_text, stable_id
 from .statistics import (
     hunting_summary,
+    historical_flow_aggregation,
     packet_activity_summary,
     timeline_summary,
     top_conversation,
@@ -98,6 +100,7 @@ class PacketIntelligenceEngine:
         top_talker_value = top_talker(conversation_rows)
         risk_signals = derive_risk_relevant_signals(protocol_rows, timeline_rows, hunt_rows, conversation_rows)
         attribution_hints = derive_attribution_hints(protocol_rows, conversation_rows)
+        service_candidates = derive_service_candidates(protocol_rows, conversation_rows)
         behavior_hints = derive_behavior_graph_hints(protocol_rows, timeline_rows, conversation_rows)
         visualization_stats = visualization_summary(visualization_rows)
         hunt_stats = hunting_summary(hunt_rows)
@@ -179,6 +182,11 @@ class PacketIntelligenceEngine:
                 "hunt_correlation": correlate_hunt_results(hunt_rows),
                 "visualization_correlation": correlate_visualizations(visualization_rows),
                 "top_talkers": top_talkers,
+                "service_candidates": service_candidates,
+                "historical_flow_aggregation": historical_flow_aggregation(
+                    conversation_rows,
+                    protocol_records=protocol_rows,
+                ),
             },
         )
         return summary.to_dict()

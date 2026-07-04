@@ -3357,3 +3357,43 @@ def test_malformed_attribution_and_cross_platform_safe_records():
 
     assert row["source_mode"] == "unknown"
     assert "real_hostname" not in deterministic_application_attribution_json(row)
+
+
+def test_risky_ssh_service_signal_is_available_without_forced_certainty():
+    record = build_probabilistic_application_model(
+        {
+            "node_id": "worker-linux",
+            "port": 22,
+            "protocol": "tcp",
+            "state": "LISTEN",
+            "score_factors": ["risky_port:22:SSH:medium", "sensitive_port:22", "listening_socket"],
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    candidates = {row["candidate"]: row for row in record["candidates"]}
+    assert record["observation_context"]["service_candidate"] == "ssh"
+    assert record["observation_context"]["protocol"] == "TCP"
+    assert "ssh" in candidates
+    assert record["confidence"] < 0.9
+    assert any("signal:risky_port:22:ssh:medium" in item for item in candidates["ssh"]["supporting_evidence"])
+
+
+def test_dns_port_metadata_creates_service_candidate_without_payload_claims():
+    record = build_probabilistic_application_model(
+        {
+            "observation_id": "dns-flow",
+            "protocol": "udp",
+            "dst_port": 53,
+            "flow_key": "udp|10.0.0.15|53000|10.0.0.1|53",
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    labels = {row["candidate"] for row in record["candidates"]}
+    assert record["observation_context"]["service_candidate"] == "dns"
+    assert record["observation_context"]["remote_port"] == "53"
+    assert "dns" in labels
+    assert "example.com" not in deterministic_probabilistic_application_model_json(record)

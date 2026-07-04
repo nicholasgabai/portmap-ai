@@ -12,10 +12,13 @@ The packet stack describes observed network metadata without storing packet payl
 
 - Packet capture framework: normalized packet metadata and session records.
 - Protocol intelligence: deterministic protocol classification from metadata such as ports, protocol fields, tags, and flow keys.
+- Flow direction is preserved from the observed metadata; outbound TCP flows keep the original local-to-remote orientation.
+- Service candidates such as DNS, SSH, HTTP, and HTTPS are evidence derived from metadata such as protocol and port. They are not proof of application identity by themselves.
 - Packet timeline: chronological event records and lifecycle summaries.
 - Visualization models: reusable data structures that describe what can be visualized.
 - Hunting and search: reusable query objects and deterministic result summaries.
 - Packet intelligence integration: compact summaries for attribution, risk, behavior graph, AI details, and future API/TUI surfaces.
+- Historical flow aggregation summarizes short-lived bursts with observation counts, unique flow counts, first and last seen times, service candidates, and active-vs-historical status without retaining raw packet payloads.
 
 ## Safety Notes
 
