@@ -492,6 +492,8 @@ Implementation note: Phase 186 adds a local static documentation portal foundati
 
 Implementation note: Phase 187 adds release-candidate stabilization helpers and regression coverage for startup hardening, safe empty-state handling, configuration defaults, deterministic ordering, JSON-safe summaries, packet pipeline integration, packet intelligence caching, behavior graph summary stability, AI and risk summary stability, graceful JSON/file failures, repeated execution consistency, and no-mutation guarantees. This remains local, deterministic, metadata-only, read-only, and does not add major new functionality, cloud behavior, SaaS behavior, packet payload storage, DPI, packet crafting, enforcement, blocking, remediation execution, GUI redesign, live privileged capture, external calls, runtime services, or future phase work.
 
+Validation note: Real-device SSH-style validation identified an identity propagation gap between socket-derived listener/conversation telemetry and downstream Risk, AI, behavior, learning, investigation, API, and TUI detail surfaces. The stabilized identity spine preserves observation IDs, flow keys, session IDs, endpoint metadata, evidence origin, observation type, identity scope, and UTC-labeled detail timestamps where available. Listener-only evidence keeps flow identity not applicable, packet activity remains conversation/flow-metadata based, and no synthetic packet capture, payload inspection, enforcement, blocking, remediation, external calls, or fabricated flow identities are introduced.
+
 ## Milestone AE - Packet Intelligence And Deep Visibility
 
 Goal: add packet-level metadata visibility and TUI packet views after scalability, packaging, compliance, AI evolution, and launch-readiness groundwork is established.

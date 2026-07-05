@@ -129,6 +129,7 @@ def build_behavior_graph_model(
     related_protocol = _protocol_label(observation)
     related_application = _application_label(classifier)
     related_profile = _profile_label(profile, history)
+    related_identity = _identity_context(observation, classifier, history)
 
     nodes: dict[str, dict[str, Any]] = {}
     edges: dict[str, dict[str, Any]] = {}
@@ -231,6 +232,7 @@ def build_behavior_graph_model(
             "related_asset": related_asset,
             "related_service": related_service,
             "related_profile": related_profile,
+            **related_identity,
         },
         peer_intelligence=peer_intelligence,
     )
@@ -551,6 +553,12 @@ def _graph_summary(
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
+        "related_observation": related.get("related_observation") or "-",
+        "related_flow": related.get("related_flow") or "-",
+        "related_session": related.get("related_session") or "-",
+        "evidence_origin": related.get("evidence_origin") or "-",
+        "observation_type": related.get("observation_type") or "-",
+        "identity_scope": related.get("identity_scope") or "-",
     }
 
 
@@ -623,6 +631,48 @@ def _add_relationship(
             "metadata_only": True,
         },
     )
+
+
+def _identity_context(
+    observation: dict[str, Any],
+    classification_model: dict[str, Any],
+    learning_profile_history: dict[str, Any],
+) -> dict[str, str]:
+    classifier_context = classification_model.get("observation_context")
+    if not isinstance(classifier_context, dict):
+        classifier_context = {}
+    history_records = learning_profile_history.get("observation_records")
+    latest_history = history_records[-1] if isinstance(history_records, list) and history_records and isinstance(history_records[-1], dict) else {}
+
+    def first(field: str, *aliases: str) -> str:
+        keys = (field, *aliases)
+        for source in (observation, classifier_context, latest_history):
+            value = _first_text(source, keys)
+            if value != "-":
+                return value
+        return "-"
+
+    identity_scope = first("identity_scope")
+    state = first("transport_state", "socket_state", "state", "status").lower()
+    remote_port = first("remote_port", "dst_port", "destination_port")
+    if identity_scope == "-":
+        identity_scope = "listener" if remote_port == "-" or state in {"listen", "listening"} else "flow"
+    evidence_origin = first("evidence_origin", "telemetry_source")
+    if evidence_origin == "-":
+        evidence_origin = "listener_socket_observation" if identity_scope == "listener" else "reconstructed_flow"
+    observation_type = first("observation_type")
+    if observation_type == "-":
+        observation_type = "listener" if identity_scope == "listener" else "socket_conversation"
+    return {
+        "related_observation": first("observation_id", "event_id", "packet_id", "record_id"),
+        "related_flow": first("flow_key", "flow_id"),
+        "related_session": first("session_id", "session_ref", "session_reference"),
+        "evidence_origin": evidence_origin,
+        "observation_type": observation_type,
+        "identity_scope": identity_scope,
+        "local_address": first("local_address", "source_ip", "src_ip"),
+        "remote_address": first("remote_address", "destination_ip", "dst_ip"),
+    }
 
 
 def _infer_relationships(
@@ -916,6 +966,7 @@ def _cluster_context(
             history_summary.get("risk_score_previous"),
         )
     )
+    identity = _identity_context(observation, classification_model, learning_profile_history)
     return {
         "risk_score": _safe_float(
             observation.get("risk_score")
@@ -926,6 +977,7 @@ def _cluster_context(
         "current_risk_score": current_risk_score,
         "previous_risk_score": previous_risk_score,
         "risk_score_history": _risk_score_history_values(observation, history_summary),
+        **identity,
         "risk_signals": risk_signals,
         "previous_risk_signals": previous_risk_signals,
         "originating_node": _safe_text(
@@ -2879,6 +2931,12 @@ def _investigation_chain_record(
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
+        "related_observation": related.get("related_observation") or "-",
+        "related_flow": related.get("related_flow") or "-",
+        "related_session": related.get("related_session") or "-",
+        "evidence_origin": related.get("evidence_origin") or "-",
+        "observation_type": related.get("observation_type") or "-",
+        "identity_scope": related.get("identity_scope") or "-",
         "related_prediction": threat_prediction.get("prediction_category", "-"),
         "related_review_queue": review_queue.get("review_queue_priority", "-"),
         "related_federated_consensus": federated_model.get("consensus", "-"),

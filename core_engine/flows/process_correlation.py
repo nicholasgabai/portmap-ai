@@ -77,6 +77,18 @@ def build_process_correlation_record(
             }
         )[:16],
         "generated_at": timestamp,
+        "observation_id": _first_text(session, ("observation_id", "event_id", "record_id")),
+        "flow_key": _first_text(session, ("flow_key", "flow_id")),
+        "session_id": _first_text(session, ("session_id", "session_ref", "session_reference")),
+        "local_address": _first_text(session, ("local_address", "source_ip", "src_ip")),
+        "remote_address": _first_text(session, ("remote_address", "destination_ip", "dst_ip")),
+        "local_port": session.get("local_port") if session.get("local_port") not in {None, ""} else session.get("port"),
+        "remote_port": session.get("remote_port"),
+        "protocol": _first_text(session, ("protocol", "transport", "transport_protocol")),
+        "socket_state": _first_text(session, ("transport_state", "socket_state", "state", "status")),
+        "evidence_origin": _identity_text(session, "evidence_origin"),
+        "observation_type": _identity_text(session, "observation_type"),
+        "identity_scope": _identity_text(session, "identity_scope"),
         "session_reference": str(session.get("session_id") or ""),
         "flow_reference": str(session.get("flow_pair_id") or session.get("flow_ref") or ""),
         "process_attribution": process_value,
@@ -171,6 +183,12 @@ def build_process_correlation_dashboard_record(
         "rows": [
             {
                 "process_correlation_id": row.get("process_correlation_id"),
+                "observation_id": row.get("observation_id"),
+                "flow_key": row.get("flow_key"),
+                "session_id": row.get("session_id"),
+                "evidence_origin": row.get("evidence_origin"),
+                "observation_type": row.get("observation_type"),
+                "identity_scope": row.get("identity_scope"),
                 "session_reference": row.get("session_reference"),
                 "process_attribution": row.get("process_attribution"),
                 "service_attribution": row.get("service_attribution"),
@@ -233,6 +251,31 @@ def score_process_attribution_confidence(
 
 def deterministic_process_correlation_json(record: dict[str, Any]) -> str:
     return json.dumps(record, sort_keys=True, separators=(",", ":"), default=str)
+
+
+def _first_text(source: dict[str, Any], fields: tuple[str, ...]) -> str:
+    for field in fields:
+        value = source.get(field)
+        if value in {None, ""}:
+            continue
+        text = str(value).strip()
+        if text and text != "-":
+            return text
+    return ""
+
+
+def _identity_text(session: dict[str, Any], field: str) -> str:
+    existing = _first_text(session, (field,))
+    if existing:
+        return existing
+    state = _first_text(session, ("transport_state", "state", "status")).lower()
+    if field == "identity_scope":
+        return "listener" if session.get("remote_port") in {None, ""} or state in {"listen", "listening"} else "flow"
+    if field == "observation_type":
+        return "listener" if _identity_text(session, "identity_scope") == "listener" else "socket_conversation"
+    if field == "evidence_origin":
+        return "listener_socket_observation" if _identity_text(session, "identity_scope") == "listener" else "reconstructed_flow"
+    return ""
 
 
 def _attribution_index(records: Iterable[dict[str, Any]] | None) -> dict[str, dict[str, Any]]:

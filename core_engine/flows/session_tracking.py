@@ -65,13 +65,35 @@ def build_session_tracking_record(
         "record_type": "normalized_flow_session",
         "record_version": FLOW_SESSION_RECORD_VERSION,
         "session_id": "",
+        "observation_id": _observation_id(observation, generated_at=timestamp),
+        "source_observation_id": _first_text(
+            observation,
+            ("source_observation_id", "observation_id", "event_id", "packet_id", "record_id"),
+        ),
+        "flow_key": _flow_key(
+            observation,
+            local_port=local_port,
+            remote_port=remote_port,
+            protocol=protocol,
+        ),
         "flow_direction": direction,
+        "local_address": _address_text(
+            observation,
+            ("local_address", "local_ip", "source_ip", "src_ip", "local_host"),
+        ),
+        "remote_address": _address_text(
+            observation,
+            ("remote_address", "remote_ip", "destination_ip", "dst_ip", "remote_host"),
+        ),
         "local_endpoint_class": local_class,
         "remote_endpoint_class": remote_class,
         "local_port": local_port,
         "remote_port": remote_port,
         "protocol": protocol,
         "transport_state": _transport_state(observation.get("transport_state") or observation.get("status")),
+        "evidence_origin": _evidence_origin(observation, remote_port=remote_port),
+        "observation_type": _observation_type(observation, remote_port=remote_port),
+        "identity_scope": _identity_scope(observation, remote_port=remote_port),
         "process_attribution": process,
         "service_attribution": service,
         "source_mode": mode,
@@ -219,6 +241,117 @@ def _observation_key(observation: dict[str, Any]) -> tuple[Any, ...]:
         _safe_attribution(observation.get("service_attribution") or observation.get("service") or observation.get("service_name")),
         normalize_source_mode(str(observation.get("source_mode") or observation.get("data_source") or "unknown")),
     )
+
+
+def _observation_id(observation: dict[str, Any], *, generated_at: str) -> str:
+    existing = _first_text(observation, ("observation_id", "event_id", "packet_id", "record_id"))
+    if existing:
+        return existing
+    return "socket-observation-" + _digest(
+        {
+            "node_id": observation.get("node_id"),
+            "timestamp": observation.get("timestamp") or observation.get("observed_at") or generated_at,
+            "local": observation.get("local") or observation.get("local_address"),
+            "remote": observation.get("remote") or observation.get("remote_address"),
+            "local_port": observation.get("local_port") or observation.get("port"),
+            "remote_port": observation.get("remote_port"),
+            "protocol": observation.get("protocol") or observation.get("transport") or observation.get("transport_protocol"),
+            "state": observation.get("transport_state") or observation.get("status") or observation.get("state"),
+            "source_mode": observation.get("source_mode") or observation.get("data_source"),
+        }
+    )[:16]
+
+
+def _flow_key(
+    observation: dict[str, Any],
+    *,
+    local_port: int | None,
+    remote_port: int | None,
+    protocol: str,
+) -> str:
+    existing = _first_text(observation, ("flow_key", "flow_id"))
+    if existing:
+        return existing
+    local_address = _address_text(observation, ("local_address", "local_ip", "source_ip", "src_ip", "local_host"))
+    remote_address = _address_text(
+        observation,
+        ("remote_address", "remote_ip", "destination_ip", "dst_ip", "remote_host"),
+    )
+    if not local_address or not remote_address or local_port is None or remote_port is None:
+        return ""
+    endpoints = sorted(
+        [
+            {"ip": local_address, "port": int(local_port)},
+            {"ip": remote_address, "port": int(remote_port)},
+        ],
+        key=lambda item: (item["ip"], item["port"]),
+    )
+    return "flow-key-" + _digest({"transport_protocol": protocol, "endpoint_a": endpoints[0], "endpoint_b": endpoints[1]})[:16]
+
+
+def _address_text(observation: dict[str, Any], fields: tuple[str, ...]) -> str:
+    direct = _first_text(observation, fields)
+    if direct:
+        return direct
+    if any(field in fields for field in ("local_address", "local_ip", "source_ip", "src_ip", "local_host")):
+        return _endpoint_host(observation.get("local"))
+    if any(field in fields for field in ("remote_address", "remote_ip", "destination_ip", "dst_ip", "remote_host")):
+        return _endpoint_host(observation.get("remote"))
+    return ""
+
+
+def _endpoint_host(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text or text == "-":
+        return ""
+    if text.startswith("[") and "]" in text:
+        return text[1 : text.index("]")]
+    if ":" in text:
+        host, _, maybe_port = text.rpartition(":")
+        if maybe_port.isdigit() and host:
+            return host.strip("[]")
+    return text
+
+
+def _first_text(observation: dict[str, Any], fields: tuple[str, ...]) -> str:
+    for field in fields:
+        value = observation.get(field)
+        if value in {None, ""}:
+            continue
+        text = str(value).strip()
+        if text and text != "-":
+            return text
+    return ""
+
+
+def _evidence_origin(observation: dict[str, Any], *, remote_port: int | None) -> str:
+    existing = _first_text(observation, ("evidence_origin",))
+    if existing:
+        return existing
+    state = str(observation.get("transport_state") or observation.get("status") or observation.get("state") or "").lower()
+    if remote_port is None or state in {"listen", "listening"}:
+        return "listener_socket_observation"
+    return "reconstructed_socket_flow"
+
+
+def _observation_type(observation: dict[str, Any], *, remote_port: int | None) -> str:
+    existing = _first_text(observation, ("observation_type",))
+    if existing:
+        return existing
+    state = str(observation.get("transport_state") or observation.get("status") or observation.get("state") or "").lower()
+    if remote_port is None or state in {"listen", "listening"}:
+        return "listener"
+    return "established_conversation" if state == "established" else "socket_conversation"
+
+
+def _identity_scope(observation: dict[str, Any], *, remote_port: int | None) -> str:
+    existing = _first_text(observation, ("identity_scope",))
+    if existing:
+        return existing
+    state = str(observation.get("transport_state") or observation.get("status") or observation.get("state") or "").lower()
+    if remote_port is None or state in {"listen", "listening"}:
+        return "listener"
+    return "flow"
 
 
 def _observed_timestamps(observation: dict[str, Any], *, generated_at: str) -> list[str]:

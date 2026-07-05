@@ -23,6 +23,13 @@ class FlowEvent:
     captured_bytes: int = 0
     findings: list[str] = field(default_factory=list)
     evidence: list[str] = field(default_factory=list)
+    observation_id: str = ""
+    source_flow_key: str = ""
+    session_id: str = ""
+    evidence_origin: str = ""
+    observation_type: str = ""
+    identity_scope: str = ""
+    telemetry_source: str = ""
 
     @property
     def src_endpoint(self) -> dict[str, Any]:
@@ -53,6 +60,13 @@ def event_to_flow_event(event: dict[str, Any]) -> FlowEvent | None:
         captured_bytes=_captured_bytes(event, metadata),
         findings=_finding_types(event),
         evidence=_evidence_markers(event),
+        observation_id=_safe_text(event.get("observation_id") or metadata.get("observation_id")),
+        source_flow_key=_safe_text(event.get("flow_key") or metadata.get("flow_key")),
+        session_id=_safe_text(event.get("session_id") or metadata.get("session_id")),
+        evidence_origin=_safe_text(event.get("evidence_origin") or metadata.get("evidence_origin")),
+        observation_type=_safe_text(event.get("observation_type") or metadata.get("observation_type")),
+        identity_scope=_safe_text(event.get("identity_scope") or metadata.get("identity_scope")),
+        telemetry_source=_safe_text(event.get("telemetry_source") or metadata.get("telemetry_source") or event.get("source_mode")),
     )
 
 
@@ -249,6 +263,13 @@ def _new_flow(key: str, event: FlowEvent) -> dict[str, Any]:
         "application_protocols": set(),
         "findings": set(),
         "evidence": set(),
+        "observation_ids": set(),
+        "source_flow_keys": set(),
+        "session_ids": set(),
+        "evidence_origins": set(),
+        "observation_types": set(),
+        "identity_scopes": set(),
+        "telemetry_sources": set(),
     }
 
 
@@ -264,6 +285,20 @@ def _apply_event(flow: dict[str, Any], event: FlowEvent) -> None:
         flow["application_protocols"].add(event.application_protocol)
     flow["findings"].update(event.findings)
     flow["evidence"].update(event.evidence)
+    if event.observation_id:
+        flow["observation_ids"].add(event.observation_id)
+    if event.source_flow_key:
+        flow["source_flow_keys"].add(event.source_flow_key)
+    if event.session_id:
+        flow["session_ids"].add(event.session_id)
+    if event.evidence_origin:
+        flow["evidence_origins"].add(event.evidence_origin)
+    if event.observation_type:
+        flow["observation_types"].add(event.observation_type)
+    if event.identity_scope:
+        flow["identity_scopes"].add(event.identity_scope)
+    if event.telemetry_source:
+        flow["telemetry_sources"].add(event.telemetry_source)
 
     initiator = flow["initiator"]
     direction = "initiator_to_responder"
@@ -284,7 +319,21 @@ def _finalize_flow(flow: dict[str, Any]) -> dict[str, Any]:
         "application_protocols": sorted(flow["application_protocols"]),
         "findings": sorted(flow["findings"]),
         "evidence": sorted(flow["evidence"]),
+        "observation_ids": sorted(flow["observation_ids"]),
+        "source_flow_keys": sorted(flow["source_flow_keys"]),
+        "session_ids": sorted(flow["session_ids"]),
+        "evidence_origins": sorted(flow["evidence_origins"]),
+        "observation_types": sorted(flow["observation_types"]),
+        "identity_scopes": sorted(flow["identity_scopes"]),
+        "telemetry_sources": sorted(flow["telemetry_sources"]),
     }
+    finalized["observation_id"] = finalized["observation_ids"][0] if len(finalized["observation_ids"]) == 1 else ", ".join(finalized["observation_ids"])
+    finalized["session_id"] = finalized["session_ids"][0] if len(finalized["session_ids"]) == 1 else ", ".join(finalized["session_ids"])
+    finalized["source_flow_key"] = finalized["source_flow_keys"][0] if len(finalized["source_flow_keys"]) == 1 else ", ".join(finalized["source_flow_keys"])
+    finalized["evidence_origin"] = finalized["evidence_origins"][0] if len(finalized["evidence_origins"]) == 1 else ", ".join(finalized["evidence_origins"])
+    finalized["observation_type"] = finalized["observation_types"][0] if len(finalized["observation_types"]) == 1 else ", ".join(finalized["observation_types"])
+    finalized["identity_scope"] = finalized["identity_scopes"][0] if len(finalized["identity_scopes"]) == 1 else ", ".join(finalized["identity_scopes"])
+    finalized["telemetry_source"] = finalized["telemetry_sources"][0] if len(finalized["telemetry_sources"]) == 1 else ", ".join(finalized["telemetry_sources"])
     finalized["flow_id"] = sha256(
         f"{finalized['flow_key']}:{finalized['first_seen']}:{finalized['last_seen']}".encode("utf-8")
     ).hexdigest()[:16]
@@ -334,3 +383,10 @@ def _optional_int(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _safe_text(value: Any) -> str:
+    if value in {None, ""}:
+        return ""
+    text = str(value).strip()
+    return "" if text == "-" else text

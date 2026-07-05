@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import wrap
 from typing import Any, Dict, List, Optional
@@ -607,6 +607,15 @@ def _format_timestamp(value: Any) -> str:
     return timestamp.strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _format_timestamp_utc(value: Any) -> str:
+    timestamp = _timestamp_to_datetime(value)
+    if timestamp is None:
+        return "-"
+    if timestamp.tzinfo is None:
+        return timestamp.strftime("%Y-%m-%d %H:%M:%S local")
+    return timestamp.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
 def _format_time(value: Any) -> str:
     timestamp = _timestamp_to_datetime(value)
     if timestamp is None:
@@ -649,6 +658,17 @@ def _datetime_from_epoch(value: float) -> datetime | None:
         return datetime.fromtimestamp(value)
     except Exception:
         return None
+
+
+def _identity_display(row: Dict[str, Any], field: str) -> str:
+    value = row.get(field)
+    if value not in {"", "-", None}:
+        return str(value)
+    if field == "flow_key" and str(row.get("identity_scope") or "").lower() == "listener":
+        return "not applicable"
+    if field in {"session_id", "remote_address", "remote_port"} and str(row.get("identity_scope") or "").lower() == "listener":
+        return "not applicable"
+    return "not available"
 
 
 def _scan_rows_from_telemetry(events: List[Dict[str, Any]], limit: int = 20) -> List[Dict[str, Any]]:
@@ -1627,6 +1647,13 @@ def _active_risk_finding_rows(
                 "provider": _risk_finding_provider(event),
                 "observation_id": _context_text_field(classification, "observation_id", limit=64),
                 "flow_key": _context_text_field(classification, "flow_key", limit=96),
+                "session_id": _context_text_field(classification, "session_id", limit=64),
+                "evidence_origin": _context_text_field(classification, "evidence_origin", limit=40),
+                "observation_type": _context_text_field(classification, "observation_type", limit=40),
+                "identity_scope": _context_text_field(classification, "identity_scope", limit=24),
+                "local_address": _context_text_field(classification, "local_address", limit=64),
+                "remote_address": _context_text_field(classification, "remote_address", limit=64),
+                "event_time_utc": _format_timestamp_utc(event.get("timestamp") or event.get("generated_at")),
                 "local_port": _context_text_field(classification, "local_port", limit=12),
                 "remote_port": _context_text_field(classification, "remote_port", limit=12),
                 "service_candidate": _context_text_field(classification, "service_candidate", limit=32),
@@ -1928,6 +1955,9 @@ def _active_risk_finding_rows(
                 "related_asset": _behavior_graph_text_field(classification, "related_asset", limit=32),
                 "related_service": _behavior_graph_text_field(classification, "related_service", limit=32),
                 "related_profile": _behavior_graph_text_field(classification, "related_profile", limit=32),
+                "related_observation": _behavior_graph_text_field(classification, "related_observation", limit=64),
+                "related_flow": _behavior_graph_text_field(classification, "related_flow", limit=96),
+                "related_session": _behavior_graph_text_field(classification, "related_session", limit=64),
                 "state": _risk_finding_state(event),
                 "first_seen": _format_optional_timestamp(event.get("first_seen")) if event.get("first_seen") else history_row.get("first_seen", "-"),
                 "last_seen": _format_optional_timestamp(event.get("last_seen")) if event.get("last_seen") else history_row.get("last_seen", "-"),
@@ -1964,10 +1994,17 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Service Name", row.get("service_name", "-")),
         ("Finding", row.get("finding", "-")),
         ("Provider", row.get("provider", "-")),
-        ("Observation ID", row.get("observation_id", "-")),
-        ("Flow Key", row.get("flow_key", "-")),
-        ("Local Port", row.get("local_port", "-")),
-        ("Remote Port", row.get("remote_port", "-")),
+        ("Evidence Origin", _identity_display(row, "evidence_origin")),
+        ("Observation Type", _identity_display(row, "observation_type")),
+        ("Identity Scope", _identity_display(row, "identity_scope")),
+        ("Observation ID", _identity_display(row, "observation_id")),
+        ("Flow Key", _identity_display(row, "flow_key")),
+        ("Session ID", _identity_display(row, "session_id")),
+        ("Local Address", _identity_display(row, "local_address")),
+        ("Local Port", _identity_display(row, "local_port")),
+        ("Remote Address", _identity_display(row, "remote_address")),
+        ("Remote Port", _identity_display(row, "remote_port")),
+        ("Event Time UTC", row.get("event_time_utc", "-")),
         ("Service Candidate", row.get("service_candidate", "-")),
         ("Top Classification", row.get("top_classification", "-")),
         ("Classification Confidence", row.get("classification_confidence", "-")),
@@ -3790,6 +3827,13 @@ def _ai_provider_model_rows(
             row["latest_activity"] = _ai_activity_value(event)
             row["observation_id"] = _context_text_field(model_record, "observation_id", limit=64)
             row["flow_key"] = _context_text_field(model_record, "flow_key", limit=96)
+            row["session_id"] = _context_text_field(model_record, "session_id", limit=64)
+            row["evidence_origin"] = _context_text_field(model_record, "evidence_origin", limit=40)
+            row["observation_type"] = _context_text_field(model_record, "observation_type", limit=40)
+            row["identity_scope"] = _context_text_field(model_record, "identity_scope", limit=24)
+            row["local_address"] = _context_text_field(model_record, "local_address", limit=64)
+            row["remote_address"] = _context_text_field(model_record, "remote_address", limit=64)
+            row["event_time_utc"] = _format_timestamp_utc(event.get("timestamp") or event.get("generated_at"))
             row["node"] = _context_text_field(model_record, "node", limit=24)
             row["asset"] = _context_text_field(model_record, "asset", limit=24)
             row["protocol"] = _context_text_field(model_record, "protocol", limit=12)
@@ -4097,6 +4141,9 @@ def _ai_provider_model_rows(
             row["related_asset"] = _behavior_graph_text_field(model_record, "related_asset", limit=32)
             row["related_service"] = _behavior_graph_text_field(model_record, "related_service", limit=32)
             row["related_profile"] = _behavior_graph_text_field(model_record, "related_profile", limit=32)
+            row["related_observation"] = _behavior_graph_text_field(model_record, "related_observation", limit=64)
+            row["related_flow"] = _behavior_graph_text_field(model_record, "related_flow", limit=96)
+            row["related_session"] = _behavior_graph_text_field(model_record, "related_session", limit=64)
     rows = sorted(
         grouped.values(),
         key=lambda row: (row["_sort_time"], row["provider"], row["model"]),
@@ -4116,6 +4163,13 @@ def _ai_provider_model_rows(
             "latest_activity": row["latest_activity"],
             "observation_id": row["observation_id"],
             "flow_key": row["flow_key"],
+            "session_id": row.get("session_id", "-"),
+            "evidence_origin": row.get("evidence_origin", "-"),
+            "observation_type": row.get("observation_type", "-"),
+            "identity_scope": row.get("identity_scope", "-"),
+            "local_address": row.get("local_address", "-"),
+            "remote_address": row.get("remote_address", "-"),
+            "event_time_utc": row.get("event_time_utc", "-"),
             "node": row["node"],
             "asset": row["asset"],
             "protocol": row["protocol"],
@@ -4258,6 +4312,9 @@ def _ai_provider_model_rows(
             "related_asset": row["related_asset"],
             "related_service": row["related_service"],
             "related_profile": row["related_profile"],
+            "related_observation": row.get("related_observation", "-"),
+            "related_flow": row.get("related_flow", "-"),
+            "related_session": row.get("related_session", "-"),
             "mode": "read_only",
             "execution": "not performed",
             "key": "|".join([row["provider"], row["model"], row["observation_id"]])
@@ -4291,13 +4348,20 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         _detail_section("Classification", "Context."),
         ("Provider", row.get("provider", "-")),
         ("Model", row.get("model", "-")),
-        ("Observation ID", row.get("observation_id", "-")),
-        ("Flow Key", row.get("flow_key", "-")),
+        ("Evidence Origin", _identity_display(row, "evidence_origin")),
+        ("Observation Type", _identity_display(row, "observation_type")),
+        ("Identity Scope", _identity_display(row, "identity_scope")),
+        ("Observation ID", _identity_display(row, "observation_id")),
+        ("Flow Key", _identity_display(row, "flow_key")),
+        ("Session ID", _identity_display(row, "session_id")),
         ("Node", row.get("node", "-")),
         ("Asset", row.get("asset", "-")),
         ("Protocol", row.get("protocol", "-")),
+        ("Local Address", _identity_display(row, "local_address")),
         ("Local Port", row.get("local_port", "-")),
+        ("Remote Address", _identity_display(row, "remote_address")),
         ("Remote Port", row.get("remote_port", "-")),
+        ("Event Time UTC", row.get("event_time_utc", "-")),
         ("State", row.get("state", "-")),
         ("Service Candidate", row.get("service_candidate", "-")),
         ("Top Classification", row.get("top_classification", "-")),
@@ -4446,6 +4510,9 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Related Asset", row.get("related_asset", "-")),
         ("Related Service", row.get("related_service", "-")),
         ("Related Profile", row.get("related_profile", "-")),
+        ("Related Observation", row.get("related_observation", "-")),
+        ("Related Flow", row.get("related_flow", "-")),
+        ("Related Session", row.get("related_session", "-")),
         ("Status", row.get("status", "-")),
         ("Decisions", row.get("decisions", "-")),
         ("Updated", row.get("updated", "-")),
@@ -4610,7 +4677,14 @@ def _packet_activity_rows(
                 "status": status,
                 "first_seen": first_seen,
                 "last_seen": last_seen,
-                "source": "flow_metadata",
+                "source": _short_text(flow.get("telemetry_source") or flow.get("source") or "flow_metadata", limit=32),
+                "evidence_origin": _short_text(flow.get("evidence_origin") or flow.get("telemetry_source") or "-", limit=40),
+                "observation_type": _short_text(flow.get("observation_type") or "-", limit=40),
+                "identity_scope": _short_text(flow.get("identity_scope") or "-", limit=24),
+                "observation_id": _short_text(flow.get("observation_id") or "-", limit=64),
+                "flow_key": _short_text(flow.get("source_flow_key") or flow.get("flow_key") or flow.get("flow_id") or "-", limit=96),
+                "session_id": _short_text(flow.get("session_id") or "-", limit=64),
+                "event_time_utc": _format_timestamp_utc(flow.get("last_seen") or flow.get("first_seen")),
                 "mode": "read_only",
                 "execution": "not performed",
                 "key": _short_text(row_key, limit=120),
@@ -4648,8 +4722,15 @@ def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, st
         ("Transport", row.get("transport", "-")),
         ("Packets", row.get("packets", "-")),
         ("Bytes", row.get("bytes", "-")),
+        ("Evidence Origin", row.get("evidence_origin", "-")),
+        ("Observation Type", row.get("observation_type", "-")),
+        ("Identity Scope", row.get("identity_scope", "-")),
+        ("Observation ID", row.get("observation_id", "-")),
+        ("Flow Key", row.get("flow_key", "-")),
+        ("Session ID", row.get("session_id", "-")),
         ("First Seen", row.get("first_seen", "-")),
         ("Last Seen", row.get("last_seen", "-")),
+        ("Event Time UTC", row.get("event_time_utc", "-")),
         ("Status", row.get("status", "-")),
         ("Source", row.get("source", "-")),
         ("Mode", row.get("mode", "-")),

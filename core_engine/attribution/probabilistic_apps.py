@@ -626,12 +626,13 @@ def _observation_context(observation: dict[str, Any], evidence: dict[str, Any]) 
         observation.get("destination_port"),
     )
     flow_key = _safe_context_text(observation.get("flow_key") or observation.get("flow_id"))
+    session_id = _safe_context_text(observation.get("session_id") or observation.get("session_ref") or observation.get("session_reference"))
     observation_id = _safe_context_text(
         observation.get("observation_id")
         or observation.get("event_id")
         or observation.get("finding_id")
         or observation.get("packet_id")
-        or observation.get("session_id")
+        or session_id
         or flow_key
         or _entity_ref(observation)
     )
@@ -643,8 +644,14 @@ def _observation_context(observation: dict[str, Any], evidence: dict[str, Any]) 
     context = {
         "observation_id": observation_id,
         "flow_key": flow_key,
+        "session_id": session_id,
+        "evidence_origin": _safe_context_text(observation.get("evidence_origin") or observation.get("telemetry_source")),
+        "observation_type": _safe_context_text(observation.get("observation_type")),
+        "identity_scope": _safe_context_text(observation.get("identity_scope")),
         "node": _safe_context_text(observation.get("node_id") or observation.get("node")),
         "asset": _safe_context_text(observation.get("asset") or observation.get("target") or observation.get("host")),
+        "local_address": _safe_context_text(observation.get("local_address") or observation.get("source_ip") or observation.get("src_ip")),
+        "remote_address": _safe_context_text(observation.get("remote_address") or observation.get("destination_ip") or observation.get("dst_ip")),
         "protocol": _safe_context_text(evidence.get("protocol")).upper()
         if _safe_context_text(evidence.get("protocol")) != "-"
         else "-",

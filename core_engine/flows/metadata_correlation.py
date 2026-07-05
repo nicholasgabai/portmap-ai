@@ -58,6 +58,7 @@ def build_metadata_correlation_record(
     dns = dict(dns_destination_behavior or {})
     protocol = dict(protocol_metadata or {})
     topology = dict(topology_relationship or {})
+    identity = _identity_context(packet=packet, socket=socket, session=session, flow=flow, topology=topology)
     mode = normalize_source_mode(
         session.get("source_mode")
         or flow.get("source_mode")
@@ -113,6 +114,18 @@ def build_metadata_correlation_record(
         "correlation_state": state,
         "source_mode": mode,
         "data_source": mode,
+        "observation_id": identity["observation_id"],
+        "flow_key": identity["flow_key"],
+        "session_id": identity["session_id"],
+        "local_address": identity["local_address"],
+        "remote_address": identity["remote_address"],
+        "local_port": identity["local_port"],
+        "remote_port": identity["remote_port"],
+        "protocol": identity["protocol"],
+        "socket_state": identity["socket_state"],
+        "evidence_origin": identity["evidence_origin"],
+        "observation_type": identity["observation_type"],
+        "identity_scope": identity["identity_scope"],
         "packet_reference": _record_ref(packet, "packet"),
         "socket_reference": _record_ref(socket, "socket"),
         "session_reference": _session_ref(session, flow),
@@ -213,6 +226,12 @@ def build_metadata_correlation_dashboard_record(
         "rows": [
             {
                 "correlation_id": row.get("correlation_id"),
+                "observation_id": row.get("observation_id"),
+                "flow_key": row.get("flow_key"),
+                "session_id": row.get("session_id"),
+                "evidence_origin": row.get("evidence_origin"),
+                "observation_type": row.get("observation_type"),
+                "identity_scope": row.get("identity_scope"),
                 "correlation_state": row.get("correlation_state"),
                 "session_reference": row.get("session_reference"),
                 "flow_reference": row.get("flow_reference"),
@@ -344,6 +363,67 @@ def _protocol_hint(*, packet: dict[str, Any], session: dict[str, Any], flow: dic
             if value not in {None, ""}:
                 return _safe_token(value)
     return "unknown"
+
+
+def _identity_context(
+    *,
+    packet: dict[str, Any],
+    socket: dict[str, Any],
+    session: dict[str, Any],
+    flow: dict[str, Any],
+    topology: dict[str, Any],
+) -> dict[str, Any]:
+    sources = (flow, session, socket, packet, topology)
+    remote_port = _first_value(sources, ("remote_port", "dst_port", "destination_port"))
+    state = _first_text(sources, ("transport_state", "socket_state", "state", "status"))
+    identity_scope = _first_text(sources, ("identity_scope",))
+    if not identity_scope:
+        identity_scope = "listener" if remote_port in {None, ""} or state.lower() in {"listen", "listening"} else "flow"
+    evidence_origin = _first_text(sources, ("evidence_origin", "telemetry_source"))
+    if not evidence_origin:
+        evidence_origin = "listener_socket_observation" if identity_scope == "listener" else "reconstructed_flow"
+    observation_type = _first_text(sources, ("observation_type",))
+    if not observation_type:
+        observation_type = "listener" if identity_scope == "listener" else "socket_conversation"
+    return {
+        "observation_id": _first_text(sources, ("observation_id", "event_id", "packet_id", "record_id")),
+        "flow_key": _first_text(sources, ("flow_key", "flow_id")),
+        "session_id": _first_text(sources, ("session_id", "session_ref", "session_reference")),
+        "local_address": _first_text(sources, ("local_address", "source_ip", "src_ip")),
+        "remote_address": _first_text(sources, ("remote_address", "destination_ip", "dst_ip")),
+        "local_port": _first_value(sources, ("local_port", "src_port", "source_port", "port")),
+        "remote_port": remote_port,
+        "protocol": _first_text(sources, ("protocol", "transport", "transport_protocol")),
+        "socket_state": state,
+        "evidence_origin": evidence_origin,
+        "observation_type": observation_type,
+        "identity_scope": identity_scope,
+    }
+
+
+def _first_text(sources: Iterable[dict[str, Any]], fields: tuple[str, ...]) -> str:
+    for source in sources:
+        if not isinstance(source, dict):
+            continue
+        for field in fields:
+            value = source.get(field)
+            if value in {None, ""}:
+                continue
+            text = str(value).strip()
+            if text and text != "-":
+                return text
+    return ""
+
+
+def _first_value(sources: Iterable[dict[str, Any]], fields: tuple[str, ...]) -> Any:
+    for source in sources:
+        if not isinstance(source, dict):
+            continue
+        for field in fields:
+            value = source.get(field)
+            if value not in {None, ""}:
+                return value
+    return None
 
 
 def _destination_class(

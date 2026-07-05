@@ -53,6 +53,76 @@ def test_live_like_socket_observations_create_milestone_v_runtime_summaries():
     assert all(event["pcap_generated"] is False for event in report["flow_events"])
 
 
+def test_established_socket_identity_survives_reconstruction_correlation_and_packet_flow():
+    report = build_milestone_v_runtime_bridge(
+        [_live_row(local_port=51515, remote_port=22, protocol="TCP", service_name="ssh")],
+        node_id="worker-fixture",
+        generated_at=GENERATED_AT,
+    )
+
+    flow_pair = report["api_status"]["flows"]["flow_pairs"][0]
+    metadata_row = report["api_status"]["metadata_correlations"]["metadata_correlations"][0]
+    process_row = report["api_status"]["process_correlations"]["process_correlations"][0]
+    packet_event = report["flow_events"][0]
+
+    assert flow_pair["observation_id"].startswith("socket-observation-")
+    assert flow_pair["flow_key"].startswith("flow-key-")
+    assert flow_pair["session_id"].startswith("flow-session-")
+    assert flow_pair["local_address"] == "192.0.2.10"
+    assert flow_pair["remote_address"] == "198.51.100.20"
+    assert flow_pair["local_port"] == 51515
+    assert flow_pair["remote_port"] == 22
+    assert flow_pair["evidence_origin"] == "reconstructed_socket_flow"
+    assert flow_pair["observation_type"] == "established_conversation"
+    assert flow_pair["identity_scope"] == "flow"
+
+    for row in (metadata_row, process_row):
+        assert row["observation_id"] == flow_pair["observation_id"]
+        assert row["flow_key"] == flow_pair["flow_key"]
+        assert row["session_id"] == flow_pair["session_id"]
+        assert row["evidence_origin"] == "reconstructed_socket_flow"
+        assert row["identity_scope"] == "flow"
+
+    assert packet_event["observation_id"] == flow_pair["observation_id"]
+    assert packet_event["flow_key"] == flow_pair["flow_key"]
+    assert packet_event["session_id"] == flow_pair["session_id"]
+    assert packet_event["telemetry_source"] == "socket_reconstruction"
+    assert packet_event["raw_payload_stored"] is False
+    assert packet_event["pcap_generated"] is False
+
+
+def test_listener_socket_identity_does_not_fabricate_flow_key_or_packet_activity():
+    listener = {
+        "program": "sshd",
+        "pid": 0,
+        "port": 22,
+        "service_name": "ssh",
+        "protocol": "TCP",
+        "status": "LISTEN",
+        "local": "192.0.2.10:22",
+        "remote": "",
+        "source_mode": "live",
+        "data_source": "local_socket_inventory",
+        "attribution_status": "matched",
+    }
+
+    report = build_milestone_v_runtime_bridge([listener], node_id="worker-fixture", generated_at=GENERATED_AT)
+
+    flow_pair = report["api_status"]["flows"]["flow_pairs"][0]
+    metadata_row = report["api_status"]["metadata_correlations"]["metadata_correlations"][0]
+
+    assert flow_pair["observation_id"].startswith("socket-observation-")
+    assert flow_pair["flow_key"] == ""
+    assert flow_pair["session_id"].startswith("flow-session-")
+    assert flow_pair["evidence_origin"] == "listener_socket_observation"
+    assert flow_pair["observation_type"] == "listener"
+    assert flow_pair["identity_scope"] == "listener"
+    assert metadata_row["flow_key"] == ""
+    assert metadata_row["identity_scope"] == "listener"
+    assert report["flow_events"] == []
+    assert any("Listener-only socket observations" in item for item in report["operator_summary"]["socket_only_limitations"])
+
+
 def test_repeated_identical_live_observations_do_not_duplicate_flows_or_edges():
     row = _live_row(local_port=51515, remote_port=22, protocol="TCP")
     report = build_milestone_v_runtime_bridge(

@@ -19,6 +19,8 @@ The packet stack describes observed network metadata without storing packet payl
 - Hunting and search: reusable query objects and deterministic result summaries.
 - Packet intelligence integration: compact summaries for attribution, risk, behavior graph, AI details, and future API/TUI surfaces.
 - Historical flow aggregation summarizes short-lived bursts with observation counts, unique flow counts, first and last seen times, service candidates, and active-vs-historical status without retaining raw packet payloads.
+- Packet Activity renders flow-shaped metadata only. Listener-only socket observations can appear in Dashboard, Risk, and AI details with listener provenance while remaining absent from Packet Activity because no remote endpoint exists to form a conversation.
+- Socket-reconstructed conversations can include observation IDs, flow keys, session IDs, evidence origin, observation type, and identity scope when the metadata supports those references.
 
 ## Safety Notes
 
@@ -27,6 +29,8 @@ The packet stack does not store payload contents, display raw packet bytes, perf
 ## Current Limitations
 
 The current portal does not render packet charts or packet tables. Future UI work can consume the existing visualization and intelligence models.
+
+Packet Activity does not activate raw packet capture. When raw capture is inactive, it may show reconstructed flow metadata from existing event streams, but it does not display payloads or prove DPI-level protocol identity.
 
 ## Related Docs
 

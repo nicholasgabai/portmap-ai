@@ -65,6 +65,7 @@ def build_milestone_v_runtime_bridge(
     flow_report = reconstruct_bidirectional_flows(socket_rows, generated_at=timestamp)
     sessions = flow_report.get("normalized_sessions") or []
     flow_pairs = flow_report.get("flow_pairs") or []
+    socket_rows = _enrich_socket_identities(socket_rows=socket_rows, sessions=sessions, flow_pairs=flow_pairs)
 
     metadata_report = build_metadata_correlation_report(
         _metadata_inputs(socket_rows=socket_rows, sessions=sessions, flow_pairs=flow_pairs),
@@ -132,6 +133,7 @@ def build_milestone_v_runtime_bridge(
             "dependency_summary": dependency_map.get("summary") or {},
             "socket_only_limitations": [
                 "ICMP ping may not appear in socket-only runtime views.",
+                "Listener-only socket observations do not create packet-activity rows because no remote flow endpoint is available.",
                 "Short-lived TCP or UDP activity may require scan timing alignment until packet capture is explicitly enabled.",
             ],
             **SAFETY_FLAGS,
@@ -212,6 +214,8 @@ def _socket_observation(row: dict[str, Any], *, node_id: str, generated_at: str)
         "timestamp": str(row.get("timestamp") or row.get("observed_at") or generated_at),
         "local": row.get("local") or "",
         "remote": row.get("remote") or "",
+        "local_address": local_host or "",
+        "remote_address": remote_host or "",
         "local_port": local_port,
         "remote_port": remote_port,
         "protocol": protocol,
@@ -223,6 +227,7 @@ def _socket_observation(row: dict[str, Any], *, node_id: str, generated_at: str)
         "service_attribution": _safe_service(row, local_port=local_port, remote_port=remote_port, source_mode=source_mode),
         "source_mode": source_mode,
         "data_source": source_mode,
+        "telemetry_source": "socket_inventory",
         "scan_snapshot_key": row.get("scan_snapshot_key") or "",
         "current_snapshot": True,
         "observation_count": 1,
@@ -230,6 +235,35 @@ def _socket_observation(row: dict[str, Any], *, node_id: str, generated_at: str)
         "remote_host_present": bool(remote_host),
         **SAFETY_FLAGS,
     }
+
+
+def _enrich_socket_identities(
+    *,
+    socket_rows: list[dict[str, Any]],
+    sessions: list[dict[str, Any]],
+    flow_pairs: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    flow_by_session = {str(row.get("session_ref") or ""): row for row in flow_pairs if isinstance(row, dict)}
+    enriched: list[dict[str, Any]] = []
+    for socket_row in socket_rows:
+        row = dict(socket_row)
+        matching_session = _matching_session(row, sessions)
+        matching_flow = flow_by_session.get(str((matching_session or {}).get("session_id") or "")) or _matching_flow(row, flow_pairs)
+        if matching_session:
+            row["observation_id"] = matching_session.get("observation_id") or row.get("observation_id") or ""
+            row["source_observation_id"] = matching_session.get("source_observation_id") or row.get("source_observation_id") or ""
+            row["session_id"] = matching_session.get("session_id") or ""
+            row["session_reference"] = matching_session.get("session_id") or ""
+            row["flow_key"] = matching_session.get("flow_key") or row.get("flow_key") or ""
+            row["evidence_origin"] = matching_session.get("evidence_origin") or row.get("evidence_origin") or ""
+            row["observation_type"] = matching_session.get("observation_type") or row.get("observation_type") or ""
+            row["identity_scope"] = matching_session.get("identity_scope") or row.get("identity_scope") or ""
+        if matching_flow:
+            row["flow_pair_id"] = matching_flow.get("flow_pair_id") or ""
+            row["flow_reference"] = matching_flow.get("flow_pair_id") or ""
+            row["flow_key"] = matching_flow.get("flow_key") or row.get("flow_key") or ""
+        enriched.append(row)
+    return enriched
 
 
 def _metadata_inputs(
@@ -259,6 +293,12 @@ def _metadata_inputs(
                     "record_type": "runtime_topology_hint",
                     "relationship_type": "socket_flow",
                     "source_mode": socket_row.get("source_mode"),
+                    "observation_id": socket_row.get("observation_id"),
+                    "flow_key": socket_row.get("flow_key"),
+                    "session_id": socket_row.get("session_id"),
+                    "evidence_origin": socket_row.get("evidence_origin"),
+                    "observation_type": socket_row.get("observation_type"),
+                    "identity_scope": socket_row.get("identity_scope"),
                     "topology_correlation_state": "correlated" if socket_row.get("remote_port") is not None else "unknown",
                 },
             }
@@ -280,6 +320,12 @@ def _relationship_inputs(flow_pairs: Iterable[dict[str, Any]], *, node_id: str) 
                 "relationship_type": _relationship_type(pair),
                 "flow_reference": pair.get("flow_pair_id"),
                 "session_reference": pair.get("session_ref"),
+                "observation_id": pair.get("observation_id"),
+                "flow_key": pair.get("flow_key"),
+                "session_id": pair.get("session_id") or pair.get("session_ref"),
+                "evidence_origin": pair.get("evidence_origin"),
+                "observation_type": pair.get("observation_type"),
+                "identity_scope": pair.get("identity_scope"),
                 "shared_service_state": "shared" if pair.get("service_attribution") not in {"Unknown", "Unattributed"} else "unknown",
                 "recurring_interaction_score": pair.get("recurrence_score"),
                 "topology_distance": 0 if local_class == "loopback" and remote_class == "loopback" else 1,
@@ -329,6 +375,13 @@ def _flow_visualization_events(socket_rows: Iterable[dict[str, Any]], *, generat
                 "dst_port": dst_port,
                 "protocol": str(row.get("protocol") or "unknown").upper(),
                 "application_protocol": _application_protocol(row),
+                "observation_id": row.get("observation_id") or "",
+                "flow_key": row.get("flow_key") or "",
+                "session_id": row.get("session_id") or "",
+                "evidence_origin": row.get("evidence_origin") or "reconstructed_socket_flow",
+                "observation_type": row.get("observation_type") or "socket_conversation",
+                "identity_scope": row.get("identity_scope") or "flow",
+                "telemetry_source": "socket_reconstruction",
                 "payload_bytes": 0,
                 "captured_len": 0,
                 "source_mode": row.get("source_mode") or "unknown",

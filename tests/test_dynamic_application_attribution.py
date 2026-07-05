@@ -3397,3 +3397,69 @@ def test_dns_port_metadata_creates_service_candidate_without_payload_claims():
     assert record["observation_context"]["remote_port"] == "53"
     assert "dns" in labels
     assert "example.com" not in deterministic_probabilistic_application_model_json(record)
+
+
+def test_canonical_identity_references_survive_ai_learning_and_behavior_graph():
+    observation = {
+        "observation_id": "socket-observation-test8r",
+        "flow_key": "flow-key-test8r",
+        "session_id": "flow-session-test8r",
+        "evidence_origin": "reconstructed_socket_flow",
+        "observation_type": "established_conversation",
+        "identity_scope": "flow",
+        "local_address": "192.0.2.10",
+        "remote_address": "198.51.100.20",
+        "local_port": 51515,
+        "remote_port": 22,
+        "protocol": "tcp",
+        "service_name": "ssh",
+        "state": "ESTABLISHED",
+        "source_mode": "live",
+    }
+
+    record = build_probabilistic_application_model(observation, generated_at=FIXED_TIME)
+    history = record["learning_profile_history"]
+    history_record = history["observation_records"][0]
+    graph = record["behavior_graph"]
+    summary = graph["summary"]
+    chain = graph["investigation_chains"][0]
+
+    assert record["observation_context"]["observation_id"] == "socket-observation-test8r"
+    assert record["observation_context"]["flow_key"] == "flow-key-test8r"
+    assert record["observation_context"]["session_id"] == "flow-session-test8r"
+    assert record["observation_context"]["evidence_origin"] == "reconstructed_socket_flow"
+    assert history_record["observation_id"] == "socket-observation-test8r"
+    assert history_record["flow_key"] == "flow-key-test8r"
+    assert history_record["session_id"] == "flow-session-test8r"
+    assert summary["related_observation"] == "socket-observation-test8r"
+    assert summary["related_flow"] == "flow-key-test8r"
+    assert summary["related_session"] == "flow-session-test8r"
+    assert chain["related_observation"] == "socket-observation-test8r"
+    assert chain["related_flow"] == "flow-key-test8r"
+    assert chain["related_session"] == "flow-session-test8r"
+    assert graph["metadata_only"] is True
+    assert graph["automated_action"] is False
+
+
+def test_listener_ai_context_preserves_nullable_flow_identity():
+    record = build_probabilistic_application_model(
+        {
+            "observation_id": "listener-observation-test8r",
+            "evidence_origin": "listener_socket_observation",
+            "observation_type": "listener",
+            "identity_scope": "listener",
+            "local_address": "192.0.2.10",
+            "local_port": 22,
+            "protocol": "tcp",
+            "service_name": "ssh",
+            "state": "LISTEN",
+            "source_mode": "live",
+        },
+        generated_at=FIXED_TIME,
+    )
+
+    context = record["observation_context"]
+    assert context["observation_id"] == "listener-observation-test8r"
+    assert context["flow_key"] == "-"
+    assert context["identity_scope"] == "listener"
+    assert record["behavior_graph"]["summary"]["related_flow"] == "-"

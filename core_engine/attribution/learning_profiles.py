@@ -459,6 +459,14 @@ def _historical_observation_record(
         "observed_at": observed_at,
         "profile_id": profile["profile_id"],
         "profile_name": profile["profile_name"],
+        "observation_id": _identity_field(observation, classification_model, "observation_id"),
+        "flow_key": _identity_field(observation, classification_model, "flow_key"),
+        "session_id": _identity_field(observation, classification_model, "session_id"),
+        "evidence_origin": _identity_field(observation, classification_model, "evidence_origin"),
+        "observation_type": _identity_field(observation, classification_model, "observation_type"),
+        "identity_scope": _identity_field(observation, classification_model, "identity_scope"),
+        "local_address": _identity_field(observation, classification_model, "local_address"),
+        "remote_address": _identity_field(observation, classification_model, "remote_address"),
         "observation_count": profile["observation_count"],
         "ports": list(profile.get("observed_ports") or []),
         "protocols": list(profile.get("observed_protocols") or []),
@@ -489,6 +497,14 @@ def _observation_records(values: Iterable[Any]) -> list[dict[str, Any]]:
             "observed_at": _safe_time(value.get("observed_at")),
             "profile_id": _safe_label(value.get("profile_id")),
             "profile_name": _safe_label(value.get("profile_name")) or "unknown_application",
+            "observation_id": _safe_label(value.get("observation_id")),
+            "flow_key": _safe_label(value.get("flow_key")),
+            "session_id": _safe_label(value.get("session_id")),
+            "evidence_origin": _safe_label(value.get("evidence_origin")),
+            "observation_type": _safe_label(value.get("observation_type")),
+            "identity_scope": _safe_label(value.get("identity_scope")),
+            "local_address": _safe_label(value.get("local_address")),
+            "remote_address": _safe_label(value.get("remote_address")),
             "observation_count": max(1, _safe_int(value.get("observation_count"), default=1)),
             "ports": _merge_sorted(value.get("ports"), [], numeric=True),
             "protocols": _merge_sorted(value.get("protocols"), []),
@@ -507,6 +523,19 @@ def _observation_records(values: Iterable[Any]) -> list[dict[str, Any]]:
         rows.append(row)
     rows.sort(key=lambda item: (str(item.get("observed_at") or ""), str(item.get("profile_id") or "")))
     return rows[-MAX_OBSERVATION_RECORDS:]
+
+
+def _identity_field(
+    observation: dict[str, Any],
+    classification_model: dict[str, Any] | None,
+    field: str,
+) -> str:
+    value = observation.get(field)
+    if value in {None, ""} and isinstance(classification_model, dict):
+        context = classification_model.get("observation_context")
+        if isinstance(context, dict):
+            value = context.get(field)
+    return _safe_label(value)
 
 
 def _normalize_profile(profile: dict[str, Any]) -> dict[str, Any]:

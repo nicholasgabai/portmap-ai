@@ -177,6 +177,13 @@ def test_ai_and_risk_details_expose_correlation_context_for_ssh():
         "node_id": "linux-worker",
         "observation_id": "risk-ssh",
         "flow_key": "tcp|10.0.0.15|22|10.0.0.30|55000",
+        "session_id": "session-ssh",
+        "evidence_origin": "reconstructed_socket_flow",
+        "observation_type": "established_conversation",
+        "identity_scope": "flow",
+        "local_address": "192.0.2.10",
+        "remote_address": "198.51.100.20",
+        "remote_port": 55000,
         "protocol": "tcp",
         "port": 22,
         "state": "ESTABLISHED",
@@ -193,10 +200,60 @@ def test_ai_and_risk_details_expose_correlation_context_for_ssh():
 
     assert ai_details["Observation ID"] == "risk-ssh"
     assert ai_details["Flow Key"] == "tcp|10.0.0.15|22|10.0.0.30|55000"
+    assert ai_details["Session ID"] == "session-ssh"
+    assert ai_details["Evidence Origin"] == "reconstructed_socket_flow"
+    assert ai_details["Observation Type"] == "established_conversation"
+    assert ai_details["Identity Scope"] == "flow"
+    assert ai_details["Local Address"] == "192.0.2.10"
+    assert ai_details["Remote Address"] == "198.51.100.20"
+    assert ai_details["Event Time UTC"] == "2026-07-04 10:00:00 UTC"
     assert ai_details["Service Candidate"] == "ssh"
     assert risk_details["Observation ID"] == "risk-ssh"
     assert risk_details["Flow Key"] == "tcp|10.0.0.15|22|10.0.0.30|55000"
+    assert risk_details["Session ID"] == "session-ssh"
+    assert risk_details["Evidence Origin"] == "reconstructed_socket_flow"
+    assert risk_details["Observation Type"] == "established_conversation"
+    assert risk_details["Identity Scope"] == "flow"
     assert risk_details["Service Candidate"] == "ssh"
+
+
+def test_listener_details_show_flow_key_not_applicable_without_fake_identity():
+    event = {
+        "event_type": "worker_risk",
+        "node_id": "linux-worker",
+        "observation_id": "listener-ssh",
+        "evidence_origin": "listener_socket_observation",
+        "observation_type": "listener",
+        "identity_scope": "listener",
+        "local_address": "192.0.2.10",
+        "protocol": "tcp",
+        "port": 22,
+        "state": "LISTEN",
+        "score_factors": ["risky_port:22:SSH:medium", "listening_socket"],
+        "risk_score": 0.58,
+        "ai_provider": "heuristic",
+        "ai_model": "probabilistic",
+        "timestamp": "2026-07-05T02:19:52Z",
+    }
+
+    ai_row = gui_app._ai_provider_model_rows(gui_app._ai_events_from_sources(master_events=[event]))[0]
+    risk_row = gui_app._active_risk_finding_rows([], [event])[0]
+    ai_details = dict(row for row in gui_app._ai_detail_rows(ai_row) if len(row) == 2)
+    risk_details = dict(row for row in gui_app._finding_detail_rows(risk_row) if len(row) == 2)
+
+    assert ai_details["Observation ID"] == "listener-ssh"
+    assert ai_details["Flow Key"] == "not applicable"
+    assert ai_details["Session ID"] == "not applicable"
+    assert ai_details["Evidence Origin"] == "listener_socket_observation"
+    assert ai_details["Identity Scope"] == "listener"
+    assert ai_details["Event Time UTC"] == "2026-07-05 02:19:52 UTC"
+    assert risk_details["Flow Key"] == "not applicable"
+    assert risk_details["Remote Address"] == "not applicable"
+    assert risk_details["Event Time UTC"] == "2026-07-05 02:19:52 UTC"
+
+
+def test_utc_timestamp_label_explains_local_day_boundary():
+    assert gui_app._format_timestamp_utc("2026-07-05T02:19:22Z") == "2026-07-05 02:19:22 UTC"
 
 
 def test_operator_help_text_defines_key_terms(tmp_path):
@@ -2061,6 +2118,43 @@ def test_packet_activity_rows_and_analytics_population():
         "dns_metadata",
         "observed",
     ]
+
+
+def test_packet_activity_details_expose_socket_reconstruction_provenance():
+    flows = [
+        {
+            "flow_id": "flow-ssh",
+            "flow_key": "TCP:192.0.2.10:51515-198.51.100.20:22",
+            "observation_id": "socket-observation-packet",
+            "session_id": "flow-session-packet",
+            "evidence_origin": "reconstructed_socket_flow",
+            "observation_type": "established_conversation",
+            "identity_scope": "flow",
+            "telemetry_source": "socket_reconstruction",
+            "initiator": {"ip": "192.0.2.10", "port": 51515},
+            "responder": {"ip": "198.51.100.20", "port": 22},
+            "first_seen": "2026-07-05T02:19:52+00:00",
+            "last_seen": "2026-07-05T02:20:02+00:00",
+            "packet_count": 3,
+            "payload_bytes": 0,
+            "transports": ["TCP"],
+            "application_protocols": ["SSH"],
+            "findings": [],
+        }
+    ]
+
+    row = gui_app._packet_activity_rows(flows)[0]
+    details = dict(gui_app._packet_detail_rows(row))
+
+    assert row["source"] == "socket_reconstruction"
+    assert details["Evidence Origin"] == "reconstructed_socket_flow"
+    assert details["Observation Type"] == "established_conversation"
+    assert details["Identity Scope"] == "flow"
+    assert details["Observation ID"] == "socket-observation-packet"
+    assert details["Session ID"] == "flow-session-packet"
+    assert details["Event Time UTC"] == "2026-07-05 02:20:02 UTC"
+    assert details["Mode"] == "read_only"
+    assert details["Execution"] == "not performed"
 
 
 def test_packet_details_rows_use_selected_activity_with_placeholders():
