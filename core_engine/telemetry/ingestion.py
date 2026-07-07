@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import ipaddress
 import json
-from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any, Iterable
 
+from core_engine.time_utils import normalize_timestamp, utc_now_iso
 from core_engine.telemetry.interfaces import TELEMETRY_SAFETY_FLAGS
 
 
@@ -32,7 +32,7 @@ def normalize_packet_metadata(
     """
     if not isinstance(packet, dict):
         raise PacketIngestionError("packet metadata must be an object")
-    timestamp = str(packet.get("timestamp") or generated_at or _now())
+    timestamp = normalize_timestamp(packet.get("timestamp") or generated_at or _now(), preserve_ambiguous=True)
     interface_name = str(packet.get("interface_name") or packet.get("source_interface") or default_interface or "")
     node_id = str(packet.get("source_node_id") or source_node_id or "local-node")
     source_ip = str(packet.get("source_ip") or packet.get("src_ip") or packet.get("source_address") or "")
@@ -283,4 +283,4 @@ def _count_by(rows: Iterable[dict[str, Any]], field_name: str) -> dict[str, int]
 
 
 def _now() -> str:
-    return datetime.now(UTC).isoformat()
+    return utc_now_iso()

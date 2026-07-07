@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Iterable
 
 from core_engine.attribution.confidence_models import ATTRIBUTION_SAFETY_FLAGS
+from core_engine.time_utils import normalize_timestamp, parse_utc_instant, utc_now_iso
 
 
 LEARNING_PROFILE_RECORD_VERSION = 1
@@ -617,12 +618,12 @@ def _profile_timestamp(observation: dict[str, Any], *, generated_at: str | None)
         or _safe_time(observation.get("last_seen"))
         or _safe_time(observation.get("timestamp"))
         or _safe_time(observation.get("generated_at"))
-        or datetime.now(UTC).isoformat()
+        or utc_now_iso()
     )
 
 
 def _safe_time(value: Any) -> str:
-    text = str(value or "").strip()
+    text = normalize_timestamp(value, preserve_ambiguous=True) if value not in {None, ""} else ""
     return text if text and text != "-" else ""
 
 
@@ -991,13 +992,7 @@ def _drift_label(score: float) -> str:
 
 
 def _parse_time(value: Any) -> datetime | None:
-    text = _safe_time(value)
-    if not text:
-        return None
-    try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00"))
-    except ValueError:
-        return None
+    return parse_utc_instant(value)
 
 
 def _observation_count(observation: dict[str, Any]) -> int:

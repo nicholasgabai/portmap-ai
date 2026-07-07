@@ -23,6 +23,14 @@ PortMap-AI is organized as a local-first platform. The core engine contains capt
 
 Architecture boundaries should preserve read-only defaults. Packet payloads, credentials, secrets, private validation data, and raw capture contents should not enter summary models or public docs.
 
+## UTC Timestamp Contract
+
+PortMap-AI uses UTC as the canonical timestamp standard for new runtime records. Newly created canonical timestamps should be timezone-aware UTC and serialize as unambiguous ISO-8601 values ending in `Z`, such as `2026-07-05T04:34:11Z`.
+
+Aware source timestamps from workers or imported metadata are converted to UTC once with timezone-aware conversion. Naive timestamps are not assumed to be local time and are not labeled as UTC by replacing timezone metadata. When legacy records contain ambiguous timestamp strings, PortMap-AI preserves the original value and surfaces the ambiguity instead of rewriting history.
+
+The worker, master/orchestrator, storage, risk, AI, packet/flow, API, export, and TUI paths should preserve the same instant. TUI detail rows display UTC explicitly, including packet and flow activity, so activity generated in a local evening timezone can correctly appear on the next UTC date without looking like unexplained future activity.
+
 ## Current Limitations
 
 The documentation portal does not include generated diagrams. Existing graph and visualization modules provide data structures that future renderers can consume.

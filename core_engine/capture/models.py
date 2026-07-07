@@ -9,8 +9,9 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List
+
+from core_engine.time_utils import normalize_timestamp as normalize_utc_timestamp
 
 
 FORBIDDEN_PACKET_FIELDS = {
@@ -72,12 +73,7 @@ def _safe_metadata(value: Any) -> Dict[str, Any]:
 
 
 def normalize_timestamp(value: Any) -> str:
-    if isinstance(value, datetime):
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=timezone.utc)
-        return value.isoformat()
-    text = _safe_text(value)
-    return text
+    return normalize_utc_timestamp(value, preserve_ambiguous=True) or "-"
 
 
 def build_flow_key(

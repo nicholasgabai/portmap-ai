@@ -285,8 +285,8 @@ def _parse_time(value: str) -> datetime:
     except ValueError as exc:
         raise FederationExchangeJobError(f"invalid timestamp: {value}") from exc
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=UTC)
-    return parsed
+        raise FederationExchangeJobError(f"ambiguous timestamp without timezone: {value}")
+    return parsed.astimezone(UTC)
 
 
 def _rows(values: Iterable[dict[str, Any]] | None) -> list[dict[str, Any]]:

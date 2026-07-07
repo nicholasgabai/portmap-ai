@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any, Iterable
 
+from core_engine.time_utils import normalize_timestamp, utc_now_iso
 from core_engine.telemetry.process_attribution import normalize_source_mode
 
 
@@ -37,7 +38,7 @@ def build_session_tracking_record(
 ) -> dict[str, Any]:
     if not isinstance(observation, dict):
         raise FlowSessionTrackingError("observation must be an object")
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     local_port = _safe_port(observation.get("local_port") or observation.get("port"))
     remote_port = _safe_port(observation.get("remote_port"))
     protocol = _normalize_protocol(observation.get("protocol") or observation.get("transport") or observation.get("transport_protocol"))
@@ -357,9 +358,9 @@ def _identity_scope(observation: dict[str, Any], *, remote_port: int | None) -> 
 def _observed_timestamps(observation: dict[str, Any], *, generated_at: str) -> list[str]:
     timestamps = observation.get("observed_timestamps")
     if isinstance(timestamps, list):
-        values = [str(item) for item in timestamps if item]
+        values = [normalize_timestamp(item, preserve_ambiguous=True) for item in timestamps if item]
     else:
-        values = [str(observation.get("timestamp") or observation.get("observed_at") or generated_at)]
+        values = [normalize_timestamp(observation.get("timestamp") or observation.get("observed_at") or generated_at, preserve_ambiguous=True)]
     return sorted(set(values))
 
 
@@ -432,4 +433,4 @@ def _digest(payload: Any) -> str:
 
 
 def _now() -> str:
-    return datetime.now(UTC).isoformat()
+    return utc_now_iso()

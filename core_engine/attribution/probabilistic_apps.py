@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any, Iterable
 
@@ -15,6 +14,7 @@ from core_engine.attribution.confidence_models import (
 from core_engine.attribution.behavior_graph import build_behavior_graph_model
 from core_engine.attribution.learning_profiles import build_learning_profile, build_learning_profile_history
 from core_engine.attribution.signature_learning import build_behavioral_signature_records
+from core_engine.time_utils import normalize_timestamp, utc_now_iso
 
 
 APPLICATION_ATTRIBUTION_RECORD_VERSION = 1
@@ -125,7 +125,7 @@ def build_probable_application_attributions(
 ) -> list[dict[str, Any]]:
     if not isinstance(observation, dict):
         raise ApplicationAttributionError("observation must be an object")
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     mode = normalize_source_mode(observation.get("source_mode") or observation.get("data_source") or "unknown")
     hints = _extract_hints(observation, source_mode=mode)
     signature_rows = [dict(row) for row in signatures or [] if isinstance(row, dict)]
@@ -157,7 +157,7 @@ def build_probable_application_attribution(
 ) -> dict[str, Any]:
     if not isinstance(observation, dict):
         raise ApplicationAttributionError("observation must be an object")
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     mode = normalize_source_mode(observation.get("source_mode") or observation.get("data_source") or "unknown")
     hints = _extract_hints(observation, source_mode=mode)
     signature_rows = [dict(row) for row in signatures or [] if isinstance(row, dict)]
@@ -234,7 +234,7 @@ def build_application_attribution_report(
     generated_at: str | None = None,
     max_candidates_per_observation: int = 3,
 ) -> dict[str, Any]:
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     try:
         observation_rows = [dict(row) for row in observations or [] if isinstance(row, dict)]
     except TypeError as exc:
@@ -276,7 +276,7 @@ def summarize_application_attributions(
     return {
         "record_type": "dynamic_application_attribution_summary",
         "record_version": APPLICATION_ATTRIBUTION_RECORD_VERSION,
-        "generated_at": generated_at or _now(),
+        "generated_at": normalize_timestamp(generated_at or _now(), preserve_ambiguous=True),
         "attribution_count": len(rows),
         "attributed_count": _count_state(rows, "attributed"),
         "probable_count": _count_state(rows, "probable"),
@@ -302,7 +302,7 @@ def build_application_attribution_dashboard(
         "record_type": "dynamic_application_attribution_dashboard",
         "panel": "dynamic_application_attribution",
         "status": status,
-        "generated_at": generated_at or _now(),
+        "generated_at": normalize_timestamp(generated_at or _now(), preserve_ambiguous=True),
         "metrics": {
             "attribution_count": int(summary.get("attribution_count") or 0),
             "probable_count": int(summary.get("probable_count") or 0),
@@ -337,7 +337,7 @@ def build_application_attribution_api(
     return {
         "record_type": "dynamic_application_attribution_api",
         "status": "review_required" if int(summary.get("conflicting_count") or 0) else "ok",
-        "generated_at": generated_at or _now(),
+        "generated_at": normalize_timestamp(generated_at or _now(), preserve_ambiguous=True),
         "count": len(rows),
         "summary": dict(summary),
         "attributions": rows,
@@ -361,7 +361,7 @@ def build_probabilistic_application_model(
     if max_candidates <= 0:
         raise ApplicationAttributionError("max_candidates must be greater than 0")
 
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     mode = normalize_source_mode(observation.get("source_mode") or observation.get("data_source") or "unknown")
     evidence = _probabilistic_evidence(observation, source_mode=mode)
     observation_context = _observation_context(observation, evidence)
@@ -1216,4 +1216,4 @@ def _digest(payload: Any) -> str:
 
 
 def _now() -> str:
-    return datetime.now(UTC).isoformat()
+    return utc_now_iso()

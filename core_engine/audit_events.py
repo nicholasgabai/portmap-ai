@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
 from core_engine import config_loader
+from core_engine.time_utils import utc_now_iso
 
 AUDIT_EVENTS_FILENAME = "audit_events.jsonl"
 DEFAULT_AUDIT_FILES = (
@@ -18,7 +18,7 @@ DEFAULT_AUDIT_FILES = (
 
 
 def utc_timestamp() -> str:
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return utc_now_iso()
 
 
 def _json_safe(value: Any) -> Any:

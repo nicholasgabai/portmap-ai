@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
 from hashlib import sha256
 from typing import Any, Iterable
+
+from core_engine.time_utils import epoch_seconds
 
 
 DEFAULT_FLOW_WINDOW_SECONDS = 60.0
@@ -349,31 +350,7 @@ def _timestamp_float(*values: Any) -> float:
 
 
 def _single_timestamp_float(value: Any) -> float:
-    if value is None:
-        return 0.0
-    if isinstance(value, (int, float)):
-        return _normalize_epoch(float(value))
-    if isinstance(value, str):
-        stripped = value.strip()
-        if stripped in {"", "-", "0"}:
-            return 0.0
-        try:
-            return _normalize_epoch(float(stripped))
-        except ValueError:
-            pass
-        try:
-            return datetime.fromisoformat(stripped.replace("Z", "+00:00")).timestamp()
-        except ValueError:
-            return 0.0
-    return 0.0
-
-
-def _normalize_epoch(value: float) -> float:
-    if value <= 0:
-        return 0.0
-    if value > 10_000_000_000:
-        return value / 1000.0
-    return value
+    return epoch_seconds(value)
 
 
 def _optional_int(value: Any) -> int | None:

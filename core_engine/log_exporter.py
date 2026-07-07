@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import shutil
-from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Optional
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from core_engine.audit_events import filter_audit_events
+from core_engine.time_utils import parse_utc_instant, utc_now_iso
 from .config_loader import DATA_DIR, LOG_DIR, get_default_export_dir, load_settings, ensure_runtime_dirs
 
 DEFAULT_EXPORT_DIR = Path(get_default_export_dir()).expanduser()
@@ -46,7 +46,7 @@ def export_logs(output_dir: Optional[str] = None, include_state: bool = True) ->
     """
 
     ensure_runtime_dirs()
-    timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    timestamp = parse_utc_instant(utc_now_iso()).strftime("%Y%m%d-%H%M%S")
 
     dest_dir = resolve_export_dir(output_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)

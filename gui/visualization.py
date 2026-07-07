@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
 from core_engine.modules.flow_tracker import build_flow_report
+from core_engine.time_utils import epoch_seconds
 
 RISK_BUCKETS = (
     ("critical", 0.9),
@@ -218,17 +218,7 @@ def _new_timeline_bucket() -> dict[str, Any]:
 
 
 def _timestamp_float(value: Any) -> float:
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        try:
-            return float(value)
-        except ValueError:
-            try:
-                return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
-            except ValueError:
-                return 0.0
-    return 0.0
+    return epoch_seconds(value)
 
 
 def _format_bucket_time(value: Any) -> str:

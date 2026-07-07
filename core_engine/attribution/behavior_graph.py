@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from hashlib import sha256
 from typing import Any, Iterable
 
 from core_engine.attribution.confidence_models import ATTRIBUTION_SAFETY_FLAGS
+from core_engine.time_utils import normalize_timestamp, parse_utc_instant, utc_isoformat, utc_now_iso
 
 
 BEHAVIOR_GRAPH_RECORD_VERSION = 1
@@ -104,7 +105,7 @@ def build_behavior_graph_model(
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     """Build a deterministic metadata-only behavior graph for one observed service."""
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     classifier = classification_model if isinstance(classification_model, dict) else {}
     profile = learning_profile if isinstance(learning_profile, dict) else {}
     history = learning_profile_history if isinstance(learning_profile_history, dict) else {}
@@ -2657,9 +2658,7 @@ def _empty_federated_merge(generated_at: str) -> dict[str, Any]:
 def _iso_timestamp(value: datetime | None) -> str:
     if value is None:
         return "-"
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=UTC)
-    return value.astimezone(UTC).isoformat()
+    return utc_isoformat(value)
 
 
 def _build_autonomous_investigation_chains(
@@ -4321,26 +4320,7 @@ def _duration_label(first_seen: str, last_seen: str) -> str:
 
 
 def _parse_time(value: Any) -> datetime | None:
-    if value in {"", "-", None}:
-        return None
-    if isinstance(value, (int, float)):
-        try:
-            timestamp = float(value)
-            if timestamp > 10_000_000_000:
-                timestamp = timestamp / 1000.0
-            return datetime.fromtimestamp(timestamp, tz=UTC)
-        except (OverflowError, OSError, ValueError):
-            return None
-    text = str(value).strip()
-    if not text:
-        return None
-    try:
-        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=UTC)
-        return parsed
-    except ValueError:
-        return None
+    return parse_utc_instant(value)
 
 
 def _delta_pair(current: int, previous: int | None) -> tuple[int, int]:
@@ -4642,4 +4622,4 @@ def _digest(value: Any) -> str:
 
 
 def _now() -> str:
-    return datetime.now(UTC).isoformat()
+    return utc_now_iso()

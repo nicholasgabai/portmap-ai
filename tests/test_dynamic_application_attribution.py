@@ -34,7 +34,7 @@ from core_engine.attribution import (
 )
 
 
-FIXED_TIME = "2026-01-01T00:00:00+00:00"
+FIXED_TIME = "2026-01-01T00:00:00Z"
 
 
 def _observation(**overrides):
@@ -466,8 +466,8 @@ def test_learning_profile_creation_from_existing_metadata_only():
 
     assert profile["record_type"] == "application_learning_profile"
     assert profile["profile_name"] == "postgresql"
-    assert profile["first_seen"] == "2026-01-01T00:00:00+00:00"
-    assert profile["last_seen"] == "2026-01-01T00:05:00+00:00"
+    assert profile["first_seen"] == "2026-01-01T00:00:00Z"
+    assert profile["last_seen"] == "2026-01-01T00:05:00Z"
     assert profile["observation_count"] == 1
     assert profile["observed_ports"] == [5432]
     assert profile["observed_protocols"] == ["tcp"]
@@ -601,8 +601,8 @@ def test_learning_profile_history_creation_uses_existing_metadata_only():
 
     assert history["record_type"] == "application_learning_profile_history"
     assert history["profile_name"] == "postgresql"
-    assert history["first_observed"] == "2026-01-01T00:00:00+00:00"
-    assert history["last_observed"] == "2026-01-01T00:05:00+00:00"
+    assert history["first_observed"] == "2026-01-01T00:00:00Z"
+    assert history["last_observed"] == "2026-01-01T00:05:00Z"
     assert history["observation_count"] == 1
     assert history["historical_ports"] == [5432]
     assert history["historical_protocols"] == ["tcp"]
@@ -651,14 +651,14 @@ def test_learning_profile_history_repeated_observations_preserve_and_merge_metad
     )
 
     assert history["profile_name"] == "redis"
-    assert history["first_observed"] == "2026-01-01T00:00:00+00:00"
-    assert history["last_observed"] == "2026-01-01T00:10:00+00:00"
+    assert history["first_observed"] == "2026-01-01T00:00:00Z"
+    assert history["last_observed"] == "2026-01-01T00:10:00Z"
     assert history["observation_count"] == 3
     assert history["historical_ports"] == [6379, 6380]
     assert history["historical_protocols"] == ["tcp"]
     assert history["historical_services"] == ["redis", "redis-cache"]
     assert history["historical_processes"] == ["redis-server"]
-    assert history["observation_timestamps"] == [FIXED_TIME, "2026-01-01T00:10:00+00:00"]
+    assert history["observation_timestamps"] == [FIXED_TIME, "2026-01-01T00:10:00Z"]
     assert len(history["observation_records"]) == 2
     assert history["historical_summary"]["historical_observations"] == "3"
     assert history["historical_summary"]["profile_age"] == "10m"
@@ -697,7 +697,7 @@ def test_learning_profile_history_collection_updates_by_profile_identity():
     postgresql = next(history for history in histories if history["profile_name"] == "postgresql")
     assert postgresql["observation_count"] == 2
     assert postgresql["historical_ports"] == [5432, 5433]
-    assert postgresql["last_observed"] == "2026-01-01T00:12:00+00:00"
+    assert postgresql["last_observed"] == "2026-01-01T00:12:00Z"
 
 
 def test_learning_profile_history_persistence_round_trip(tmp_path):
@@ -728,7 +728,7 @@ def test_learning_profile_history_persistence_round_trip(tmp_path):
     assert loaded == [history]
     assert updated[0]["observation_count"] == 2
     assert updated[0]["historical_ports"] == [443, 8443]
-    assert updated[0]["observation_timestamps"] == [FIXED_TIME, "2026-01-01T00:10:00+00:00"]
+    assert updated[0]["observation_timestamps"] == [FIXED_TIME, "2026-01-01T00:10:00Z"]
     assert summary["historical_observations"] == "2"
     assert load_learning_profile_histories(path) == updated
 

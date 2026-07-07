@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from textwrap import wrap
 from typing import Any, Dict, List, Optional
@@ -20,6 +20,7 @@ from textual.widgets import Button, DataTable, Footer, Header, Static, Label
 from core_engine.attribution import build_probabilistic_application_model
 from core_engine.config_loader import load_settings, save_settings
 from core_engine.deployment import build_deployment_manifest_catalog
+from core_engine.time_utils import format_utc_label, parse_utc_instant, utc_now_iso
 from core_engine.log_exporter import export_logs, resolve_export_dir
 from core_engine.packaging import (
     build_auto_updater_readiness,
@@ -601,63 +602,26 @@ def _format_compact_risk_score(value: Any) -> str:
 
 
 def _format_timestamp(value: Any) -> str:
-    timestamp = _timestamp_to_datetime(value)
-    if timestamp is None:
-        return "-"
-    return timestamp.strftime("%Y-%m-%d %H:%M:%S")
+    return format_utc_label(value)
 
 
 def _format_timestamp_utc(value: Any) -> str:
-    timestamp = _timestamp_to_datetime(value)
-    if timestamp is None:
-        return "-"
-    if timestamp.tzinfo is None:
-        return timestamp.strftime("%Y-%m-%d %H:%M:%S local")
-    return timestamp.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    return format_utc_label(value)
 
 
 def _format_time(value: Any) -> str:
     timestamp = _timestamp_to_datetime(value)
     if timestamp is None:
         return "-"
-    return timestamp.strftime("%H:%M")
+    return timestamp.strftime("%H:%M UTC")
 
 
 def _timestamp_to_datetime(value: Any) -> datetime | None:
-    if value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return _datetime_from_epoch(float(value))
-    if isinstance(value, str):
-        stripped = value.strip()
-        if stripped in {"", "-", "0"}:
-            return None
-        try:
-            return _datetime_from_epoch(float(stripped))
-        except ValueError:
-            pass
-        try:
-            parsed = datetime.fromisoformat(stripped.replace("Z", "+00:00"))
-        except ValueError:
-            return None
-        try:
-            if parsed.timestamp() <= 0:
-                return None
-        except Exception:
-            pass
-        return parsed
-    return None
+    return parse_utc_instant(value)
 
 
 def _datetime_from_epoch(value: float) -> datetime | None:
-    if value <= 0:
-        return None
-    if value > 10_000_000_000:
-        value = value / 1000.0
-    try:
-        return datetime.fromtimestamp(value)
-    except Exception:
-        return None
+    return parse_utc_instant(value)
 
 
 def _identity_display(row: Dict[str, Any], field: str) -> str:
@@ -2573,7 +2537,7 @@ def _export_rows_from_dir(export_dir: Path, *, limit: int = EXPORT_ACTIVITY_LIMI
                 }
             )
             continue
-        completed = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        completed = _format_timestamp(stat.st_mtime)
         validation = "valid" if stat.st_size > 0 else "empty"
         rows.append(
             {
@@ -3148,7 +3112,7 @@ def _deployment_row_from_package(record: Dict[str, Any]) -> Dict[str, str]:
 
 
 def _default_deployment_generated_at() -> str:
-    return datetime.now().isoformat(timespec="seconds")
+    return utc_now_iso()
 
 
 def _build_default_deployment_readiness_rows(
@@ -5054,7 +5018,7 @@ class MetricsPanel(Static):
         last_seen = metrics.get("last_seen")
         if last_seen:
             try:
-                last_seen_str = datetime.fromtimestamp(last_seen).strftime("%Y-%m-%d %H:%M:%S")
+                last_seen_str = _format_timestamp(last_seen)
             except Exception:
                 last_seen_str = str(last_seen)
         else:

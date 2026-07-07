@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import Any, Iterable
 
 from core_engine.attribution.probabilistic_apps import build_application_attribution_report
 from core_engine.behavior.drift_detection import build_behavior_drift_report
+from core_engine.time_utils import normalize_timestamp, utc_now_iso
 from core_engine.flows.flow_reconstruction import reconstruct_bidirectional_flows
 from core_engine.flows.metadata_correlation import build_metadata_correlation_report
 from core_engine.flows.process_correlation import build_process_correlation_report
@@ -52,7 +52,7 @@ def build_milestone_v_runtime_bridge(
     max_observations: int = DEFAULT_MAX_RUNTIME_OBSERVATIONS,
 ) -> dict[str, Any]:
     """Build bounded Milestone V runtime summaries from a current socket snapshot."""
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     current_rows = normalize_scan_snapshot(
         observations or [],
         node_id=node_id,
@@ -170,7 +170,7 @@ def empty_milestone_v_runtime_bridge(
     generated_at: str | None = None,
     error_summary: str = "",
 ) -> dict[str, Any]:
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     counters = {name: 0 for name in MILESTONE_V_COUNTER_NAMES}
     return {
         "record_type": "milestone_v_live_runtime_bridge",
@@ -556,4 +556,4 @@ def _safe_port(value: Any) -> int | None:
 
 
 def _now() -> str:
-    return datetime.now(UTC).isoformat()
+    return utc_now_iso()

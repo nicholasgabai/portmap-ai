@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -17,7 +17,7 @@ def _timestamp(date, *parts):
 
 def _local_display_from_iso(value: str) -> str:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    return datetime.fromtimestamp(parsed.timestamp()).strftime("%Y-%m-%d %H:%M:%S")
+    return parsed.astimezone(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
 def test_compute_metrics():
@@ -56,16 +56,16 @@ def test_format_risk_score():
 
 
 def test_format_timestamp_handles_iso_and_unavailable_values():
-    assert gui_app._format_timestamp("2026-06-03T12:00:00+00:00") == "2026-06-03 12:00:00"
-    assert gui_app._format_timestamp("2026-06-03T12:00:00") == "2026-06-03 12:00:00"
+    assert gui_app._format_timestamp("2026-06-03T12:00:00+00:00") == "2026-06-03 12:00:00 UTC"
+    assert gui_app._format_timestamp("2026-06-03T12:00:00") == "2026-06-03T12:00:00 (timezone ambiguous)"
     assert gui_app._format_timestamp(0) == "-"
     assert gui_app._format_timestamp(None) == "-"
     assert gui_app._format_timestamp("") == "-"
 
 
 def test_format_timestamp_handles_epoch_seconds_and_milliseconds():
-    seconds = datetime(2026, 6, 3, 12, 0, 0).timestamp()
-    expected = datetime.fromtimestamp(seconds).strftime("%Y-%m-%d %H:%M:%S")
+    seconds = datetime(2026, 6, 3, 12, 0, 0, tzinfo=UTC).timestamp()
+    expected = "2026-06-03 12:00:00 UTC"
 
     assert gui_app._format_timestamp(seconds) == expected
     assert gui_app._format_timestamp(int(seconds * 1000)) == expected
@@ -1167,7 +1167,7 @@ def test_ai_provider_model_rows_and_analytics_population():
         "providers": "2",
         "models": "3",
         "decisions": "4",
-        "last_updated": "2026-06-14 12:03:00",
+        "last_updated": "2026-06-14 12:03:00 UTC",
         "mode": "read_only",
     }
     assert rows[0]["provider"] == "heuristic"
@@ -1222,8 +1222,8 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Learning Profile Stability"] != "-"
     assert details["Historical Observations"] == "1"
     assert details["Profile Age"] == "0m"
-    assert details["First Observed"] == "2026-06-14T12:03:00+00:00"
-    assert details["Last Observed"] == "2026-06-14T12:03:00+00:00"
+    assert details["First Observed"] == "2026-06-14T12:03:00Z"
+    assert details["Last Observed"] == "2026-06-14T12:03:00Z"
     assert details["Stability Score"] != "-"
     assert details["Stability Label"] == "unstable"
     assert details["Drift Score"] == "0.00"
@@ -1363,7 +1363,7 @@ def test_ai_details_rows_use_selected_provider_model_with_placeholders():
     assert details["Related Profile"].startswith("learning-profile-")
     assert details["Status"] == "preview"
     assert details["Decisions"] == "2"
-    assert details["Updated"] == "2026-06-14 12:03:00"
+    assert details["Updated"] == "2026-06-14 12:03:00 UTC"
     assert details["Mode"] == "read_only"
     assert details["Execution"] == "not performed"
 
@@ -2098,7 +2098,7 @@ def test_packet_activity_rows_and_analytics_population():
         "packets": "6",
         "flows": "3",
         "protocols": "2",
-        "updated": "2026-06-14 12:03:00",
+        "updated": "2026-06-14 12:03:00 UTC",
         "mode": "read_only",
     }
     assert rows[0]["flow"] == "203.0.113.5:51515 -> 203.0.113.10:443"
@@ -2165,8 +2165,8 @@ def test_packet_details_rows_use_selected_activity_with_placeholders():
     assert details["Transport"] == "TCP"
     assert details["Packets"] == "3"
     assert details["Bytes"] == "420"
-    assert details["First Seen"] == "2026-06-14 12:00:00"
-    assert details["Last Seen"] == "2026-06-14 12:03:00"
+    assert details["First Seen"] == "2026-06-14 12:00:00 UTC"
+    assert details["Last Seen"] == "2026-06-14 12:03:00 UTC"
     assert details["Source"] == "flow_metadata"
     assert details["Mode"] == "read_only"
     assert details["Execution"] == "not performed"
@@ -2290,7 +2290,7 @@ def test_governance_status_and_analytics_population():
     status = gui_app._governance_status_table_row(rows)
 
     assert status == {
-        "latest": "2026-06-14 12:04:00",
+        "latest": "2026-06-14 12:04:00 (timezone ambiguous)",
         "evidence_count": "5",
         "preview_count": "5",
         "exception_count": "1",
@@ -2473,8 +2473,8 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Learning Profile Stability"] != "-"
     assert details["Historical Observations"] == "3"
     assert details["Profile Age"] == "1h"
-    assert details["First Observed"] == "2026-06-14T11:00:00+00:00"
-    assert details["Last Observed"] == "2026-06-14T12:00:00+00:00"
+    assert details["First Observed"] == "2026-06-14T11:00:00Z"
+    assert details["Last Observed"] == "2026-06-14T12:00:00Z"
     assert details["Stability Score"] != "-"
     assert details["Stability Label"] == "stable"
     assert details["Drift Score"] == "0.00"
@@ -2617,8 +2617,8 @@ def test_finding_details_rows_use_selected_finding_with_placeholders():
     assert details["Score"] == ".82"
     assert details["Action"] == "prompt_op..."
     assert details["State"] == "LISTEN"
-    assert details["First Seen"] == "2026-06-14 11:00:00"
-    assert details["Last Seen"] == "2026-06-14 12:00:00"
+    assert details["First Seen"] == "2026-06-14 11:00:00 UTC"
+    assert details["Last Seen"] == "2026-06-14 12:00:00 UTC"
     assert details["Occurrence Count"] == "3"
     assert details["Signal Count"] == "1"
     assert details["Top Signal"] == "sensitive_port:22"
@@ -3678,8 +3678,8 @@ def test_risk_timeline_formatter_handles_empty_and_populated_data():
     )
 
     assert "Time | Avg | Max | Events | Trend" in text
-    assert "12:00 | .64" in text
-    assert "12:01 | .70" in text
+    assert "12:00 UTC | .64" in text
+    assert "12:01 UTC | .70" in text
     assert "up" in text
 
 

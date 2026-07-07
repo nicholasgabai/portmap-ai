@@ -318,7 +318,7 @@ def safe_float(value: Any) -> float:
 
 
 def now_timestamp() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def digest(value: Any) -> str:

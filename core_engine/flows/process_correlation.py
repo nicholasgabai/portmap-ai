@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any, Iterable
 
+from core_engine.time_utils import normalize_timestamp, utc_now_iso
 from core_engine.flows.session_tracking import FLOW_SAFETY_FLAGS
 from core_engine.telemetry.process_attribution import normalize_source_mode
 
@@ -26,7 +26,7 @@ def build_process_correlation_record(
     attribution_source: str = "unknown",
     generated_at: str | None = None,
 ) -> dict[str, Any]:
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     if session_record is not None and not isinstance(session_record, dict):
         raise ProcessCorrelationError("session_record must be an object")
     session = dict(session_record or {})
@@ -112,7 +112,7 @@ def build_process_correlation_report(
     service_attributions: Iterable[dict[str, Any]] | None = None,
     generated_at: str | None = None,
 ) -> dict[str, Any]:
-    timestamp = generated_at or _now()
+    timestamp = normalize_timestamp(generated_at or _now(), preserve_ambiguous=True)
     try:
         session_rows = [dict(row) for row in sessions or [] if isinstance(row, dict)]
     except TypeError as exc:
@@ -382,4 +382,4 @@ def _digest(payload: Any) -> str:
 
 
 def _now() -> str:
-    return datetime.now(UTC).isoformat()
+    return utc_now_iso()

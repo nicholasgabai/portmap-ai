@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any, Iterable
+
+from core_engine.time_utils import normalize_timestamp, utc_now_iso
 
 
 SEVERITY_ORDER = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
@@ -151,7 +152,7 @@ def _severity(value: Any) -> str:
 
 def _timestamp(row: dict[str, Any]) -> str:
     value = row.get("timestamp") or row.get("observed_at") or row.get("created_at")
-    return str(value) if value else datetime.now(UTC).isoformat()
+    return normalize_timestamp(value, preserve_ambiguous=True) if value else utc_now_iso()
 
 
 def _optional_str(value: Any) -> str | None:
