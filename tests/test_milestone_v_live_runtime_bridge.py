@@ -108,15 +108,17 @@ def test_listener_socket_identity_does_not_fabricate_flow_key_or_packet_activity
 
     report = build_milestone_v_runtime_bridge([listener], node_id="worker-fixture", generated_at=GENERATED_AT)
 
-    flow_pair = report["api_status"]["flows"]["flow_pairs"][0]
+    observation = report["observations"][0]
     metadata_row = report["api_status"]["metadata_correlations"]["metadata_correlations"][0]
 
-    assert flow_pair["observation_id"].startswith("socket-observation-")
-    assert flow_pair["flow_key"] == ""
-    assert flow_pair["session_id"].startswith("flow-session-")
-    assert flow_pair["evidence_origin"] == "listener_socket_observation"
-    assert flow_pair["observation_type"] == "listener"
-    assert flow_pair["identity_scope"] == "listener"
+    assert report["api_status"]["flows"]["flow_pairs"] == []
+    assert report["runtime_counters"]["sessions_reconstructed"] == 0
+    assert report["runtime_counters"]["flows_reconstructed"] == 0
+    assert observation["observation_id"].startswith("socket-observation-")
+    assert observation["flow_key"] == observation["session_id"] == ""
+    assert observation["evidence_origin"] == "listener_socket_observation"
+    assert observation["observation_type"] == "listener"
+    assert observation["identity_scope"] == "listener"
     assert metadata_row["flow_key"] == ""
     assert metadata_row["identity_scope"] == "listener"
     assert report["flow_events"] == []

@@ -236,7 +236,7 @@ def _render_flow_table(payload: dict[str, Any]) -> None:
     table.add_column("Flow")
     table.add_column("Initiator")
     table.add_column("Responder")
-    table.add_column("Packets", justify="right")
+    table.add_column("Events", justify="right")
     table.add_column("Payload", justify="right")
     table.add_column("Apps")
     table.add_column("Findings")
@@ -248,8 +248,8 @@ def _render_flow_table(payload: dict[str, Any]) -> None:
             str(item.get("flow_id") or "-"),
             _endpoint_text(initiator),
             _endpoint_text(responder),
-            str(item.get("packet_count") or 0),
-            str(item.get("payload_bytes") or 0),
+            str(item.get("event_count", item.get("packet_count")) or 0),
+            str(item.get("payload_bytes") or 0) if item.get("counter_provenance") in {None, "captured_packet", "reported_packet_metadata"} else "-",
             ",".join(item.get("application_protocols") or []) or "-",
             ",".join(item.get("findings") or []) or "-",
         )

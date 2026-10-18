@@ -2166,7 +2166,8 @@ def test_packet_details_rows_use_selected_activity_with_placeholders():
 
     assert details["Flow"] == "203.0.113.5:51515 -> 203.0.113.10:443"
     assert details["Transport"] == "TCP"
-    assert details["Packets"] == "3"
+    assert details["Event Count"] == "3"
+    assert details["Packets"] == "not measured"
     assert details["Bytes"] == "420"
     assert details["First Seen"] == "2026-06-14 12:00:00 UTC"
     assert details["Last Seen"] == "2026-06-14 12:03:00 UTC"
@@ -4113,11 +4114,14 @@ def test_load_orchestrator_health_reads_health_and_metrics(monkeypatch):
 
     health = dashboard._load_orchestrator_health()
 
-    assert health == {
+    assert {key: health[key] for key in ("url", "status", "metrics")} == {
         "url": "http://orchestrator",
         "status": "ok",
         "metrics": {"registers": 1, "heartbeats": 2, "commands_queued": 3},
     }
+    assert health["metrics_status"] == "ok"
+    assert health["checked_at"].endswith("Z")
+    assert health["last_success_at"] == health["checked_at"]
 
 
 def test_queue_command_posts_to_orchestrator(monkeypatch, tmp_path):

@@ -145,8 +145,9 @@ def topology_edge_rows(topology: dict[str, Any] | None, *, limit: int = 12) -> l
                 "src_ip": edge.get("src_ip") or "-",
                 "dst_ip": edge.get("dst_ip") or "-",
                 "flow_count": int(edge.get("flow_count") or 0),
-                "packet_count": int(edge.get("packet_count") or 0),
+                "packet_count": int(edge.get("event_count", edge.get("packet_count")) or 0),
                 "payload_bytes": int(edge.get("payload_bytes") or 0),
+                "bytes_measured": not any(source not in {"captured_packet", "reported_packet_metadata"} for source in edge.get("counter_sources", {})),
                 "protocols": ", ".join(str(item) for item in edge.get("protocols") or []) or "-",
                 "application_protocols": ", ".join(str(item) for item in edge.get("application_protocols") or []) or "-",
             }
@@ -169,8 +170,9 @@ def flow_rows(flows: Iterable[dict[str, Any]], *, limit: int = 12) -> list[dict[
                 "last_seen": flow.get("last_seen", "-"),
                 "flow": _endpoint_label(initiator) + " -> " + _endpoint_label(responder),
                 "application_protocols": ", ".join(str(item) for item in flow.get("application_protocols") or []) or "-",
-                "packet_count": int(flow.get("packet_count") or 0),
+                "packet_count": int(flow.get("event_count", flow.get("packet_count")) or 0),
                 "payload_bytes": int(flow.get("payload_bytes") or 0),
+                "bytes_measured": flow.get("counter_provenance") in {None, "captured_packet", "reported_packet_metadata"},
                 "findings": ", ".join(str(item) for item in flow.get("findings") or []) or "-",
             }
         )

@@ -628,6 +628,8 @@ def _observation_context(observation: dict[str, Any], evidence: dict[str, Any]) 
     )
     flow_key = _safe_context_text(observation.get("flow_key") or observation.get("flow_id"))
     session_id = _safe_context_text(observation.get("session_id") or observation.get("session_ref") or observation.get("session_reference"))
+    if observation.get("identity_scope") == "listener" or evidence.get("state") in {"listen", "listening"}:
+        flow_key = session_id = "-"
     observation_id = _safe_context_text(
         observation.get("observation_id")
         or observation.get("event_id")

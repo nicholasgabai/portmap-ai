@@ -414,7 +414,7 @@ def test_packet_aggregation_keeps_socket_and_capture_contexts_separate():
     fixture_event = {**socket_event, "source_mode": "fixture"}
     flows = build_flow_report([socket_event, capture_event, fixture_event])["flows"]
     assert len(flows) == 3
-    assert all(flow["packet_count"] == 1 for flow in flows)
+    assert all(flow["event_count"] == 1 for flow in flows)
 
 
 def test_sample_correlation_does_not_take_a_different_session_sample_time():

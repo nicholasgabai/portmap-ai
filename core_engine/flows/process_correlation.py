@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 from core_engine.time_utils import normalize_timestamp, utc_now_iso
 from core_engine.flows.session_tracking import FLOW_SAFETY_FLAGS
+from core_engine.observation_identity import identity_key
 from core_engine.telemetry.process_attribution import normalize_source_mode
 
 
@@ -70,6 +71,7 @@ def build_process_correlation_record(
         + _digest(
             {
                 "session_reference": session.get("session_id") or "",
+                **({"socket_identity": identity_key(session)} if not session.get("session_id") else {}),
                 "process_attribution": process_value,
                 "service_attribution": service_value,
                 "attribution_source": attribution_source,

@@ -114,15 +114,23 @@ def observation_identity(row: dict[str, Any], *, node_id: str = "", event_timest
     if not observation_id and instant:
         observation_id = _id("socket-observation-", {
             **basis, "event_timestamp": instant,
-            "state": str(_first(row, "transport_state", "status", "state") or "unknown").lower(),
+            "state": str(_first(row, "transport_state", "socket_state", "status", "state") or "unknown").lower(),
         })
-    session = _first(row, "session_id", "session_ref", "session_reference") or _id("flow-session-", basis)
+    session = _first(row, "session_id", "session_ref", "session_reference")
+    if basis["identity_scope"] == "listener":
+        session = ""
+    elif not session and basis["identity_scope"] == "flow":
+        session = _id("flow-session-", basis)
     flow = ""
     if basis["identity_scope"] == "flow":
         flow = _first(row, "flow_key", "flow_id") or _id("flow-key-", basis)
-    return {
+    result = {
         **basis, "identity_version": IDENTITY_VERSION,
-        "observation_id": observation_id or "", "session_id": session, "flow_key": flow,
-        "observation_type": "listener" if basis["identity_scope"] == "listener" else "established_conversation" if str(_first(row, "transport_state", "status", "state") or "").lower() == "established" else "socket_conversation",
+        "observation_id": observation_id or "", "session_id": session or "", "flow_key": flow,
+        "observation_type": "listener" if basis["identity_scope"] == "listener" else "established_conversation" if str(_first(row, "transport_state", "socket_state", "status", "state") or "").lower() == "established" else "socket_conversation",
         "evidence_origin": _first(row, "evidence_origin") or ("listener_socket_observation" if basis["identity_scope"] == "listener" else "reconstructed_socket_flow"),
     }
+    if basis["identity_scope"] == "listener":
+        # Old aliases must not reintroduce conversation IDs downstream.
+        result.update({key: "" for key in ("session_ref", "session_reference", "flow_id") if key in row})
+    return result

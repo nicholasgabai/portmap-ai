@@ -70,6 +70,8 @@ def build_flow_pairs(sessions: Iterable[dict[str, Any]], *, dns_index: dict[str,
     for session in sessions or []:
         if not isinstance(session, dict):
             continue
+        if session.get("identity_scope") == "listener":
+            continue
         classification = classify_reconstructed_session(session)
         recurrence = score_recurrence(session)
         confidence = score_reconstruction_confidence(session, recurrence_score=recurrence)

@@ -80,7 +80,10 @@ def build_milestone_v_runtime_bridge(
     )
     relationships = relationship_graph.get("relationships") or []
     lateral_report = build_lateral_analysis_report(relationships, generated_at=timestamp)
-    attribution_report = build_application_attribution_report(flow_pairs, generated_at=timestamp)
+    attribution_report = build_application_attribution_report(
+        [*flow_pairs, *(row for row in socket_rows if row.get("identity_scope") == "listener")],
+        generated_at=timestamp,
+    )
     drift_report = build_behavior_drift_report(
         [
             {
@@ -99,7 +102,7 @@ def build_milestone_v_runtime_bridge(
 
     counters = {
         "observations_seen": len(socket_rows),
-        "sessions_reconstructed": len(sessions),
+        "sessions_reconstructed": sum(bool(row.get("session_id")) for row in sessions),
         "flows_reconstructed": len(flow_pairs),
         "metadata_correlations": len(metadata_report.get("metadata_correlations") or []),
         "process_correlations": len(process_report.get("process_correlations") or []),
@@ -400,6 +403,7 @@ def _flow_visualization_events(socket_rows: Iterable[dict[str, Any]], *, generat
                 "observation_type": row.get("observation_type") or "socket_conversation",
                 "identity_scope": row.get("identity_scope") or "flow",
                 "telemetry_source": "socket_reconstruction",
+                "counter_provenance": "socket_observation",
                 "payload_bytes": 0,
                 "captured_len": 0,
                 "source_mode": row.get("source_mode") or "unknown",
@@ -426,13 +430,18 @@ def _topology_edge_records(flow_events: Iterable[dict[str, Any]]) -> list[dict[s
                 "source_mode": key[2],
                 "flow_count": 0,
                 "packet_count": 0,
+                "event_count": 0,
+                "socket_observation_count": 0,
+                "captured_packet_count": 0,
+                "counter_provenance": "socket_observation",
                 "payload_bytes": 0,
                 "protocols": set(),
                 "application_protocols": set(),
             },
         )
         edge["flow_count"] += 1
-        edge["packet_count"] += 1
+        edge["event_count"] += 1
+        edge["socket_observation_count"] += 1
         edge["protocols"].add(str(event.get("protocol") or "unknown").upper())
         app = str(event.get("application_protocol") or "unknown").upper()
         if app != "UNKNOWN":

@@ -533,6 +533,9 @@ def _identity_field(
     classification_model: dict[str, Any] | None,
     field: str,
 ) -> str:
+    state = str(observation.get("transport_state") or observation.get("socket_state") or observation.get("status") or observation.get("state") or "").lower()
+    if field in {"flow_key", "session_id"} and (observation.get("identity_scope") == "listener" or state in {"listen", "listening"}):
+        return ""
     value = observation.get(field)
     if value in {None, ""} and isinstance(classification_model, dict):
         context = classification_model.get("observation_context")

@@ -657,7 +657,9 @@ def _identity_context(
     identity_scope = first("identity_scope")
     state = first("transport_state", "socket_state", "state", "status").lower()
     remote_port = first("remote_port", "dst_port", "destination_port")
-    if identity_scope == "-":
+    if state in {"listen", "listening"}:
+        identity_scope = "listener"
+    elif identity_scope == "-":
         identity_scope = "listener" if remote_port == "-" or state in {"listen", "listening"} else "flow"
     evidence_origin = first("evidence_origin", "telemetry_source")
     if evidence_origin == "-":
@@ -668,8 +670,8 @@ def _identity_context(
     return {
         "related_observation": first("observation_id", "event_id", "packet_id", "record_id"),
         **{key: observation[key] for key in ("event_timestamp", "ingested_at", "timestamp_status", "address_family", "node_id", "identity_version") if key in observation},
-        "related_flow": first("flow_key", "flow_id"),
-        "related_session": first("session_id", "session_ref", "session_reference"),
+        "related_flow": "-" if identity_scope == "listener" else first("flow_key", "flow_id"),
+        "related_session": "-" if identity_scope == "listener" else first("session_id", "session_ref", "session_reference"),
         "evidence_origin": evidence_origin,
         "observation_type": observation_type,
         "identity_scope": identity_scope,

@@ -71,7 +71,9 @@ def parse_utc_instant(value: Any) -> datetime | None:
     except (ValueError, OverflowError, OSError):
         pass
     try:
-        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        # Accept our explicit UTC display format, but never infer a naive zone.
+        iso_text = text[:-4] + "+00:00" if text.endswith(" UTC") else text
+        parsed = datetime.fromisoformat(iso_text.replace("Z", "+00:00"))
     except ValueError:
         return None
     if parsed.tzinfo is None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import socket
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -628,6 +629,8 @@ def _datetime_from_epoch(value: float) -> datetime | None:
 
 
 def _identity_display(row: Dict[str, Any], field: str) -> str:
+    if str(row.get("identity_scope") or "").lower() == "listener" and field in {"flow_key", "session_id", "remote_address", "remote_port"}:
+        return "not applicable"
     value = row.get(field)
     if value not in {"", "-", None}:
         return str(value)
@@ -4649,8 +4652,16 @@ def _packet_activity_rows(
         last_seen = _format_timestamp(flow.get("last_seen"))
         flow_label = _packet_flow_label(flow)
         transport = _packet_transport_value(flow)
-        packets = str(_deployment_int(flow.get("packet_count")))
-        payload_bytes = str(_deployment_int(flow.get("payload_bytes")))
+        provenance = flow.get("counter_provenance") or (
+            "socket_observation" if flow.get("telemetry_source") in {"socket_inventory", "socket_reconstruction"}
+            else "reported_packet_metadata"
+        )
+        packets = str(_deployment_int(flow.get("event_count", flow.get("packet_count"))))
+        payload_bytes = (
+            str(_deployment_int(flow.get("captured_bytes"))) if provenance == "captured_packet"
+            else str(_deployment_int(flow.get("payload_bytes"))) if provenance == "reported_packet_metadata"
+            else "-"
+        )
         status = _packet_status_value(flow)
         row_key = flow.get("flow_id") or flow.get("flow_key") or "|".join([first_seen, last_seen, flow_label, transport])
         rows.append(
@@ -4660,6 +4671,14 @@ def _packet_activity_rows(
                 "transport": transport,
                 "packets": packets,
                 "bytes": payload_bytes,
+                "counter_provenance": provenance,
+                "node_id": str(flow.get("node_id") or "-"),
+                "source_mode": flow.get("source_mode") or "unknown",
+                "captured_packets": str(_deployment_int(flow.get("captured_packet_count"))) if provenance == "captured_packet" else "not measured",
+                "socket_observations": str(_deployment_int(flow.get("socket_observation_count", packets if provenance == "socket_observation" else 0))),
+                "byte_basis": "captured length" if provenance == "captured_packet" else "reported payload length (unverified)" if provenance == "reported_packet_metadata" else "not measured",
+                "observation_ids": ", ".join(str(value) for value in flow.get("observation_ids") or []),
+                "session_count": str(len(flow.get("session_ids") or []) or int(bool(flow.get("session_id")))),
                 "status": status,
                 "first_seen": first_seen,
                 "last_seen": last_seen,
@@ -4709,13 +4728,20 @@ def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, st
     source, destination = _packet_flow_endpoints(flow)
     metadata = [
         ("Flow", row.get("flow", "-")),
+        ("Node", row.get("node_id", "-")),
         ("Transport", row.get("transport", "-")),
-        ("Packets", row.get("packets", "-")),
+        ("Event Count", row.get("packets", "-")),
+        ("Counter Provenance", row.get("counter_provenance", "-")),
+        ("Source Mode", row.get("source_mode", "-")),
+        ("Socket Observations", row.get("socket_observations", "-")),
+        ("Packets", row.get("captured_packets", "-")),
         ("Bytes", row.get("bytes", "-")),
+        ("Byte Basis", row.get("byte_basis", "-")),
         ("Evidence Origin", row.get("evidence_origin", "-")),
         ("Observation Type", row.get("observation_type", "-")),
         ("Identity Scope", row.get("identity_scope", "-")),
         ("Observation ID", row.get("observation_id", "-")),
+        ("Observation IDs", row.get("observation_ids") or "-"),
         ("Flow Key", row.get("flow_key", "-")),
         ("Session ID", row.get("session_id", "-")),
         ("First Seen", row.get("first_seen", "-")),
@@ -4741,7 +4767,7 @@ def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, st
             ("Most Active Ports", _packet_flow_ports(flow)),
             ("Traffic Direction", _packet_flow_direction(source, destination)),
             ("Conversation Duration", _conversation_duration(row.get("_first_seen_raw"), row.get("_last_seen_raw"))),
-            ("Session Counts", row.get("packets", "-")),
+            ("Session Count", row.get("session_count", "-")),
             ("Observed Services", _first_nonempty(row.get("status"), row.get("transport"))),
             ("Recent Traffic Trends", _packet_traffic_trend(row)),
             ("Packet Timeline Summary", _first_nonempty(row.get("last_seen"), row.get("first_seen"))),
@@ -4815,16 +4841,17 @@ def _packet_summary_rows(packet_rows: List[Dict[str, str]], *, limit: int = 9) -
     grouped: Dict[str, Dict[str, int]] = {}
     for row in packet_rows:
         protocol = row.get("transport") or "-"
-        item = grouped.setdefault(protocol, {"flows": 0, "packets": 0, "bytes": 0})
+        item = grouped.setdefault(protocol, {"flows": 0, "packets": 0, "bytes": 0, "bytes_known": True})
         item["flows"] += 1
         item["packets"] += _deployment_int(row.get("packets"))
         item["bytes"] += _deployment_int(row.get("bytes"))
+        item["bytes_known"] = item["bytes_known"] and row.get("bytes") not in {None, "-", ""}
     return [
         {
             "protocol": protocol,
             "flows": str(values["flows"]),
             "packets": str(values["packets"]),
-            "bytes": str(values["bytes"]),
+            "bytes": str(values["bytes"]) if values["bytes_known"] else "-",
         }
         for protocol, values in sorted(
             grouped.items(),
@@ -4852,16 +4879,17 @@ def _packet_timeline_rows(packet_rows: List[Dict[str, str]], *, limit: int = 9) 
     for row in packet_rows:
         time = row.get("last_seen") or row.get("time") or "-"
         bucket = time[:10] if time != "-" else "-"
-        item = buckets.setdefault(bucket, {"flows": 0, "packets": 0, "bytes": 0})
+        item = buckets.setdefault(bucket, {"flows": 0, "packets": 0, "bytes": 0, "bytes_known": True})
         item["flows"] += 1
         item["packets"] += _deployment_int(row.get("packets"))
         item["bytes"] += _deployment_int(row.get("bytes"))
+        item["bytes_known"] = item["bytes_known"] and row.get("bytes") not in {None, "-", ""}
     return [
         {
             "time": bucket,
             "flows": str(values["flows"]),
             "packets": str(values["packets"]),
-            "bytes": str(values["bytes"]),
+            "bytes": str(values["bytes"]) if values["bytes_known"] else "-",
         }
         for bucket, values in sorted(buckets.items(), reverse=True)[: max(limit, 0)]
     ]
@@ -5053,7 +5081,7 @@ class MetricsPanel(Static):
         counts = metrics.get("counts", {})
         firewall_status = metrics.get("firewall_status", {})
         text = (
-            f"Nodes online: {metrics.get('online_nodes', 0)}/{metrics.get('total_nodes', 0)}\n"
+            f"Nodes online (stored state): {metrics.get('online_nodes', 0)}/{metrics.get('total_nodes', 0)}\n"
             f"Last heartbeat: {last_seen_str}\n"
             f"Remediation totals - monitor: {counts.get('monitor', 0)}, "
             f"review: {counts.get('review', 0)}, block: {counts.get('block', 0)}\n"
@@ -5068,6 +5096,11 @@ class MetricsPanel(Static):
                 f"API counters - registers: {counters.get('registers', '-')}, "
                 f"heartbeats: {counters.get('heartbeats', '-')}, "
                 f"queued: {counters.get('commands_queued', '-')}"
+            )
+            text += (
+                f"\nHealth checked: {_format_timestamp(health.get('checked_at'))}; "
+                f"last successful response: {_format_timestamp(health.get('last_success_at'))}"
+                f"\nHealth detail: {health.get('detail', '-')}; metrics: {health.get('metrics_status', '-')}"
             )
         visualization = metrics.get("visualization") or {}
         if visualization:
@@ -6113,7 +6146,7 @@ class AITimelineTable(DataTable):
 
 class PacketStatusTable(DataTable):
     def on_mount(self) -> None:
-        self.add_column("Packets")
+        self.add_column("Events")
         self.add_column("Flows")
         self.add_column("Protocols")
         self.add_column("Updated")
@@ -6141,7 +6174,7 @@ class PacketActivityTable(DataTable):
         self.add_column("Time")
         self.add_column("Flow")
         self.add_column("Transport")
-        self.add_column("Packets")
+        self.add_column("Events")
         self.add_column("Bytes")
         self.add_column("Status")
         self.update_packets([])
@@ -6194,7 +6227,7 @@ class PacketSummaryTable(DataTable):
     def on_mount(self) -> None:
         self.add_column("Protocol")
         self.add_column("Flows")
-        self.add_column("Packets")
+        self.add_column("Events")
         self.add_column("Bytes")
         self.update_summary([])
 
@@ -6222,7 +6255,7 @@ class PacketRecentActivityTable(DataTable):
     def on_mount(self) -> None:
         self.add_column("Time")
         self.add_column("Flow")
-        self.add_column("Packets")
+        self.add_column("Events")
         self.add_column("Status")
         self.update_activity([])
 
@@ -6250,7 +6283,7 @@ class PacketTimelineTable(DataTable):
     def on_mount(self) -> None:
         self.add_column("Time")
         self.add_column("Flows")
-        self.add_column("Packets")
+        self.add_column("Events")
         self.add_column("Bytes")
         self.update_timeline([])
 
@@ -6279,8 +6312,8 @@ class TopologyPanel(DataTable):
         self.add_column("Source")
         self.add_column("Destination")
         self.add_column("Flows")
-        self.add_column("Packets")
-        self.add_column("Bytes")
+        self.add_column("Events")
+        self.add_column("Payload B")
         self.add_column("Transport")
         self.add_column("Application")
 
@@ -6302,7 +6335,7 @@ class TopologyPanel(DataTable):
                 str(row.get("dst_ip", "-")),
                 str(row.get("flow_count", 0)),
                 str(row.get("packet_count", 0)),
-                str(row.get("payload_bytes", 0)),
+                str(row.get("payload_bytes", 0)) if row.get("bytes_measured", True) else "-",
                 str(row.get("protocols", "-")),
                 str(row.get("application_protocols", "-")),
                 key=_unique_table_key(row_key, seen),
@@ -6316,8 +6349,8 @@ class TrafficFlowsPanel(DataTable):
         self.add_column("Last")
         self.add_column("Flow")
         self.add_column("Application")
-        self.add_column("Packets")
-        self.add_column("Bytes")
+        self.add_column("Events")
+        self.add_column("Payload B")
         self.add_column("Findings")
 
     def update_flows(self, rows: List[Dict[str, Any]]) -> None:
@@ -6339,7 +6372,7 @@ class TrafficFlowsPanel(DataTable):
                 str(row.get("flow", "-")),
                 str(row.get("application_protocols", "-")),
                 str(row.get("packet_count", 0)),
-                str(row.get("payload_bytes", 0)),
+                str(row.get("payload_bytes", 0)) if row.get("bytes_measured", True) else "-",
                 str(row.get("findings", "-")),
                 key=_unique_table_key(row_key, seen),
             )
@@ -7709,26 +7742,50 @@ class PortMapDashboard(App):
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
+        previous = getattr(self, "_orchestrator_health_state", {})
+        last_success = previous.get("last_success_at") if previous.get("url") == url else None
+
+        def record(status, *, metrics=None, detail="health endpoint responded", metrics_status="unavailable", responded=False):
+            checked_at = utc_now_iso()
+            result = {
+                "url": url, "status": status, "metrics": metrics or {},
+                "checked_at": checked_at,
+                "last_success_at": checked_at if responded else last_success,
+                "detail": detail, "metrics_status": metrics_status,
+            }
+            self._orchestrator_health_state = result
+            return result
+
         try:
             health_req = request.Request(f"{url.rstrip('/')}/healthz", method="GET", headers=headers)
-            with request.urlopen(health_req, timeout=0.75) as resp:
+            with request.urlopen(health_req, timeout=2.0) as resp:
                 body = resp.read().decode("utf-8")
-                health = json.loads(body) if body else {}
-                status = str(health.get("status") or "ok")
+                health = json.loads(body)
+                if not isinstance(health, dict) or not isinstance(health.get("status"), str) or not health["status"]:
+                    raise ValueError("invalid health response")
+                status = health["status"]
         except error.HTTPError as exc:
-            return {"url": url, "status": f"http_{exc.code}", "metrics": {}}
-        except Exception:
-            return {"url": url, "status": "unreachable", "metrics": {}}
+            return record(f"http_{exc.code}", detail="authentication rejected" if exc.code in {401, 403} else "health endpoint HTTP error")
+        except (ValueError, UnicodeError):
+            return record("invalid_response", detail="health response is not a valid status object")
+        except (error.URLError, OSError) as exc:
+            reason = getattr(exc, "reason", exc)
+            timed_out = isinstance(reason, (TimeoutError, socket.timeout))
+            return record("timeout" if timed_out else "connection_error", detail="health request timed out; process state unknown" if timed_out else "health connection failed; process state unknown")
 
         metrics = {}
         try:
             metrics_req = request.Request(f"{url.rstrip('/')}/metrics", method="GET", headers=headers)
-            with request.urlopen(metrics_req, timeout=0.75) as resp:
+            with request.urlopen(metrics_req, timeout=2.0) as resp:
                 body = resp.read().decode("utf-8")
-                metrics = json.loads(body) if body else {}
+                metrics = json.loads(body)
+                if not isinstance(metrics, dict):
+                    raise ValueError("invalid metrics response")
+            metrics_status = "ok"
         except Exception:
             metrics = {}
-        return {"url": url, "status": status, "metrics": metrics}
+            metrics_status = "unavailable"
+        return record(status, metrics=metrics, metrics_status=metrics_status, responded=True)
 
     def action_scan_now(self) -> None:
         node = self._resolve_selected_node()

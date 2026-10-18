@@ -37,6 +37,8 @@ class FlowEvent:
     event_timestamp: str = ""
     ingested_at: str = ""
     grouping_context: str = ""
+    counter_provenance: str = "reported_packet_metadata"
+    source_mode: str = ""
 
     @property
     def src_endpoint(self) -> dict[str, Any]:
@@ -55,6 +57,7 @@ def event_to_flow_event(event: dict[str, Any]) -> FlowEvent | None:
     dst_ip = normalize_address(metadata.get("dst_ip"))
     if not src_ip or not dst_ip:
         return None
+    provenance = _counter_provenance(event, metadata)
     return FlowEvent(
         timestamp=_timestamp_float(event.get("event_timestamp")) if "event_timestamp" in event else _timestamp_float(metadata.get("timestamp"), event.get("timestamp"), event.get("generated_at")),
         src_ip=src_ip,
@@ -63,8 +66,10 @@ def event_to_flow_event(event: dict[str, Any]) -> FlowEvent | None:
         dst_port=_optional_int(metadata.get("dst_port")),
         transport=str(metadata.get("protocol") or metadata.get("transport") or "unknown").upper(),
         application_protocol=_application_protocol(event, metadata),
-        payload_bytes=_payload_bytes(event, metadata),
-        captured_bytes=_captured_bytes(event, metadata),
+        payload_bytes=_payload_bytes(event, metadata) if provenance != "socket_observation" else 0,
+        captured_bytes=_captured_bytes(event, metadata) if provenance == "captured_packet" else 0,
+        counter_provenance=provenance,
+        source_mode=_safe_text(event.get("source_mode") or metadata.get("source_mode")),
         findings=_finding_types(event),
         node_id=_safe_text(event.get("node_id") or metadata.get("node_id")),
         event_timestamp=normalize_timestamp(event.get("event_timestamp") if "event_timestamp" in event else metadata.get("timestamp") or event.get("timestamp") or event.get("generated_at"), preserve_ambiguous=True),
@@ -93,12 +98,15 @@ def flow_key(event: FlowEvent | dict[str, Any]) -> str:
         (flow_event.src_ip, int(flow_event.src_port or 0)),
         (flow_event.dst_ip, int(flow_event.dst_port or 0)),
     ])
+    context = flow_event.grouping_context
+    if flow_event.counter_provenance != "reported_packet_metadata":
+        context += "|" + flow_event.counter_provenance
     return (
         (f"{flow_event.node_id}|" if flow_event.node_id else "") +
         f"{flow_event.transport}:"
         f"{endpoints[0][0]}:{endpoints[0][1]}-"
         f"{endpoints[1][0]}:{endpoints[1][1]}"
-        + ("|" + flow_event.grouping_context if flow_event.grouping_context not in {"", "{}"} else "")
+        + ("|" + context if context not in {"", "{}"} else "")
     )
 
 
@@ -110,12 +118,18 @@ def reconstruct_flows(
     if window_seconds <= 0:
         raise ValueError("window_seconds must be greater than 0")
     normalized = [event for event in (event_to_flow_event(item) for item in events) if event is not None]
-    normalized.sort(key=lambda item: (flow_key(item), item.timestamp))
+    normalized.sort(key=lambda item: (flow_key(item), item.timestamp, timestamp_sort_key(item.ingested_at), item.observation_id))
 
     flows: list[dict[str, Any]] = []
     active: dict[str, dict[str, Any]] = {}
+    seen_samples: set[tuple[str, str, str]] = set()
     for event in normalized:
         key = flow_key(event)
+        if event.observation_id:
+            sample = (key, event.observation_id, event.event_timestamp)
+            if sample in seen_samples:
+                continue
+            seen_samples.add(sample)
         current = active.get(key)
         if current is None or (event.timestamp and current["last_seen"] and event.timestamp - current["last_seen"] > window_seconds):
             if current is not None:
@@ -145,7 +159,7 @@ def build_flow_report(
 
 
 def topology_from_flows(flows: Iterable[dict[str, Any]]) -> dict[str, Any]:
-    node_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {"ip": "", "flow_count": 0, "packet_count": 0, "payload_bytes": 0})
+    node_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {"ip": "", "flow_count": 0, "packet_count": 0, "event_count": 0, "captured_packet_count": 0, "socket_observation_count": 0, "counter_sources": {}, "payload_bytes": 0})
     edge_stats: dict[tuple[str, str], dict[str, Any]] = {}
     for flow in flows:
         initiator = str((flow.get("initiator") or {}).get("ip") or "")
@@ -157,6 +171,7 @@ def topology_from_flows(flows: Iterable[dict[str, Any]]) -> dict[str, Any]:
             node["ip"] = ip
             node["flow_count"] += 1
             node["packet_count"] += int(flow.get("packet_count") or 0)
+            _add_counter_totals(node, flow)
             node["payload_bytes"] += int(flow.get("payload_bytes") or 0)
         edge_key = (initiator, responder)
         edge = edge_stats.setdefault(
@@ -166,6 +181,10 @@ def topology_from_flows(flows: Iterable[dict[str, Any]]) -> dict[str, Any]:
                 "dst_ip": responder,
                 "flow_count": 0,
                 "packet_count": 0,
+                "event_count": 0,
+                "captured_packet_count": 0,
+                "socket_observation_count": 0,
+                "counter_sources": {},
                 "payload_bytes": 0,
                 "protocols": set(),
                 "application_protocols": set(),
@@ -173,6 +192,7 @@ def topology_from_flows(flows: Iterable[dict[str, Any]]) -> dict[str, Any]:
         )
         edge["flow_count"] += 1
         edge["packet_count"] += int(flow.get("packet_count") or 0)
+        _add_counter_totals(edge, flow)
         edge["payload_bytes"] += int(flow.get("payload_bytes") or 0)
         edge["protocols"].update(flow.get("transports") or [])
         edge["application_protocols"].update(flow.get("application_protocols") or [])
@@ -190,6 +210,29 @@ def topology_from_flows(flows: Iterable[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _add_counter_totals(target: dict[str, Any], flow: dict[str, Any]) -> None:
+    for key in ("event_count", "captured_packet_count", "socket_observation_count"):
+        target[key] += int(flow.get(key, flow.get("packet_count", 0) if key == "event_count" else 0) or 0)
+    source = str(flow.get("counter_provenance") or "reported_packet_metadata")
+    target["counter_sources"][source] = target["counter_sources"].get(source, 0) + int(flow.get("event_count", flow.get("packet_count", 0)) or 0)
+
+
+def _counter_provenance(event: dict[str, Any], metadata: dict[str, Any]) -> str:
+    if str(event.get("source_mode") or metadata.get("source_mode") or "").lower() in {"fixture", "simulated"}:
+        return "synthetic"
+    source = str(event.get("telemetry_source") or metadata.get("telemetry_source") or "").lower()
+    origin = str(event.get("evidence_origin") or "").lower()
+    if source in {"socket_inventory", "socket_reconstruction"} or origin in {"reconstructed_socket_flow", "listener_socket_observation"}:
+        return "socket_observation"
+    declared = event.get("counter_provenance") or metadata.get("counter_provenance")
+    if declared in {"os_counter", "estimated", "synthetic", "socket_observation"}:
+        return str(declared)
+    if any((_optional_int(metadata.get(key)) or 0) > 0 for key in ("captured_len", "captured_length")):
+        return "captured_packet"
+    # Legacy metadata can report packets without proving physical capture.
+    return "reported_packet_metadata"
+
+
 def _metadata_from_event(event: dict[str, Any]) -> dict[str, Any]:
     metadata: dict[str, Any] = {}
     if isinstance(event.get("metadata"), dict):
@@ -201,7 +244,7 @@ def _metadata_from_event(event: dict[str, Any]) -> dict[str, Any]:
         dpi_headers = event["dpi"].get("headers") or {}
         if isinstance(dpi_headers, dict) and isinstance(dpi_headers.get("network"), dict):
             metadata.update({key: value for key, value in dpi_headers["network"].items() if value not in {None, ""}})
-    for key in ("timestamp", "src_ip", "dst_ip", "src_port", "dst_port", "protocol", "transport", "payload_bytes", "captured_len"):
+    for key in ("timestamp", "src_ip", "dst_ip", "src_port", "dst_port", "protocol", "transport", "payload_bytes", "captured_len", "captured_length"):
         if event.get(key) not in {None, ""}:
             metadata[key] = event[key]
     return metadata
@@ -234,7 +277,7 @@ def _payload_bytes(event: dict[str, Any], metadata: dict[str, Any]) -> int:
 
 
 def _captured_bytes(event: dict[str, Any], metadata: dict[str, Any]) -> int:
-    for candidate in (metadata.get("captured_len"), metadata.get("original_len"), event.get("captured_len")):
+    for candidate in (metadata.get("captured_len"), metadata.get("captured_length"), metadata.get("original_len"), event.get("captured_len")):
         value = _optional_int(candidate)
         if value is not None:
             return max(value, 0)
@@ -273,6 +316,11 @@ def _new_flow(key: str, event: FlowEvent) -> dict[str, Any]:
         "first_seen": event.timestamp,
         "last_seen": event.timestamp,
         "packet_count": 0,
+        "event_count": 0,
+        "captured_packet_count": 0,
+        "socket_observation_count": 0,
+        "counter_provenance": event.counter_provenance,
+        "source_mode": event.source_mode,
         "payload_bytes": 0,
         "captured_bytes": 0,
         "directions": {
@@ -301,7 +349,13 @@ def _apply_event(flow: dict[str, Any], event: FlowEvent) -> None:
     if event.timestamp:
         flow["first_seen"] = min(flow["first_seen"] or event.timestamp, event.timestamp)
         flow["last_seen"] = max(flow["last_seen"] or event.timestamp, event.timestamp)
-    flow["packet_count"] += 1
+    flow["event_count"] += 1
+    if event.counter_provenance in {"captured_packet", "reported_packet_metadata"}:
+        flow["packet_count"] += 1
+    if event.counter_provenance == "captured_packet":
+        flow["captured_packet_count"] += 1
+    if event.counter_provenance == "socket_observation":
+        flow["socket_observation_count"] += 1
     flow["payload_bytes"] += event.payload_bytes
     flow["captured_bytes"] += event.captured_bytes
     flow["transports"].add(event.transport)
@@ -330,7 +384,7 @@ def _apply_event(flow: dict[str, Any], event: FlowEvent) -> None:
         direction = "initiator_to_responder"
     else:
         direction = "responder_to_initiator"
-    flow["directions"][direction]["packets"] += 1
+    flow["directions"][direction]["packets"] += int(event.counter_provenance in {"captured_packet", "reported_packet_metadata"})
     flow["directions"][direction]["payload_bytes"] += event.payload_bytes
 
 
@@ -355,7 +409,7 @@ def _finalize_flow(flow: dict[str, Any]) -> dict[str, Any]:
     }
     finalized["event_timestamp"] = finalized["event_timestamps"][-1] if finalized["event_timestamps"] else None
     finalized["ingested_at"] = finalized["ingestion_timestamps"][-1] if finalized["ingestion_timestamps"] else None
-    finalized["observation_id"] = finalized["observation_ids"][0] if len(finalized["observation_ids"]) == 1 else ", ".join(finalized["observation_ids"])
+    finalized["observation_id"] = finalized["observation_ids"][0] if len(finalized["observation_ids"]) == 1 else ""
     finalized["session_id"] = finalized["session_ids"][0] if len(finalized["session_ids"]) == 1 else ", ".join(finalized["session_ids"])
     finalized["source_flow_key"] = finalized["source_flow_keys"][0] if len(finalized["source_flow_keys"]) == 1 else ", ".join(finalized["source_flow_keys"])
     finalized["evidence_origin"] = finalized["evidence_origins"][0] if len(finalized["evidence_origins"]) == 1 else ", ".join(finalized["evidence_origins"])
