@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import logging
 import sys
+import time
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from .config_loader import LOG_DIR, ensure_runtime_dirs
 
-DEFAULT_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+DEFAULT_FORMAT = "%(asctime)s UTC | %(levelname)s | %(name)s | %(message)s"
 
 
 def configure_logger(
@@ -39,6 +40,7 @@ def configure_logger(
     log_path = Path(LOG_DIR) / logfile
 
     formatter = logging.Formatter(fmt)
+    formatter.converter = time.gmtime
 
     log_path.parent.mkdir(parents=True, exist_ok=True)
     if max_bytes:

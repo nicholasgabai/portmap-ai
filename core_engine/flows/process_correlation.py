@@ -89,6 +89,7 @@ def build_process_correlation_record(
         "evidence_origin": _identity_text(session, "evidence_origin"),
         "observation_type": _identity_text(session, "observation_type"),
         "identity_scope": _identity_text(session, "identity_scope"),
+        **{key: session[key] for key in ("node_id", "address_family", "identity_version", "event_timestamp", "ingested_at", "timestamp_status") if key in session},
         "session_reference": str(session.get("session_id") or ""),
         "flow_reference": str(session.get("flow_pair_id") or session.get("flow_ref") or ""),
         "process_attribution": process_value,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+import math
 from typing import Any
 
 
@@ -16,7 +17,7 @@ def utc_now_iso() -> str:
 
 
 def utc_isoformat(value: datetime) -> str:
-    if value.tzinfo is None:
+    if value.tzinfo is None or value.utcoffset() is None:
         raise AmbiguousTimestampError("naive datetime cannot be canonicalized as UTC")
     return value.astimezone(UTC).isoformat().replace("+00:00", UTC_SUFFIX)
 
@@ -52,19 +53,22 @@ def parse_utc_instant(value: Any) -> datetime | None:
     if value in {None, ""}:
         return None
     if isinstance(value, datetime):
-        if value.tzinfo is None:
+        if value.tzinfo is None or value.utcoffset() is None:
             return None
         return value.astimezone(UTC)
     if isinstance(value, (int, float)):
         if float(value) <= 0:
             return None
-        return _datetime_from_epoch(float(value))
+        try:
+            return _datetime_from_epoch(float(value))
+        except (ValueError, OverflowError, OSError):
+            return None
     text = str(value).strip()
     if text in {"", "-", "0"}:
         return None
     try:
         return _datetime_from_epoch(float(text))
-    except ValueError:
+    except (ValueError, OverflowError, OSError):
         pass
     try:
         parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
@@ -96,8 +100,35 @@ def epoch_seconds(value: Any) -> float:
 
 
 def _datetime_from_epoch(value: float) -> datetime:
-    if value <= 0:
+    if not math.isfinite(value) or value <= 0:
         raise ValueError("epoch timestamp must be positive")
     if value > 10_000_000_000:
         value = value / 1000.0
     return datetime.fromtimestamp(value, UTC)
+
+
+def timestamp_sort_key(value: Any) -> tuple[bool, float, str]:
+    """Known instants sort chronologically; ambiguous values remain deterministic."""
+    parsed = parse_utc_instant(value)
+    return (parsed is not None, parsed.timestamp() if parsed else 0.0, str(value or ""))
+
+
+def observation_timestamps(
+    record: dict[str, Any], *, event_timestamp: Any = None,
+    ingested_at: Any = None, strict: bool = False,
+) -> dict[str, Any]:
+    """Separate event time from receiver time without guessing legacy timezones."""
+    raw = record.get("event_timestamp") if "event_timestamp" in record else record.get("timestamp") or record.get("observed_at") or event_timestamp
+    event = normalize_timestamp(raw, preserve_ambiguous=not strict) if raw not in (None, "", "-") else None
+    parsed = parse_utc_instant(event)
+    if strict and parsed is None:
+        raise AmbiguousTimestampError("canonical observation requires an aware event timestamp")
+    result = {
+        "event_timestamp": event,
+        "timestamp": event,
+        "timestamp_status": "canonical_utc" if parsed else "ambiguous_legacy" if event else "unavailable",
+    }
+    received = ingested_at if ingested_at is not None else record.get("ingested_at")
+    if received not in (None, "", "-"):
+        result["ingested_at"] = normalize_timestamp(received, preserve_ambiguous=False)
+    return result

@@ -551,6 +551,7 @@ def _graph_summary(
         "top_investigation_chain_confidence": top_chain.get("chain_confidence", 0.0),
         "investigation_chain_summary": _investigation_chain_summary(investigation_chains),
         "investigation_chain_next_steps": _investigation_chain_next_steps(top_chain),
+        **{key: related[key] for key in ("event_timestamp", "ingested_at", "timestamp_status", "address_family", "node_id", "identity_version") if key in related},
         "related_asset": related.get("related_asset") or "-",
         "related_service": related.get("related_service") or "-",
         "related_profile": related.get("related_profile") or "-",
@@ -666,6 +667,7 @@ def _identity_context(
         observation_type = "listener" if identity_scope == "listener" else "socket_conversation"
     return {
         "related_observation": first("observation_id", "event_id", "packet_id", "record_id"),
+        **{key: observation[key] for key in ("event_timestamp", "ingested_at", "timestamp_status", "address_family", "node_id", "identity_version") if key in observation},
         "related_flow": first("flow_key", "flow_id"),
         "related_session": first("session_id", "session_ref", "session_reference"),
         "evidence_origin": evidence_origin,
@@ -2937,6 +2939,7 @@ def _investigation_chain_record(
         "observation_type": related.get("observation_type") or "-",
         "identity_scope": related.get("identity_scope") or "-",
         "related_prediction": threat_prediction.get("prediction_category", "-"),
+        **{key: related[key] for key in ("event_timestamp", "ingested_at", "timestamp_status", "address_family", "node_id", "identity_version") if key in related},
         "related_review_queue": review_queue.get("review_queue_priority", "-"),
         "related_federated_consensus": federated_model.get("consensus", "-"),
         "metadata_only": True,

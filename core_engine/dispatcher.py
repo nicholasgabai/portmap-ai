@@ -7,6 +7,7 @@ from ai_agent.remediation import handle_remediation
 from core_engine.audit_events import append_jsonl_event, record_audit_event, utc_timestamp
 from core_engine.modules.scanner import normalize_scan_snapshot, scan_snapshot_id
 from core_engine.remediation_safety import firewall_dry_run
+from core_engine.time_utils import observation_timestamps
 from core_engine.runtime.milestone_v_bridge import (
     build_milestone_v_runtime_bridge,
     empty_milestone_v_runtime_bridge,
@@ -57,6 +58,11 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
         top_port = None
 
     timestamp = utc_timestamp()
+    times = observation_timestamps(payload, ingested_at=timestamp)
+    ports = [
+        {**row, **observation_timestamps(row, event_timestamp=times["event_timestamp"], ingested_at=timestamp)}
+        for row in ports
+    ]
     try:
         milestone_v = build_milestone_v_runtime_bridge(ports, node_id=node_id, generated_at=timestamp)
     except Exception as exc:
@@ -67,7 +73,8 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
         )
 
     line = {
-        "timestamp": timestamp,
+        **times,
+        "timestamp": times.get("event_timestamp") or timestamp,
         "event_type": "worker_telemetry",
         "node_id": node_id,
         "score": score,
@@ -75,7 +82,8 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
         "anomalies": anomalies,
         "scan_snapshot_id": snapshot_id,
         "source_mode": (ports[0].get("source_mode") if ports else "unknown"),
-        "ports_sample": ports[:5],  # don’t spam the log
+        "ports_sample": (milestone_v.get("observations") or ports)[:5],
+        "observations": milestone_v.get("observations") or [],
         "current_snapshot": True,
         "score_factors": score_factors,
         "milestone_v": milestone_v.get("operator_summary") or {},
@@ -107,7 +115,8 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
             decision = handle_remediation(payload, settings, logger if logger else None)
             if decision:
                 event = {
-                    "timestamp": utc_timestamp(),
+                    "timestamp": times.get("event_timestamp") or timestamp,
+                    **times,
                     "event_type": "remediation_decision",
                     "node_id": node_id,
                     "action": decision.action,
@@ -121,6 +130,10 @@ def dispatch_alert(payload: dict, logger=None, settings=None):
                     "score_factors": score_factors,
                 }
                 if top_port:
+                    matching = next((row for row in milestone_v.get("observations", []) if row.get("scan_snapshot_key") == top_port.get("scan_snapshot_key")), top_port)
+                    for key in ("observation_id", "session_id", "flow_key", "node_id", "address_family", "identity_version", "evidence_origin", "observation_type", "identity_scope", "local_address", "remote_address", "local_port", "remote_port", "event_timestamp", "ingested_at", "timestamp_status", "timestamp"):
+                        if key in matching:
+                            event[key] = matching[key]
                     event["port"] = top_port.get("port")
                     event["program"] = top_port.get("program")
                     event["protocol"] = top_port.get("protocol")

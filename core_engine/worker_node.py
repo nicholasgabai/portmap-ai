@@ -28,6 +28,8 @@ from core_engine.modules.scanner import basic_scan_with_diagnostics, normalize_s
 from core_engine.firewall_hooks import configure_firewall
 from core_engine.telemetry_framing import encode_json_frame, summarize_worker_payload
 from core_engine.tls_utils import create_client_context, merge_tls_config
+from core_engine.observation_identity import observation_identity
+from core_engine.time_utils import observation_timestamps, utc_now_iso
 
 DEFAULT_TIMEOUT = 5
 DEFAULT_MASTER_IP = "127.0.0.1"
@@ -76,12 +78,20 @@ def _scanner_diagnostic_log_fields(diagnostics: dict) -> dict:
 
 
 def build_payload(node_id: str, connections, logger: logging.Logger, autolearn: bool) -> dict:
+    observed_at = utc_now_iso()
     snapshot_connections = normalize_scan_snapshot(connections, node_id=node_id)
-    source_modes = sorted({str(row.get("source_mode") or "unknown") for row in snapshot_connections})
     snapshot_id = scan_snapshot_id(snapshot_connections, node_id=node_id)
+    snapshot_connections = [
+        {**row, **observation_identity(row, node_id=node_id, event_timestamp=observed_at),
+         **observation_timestamps(row, event_timestamp=observed_at, strict=True)}
+        for row in snapshot_connections
+    ]
+    source_modes = sorted({str(row.get("source_mode") or "unknown") for row in snapshot_connections})
     payload = {
         "node_id": node_id,
-        "timestamp": int(time.time()),
+        "timestamp": observed_at,
+        "event_timestamp": observed_at,
+        "timestamp_status": "canonical_utc",
         "ports": [],
         "anomalies": [],
         "score": 0.0,

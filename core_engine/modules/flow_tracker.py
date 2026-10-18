@@ -3,9 +3,11 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 from hashlib import sha256
+import json
 from typing import Any, Iterable
 
-from core_engine.time_utils import epoch_seconds
+from core_engine.time_utils import epoch_seconds, normalize_timestamp, timestamp_sort_key
+from core_engine.observation_identity import normalize_address
 
 
 DEFAULT_FLOW_WINDOW_SECONDS = 60.0
@@ -31,6 +33,10 @@ class FlowEvent:
     observation_type: str = ""
     identity_scope: str = ""
     telemetry_source: str = ""
+    node_id: str = ""
+    event_timestamp: str = ""
+    ingested_at: str = ""
+    grouping_context: str = ""
 
     @property
     def src_endpoint(self) -> dict[str, Any]:
@@ -45,12 +51,12 @@ def event_to_flow_event(event: dict[str, Any]) -> FlowEvent | None:
     if not isinstance(event, dict):
         return None
     metadata = _metadata_from_event(event)
-    src_ip = str(metadata.get("src_ip") or "")
-    dst_ip = str(metadata.get("dst_ip") or "")
+    src_ip = normalize_address(metadata.get("src_ip"))
+    dst_ip = normalize_address(metadata.get("dst_ip"))
     if not src_ip or not dst_ip:
         return None
     return FlowEvent(
-        timestamp=_timestamp_float(metadata.get("timestamp"), event.get("timestamp"), event.get("generated_at")),
+        timestamp=_timestamp_float(event.get("event_timestamp")) if "event_timestamp" in event else _timestamp_float(metadata.get("timestamp"), event.get("timestamp"), event.get("generated_at")),
         src_ip=src_ip,
         dst_ip=dst_ip,
         src_port=_optional_int(metadata.get("src_port")),
@@ -60,6 +66,14 @@ def event_to_flow_event(event: dict[str, Any]) -> FlowEvent | None:
         payload_bytes=_payload_bytes(event, metadata),
         captured_bytes=_captured_bytes(event, metadata),
         findings=_finding_types(event),
+        node_id=_safe_text(event.get("node_id") or metadata.get("node_id")),
+        event_timestamp=normalize_timestamp(event.get("event_timestamp") if "event_timestamp" in event else metadata.get("timestamp") or event.get("timestamp") or event.get("generated_at"), preserve_ambiguous=True),
+        ingested_at=normalize_timestamp(event.get("ingested_at"), preserve_ambiguous=True),
+        grouping_context=json.dumps({
+            key: event.get(key) or metadata.get(key)
+            for key in ("source_mode", "telemetry_source", "identity_scope", "flow_direction", "session_id", "flow_key")
+            if event.get(key) or metadata.get(key)
+        }, sort_keys=True, separators=(",", ":")),
         evidence=_evidence_markers(event),
         observation_id=_safe_text(event.get("observation_id") or metadata.get("observation_id")),
         source_flow_key=_safe_text(event.get("flow_key") or metadata.get("flow_key")),
@@ -80,9 +94,11 @@ def flow_key(event: FlowEvent | dict[str, Any]) -> str:
         (flow_event.dst_ip, int(flow_event.dst_port or 0)),
     ])
     return (
+        (f"{flow_event.node_id}|" if flow_event.node_id else "") +
         f"{flow_event.transport}:"
         f"{endpoints[0][0]}:{endpoints[0][1]}-"
         f"{endpoints[1][0]}:{endpoints[1][1]}"
+        + ("|" + flow_event.grouping_context if flow_event.grouping_context not in {"", "{}"} else "")
     )
 
 
@@ -249,6 +265,9 @@ def _evidence_markers(event: dict[str, Any]) -> list[str]:
 def _new_flow(key: str, event: FlowEvent) -> dict[str, Any]:
     return {
         "flow_key": key,
+        "node_id": event.node_id,
+        "event_timestamps": set(),
+        "ingestion_timestamps": set(),
         "initiator": event.src_endpoint,
         "responder": event.dst_endpoint,
         "first_seen": event.timestamp,
@@ -275,6 +294,10 @@ def _new_flow(key: str, event: FlowEvent) -> dict[str, Any]:
 
 
 def _apply_event(flow: dict[str, Any], event: FlowEvent) -> None:
+    if event.event_timestamp:
+        flow["event_timestamps"].add(event.event_timestamp)
+    if event.ingested_at:
+        flow["ingestion_timestamps"].add(event.ingested_at)
     if event.timestamp:
         flow["first_seen"] = min(flow["first_seen"] or event.timestamp, event.timestamp)
         flow["last_seen"] = max(flow["last_seen"] or event.timestamp, event.timestamp)
@@ -315,6 +338,8 @@ def _finalize_flow(flow: dict[str, Any]) -> dict[str, Any]:
     duration = max(float(flow["last_seen"] or 0) - float(flow["first_seen"] or 0), 0.0)
     finalized = {
         **flow,
+        "event_timestamps": sorted(flow["event_timestamps"], key=timestamp_sort_key),
+        "ingestion_timestamps": sorted(flow["ingestion_timestamps"], key=timestamp_sort_key),
         "duration_seconds": round(duration, 3),
         "transports": sorted(flow["transports"]),
         "application_protocols": sorted(flow["application_protocols"]),
@@ -328,6 +353,8 @@ def _finalize_flow(flow: dict[str, Any]) -> dict[str, Any]:
         "identity_scopes": sorted(flow["identity_scopes"]),
         "telemetry_sources": sorted(flow["telemetry_sources"]),
     }
+    finalized["event_timestamp"] = finalized["event_timestamps"][-1] if finalized["event_timestamps"] else None
+    finalized["ingested_at"] = finalized["ingestion_timestamps"][-1] if finalized["ingestion_timestamps"] else None
     finalized["observation_id"] = finalized["observation_ids"][0] if len(finalized["observation_ids"]) == 1 else ", ".join(finalized["observation_ids"])
     finalized["session_id"] = finalized["session_ids"][0] if len(finalized["session_ids"]) == 1 else ", ".join(finalized["session_ids"])
     finalized["source_flow_key"] = finalized["source_flow_keys"][0] if len(finalized["source_flow_keys"]) == 1 else ", ".join(finalized["source_flow_keys"])

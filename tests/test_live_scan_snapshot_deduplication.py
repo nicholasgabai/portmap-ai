@@ -64,7 +64,7 @@ def test_stale_transient_observations_are_pruned_between_scan_cycles(monkeypatch
     assert second[0]["status"] == "LISTEN"
 
 
-def test_duplicate_socket_rows_collapse_into_one_observation():
+def test_exact_duplicate_socket_rows_collapse_but_different_addresses_survive():
     rows = [
         {"program": "sample-service", "port": 443, "local": "203.0.113.10:443", "remote": "-", "protocol": "TCP", "status": "LISTEN", "source_mode": "live"},
         {"program": "sample-service", "port": 443, "local": "203.0.113.11:443", "remote": "-", "protocol": "TCP", "status": "LISTEN", "source_mode": "live"},
@@ -73,7 +73,8 @@ def test_duplicate_socket_rows_collapse_into_one_observation():
 
     snapshot = scanner.normalize_scan_snapshot(rows, node_id="worker-placeholder")
 
-    assert len(snapshot) == 1
+    assert len(snapshot) == 2
+    assert {row["local"] for row in snapshot} == {"203.0.113.10:443", "203.0.113.11:443"}
     assert snapshot[0]["current_snapshot"] is True
 
 
@@ -87,11 +88,11 @@ def test_worker_payload_is_current_bounded_snapshot_and_scoring_is_stable(monkey
     first = worker_node.build_payload("worker-placeholder", duplicated, logging.getLogger("test.worker"), autolearn=False)
     second = worker_node.build_payload("worker-placeholder", duplicated + duplicated, logging.getLogger("test.worker"), autolearn=False)
 
-    assert len(first["ports"]) == 1
-    assert len(second["ports"]) == 1
+    assert len(first["ports"]) == 2
+    assert len(second["ports"]) == 2
     assert first["score"] == second["score"] == 0.42
-    assert first["scan_snapshot"]["observation_count"] == 1
-    assert second["scan_snapshot"]["observation_count"] == 1
+    assert first["scan_snapshot"]["observation_count"] == 2
+    assert second["scan_snapshot"]["observation_count"] == 2
     assert first["scan_snapshot"]["snapshot_id"] == second["scan_snapshot"]["snapshot_id"]
 
 
@@ -113,7 +114,7 @@ def test_dispatcher_logs_deduplicated_current_snapshot(tmp_path, monkeypatch):
 
     assert entry["current_snapshot"] is True
     assert entry["source_mode"] == "live"
-    assert len(entry["ports_sample"]) == 1
+    assert len(entry["ports_sample"]) == 2
     assert entry["scan_snapshot_id"].startswith("scan-snapshot-")
 
 

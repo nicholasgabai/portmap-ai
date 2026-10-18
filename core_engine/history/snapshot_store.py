@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from core_engine.time_utils import timestamp_sort_key
+
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -29,7 +31,7 @@ def rotate_historical_snapshots(
             valid_rows.append(dict(row))
         else:
             malformed_rows.append(build_malformed_snapshot_record(raw_record=row if isinstance(row, dict) else {}, errors=validation["errors"]))
-    ordered = sorted(valid_rows, key=lambda item: (str(item.get("snapshot_timestamp") or item.get("generated_at") or ""), str(item.get("snapshot_id") or "")))
+    ordered = sorted(valid_rows, key=lambda item: (timestamp_sort_key(item.get("snapshot_timestamp") or item.get("generated_at")), str(item.get("snapshot_id") or "")))
     retained = ordered[-limit:] if limit else []
     dropped = ordered[: max(0, len(ordered) - len(retained))]
     return {

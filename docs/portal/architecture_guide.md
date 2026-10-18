@@ -41,6 +41,7 @@ Physical validation with a sanitized SSH-style scenario showed that socket-state
 
 ## Related Docs
 
+- [Runtime Evidence Integrity](../runtime_evidence_integrity.md)
 - [Packet Intelligence Guide](packet_intelligence_guide.md)
 - [AI Intelligence Guide](ai_intelligence_guide.md)
 - [Architecture](../architecture.md)

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
-from hashlib import sha256
 from typing import Any, Iterable
 
-from core_engine.time_utils import normalize_timestamp, utc_now_iso
+from core_engine.time_utils import normalize_timestamp, utc_now_iso, observation_timestamps, parse_utc_instant, timestamp_sort_key
+from core_engine.observation_identity import observation_identity, identity_key
 from core_engine.telemetry.process_attribution import normalize_source_mode
 
 
@@ -62,30 +61,20 @@ def build_session_tracking_record(
     process = _safe_attribution(observation.get("process_attribution") or observation.get("process") or observation.get("program"))
     service = _safe_attribution(observation.get("service_attribution") or observation.get("service") or observation.get("service_name"))
     mode = normalize_source_mode(str(observation.get("source_mode") or observation.get("data_source") or "unknown"))
+    identity = observation_identity(observation, event_timestamp=timestamp)
     record = {
         "record_type": "normalized_flow_session",
         "record_version": FLOW_SESSION_RECORD_VERSION,
         "session_id": "",
-        "observation_id": _observation_id(observation, generated_at=timestamp),
+        "observation_id": identity["observation_id"],
         "source_observation_id": _first_text(
             observation,
             ("source_observation_id", "observation_id", "event_id", "packet_id", "record_id"),
         ),
-        "flow_key": _flow_key(
-            observation,
-            local_port=local_port,
-            remote_port=remote_port,
-            protocol=protocol,
-        ),
+        "flow_key": identity["flow_key"],
         "flow_direction": direction,
-        "local_address": _address_text(
-            observation,
-            ("local_address", "local_ip", "source_ip", "src_ip", "local_host"),
-        ),
-        "remote_address": _address_text(
-            observation,
-            ("remote_address", "remote_ip", "destination_ip", "dst_ip", "remote_host"),
-        ),
+        "local_address": identity["local_address"],
+        "remote_address": identity["remote_address"],
         "local_endpoint_class": local_class,
         "remote_endpoint_class": remote_class,
         "local_port": local_port,
@@ -105,21 +94,10 @@ def build_session_tracking_record(
         "advisory_notes": _advisory_notes(direction=direction, state=state, source_mode=mode),
         **FLOW_SAFETY_FLAGS,
     }
+    record.update(identity)
+    record.update(observation_timestamps(observation, event_timestamp=timestamp))
+    record["advisory_notes"] = _advisory_notes(direction=record["flow_direction"], state=state, source_mode=mode)
     record["confidence_score"] = score_session_confidence(record, previous_count=previous_count)
-    record["session_id"] = "flow-session-" + _digest(
-        {
-            "direction": record["flow_direction"],
-            "local_endpoint_class": record["local_endpoint_class"],
-            "remote_endpoint_class": record["remote_endpoint_class"],
-            "local_port": record["local_port"],
-            "remote_port": record["remote_port"],
-            "protocol": record["protocol"],
-            "transport_state": record["transport_state"],
-            "process_attribution": record["process_attribution"],
-            "service_attribution": record["service_attribution"],
-            "source_mode": record["source_mode"],
-        }
-    )[:16]
     return record
 
 
@@ -134,18 +112,25 @@ def normalize_socket_observations(
         for row in observations or []
         if isinstance(row, dict)
     ]
-    deduped: dict[str, dict[str, Any]] = {}
+    deduped: dict[tuple[str, str], dict[str, Any]] = {}
     for record in records:
-        existing = deduped.get(record["session_id"])
+        key = (record["session_id"], identity_key(record))
+        existing = deduped.get(key)
         if existing is None:
-            deduped[record["session_id"]] = record
+            deduped[key] = record
             continue
-        merged = dict(existing)
-        timestamps = sorted(set(existing.get("observed_timestamps") or []) | set(record.get("observed_timestamps") or []))
+        # A session is an aggregate; its scalar identity/time must describe the
+        # same, deterministically selected sample rather than input list order.
+        merged = dict(max((existing, record), key=lambda item: (
+            timestamp_sort_key(item.get("event_timestamp")),
+            timestamp_sort_key(item.get("ingested_at")),
+            json.dumps(item, sort_keys=True, default=str),
+        )))
+        timestamps = sorted(set(existing.get("observed_timestamps") or []) | set(record.get("observed_timestamps") or []), key=timestamp_sort_key)
         merged["observed_timestamps"] = timestamps
         merged["session_duration_preview"] = _duration_preview(timestamps)
         merged["confidence_score"] = max(float(existing.get("confidence_score") or 0.0), float(record.get("confidence_score") or 0.0))
-        deduped[record["session_id"]] = merged
+        deduped[key] = merged
     return sorted(deduped.values(), key=lambda item: (str(item.get("session_id") or ""), str(item.get("source_mode") or "")))
 
 
@@ -232,86 +217,9 @@ def _matching_previous_count(observation: dict[str, Any], previous_observations:
 
 
 def _observation_key(observation: dict[str, Any]) -> tuple[Any, ...]:
-    return (
-        _endpoint_class(observation.get("local_endpoint_class") or observation.get("local_address_class") or "unknown"),
-        _endpoint_class(observation.get("remote_endpoint_class") or observation.get("remote_address_class") or "unknown"),
-        _safe_port(observation.get("local_port") or observation.get("port")),
-        _safe_port(observation.get("remote_port")),
-        _normalize_protocol(observation.get("protocol") or observation.get("transport") or observation.get("transport_protocol")),
-        _safe_attribution(observation.get("process_attribution") or observation.get("process") or observation.get("program")),
-        _safe_attribution(observation.get("service_attribution") or observation.get("service") or observation.get("service_name")),
-        normalize_source_mode(str(observation.get("source_mode") or observation.get("data_source") or "unknown")),
-    )
+    return (identity_key(observation),)
 
 
-def _observation_id(observation: dict[str, Any], *, generated_at: str) -> str:
-    existing = _first_text(observation, ("observation_id", "event_id", "packet_id", "record_id"))
-    if existing:
-        return existing
-    return "socket-observation-" + _digest(
-        {
-            "node_id": observation.get("node_id"),
-            "timestamp": observation.get("timestamp") or observation.get("observed_at") or generated_at,
-            "local": observation.get("local") or observation.get("local_address"),
-            "remote": observation.get("remote") or observation.get("remote_address"),
-            "local_port": observation.get("local_port") or observation.get("port"),
-            "remote_port": observation.get("remote_port"),
-            "protocol": observation.get("protocol") or observation.get("transport") or observation.get("transport_protocol"),
-            "state": observation.get("transport_state") or observation.get("status") or observation.get("state"),
-            "source_mode": observation.get("source_mode") or observation.get("data_source"),
-        }
-    )[:16]
-
-
-def _flow_key(
-    observation: dict[str, Any],
-    *,
-    local_port: int | None,
-    remote_port: int | None,
-    protocol: str,
-) -> str:
-    existing = _first_text(observation, ("flow_key", "flow_id"))
-    if existing:
-        return existing
-    local_address = _address_text(observation, ("local_address", "local_ip", "source_ip", "src_ip", "local_host"))
-    remote_address = _address_text(
-        observation,
-        ("remote_address", "remote_ip", "destination_ip", "dst_ip", "remote_host"),
-    )
-    if not local_address or not remote_address or local_port is None or remote_port is None:
-        return ""
-    endpoints = sorted(
-        [
-            {"ip": local_address, "port": int(local_port)},
-            {"ip": remote_address, "port": int(remote_port)},
-        ],
-        key=lambda item: (item["ip"], item["port"]),
-    )
-    return "flow-key-" + _digest({"transport_protocol": protocol, "endpoint_a": endpoints[0], "endpoint_b": endpoints[1]})[:16]
-
-
-def _address_text(observation: dict[str, Any], fields: tuple[str, ...]) -> str:
-    direct = _first_text(observation, fields)
-    if direct:
-        return direct
-    if any(field in fields for field in ("local_address", "local_ip", "source_ip", "src_ip", "local_host")):
-        return _endpoint_host(observation.get("local"))
-    if any(field in fields for field in ("remote_address", "remote_ip", "destination_ip", "dst_ip", "remote_host")):
-        return _endpoint_host(observation.get("remote"))
-    return ""
-
-
-def _endpoint_host(value: Any) -> str:
-    text = str(value or "").strip()
-    if not text or text == "-":
-        return ""
-    if text.startswith("[") and "]" in text:
-        return text[1 : text.index("]")]
-    if ":" in text:
-        host, _, maybe_port = text.rpartition(":")
-        if maybe_port.isdigit() and host:
-            return host.strip("[]")
-    return text
 
 
 def _first_text(observation: dict[str, Any], fields: tuple[str, ...]) -> str:
@@ -360,23 +268,26 @@ def _observed_timestamps(observation: dict[str, Any], *, generated_at: str) -> l
     if isinstance(timestamps, list):
         values = [normalize_timestamp(item, preserve_ambiguous=True) for item in timestamps if item]
     else:
-        values = [normalize_timestamp(observation.get("timestamp") or observation.get("observed_at") or generated_at, preserve_ambiguous=True)]
-    return sorted(set(values))
+        value = observation_timestamps(observation, event_timestamp=generated_at)["event_timestamp"]
+        values = [value] if value else []
+    return sorted(set(values), key=timestamp_sort_key)
 
 
 def _duration_preview(timestamps: list[str]) -> dict[str, Any]:
     if not timestamps:
         return {"first_seen": "", "last_seen": "", "duration_seconds": 0}
-    first_seen = min(timestamps)
-    last_seen = max(timestamps)
+    known = [value for value in timestamps if parse_utc_instant(value) is not None]
+    if not known:
+        return {"first_seen": "", "last_seen": "", "duration_seconds": 0}
+    first_seen = min(known, key=timestamp_sort_key)
+    last_seen = max(known, key=timestamp_sort_key)
     return {"first_seen": first_seen, "last_seen": last_seen, "duration_seconds": _duration_seconds(first_seen, last_seen)}
 
 
 def _duration_seconds(first_seen: str, last_seen: str) -> int:
-    try:
-        first = datetime.fromisoformat(first_seen.replace("Z", "+00:00"))
-        last = datetime.fromisoformat(last_seen.replace("Z", "+00:00"))
-    except ValueError:
+    first = parse_utc_instant(first_seen)
+    last = parse_utc_instant(last_seen)
+    if first is None or last is None:
         return 0
     return max(0, int((last - first).total_seconds()))
 
@@ -425,11 +336,6 @@ def _safe_attribution(value: Any) -> str:
     if text.lower() in {"unknown", "unattributed", "none"}:
         return "Unknown" if text.lower() == "unknown" else "Unattributed"
     return text[:80]
-
-
-def _digest(payload: Any) -> str:
-    material = json.dumps(payload, sort_keys=True, default=str, separators=(",", ":"))
-    return sha256(material.encode("utf-8")).hexdigest()
 
 
 def _now() -> str:

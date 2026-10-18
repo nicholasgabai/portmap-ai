@@ -202,6 +202,7 @@ def build_probable_application_attribution(
         )[:16],
         "generated_at": timestamp,
         "observed_entity_reference": _entity_ref(observation),
+        **{key: observation[key] for key in ("observation_id", "flow_key", "session_id", "node_id", "address_family", "identity_version", "event_timestamp", "ingested_at", "timestamp_status", "local_address", "remote_address", "local_port", "remote_port", "identity_scope", "evidence_origin") if key in observation},
         "candidate_app_class": app_class,
         "candidate_service_class": service_class,
         "process_hint": hints["process_hint"],
@@ -632,9 +633,7 @@ def _observation_context(observation: dict[str, Any], evidence: dict[str, Any]) 
         or observation.get("event_id")
         or observation.get("finding_id")
         or observation.get("packet_id")
-        or session_id
-        or flow_key
-        or _entity_ref(observation)
+        or observation.get("record_id")
     )
     service_candidate = _safe_context_text(evidence.get("service"))
     if service_candidate in {"-", "Unknown", "Unattributed"}:
@@ -642,6 +641,7 @@ def _observation_context(observation: dict[str, Any], evidence: dict[str, Any]) 
         labels = APPLICATION_PORT_CANDIDATES.get(port, ()) if port is not None else ()
         service_candidate = _safe_context_text(labels[0] if labels else "-")
     context = {
+        **{key: observation[key] for key in ("event_timestamp", "ingested_at", "timestamp_status", "address_family", "identity_version", "node_id") if key in observation},
         "observation_id": observation_id,
         "flow_key": flow_key,
         "session_id": session_id,

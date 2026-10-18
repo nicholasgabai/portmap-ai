@@ -33,7 +33,7 @@ def _format_address(addr: Any) -> str:
         port = addr[1] if len(addr) > 1 else None
     if host is None:
         return "-"
-    return f"{host}:{port}" if port is not None else str(host)
+    return f"[{host}]:{port}" if port is not None and ":" in str(host) else f"{host}:{port}" if port is not None else str(host)
 
 
 def _split_host_port(value: Any) -> tuple[str, int | None]:
@@ -140,16 +140,10 @@ def _dedupe(connections: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def scan_snapshot_key(connection: Dict[str, Any], *, node_id: str = "") -> tuple:
-    local = connection.get("local")
-    remote = connection.get("remote")
-    _, remote_port = _split_host_port(remote)
+    from core_engine.observation_identity import identity_key
+
     return (
-        str(node_id or connection.get("node_id") or ""),
-        _address_class(local),
-        int(connection.get("port") or 0),
-        _address_class(remote),
-        remote_port or 0,
-        str(connection.get("protocol") or "Unknown").upper(),
+        identity_key(connection, node_id=node_id),
         str(connection.get("status") or connection.get("state") or "UNKNOWN").upper(),
         str(connection.get("program") or connection.get("service_name") or "Unattributed").lower(),
         _normalize_source_mode(connection.get("source_mode") or connection.get("data_source") or "live"),

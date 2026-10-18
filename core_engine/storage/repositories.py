@@ -7,6 +7,7 @@ from typing import Any
 
 from core_engine.events import LocalEvent, event_to_dict
 from core_engine.storage.sqlite_store import SQLiteStore, StorageError
+from core_engine.time_utils import observation_timestamps
 
 
 class LocalStorageRepository:
@@ -22,6 +23,8 @@ class LocalStorageRepository:
 
     def insert_event(self, event: LocalEvent | dict[str, Any]) -> int:
         payload = event_to_dict(event) if isinstance(event, LocalEvent) else dict(event)
+        if "event_timestamp" in payload or "ingested_at" in payload:
+            payload.update(observation_timestamps(payload))
         event_id = _required(payload, "event_id")
         cursor = self.store.execute(
             """
@@ -33,7 +36,9 @@ class LocalStorageRepository:
                 _required(payload, "event_type"),
                 _required(payload, "severity"),
                 _required(payload, "source"),
-                _required(payload, "timestamp"),
+                # The legacy index column is NOT NULL. An empty index value
+                # preserves explicit unknown event time in the JSON payload.
+                "" if "event_timestamp" in payload and payload["event_timestamp"] is None else _required(payload, "timestamp"),
                 _required(payload, "message"),
                 _to_json(payload),
                 _now(),
@@ -136,6 +141,8 @@ class LocalStorageRepository:
 
     def insert_finding(self, finding: dict[str, Any]) -> int:
         payload = dict(finding)
+        if "event_timestamp" in payload or "ingested_at" in payload:
+            payload.update(observation_timestamps(payload))
         finding_id = str(payload.get("finding_id") or _stable_id("finding", payload))
         payload.setdefault("finding_id", finding_id)
         cursor = self.store.execute(

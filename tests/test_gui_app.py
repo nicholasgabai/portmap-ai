@@ -96,7 +96,7 @@ def test_scan_rows_from_telemetry_extracts_ports_sample():
         ]
     )
 
-    assert rows == [
+    expected = [
         {
             "timestamp": _timestamp("2026-05-05", "12", "00", "00"),
             "node_id": "worker-1",
@@ -111,6 +111,9 @@ def test_scan_rows_from_telemetry_extracts_ports_sample():
             "ai_provider": "heuristic",
         }
     ]
+    assert [{key: row[key] for key in expected[0]} for row in rows] == expected
+    assert rows[0]["event_timestamp"] == _timestamp("2026-05-05", "12", "00", "00")
+    assert rows[0]["timestamp_status"] == "canonical_utc"
 
 
 def test_expected_service_helpers():

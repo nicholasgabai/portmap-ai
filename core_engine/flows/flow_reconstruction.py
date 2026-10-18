@@ -94,6 +94,7 @@ def build_flow_pairs(sessions: Iterable[dict[str, Any]], *, dns_index: dict[str,
             "evidence_origin": session.get("evidence_origin") or "",
             "observation_type": session.get("observation_type") or "",
             "identity_scope": session.get("identity_scope") or "",
+            **{key: session[key] for key in ("node_id", "address_family", "identity_version", "event_timestamp", "ingested_at", "timestamp_status", "telemetry_source") if key in session},
             "process_attribution": session.get("process_attribution", "Unattributed"),
             "service_attribution": session.get("service_attribution", "Unattributed"),
             "source_mode": session.get("source_mode", "unknown"),
@@ -292,6 +293,11 @@ def deterministic_bidirectional_flow_json(record: dict[str, Any]) -> str:
 
 def _pair_key(session: dict[str, Any]) -> dict[str, Any]:
     return {
+        "session_id": session.get("session_id"),
+        "node_id": session.get("node_id"),
+        "local_address": session.get("local_address"),
+        "remote_address": session.get("remote_address"),
+        "address_family": session.get("address_family"),
         "flow_direction": session.get("flow_direction"),
         "local_endpoint_class": session.get("local_endpoint_class"),
         "remote_endpoint_class": session.get("remote_endpoint_class"),
@@ -301,6 +307,8 @@ def _pair_key(session: dict[str, Any]) -> dict[str, Any]:
         "process_attribution": session.get("process_attribution"),
         "service_attribution": session.get("service_attribution"),
         "source_mode": session.get("source_mode"),
+        "telemetry_source": session.get("telemetry_source"),
+        "identity_scope": session.get("identity_scope"),
     }
 
 

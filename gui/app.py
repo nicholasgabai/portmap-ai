@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from textwrap import wrap
 from typing import Any, Dict, List, Optional
@@ -16,11 +16,14 @@ from textual.coordinate import Coordinate
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Footer, Header, Static, Label
+from textual.widgets._header import HeaderClock
+from rich.text import Text
 
 from core_engine.attribution import build_probabilistic_application_model
+from core_engine.observation_identity import identity_key
 from core_engine.config_loader import load_settings, save_settings
 from core_engine.deployment import build_deployment_manifest_catalog
-from core_engine.time_utils import format_utc_label, parse_utc_instant, utc_now_iso
+from core_engine.time_utils import format_utc_label, parse_utc_instant, utc_now_iso, timestamp_sort_key, observation_timestamps
 from core_engine.log_exporter import export_logs, resolve_export_dir
 from core_engine.packaging import (
     build_auto_updater_readiness,
@@ -641,15 +644,15 @@ def _scan_rows_from_telemetry(events: List[Dict[str, Any]], limit: int = 20) -> 
     for event in events:
         node_id = str(event.get("node_id") or "-")
         current = latest_by_node.get(node_id)
-        if current is None or str(event.get("timestamp") or "") >= str(current.get("timestamp") or ""):
+        if current is None or timestamp_sort_key(event.get("ingested_at") or event.get("timestamp")) >= timestamp_sort_key(current.get("ingested_at") or current.get("timestamp")):
             latest_by_node[node_id] = event
-    for event in sorted(latest_by_node.values(), key=lambda item: str(item.get("timestamp") or "")):
+    for event in sorted(latest_by_node.values(), key=lambda item: timestamp_sort_key(item.get("ingested_at") or item.get("timestamp"))):
         node_id = event.get("node_id", "-")
         event_score = event.get("risk_score", event.get("score", "-"))
         event_factors = event.get("score_factors") or []
         event_source_mode = _source_mode(event.get("source_mode") or event.get("data_source"))
         event_ports = []
-        for port in event.get("ports_sample") or []:
+        for port in event.get("observations") or event.get("ports_sample") or []:
             if isinstance(port, dict):
                 row = dict(port)
                 row.setdefault("source_mode", event_source_mode)
@@ -661,7 +664,9 @@ def _scan_rows_from_telemetry(events: List[Dict[str, Any]], limit: int = 20) -> 
                 continue
             rows.append(
                 {
-                    "timestamp": event.get("timestamp", "-"),
+                    **port,
+                    "timestamp": port.get("timestamp") or event.get("timestamp", "-"),
+                    **observation_timestamps(port, event_timestamp=event.get("event_timestamp") if "event_timestamp" in event else event.get("timestamp"), ingested_at=port.get("ingested_at") or event.get("ingested_at")),
                     "node_id": node_id,
                     "program": _display_program_for_source(port.get("program"), port.get("source_mode") or event.get("source_mode") or event.get("data_source")),
                     "port": port.get("port", "-"),
@@ -684,6 +689,7 @@ def _scan_rows_from_remediation(events: List[Dict[str, Any]], limit: int = 20) -
             continue
         rows.append(
             {
+                **event,
                 "timestamp": event.get("timestamp", "-"),
                 "node_id": event.get("node_id", "-"),
                 "program": _display_program_for_source(event.get("program"), event.get("source_mode") or event.get("data_source")),
@@ -1483,6 +1489,8 @@ def _risk_finding_identity(event: Dict[str, Any]) -> str:
             _risk_finding_service(event),
             _risk_finding_summary(event),
             _risk_finding_source(event),
+            str(event.get("session_id") or event.get("observation_id") or ""),
+            identity_key(event),
         ]
     )
 
@@ -1496,6 +1504,8 @@ def _risk_finding_key(event: Dict[str, Any]) -> str:
             _risk_finding_summary(event),
             score,
             _format_time(event.get("timestamp") or event.get("generated_at")),
+            identity_key(event),
+            str(event.get("session_id") or event.get("observation_id") or ""),
         ]
     )
 
@@ -1535,7 +1545,7 @@ def _risk_finding_history(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, s
         for raw in (
             event.get("first_seen"),
             event.get("last_seen"),
-            event.get("timestamp") or event.get("generated_at"),
+            event.get("event_timestamp") if "event_timestamp" in event else event.get("timestamp") or event.get("generated_at"),
         ):
             parsed = _timestamp_to_datetime(raw)
             if parsed is None:
@@ -1546,8 +1556,8 @@ def _risk_finding_history(events: List[Dict[str, Any]]) -> Dict[str, Dict[str, s
                 item["last"] = parsed
     return {
         identity: {
-            "first_seen": value["first"].strftime("%Y-%m-%d %H:%M:%S") if value["first"] else "-",
-            "last_seen": value["last"].strftime("%Y-%m-%d %H:%M:%S") if value["last"] else "-",
+            "first_seen": format_utc_label(value["first"]),
+            "last_seen": format_utc_label(value["last"]),
             "occurrence_count": str(value["count"]) if value["count"] else "-",
         }
         for identity, value in history.items()
@@ -1617,7 +1627,8 @@ def _active_risk_finding_rows(
                 "identity_scope": _context_text_field(classification, "identity_scope", limit=24),
                 "local_address": _context_text_field(classification, "local_address", limit=64),
                 "remote_address": _context_text_field(classification, "remote_address", limit=64),
-                "event_time_utc": _format_timestamp_utc(event.get("timestamp") or event.get("generated_at")),
+                "event_time_utc": _format_timestamp_utc(event.get("event_timestamp") if "event_timestamp" in event else event.get("timestamp") or event.get("generated_at")),
+                "ingested_at_utc": _format_timestamp_utc(event.get("ingested_at")),
                 "local_port": _context_text_field(classification, "local_port", limit=12),
                 "remote_port": _context_text_field(classification, "remote_port", limit=12),
                 "service_candidate": _context_text_field(classification, "service_candidate", limit=32),
@@ -1969,6 +1980,7 @@ def _finding_detail_rows(finding: Dict[str, str] | None) -> List[tuple[str, str]
         ("Remote Address", _identity_display(row, "remote_address")),
         ("Remote Port", _identity_display(row, "remote_port")),
         ("Event Time UTC", row.get("event_time_utc", "-")),
+        ("Ingested At UTC", row.get("ingested_at_utc", "-")),
         ("Service Candidate", row.get("service_candidate", "-")),
         ("Top Classification", row.get("top_classification", "-")),
         ("Classification Confidence", row.get("classification_confidence", "-")),
@@ -3260,6 +3272,8 @@ def _deployment_timeline_rows(deployment_rows: List[Dict[str, str]], *, limit: i
 
 
 def _ai_raw_time(event: Dict[str, Any]) -> Any:
+    if "event_timestamp" in event:
+        return event["event_timestamp"]
     return event.get("created_at") or event.get("timestamp") or event.get("generated_at")
 
 
@@ -3620,11 +3634,17 @@ def _ai_provider_model_rows(
             else _probabilistic_application_model(event)
         )
         explicit_identity = _explicit_observation_identity(event, model_record)
-        identity = "|".join([provider, model, explicit_identity]) if explicit_identity != "-" else "|".join([provider, model])
+        context = _classification_observation_context(model_record)
+        identity = "|".join([
+            provider, model, explicit_identity, str(context.get("node") or ""),
+            str(context.get("local_address") or ""), str(context.get("remote_address") or ""),
+            identity_key({**context, **event}),
+        ]) if explicit_identity != "-" else "|".join([provider, model])
         row = grouped.setdefault(
             identity,
             {
                 "provider": provider,
+                "group_identity": identity,
                 "model": model,
                 "decisions": 0,
                 "updated": "-",
@@ -3797,7 +3817,8 @@ def _ai_provider_model_rows(
             row["identity_scope"] = _context_text_field(model_record, "identity_scope", limit=24)
             row["local_address"] = _context_text_field(model_record, "local_address", limit=64)
             row["remote_address"] = _context_text_field(model_record, "remote_address", limit=64)
-            row["event_time_utc"] = _format_timestamp_utc(event.get("timestamp") or event.get("generated_at"))
+            row["event_time_utc"] = _format_timestamp_utc(event.get("event_timestamp") if "event_timestamp" in event else event.get("timestamp") or event.get("generated_at"))
+            row["ingested_at_utc"] = _format_timestamp_utc(event.get("ingested_at"))
             row["node"] = _context_text_field(model_record, "node", limit=24)
             row["asset"] = _context_text_field(model_record, "asset", limit=24)
             row["protocol"] = _context_text_field(model_record, "protocol", limit=12)
@@ -4134,6 +4155,7 @@ def _ai_provider_model_rows(
             "local_address": row.get("local_address", "-"),
             "remote_address": row.get("remote_address", "-"),
             "event_time_utc": row.get("event_time_utc", "-"),
+            "ingested_at_utc": row.get("ingested_at_utc", "-"),
             "node": row["node"],
             "asset": row["asset"],
             "protocol": row["protocol"],
@@ -4281,9 +4303,7 @@ def _ai_provider_model_rows(
             "related_session": row.get("related_session", "-"),
             "mode": "read_only",
             "execution": "not performed",
-            "key": "|".join([row["provider"], row["model"], row["observation_id"]])
-            if row["observation_id"] != "-"
-            else "|".join([row["provider"], row["model"]]),
+            "key": row["group_identity"],
         }
         for row in rows[: max(limit, 0)]
     ]
@@ -4326,6 +4346,7 @@ def _ai_detail_rows(ai_row: Dict[str, str] | None) -> List[tuple[str, str]]:
         ("Remote Address", _identity_display(row, "remote_address")),
         ("Remote Port", row.get("remote_port", "-")),
         ("Event Time UTC", row.get("event_time_utc", "-")),
+        ("Ingested At UTC", row.get("ingested_at_utc", "-")),
         ("State", row.get("state", "-")),
         ("Service Candidate", row.get("service_candidate", "-")),
         ("Top Classification", row.get("top_classification", "-")),
@@ -4564,7 +4585,8 @@ def _ai_timeline_rows(events: List[Dict[str, Any]], *, limit: int = 9) -> List[D
 def _packet_endpoint_label(endpoint: Dict[str, Any]) -> str:
     ip = endpoint.get("ip") or "?"
     port = endpoint.get("port")
-    return f"{ip}:{port}" if port not in {"", None} else str(ip)
+    host = f"[{ip}]" if ":" in str(ip) else str(ip)
+    return f"{host}:{port}" if port not in {"", None} else str(ip)
 
 
 def _packet_list_text(values: Any, *, limit: int = 4, text_limit: int = 40) -> str:
@@ -4641,6 +4663,9 @@ def _packet_activity_rows(
                 "status": status,
                 "first_seen": first_seen,
                 "last_seen": last_seen,
+                "_first_seen_raw": flow.get("first_seen"),
+                "_last_seen_raw": flow.get("last_seen"),
+                "ingested_at_utc": _format_timestamp_utc(flow.get("ingested_at")),
                 "source": _short_text(flow.get("telemetry_source") or flow.get("source") or "flow_metadata", limit=32),
                 "evidence_origin": _short_text(flow.get("evidence_origin") or flow.get("telemetry_source") or "-", limit=40),
                 "observation_type": _short_text(flow.get("observation_type") or "-", limit=40),
@@ -4648,7 +4673,7 @@ def _packet_activity_rows(
                 "observation_id": _short_text(flow.get("observation_id") or "-", limit=64),
                 "flow_key": _short_text(flow.get("source_flow_key") or flow.get("flow_key") or flow.get("flow_id") or "-", limit=96),
                 "session_id": _short_text(flow.get("session_id") or "-", limit=64),
-                "event_time_utc": _format_timestamp_utc(flow.get("last_seen") or flow.get("first_seen")),
+                "event_time_utc": _format_timestamp_utc(flow.get("event_timestamp") if "event_timestamp" in flow else flow.get("last_seen") or flow.get("first_seen")),
                 "mode": "read_only",
                 "execution": "not performed",
                 "key": _short_text(row_key, limit=120),
@@ -4667,7 +4692,8 @@ def _packet_sort_time(flow: Dict[str, Any]) -> float:
 def _packet_status_table_row(packet_rows: List[Dict[str, str]]) -> Dict[str, str]:
     packets = sum(_deployment_int(row.get("packets")) for row in packet_rows)
     protocols = {row.get("transport") for row in packet_rows if row.get("transport") not in {"", "-", None}}
-    latest = max((row.get("last_seen") for row in packet_rows if row.get("last_seen") not in {"", "-", None}), default="-")
+    latest_row = max(packet_rows, key=lambda row: row.get("_sort_time", ""), default={})
+    latest = latest_row.get("last_seen", "-")
     return {
         "packets": str(packets),
         "flows": str(len(packet_rows)),
@@ -4695,6 +4721,7 @@ def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, st
         ("First Seen", row.get("first_seen", "-")),
         ("Last Seen", row.get("last_seen", "-")),
         ("Event Time UTC", row.get("event_time_utc", "-")),
+        ("Ingested At UTC", row.get("ingested_at_utc", "-")),
         ("Status", row.get("status", "-")),
         ("Source", row.get("source", "-")),
         ("Mode", row.get("mode", "-")),
@@ -4713,7 +4740,7 @@ def _packet_detail_rows(packet_row: Dict[str, str] | None) -> List[tuple[str, st
             ("Most Frequent Destination", destination),
             ("Most Active Ports", _packet_flow_ports(flow)),
             ("Traffic Direction", _packet_flow_direction(source, destination)),
-            ("Conversation Duration", _conversation_duration(row.get("first_seen"), row.get("last_seen"))),
+            ("Conversation Duration", _conversation_duration(row.get("_first_seen_raw"), row.get("_last_seen_raw"))),
             ("Session Counts", row.get("packets", "-")),
             ("Observed Services", _first_nonempty(row.get("status"), row.get("transport"))),
             ("Recent Traffic Trends", _packet_traffic_trend(row)),
@@ -6319,6 +6346,19 @@ class TrafficFlowsPanel(DataTable):
         _restore_table_selection(self, selection)
 
 
+class UTCHeaderClock(HeaderClock):
+    DEFAULT_CSS = "UTCHeaderClock { width: 14; }"
+
+    def render(self) -> Text:
+        return Text(datetime.now(UTC).strftime("%H:%M:%S UTC"))
+
+
+class UTCHeader(Header):
+    def compose(self) -> ComposeResult:
+        for widget in super().compose():
+            yield UTCHeaderClock() if isinstance(widget, HeaderClock) else widget
+
+
 class PortMapDashboard(App):
     CSS = """
     .panel-heading {
@@ -6683,7 +6723,7 @@ class PortMapDashboard(App):
     active_tab = reactive(DEFAULT_TUI_TAB)
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield UTCHeader(show_clock=True)
         self.tab_nav = Static(render_tab_nav(DEFAULT_TUI_TAB), id="tab-nav")
         yield self.tab_nav
         with Container(id="tab-dashboard", classes="tab-panel"):

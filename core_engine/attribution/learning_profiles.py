@@ -201,7 +201,7 @@ def build_learning_profile_history(
         "historical_protocols": profile["observed_protocols"],
         "historical_services": profile["observed_services"],
         "historical_processes": profile["observed_processes"],
-        "observation_timestamps": [observed_at],
+        "observation_timestamps": [observed_at] if observed_at else [],
         "observation_records": [record],
         "historical_summary": {},
         "metadata_only": True,
@@ -458,6 +458,7 @@ def _historical_observation_record(
 ) -> dict[str, Any]:
     return {
         "observed_at": observed_at,
+        **{key: observation[key] for key in ("event_timestamp", "ingested_at", "timestamp_status", "address_family", "node_id", "local_port", "remote_port", "protocol", "identity_version") if key in observation},
         "profile_id": profile["profile_id"],
         "profile_name": profile["profile_name"],
         "observation_id": _identity_field(observation, classification_model, "observation_id"),
@@ -495,6 +496,7 @@ def _observation_records(values: Iterable[Any]) -> list[dict[str, Any]]:
         if not isinstance(value, dict):
             continue
         row = {
+            **{key: value[key] for key in ("event_timestamp", "ingested_at", "timestamp_status", "address_family", "node_id", "local_port", "remote_port", "protocol", "identity_version") if key in value},
             "observed_at": _safe_time(value.get("observed_at")),
             "profile_id": _safe_label(value.get("profile_id")),
             "profile_name": _safe_label(value.get("profile_name")) or "unknown_application",
@@ -613,6 +615,8 @@ def _alternative_candidate_count(classification_model: dict[str, Any] | None) ->
 
 
 def _profile_timestamp(observation: dict[str, Any], *, generated_at: str | None) -> str:
+    if "event_timestamp" in observation:
+        return _safe_time(observation["event_timestamp"])
     return (
         _safe_time(generated_at)
         or _safe_time(observation.get("last_seen"))

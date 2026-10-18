@@ -4,7 +4,8 @@ from typing import Any, Iterable
 
 from core_engine.attribution.probabilistic_apps import build_application_attribution_report
 from core_engine.behavior.drift_detection import build_behavior_drift_report
-from core_engine.time_utils import normalize_timestamp, utc_now_iso
+from core_engine.time_utils import normalize_timestamp, utc_now_iso, observation_timestamps
+from core_engine.observation_identity import observation_identity, identity_key
 from core_engine.flows.flow_reconstruction import reconstruct_bidirectional_flows
 from core_engine.flows.metadata_correlation import build_metadata_correlation_report
 from core_engine.flows.process_correlation import build_process_correlation_report
@@ -114,6 +115,7 @@ def build_milestone_v_runtime_bridge(
         "node_id": str(node_id or "unknown-node"),
         "source_modes": source_modes,
         "runtime_counters": counters,
+        "observations": socket_rows,
         "flow_events": flow_events,
         "topology_edges": topology_edges,
         "operator_summary": {
@@ -208,14 +210,28 @@ def _socket_observation(row: dict[str, Any], *, node_id: str, generated_at: str)
     if protocol not in {"tcp", "udp", "icmp"}:
         protocol = "tcp" if str(row.get("status") or "").upper() in {"LISTEN", "ESTABLISHED"} else "unknown"
     source_mode = _source_mode(row)
-    return {
+    identity = observation_identity(
+        {**row, "source_mode": source_mode},
+        node_id=node_id or str(row.get("node_id") or "unknown-node"),
+        event_timestamp=generated_at,
+    )
+    result = {
+        **{key: row[key] for key in (
+            "observation_id", "source_observation_id", "event_id", "packet_id", "record_id",
+            "session_id", "session_ref", "session_reference", "flow_key", "flow_id",
+            "event_timestamp", "ingested_at", "timestamp_status", "identity_version",
+            "flow_direction", "direction", "evidence_origin", "observation_type", "identity_scope",
+            "program", "pid", "service_name", "port", "status", "state", "attribution_status",
+            "score", "score_factors", "risk_explanation", "ai_provider", "collection_backend",
+            "first_seen", "last_seen",
+        ) if key in row},
         "record_type": "live_socket_observation",
         "node_id": str(node_id or row.get("node_id") or "unknown-node"),
         "timestamp": str(row.get("timestamp") or row.get("observed_at") or generated_at),
         "local": row.get("local") or "",
         "remote": row.get("remote") or "",
-        "local_address": local_host or "",
-        "remote_address": remote_host or "",
+        "local_address": row.get("local_address") or local_host or "",
+        "remote_address": row.get("remote_address") or remote_host or "",
         "local_port": local_port,
         "remote_port": remote_port,
         "protocol": protocol,
@@ -224,7 +240,7 @@ def _socket_observation(row: dict[str, Any], *, node_id: str, generated_at: str)
         "local_endpoint_class": _flow_endpoint_class(row.get("local_address_class") or _address_class(row.get("local"))),
         "remote_endpoint_class": _flow_endpoint_class(row.get("remote_address_class") or _address_class(row.get("remote"))),
         "process_attribution": _safe_process(row, source_mode=source_mode),
-        "service_attribution": _safe_service(row, local_port=local_port, remote_port=remote_port, source_mode=source_mode),
+        "service_attribution": _safe_service(row, local_port=identity["local_port"], remote_port=identity["remote_port"], source_mode=source_mode),
         "source_mode": source_mode,
         "data_source": source_mode,
         "telemetry_source": "socket_inventory",
@@ -235,6 +251,11 @@ def _socket_observation(row: dict[str, Any], *, node_id: str, generated_at: str)
         "remote_host_present": bool(remote_host),
         **SAFETY_FLAGS,
     }
+    result.update(identity)
+    result.update(observation_timestamps(row, event_timestamp=generated_at))
+    result["local_host_present"] = bool(result["local_address"])
+    result["remote_host_present"] = bool(result["remote_address"])
+    return result
 
 
 def _enrich_socket_identities(
@@ -243,15 +264,14 @@ def _enrich_socket_identities(
     sessions: list[dict[str, Any]],
     flow_pairs: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    flow_by_session = {str(row.get("session_ref") or ""): row for row in flow_pairs if isinstance(row, dict)}
     enriched: list[dict[str, Any]] = []
     for socket_row in socket_rows:
         row = dict(socket_row)
         matching_session = _matching_session(row, sessions)
-        matching_flow = flow_by_session.get(str((matching_session or {}).get("session_id") or "")) or _matching_flow(row, flow_pairs)
+        matching_flow = _matching_flow(row, flow_pairs)
         if matching_session:
-            row["observation_id"] = matching_session.get("observation_id") or row.get("observation_id") or ""
-            row["source_observation_id"] = matching_session.get("source_observation_id") or row.get("source_observation_id") or ""
+            # Session summaries may represent a different sample of this tuple.
+            row["source_observation_id"] = row.get("source_observation_id") or row.get("observation_id") or ""
             row["session_id"] = matching_session.get("session_id") or ""
             row["session_reference"] = matching_session.get("session_id") or ""
             row["flow_key"] = matching_session.get("flow_key") or row.get("flow_key") or ""
@@ -272,17 +292,14 @@ def _metadata_inputs(
     sessions: list[dict[str, Any]],
     flow_pairs: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    session_by_ref = {str(row.get("session_id") or ""): row for row in sessions}
-    flow_by_ref = {str(row.get("session_ref") or ""): row for row in flow_pairs}
     inputs = []
     for socket_row in socket_rows:
         matching_session = _matching_session(socket_row, sessions)
-        session_ref = str((matching_session or {}).get("session_id") or "")
-        flow_pair = flow_by_ref.get(session_ref) or _matching_flow(socket_row, flow_pairs)
+        flow_pair = _matching_flow(socket_row, flow_pairs)
         inputs.append(
             {
                 "socket_observation": socket_row,
-                "reconstructed_session": matching_session or session_by_ref.get(session_ref) or {},
+                "reconstructed_session": matching_session or {},
                 "flow_pair": flow_pair or {},
                 "protocol_metadata": {
                     "record_type": "runtime_protocol_hint",
@@ -334,7 +351,7 @@ def _relationship_inputs(flow_pairs: Iterable[dict[str, Any]], *, node_id: str) 
                 "relationship_state": pair.get("session_classification"),
                 "drift_detected": pair.get("drift_detected"),
                 "source_mode": pair.get("source_mode"),
-                "source_node_reference": str(node_id or "worker"),
+                "source_node_reference": str(node_id or pair.get("node_id") or "worker"),
                 "target_node_reference": remote_class,
             }
         )
@@ -347,14 +364,14 @@ def _flow_visualization_events(socket_rows: Iterable[dict[str, Any]], *, generat
     for row in socket_rows or []:
         if row.get("remote_port") is None or not row.get("remote_host_present"):
             continue
-        local_host, _ = _split_host_port(row.get("local"))
-        remote_host, _ = _split_host_port(row.get("remote"))
+        local_host, remote_host = row.get("local_address"), row.get("remote_address")
         if not local_host or not remote_host:
             continue
         src_host, src_port, dst_host, dst_port = local_host, row.get("local_port"), remote_host, row.get("remote_port")
         if row.get("flow_direction") == "inbound" or str(row.get("transport_state") or "").lower() in {"listen", "listening"}:
             src_host, src_port, dst_host, dst_port = remote_host, row.get("remote_port"), local_host, row.get("local_port")
         key = (
+            row.get("node_id"),
             src_host,
             int(src_port or 0),
             dst_host,
@@ -368,7 +385,8 @@ def _flow_visualization_events(socket_rows: Iterable[dict[str, Any]], *, generat
         events.append(
             {
                 "event_type": "traffic_flow",
-                "timestamp": generated_at,
+                "timestamp": row.get("event_timestamp"),
+                **{key: row[key] for key in ("event_timestamp", "ingested_at", "timestamp_status", "node_id", "address_family", "identity_version", "local_address", "remote_address", "local_port", "remote_port", "flow_direction") if key in row},
                 "src_ip": src_host,
                 "src_port": src_port,
                 "dst_ip": dst_host,
@@ -431,24 +449,14 @@ def _topology_edge_records(flow_events: Iterable[dict[str, Any]]) -> list[dict[s
 
 def _matching_session(socket_row: dict[str, Any], sessions: Iterable[dict[str, Any]]) -> dict[str, Any] | None:
     for session in sessions or []:
-        if (
-            session.get("local_port") == socket_row.get("local_port")
-            and session.get("remote_port") == socket_row.get("remote_port")
-            and session.get("protocol") == socket_row.get("protocol")
-            and session.get("source_mode") == socket_row.get("source_mode")
-        ):
+        if session.get("session_id") == socket_row.get("session_id") and identity_key(session) == identity_key(socket_row):
             return session
     return None
 
 
 def _matching_flow(socket_row: dict[str, Any], flow_pairs: Iterable[dict[str, Any]]) -> dict[str, Any] | None:
     for flow in flow_pairs or []:
-        if (
-            flow.get("local_port") == socket_row.get("local_port")
-            and flow.get("remote_port") == socket_row.get("remote_port")
-            and flow.get("protocol") == socket_row.get("protocol")
-            and flow.get("source_mode") == socket_row.get("source_mode")
-        ):
+        if flow.get("session_id") == socket_row.get("session_id") and identity_key(flow) == identity_key(socket_row):
             return flow
     return None
 

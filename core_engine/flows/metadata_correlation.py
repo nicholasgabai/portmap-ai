@@ -126,6 +126,7 @@ def build_metadata_correlation_record(
         "evidence_origin": identity["evidence_origin"],
         "observation_type": identity["observation_type"],
         "identity_scope": identity["identity_scope"],
+        **{key: next(source[key] for source in (socket, packet, flow, session) if key in source) for key in ("node_id", "address_family", "identity_version", "event_timestamp", "ingested_at", "timestamp_status") if any(key in source for source in (socket, packet, flow, session))},
         "packet_reference": _record_ref(packet, "packet"),
         "socket_reference": _record_ref(socket, "socket"),
         "session_reference": _session_ref(session, flow),
@@ -386,7 +387,7 @@ def _identity_context(
     if not observation_type:
         observation_type = "listener" if identity_scope == "listener" else "socket_conversation"
     return {
-        "observation_id": _first_text(sources, ("observation_id", "event_id", "packet_id", "record_id")),
+        "observation_id": str(socket.get("observation_id") or "") if "observation_id" in socket else _first_text((socket, packet, flow, session, topology), ("observation_id", "event_id", "packet_id", "record_id")),
         "flow_key": _first_text(sources, ("flow_key", "flow_id")),
         "session_id": _first_text(sources, ("session_id", "session_ref", "session_reference")),
         "local_address": _first_text(sources, ("local_address", "source_ip", "src_ip")),
