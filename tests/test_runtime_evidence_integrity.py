@@ -19,6 +19,7 @@ from core_engine.modules.scanner import normalize_scan_snapshot
 from core_engine.observation_identity import observation_identity
 from core_engine.runtime.milestone_v_bridge import build_milestone_v_runtime_bridge
 from core_engine.storage import LocalStorageRepository, SQLiteStore
+from core_engine.storage.sqlite_store import StorageError
 from core_engine.time_utils import AmbiguousTimestampError, observation_timestamps, parse_utc_instant
 from gui import app as gui_app
 
@@ -318,6 +319,77 @@ def test_worker_resampling_replay_and_reloaded_views_preserve_identity_lifecycle
             assert len(flow["observation_ids"]) == 2 and flow["observation_id"] == ""
             assert flow["duration_seconds"] == 30
             assert set(flow["observation_ids"]) <= {row["observation_id"] for row in samples}
+
+
+@pytest.mark.parametrize("order", [(1, 2, 0, 0), (0, 1, 2, 0)])
+def test_out_of_order_skewed_worker_delivery_and_replay_preserve_source_evidence(tmp_path, monkeypatch, order):
+    path = tmp_path / "master_events.log"
+    monkeypatch.setattr(dispatcher, "MASTER_LOG", path)
+    monkeypatch.setattr(worker_node, "get_score", lambda *args, **kwargs: 0.4)
+    sources = [("worker-a", "2026-07-04T22:19:22-04:00"),
+               ("worker-a", INGESTED), ("worker-b", "2026-07-05T04:24:22+02:00")]
+    payloads = []
+    for node, instant in sources:
+        monkeypatch.setattr(worker_node, "utc_now_iso", lambda: instant)
+        payloads.append(worker_node.build_payload(node, [socket_row(timestamp=instant, ai_provider="heuristic")], logging.getLogger("test.skew"), False))
+    arrivals = [f"2026-07-05T02:20:0{second}Z" for second in range(2, 6)]
+    for index, received in zip(order, arrivals):
+        monkeypatch.setattr(dispatcher, "utc_timestamp", lambda: received)
+        dispatcher.dispatch_alert(copy.deepcopy(payloads[index]))
+    events = [json.loads(line) for line in path.read_text().splitlines()]
+    db_path = tmp_path / "history.sqlite"
+    stored = {}
+    with SQLiteStore(db_path) as store:
+        repository = LocalStorageRepository(store)
+        for event, index, received in zip(events, order, arrivals):
+            sample = event["observations"][0]
+            for key in ("observation_id", "session_id", "flow_key", "node_id", "event_timestamp"):
+                assert sample[key] == payloads[index]["ports"][0][key]
+            assert sample["ingested_at"] == received
+            record = {**sample, "event_id": sample["observation_id"], "event_type": "network_observation", "severity": "low", "source": "worker", "message": "Socket metadata"}
+            if sample["observation_id"] in stored:
+                with pytest.raises(StorageError, match="UNIQUE constraint"):
+                    repository.insert_event(record)
+            else:
+                repository.insert_event(record)
+                stored[sample["observation_id"]] = record
+    with SQLiteStore(db_path) as store:
+        restored = create_local_api_app(repository=LocalStorageRepository(store)).get("/events")[1]["items"]
+        assert restored == list(stored.values())  # Rejected replay never overwrites first receipt.
+    flows = build_flow_report([flow for event in events for flow in event["flows"]])["flows"]
+    assert len(flows) == 2
+    assert sum(flow["event_count"] for flow in flows) == 3  # Four deliveries, three samples.
+    worker_a = next(flow for flow in flows if flow["node_id"] == "worker-a")
+    assert worker_a["duration_seconds"] == 30
+    assert len(worker_a["observation_ids"]) == 2
+    scans = gui_app._scan_rows_from_telemetry(events)
+    # Receipt order controls the current snapshot, not an uncorrected worker clock.
+    current_a = next(row for row in scans if row["node_id"] == "worker-a")
+    assert current_a["observation_id"] == payloads[0]["ports"][0]["observation_id"]
+    for view in (gui_app._active_risk_finding_rows([], scans), gui_app._ai_provider_model_rows(gui_app._ai_events_from_sources(scan_results=scans))):
+        assert {row["observation_id"] for row in view} == {row["observation_id"] for row in scans}
+    assert all(flow["captured_packet_count"] == flow["captured_bytes"] == 0 for flow in flows)
+
+
+@pytest.mark.parametrize("upstream_lifetime", [False, True])
+@pytest.mark.parametrize("later,windows", [(INGESTED, 1), ("2026-07-06T02:19:22Z", 2)])
+def test_reused_tuple_only_separates_connection_lifetimes_with_source_references(upstream_lifetime, later, windows):
+    events = []
+    for index, instant in enumerate((EVENT, later)):
+        references = {"session_id": f"upstream-session-{index}", "flow_key": f"upstream-flow-{index}"} if upstream_lifetime else {}
+        report = build_milestone_v_runtime_bridge([socket_row(timestamp=instant, **references)], generated_at=instant)
+        events.extend(report["flow_events"])
+    assert events[0]["observation_id"] != events[1]["observation_id"]
+    flows = build_flow_report(events)["flows"]
+    if upstream_lifetime:
+        assert len(flows) == 2
+        assert {flow["session_id"] for flow in flows} == {"upstream-session-0", "upstream-session-1"}
+        assert {flow["source_flow_key"] for flow in flows} == {"upstream-flow-0", "upstream-flow-1"}
+    else:
+        assert len(flows) == windows  # An aggregation window is not a proven TCP lifetime.
+        assert events[0]["session_id"] == events[1]["session_id"]
+        assert {flow["session_id"] for flow in flows} == {events[0]["session_id"]}
+        assert sorted(value for flow in flows for value in flow["observation_ids"]) == sorted(event["observation_id"] for event in events)
 
 
 def test_sqlite_legacy_records_are_preserved_verbatim(tmp_path):

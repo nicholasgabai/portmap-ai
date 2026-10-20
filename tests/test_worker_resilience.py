@@ -1,6 +1,13 @@
 import logging
+import json
+from contextlib import contextmanager
+from types import SimpleNamespace
+from urllib import error
+
+import pytest
 
 from core_engine import worker_node
+from core_engine.orchestrator_service import OrchestratorState
 
 
 def test_worker_heartbeat_reregisters_after_orchestrator_state_loss(monkeypatch):
@@ -62,3 +69,59 @@ def test_worker_logs_safe_socket_collection_diagnostics(monkeypatch, caplog):
     assert "operation_not_permitted" in caplog.text
     assert "macos_lsof" in caplog.text
     assert "raw_endpoint_logged': False" in caplog.text
+
+
+@pytest.mark.parametrize("identity", [
+    {"node_id": "worker-stable"},
+    {"worker_id": "worker-stable"},
+    {"node_id": "worker-stable", "worker_id": "legacy-other"},
+])
+def test_worker_loop_recovers_registration_and_preserves_node_identity_on_restart(tmp_path, monkeypatch, identity):
+    state = OrchestratorState(state_file=tmp_path / "state.json")
+    available = False
+    calls, samples = [], []
+    @contextmanager
+    def local_request(req, timeout):
+        assert req.get_header("Authorization") == "Bearer test-local-token"
+        assert timeout == 5
+        payload = json.loads(req.data)
+        calls.append((req.full_url.rsplit("/", 1)[-1], payload["node_id"]))
+        if not available:
+            raise error.URLError(ConnectionRefusedError())
+        if req.full_url.endswith("/register"):
+            result = {"node": state.register_node(payload["node_id"], payload["role"], payload["address"], payload["meta"])}
+        else:
+            try:
+                result = state.record_heartbeat(payload["node_id"], payload["status"], payload["meta"])
+            except KeyError:
+                raise error.HTTPError(req.full_url, 404, "unknown worker", {}, None)
+        yield SimpleNamespace(read=lambda: json.dumps(result).encode())
+    sleeps = 0
+    def next_cycle(interval):
+        nonlocal available, sleeps
+        assert interval == 1
+        sleeps += 1
+        if sleeps == 2:
+            raise KeyboardInterrupt
+        available = True
+    config = {**identity, "master_ip": "127.0.0.1", "port": 9000,
+              "scan_interval": 1, "orchestrator_url": "http://127.0.0.1:9100",
+              "orchestrator_token": "test-local-token"}
+    monkeypatch.setattr(worker_node.request, "urlopen", local_request)
+    monkeypatch.setattr(worker_node, "local_node_address", lambda: "192.0.2.10")
+    monkeypatch.setattr(worker_node.socket, "gethostname", lambda: "fallback-host")
+    monkeypatch.setattr(worker_node, "configure_firewall", lambda *args: None)
+    monkeypatch.setattr(worker_node, "send_to_master", lambda **kwargs: samples.append(kwargs["node_id"]))
+    monkeypatch.setattr(worker_node.time, "sleep", next_cycle)
+    logger = logging.getLogger("test.worker.recovery")
+    worker_node.run_worker(config, {}, logger, continuous=True)
+    assert calls == [("register", "worker-stable"), ("heartbeat", "worker-stable"),
+                     ("heartbeat", "worker-stable"), ("register", "worker-stable"),
+                     ("heartbeat", "worker-stable")]
+    assert samples == ["worker-stable", "worker-stable"]
+    state = OrchestratorState(state_file=tmp_path / "state.json")
+    state.register_node("worker-other", "worker", "192.0.2.11")
+    worker_node.run_worker(config, {}, logger)
+    assert samples[-1] == "worker-stable"
+    assert {node["node_id"] for node in state.list_nodes()} == {"worker-stable", "worker-other"}
+    assert state.get_node("worker-stable")["status"] == "online"

@@ -1,6 +1,9 @@
 import json
 from pathlib import Path
 
+import pytest
+
+from core_engine import orchestrator_service
 from core_engine.orchestrator_service import OrchestratorState
 
 
@@ -61,3 +64,64 @@ def test_stale_nodes_are_marked_offline(tmp_path):
     assert marked == 1
     assert state.get_node("worker-1")["status"] == "offline"
     assert state.get_metrics()["nodes_marked_offline"] == 1
+
+
+@pytest.mark.parametrize("read", ["get_metrics", "get_node"])
+def test_health_reads_expire_disconnected_workers_and_heartbeat_recovers(tmp_path, monkeypatch, read):
+    now = 1783217962
+    monkeypatch.setattr(orchestrator_service.time, "time", lambda: now)
+    state_file = tmp_path / "state.json"
+    state = OrchestratorState(state_file=state_file, stale_after_seconds=10)
+    for node in ("worker-one", "worker-two"):
+        state.register_node(node, "worker", "192.0.2.10")
+        state.record_heartbeat(node, "online")
+    now += 11
+    state.record_heartbeat("worker-two", "online")
+    getattr(state, read)(*(["worker-one"] if read == "get_node" else []))
+    nodes = json.loads(state_file.read_text())["nodes"]
+    assert nodes["worker-one"]["status"] == "offline"
+    assert nodes["worker-two"]["status"] == "online"
+    from gui.app import _compute_metrics
+    metrics = _compute_metrics(list(nodes.values()), [])
+    assert metrics["total_nodes"] == 2 and metrics["online_nodes"] == 1
+    assert state.get_metrics()["nodes_marked_offline"] == 1
+    restarted = OrchestratorState(state_file=state_file, stale_after_seconds=10)
+    restarted.record_heartbeat("worker-one", "online")
+    assert len(restarted.list_nodes()) == 2
+    assert all(node["status"] == "online" for node in restarted.list_nodes())
+    assert _compute_metrics(restarted.list_nodes(), [])["online_nodes"] == 2
+
+
+def test_interrupted_registry_write_preserves_last_complete_state(tmp_path, monkeypatch):
+    path = tmp_path / "state.json"
+    state = OrchestratorState(state_file=path)
+    state.register_node("worker-one", "worker", "192.0.2.10")
+    state.enqueue_command("worker-one", {"type": "set_interval", "value": 5})
+    before = path.read_bytes()
+    original_dump = json.dump
+    def interrupted_dump(payload, handle, **kwargs):
+        handle.write('{"nodes":')
+        raise OSError("interrupted disk write")
+    monkeypatch.setattr(orchestrator_service.json, "dump", interrupted_dump)
+    state.register_node("worker-two", "worker", "192.0.2.11")
+    assert path.read_bytes() == before
+    assert list(tmp_path.iterdir()) == [path]
+    monkeypatch.setattr(orchestrator_service.json, "dump", original_dump)
+    reloaded = OrchestratorState(state_file=path)
+    assert [node["node_id"] for node in reloaded.list_nodes()] == ["worker-one"]
+    assert reloaded.record_heartbeat("worker-one", "online")["commands"] == [{"type": "set_interval", "value": 5}]
+
+
+def test_registry_replacement_failure_preserves_previous_state_and_cleans_tempfile(tmp_path, monkeypatch):
+    path = tmp_path / "state.json"
+    state = OrchestratorState(state_file=path)
+    state.register_node("worker-one", "worker", "192.0.2.10")
+    before = path.read_bytes()
+    def failed_replace(source, destination):
+        assert json.loads(source.read_text())["nodes"]["worker-two"]["node_id"] == "worker-two"
+        assert destination.read_bytes() == before
+        raise OSError("replacement unavailable")
+    monkeypatch.setattr(orchestrator_service.os, "replace", failed_replace)
+    state.register_node("worker-two", "worker", "192.0.2.11")
+    assert path.read_bytes() == before
+    assert list(tmp_path.iterdir()) == [path]

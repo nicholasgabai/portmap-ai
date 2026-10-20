@@ -14,6 +14,11 @@ Implemented baseline:
 - Workers retry master connections naturally on each scan cycle, so a restarted master is picked up on the next cycle.
 - Workers and the background agent re-register with the orchestrator if a heartbeat returns an unknown-node response, which covers orchestrator restarts or state loss.
 - The orchestrator marks stale nodes offline after `node_stale_after` seconds without a heartbeat. Set `node_stale_after` to `0` to disable stale detection.
+- Liveness is evaluated on node and metrics reads, not by a background timer. Heartbeat receipt time is the orchestrator's clock, independent of worker event timestamps.
+- Registry updates use flushed same-directory temporary files and atomic replacement, so interrupted writes preserve the last complete registry. Persistence errors are logged, not durable-delivery acknowledgements.
+- Worker identity prefers `node_id`, accepts the validated legacy `worker_id` alias, and otherwise falls back to the hostname. Use unique explicit IDs for multi-worker operation.
+
+See [TEST 9 Distributed Runtime And Recovery](distributed_runtime_recovery.md) for the implementation audit, regression boundaries, remaining delivery/security limitations, and Raspberry Pi revalidation procedure. No physical TEST 9 acceptance is implied by local tests.
 
 Example:
 

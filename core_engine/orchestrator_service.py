@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -52,12 +54,27 @@ class OrchestratorState:
 
     def _persist(self) -> None:
         data = {"nodes": self._nodes, "commands": self._commands}
+        temporary = None
         try:
-            with open(self.state_file, "w") as handle:
+            self.state_file.parent.mkdir(parents=True, exist_ok=True)
+            # Readers and restarts must see either complete registry, never a partial write.
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.state_file.parent,
+                                             prefix=f".{self.state_file.name}.", delete=False) as handle:
+                temporary = Path(handle.name)
                 json.dump(data, handle, indent=2)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, self.state_file)
         except Exception as exc:
             if self.logger:
                 self.logger.error("Failed to persist orchestrator state: %s", exc)
+        finally:
+            if temporary is not None:
+                try:
+                    temporary.unlink(missing_ok=True)
+                except OSError as exc:
+                    if self.logger:
+                        self.logger.warning("Failed to remove incomplete registry write: %s", exc)
 
     # ------------------------------------------------------------------ #
     # Node management
@@ -135,11 +152,13 @@ class OrchestratorState:
             return list(self._nodes.values())
 
     def get_node(self, node_id: str) -> Optional[Dict[str, object]]:
+        self.mark_stale_nodes()
         with self._lock:
             node = self._nodes.get(node_id)
             return dict(node) if node else None
 
     def get_metrics(self) -> Dict[str, int]:
+        self.mark_stale_nodes()
         with self._lock:
             return dict(self._metrics)
 

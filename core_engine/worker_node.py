@@ -149,13 +149,12 @@ def send_to_master(
     sock = None
     try:
         raw_sock = socket.create_connection((master_ip, port), timeout=timeout)
+        sock = raw_sock
         if tls_context:
             server_hostname = None
             if tls_context.check_hostname:
                 server_hostname = (tls_config or {}).get("server_hostname") or master_ip
             sock = tls_context.wrap_socket(raw_sock, server_hostname=server_hostname)
-        else:
-            sock = raw_sock
         logger.info("✅ Connected. Sending payload bytes: %s", len(data))
         sock.sendall(data)
         logger.debug("Payload summary: %s", summarize_worker_payload(payload))
@@ -327,7 +326,7 @@ def run_worker(
     watch_interval: float = 5.0,
 ):
     runtime = {
-        "node_id": config.get("node_id") or socket.gethostname(),
+        "node_id": config.get("node_id") or config.get("worker_id") or socket.gethostname(),
         "master_ip": config.get("master_ip", DEFAULT_MASTER_IP),
         "port": int(config.get("port", DEFAULT_PORT)),
         "timeout": int(config.get("timeout", DEFAULT_TIMEOUT)),

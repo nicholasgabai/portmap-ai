@@ -1,10 +1,13 @@
 import json
 import logging
+import socket
+import ssl
 
 import pytest
 
-from core_engine import worker_node
+from core_engine import master_node, worker_node
 from core_engine.telemetry_framing import (
+    DEFAULT_FRAME_READ_TIMEOUT_SECONDS,
     TelemetryFrameMalformed,
     TelemetryFrameTooLarge,
     encode_json_frame,
@@ -23,6 +26,8 @@ class ChunkedSocket:
     def recv(self, size):
         if self.chunks:
             chunk = self.chunks.pop(0)
+            if isinstance(chunk, BaseException):
+                raise chunk
             if len(chunk) > size:
                 self.chunks.insert(0, chunk[size:])
                 return chunk[:size]
@@ -40,6 +45,12 @@ class ChunkedSocket:
 
     def close(self):
         self.closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
 
 
 def _payload(**extra):
@@ -173,3 +184,90 @@ def test_milestone_v_telemetry_fields_survive_transport():
     assert decoded["milestone_v_counters"]["observations_seen"] == 1
     assert decoded["flows"][0]["source_mode"] == "live"
     assert decoded["topology_edges"][0]["source_mode"] == "live"
+
+
+@pytest.mark.parametrize("failure", [ssl.SSLError("handshake rejected"), socket.timeout("handshake timeout")])
+def test_worker_closes_raw_socket_when_tls_handshake_fails(monkeypatch, failure):
+    raw_socket = ChunkedSocket([])
+    class TLSContext:
+        check_hostname = True
+
+        def wrap_socket(self, sock, server_hostname):
+            assert sock is raw_socket
+            assert server_hostname == "master.example.invalid"
+            raise failure
+
+    monkeypatch.setattr(worker_node, "collect_connections", lambda logger: [])
+    monkeypatch.setattr(worker_node, "build_payload", lambda *args: _payload())
+    monkeypatch.setattr(worker_node.socket, "create_connection", lambda *args, **kwargs: raw_socket)
+    worker_node.send_to_master("worker-fixture", "master.example.invalid", 9000, 1,
+                              logging.getLogger("test.worker.tls"), False, TLSContext())
+    assert raw_socket.closed
+    assert raw_socket.sent == b""  # Never fall back to plaintext after TLS failure.
+
+
+@pytest.mark.parametrize("failure", [ConnectionRefusedError(), socket.timeout(), ConnectionResetError()])
+def test_worker_next_cycle_reconnects_after_transport_failure(monkeypatch, failure):
+    failed = ChunkedSocket([failure])
+    recovered = ChunkedSocket([b'{"status":"ok"}'])
+    connections = iter([failure if isinstance(failure, ConnectionRefusedError) else failed, recovered])
+    payloads = iter([_payload(sample="first"), _payload(sample="second")])
+    def connect(endpoint, timeout):
+        assert endpoint == ("127.0.0.1", 9000) and timeout == 1
+        result = next(connections)
+        if isinstance(result, BaseException):
+            raise result
+        return result
+    monkeypatch.setattr(worker_node, "collect_connections", lambda logger: [])
+    monkeypatch.setattr(worker_node, "build_payload", lambda *args: next(payloads))
+    monkeypatch.setattr(worker_node.socket, "create_connection", connect)
+    for _ in range(2):
+        worker_node.send_to_master("worker-fixture", "127.0.0.1", 9000, 1,
+                                  logging.getLogger("test.worker.reconnect"), False)
+    assert recovered.closed
+    assert read_json_frames(ChunkedSocket([recovered.sent]))[0]["sample"] == "second"
+    assert isinstance(failure, ConnectionRefusedError) or failed.closed
+
+
+@pytest.mark.parametrize("failure", [ssl.SSLError("bad client certificate"), socket.timeout("TLS timeout"), ConnectionResetError()])
+def test_master_rejects_failed_tls_client_and_accepts_next_worker(monkeypatch, failure):
+    rejected = ChunkedSocket([])
+    accepted = ChunkedSocket([encode_json_frame(_payload(node_id="worker-two"))])
+    incoming = iter([rejected, accepted])
+    class Listener:
+        closed = False
+
+        def setsockopt(self, *args):
+            pass
+
+        def bind(self, address):
+            assert address == ("127.0.0.1", 9000)
+
+        def listen(self):
+            pass
+
+        def accept(self):
+            try:
+                return next(incoming), ("127.0.0.1", 50000)
+            except StopIteration:
+                raise KeyboardInterrupt
+
+        def close(self):
+            self.closed = True
+
+    class TLSContext:
+        def wrap_socket(self, sock, server_side):
+            assert server_side is True
+            assert sock.timeout == DEFAULT_FRAME_READ_TIMEOUT_SECONDS
+            if sock is rejected:
+                raise failure
+            return sock
+
+    listener = Listener()
+    ingested = []
+    monkeypatch.setattr(master_node.socket, "socket", lambda *args: listener)
+    monkeypatch.setattr(master_node, "dispatch_alert", lambda payload, **kwargs: ingested.append(payload))
+    master_node.start_master_server("127.0.0.1", 9000, logging.getLogger("test.master.tls"), {}, None, None, TLSContext())
+    assert rejected.closed and accepted.closed and listener.closed
+    assert [payload["node_id"] for payload in ingested] == ["worker-two"]
+    assert json.loads(accepted.sent) == {"status": "ok"}

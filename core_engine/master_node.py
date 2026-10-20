@@ -21,6 +21,7 @@ from core_engine.dispatcher import dispatch_alert
 from core_engine.logging_utils import configure_logger, update_log_level
 from core_engine.remediation_safety import enforce_remediation_command_safety, firewall_dry_run
 from core_engine.telemetry_framing import (
+    DEFAULT_FRAME_READ_TIMEOUT_SECONDS,
     TelemetryFrameError,
     read_json_frames,
     summarize_worker_payload,
@@ -115,8 +116,9 @@ def start_master_server(
             raw_conn, addr = server_socket.accept()
             if tls_context:
                 try:
+                    raw_conn.settimeout(DEFAULT_FRAME_READ_TIMEOUT_SECONDS)
                     conn = tls_context.wrap_socket(raw_conn, server_side=True)
-                except ssl.SSLError as exc:
+                except OSError as exc:
                     logger.warning("TLS handshake failed from %s: %s", addr, exc)
                     raw_conn.close()
                     continue
