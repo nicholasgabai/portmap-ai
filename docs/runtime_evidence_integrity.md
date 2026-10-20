@@ -146,3 +146,103 @@ JSON preserves these additive fields without a migration or automatic writer.
 Explicit UTC display strings parse back to the same UTC instant. Naive legacy
 timestamps still remain ambiguous. No capture, crafting, external scanning,
 enforcement, blocking, remediation execution, or runtime service was added.
+
+## TEST 8R Final Automated Regression
+
+The physical validation baseline reported by the operator is `9b2a913`. This pass
+extends automated coverage on the development host; it does not claim another
+physical Raspberry Pi test or begin TEST 8S. It does not change scoring, collect
+traffic, activate capture, or execute actions.
+
+Two negative cases exposed metadata defects:
+
+- Listener normalization could retain stale `reconstructed_socket_flow`
+  provenance. Derived listener evidence now uses `listener_socket_observation`
+  consistently with its listener scope and absent flow/session references.
+  The original input and persisted historical records are not rewritten.
+- AI observation context could substitute `finding_id` when no observation ID
+  existed. A finding identifies a conclusion, not its supporting observation.
+  That fallback is removed; Risk/AI details and learning evidence leave the
+  observation reference unavailable. Explicit upstream observation/event/packet/
+  record references remain supported. No classification score rule changes.
+
+Coverage reuses the existing regression files and fixtures:
+
+| Contract | Regression coverage |
+| --- | --- |
+| TCP IPv4/IPv6, connected UDP, and listener worker samples | Parameterized `test_worker_master_sqlite_ai_api_tui_round_trip` in `tests/test_runtime_evidence_integrity.py` |
+| Framing, master ingestion, SQLite close/reopen, API, Risk/AI, profiles, investigation references, Packet, exports | The same round-trip test checks canonical references and separate event/ingestion instants |
+| Real risk-log construction preserves selected evidence | Parameterized `test_risk_decision_retains_the_selected_observation_time_and_identity`; the action provider is stubbed to an advisory result |
+| Multiple workers/peers, repeated samples, exact replay, fresh dashboard reload | `test_worker_resampling_replay_and_reloaded_views_preserve_identity_lifecycle` |
+| Missing/ambiguous/known timestamps without an observation reference | `test_legacy_finding_id_is_not_a_canonical_observation_reference` in `tests/test_post_8r_runtime_regressions.py` |
+| Stale listener provenance and conversation aliases | Listener tests in `tests/test_post_8r_runtime_regressions.py` |
+| Measured metadata versus socket, estimate, OS, fixture, and legacy counters | Existing counter-provenance tests in that file; connected UDP also passes the complete worker path |
+| UTC offsets/date rollover, unavailable/ambiguous legacy time, durations | Existing UTC/runtime tests, plus end-to-end July 4 EDT to July 5 UTC assertions |
+| Narrow wrapping, cursor/scroll and viewport restoration | Existing headless `tests/test_gui_app.py` regressions; no rendering code changed |
+
+### Export And Aggregation Boundaries
+
+Operational bundles redact key-named fields, including `flow_key`, by default.
+This is intentional security policy, not lost runtime correlation. The tests
+check that redaction and verify exact references in the explicit unredacted
+local bundle mode. Existing log archives preserve JSONL contents byte-for-byte;
+such archives may contain sensitive environment metadata and must be handled
+privately. No redaction policy is weakened by this regression work.
+
+A repeated socket tuple keeps its node-relative session/flow references, while
+a new event time creates a separate sample ID. A replay of the same sample does
+not increase Packet event counts. Multi-sample aggregates expose the complete
+contributing observation ID list, not one invented observation ID. Tests reload
+SQLite and instantiate fresh dashboard objects; they do not simulate TCP socket
+creation, daemon restarts, network transport failure, or physical clock skew.
+
+SQLite/API/export helpers are exercised explicitly, not represented as an
+automatic production database writer or an automatically served API. Packet
+retains its separate telemetry-source policy: an available dedicated flow log
+takes precedence over the master-log fallback. Socket listeners never become
+Packet conversations. Real capture accuracy, independently measured bytes,
+multi-host transport, connection tuple reuse, and clock synchronization still
+require separate authorized validation; no capture or scanning is added here.
+
+### Local And Raspberry Pi Revalidation
+
+From the checkout, with its existing Python environment active:
+
+```bash
+python -m pytest tests/test_runtime_evidence_integrity.py tests/test_post_8r_runtime_regressions.py tests/test_utc_timestamp_contract.py
+python -m pytest
+git diff --check
+```
+
+On the Pi, stop the existing stack normally before updating, preserve local
+validation notes, and use `git pull --ff-only origin main`. Record
+`git rev-parse HEAD` and `date -u '+%Y-%m-%dT%H:%M:%SZ'`. Run the focused tests
+above. Reuse the validated read-only/preview configuration, without changing
+scan targets, autolearn, capture, or enforcement settings:
+
+```bash
+python -m cli.main stack --no-dashboard --verbose
+```
+
+In another Pi terminal using the same environment:
+
+```bash
+python -m cli.main health
+python -m cli.main nodes
+ss -ltn 'sport = :22'
+ss -tn state established '( sport = :22 or dport = :22 )'
+python -m cli.main tui
+```
+
+Keep an ordinary authorized SSH session open. Inspect Dashboard (`1`), Risk
+(`2`), AI (`6`), and Packet (`7`). Photograph listener provenance/scope and
+not-applicable flow/session IDs separately from the established conversation's
+node, endpoints, observation ID, canonical flow key, session ID, and UTC event/
+ingestion times. Compare the same sample, or find its ID in an aggregate's
+contributing observation list; refreshing to a newer sample may change its ID.
+Confirm Packet shows socket observations/events, unmeasured packets/bytes, and
+read-only/no-execution status. Scroll a wrapped detail row through refresh.
+An absent Packet conversation is not evidence of a failed listener: check the
+documented source precedence and endpoint availability first. Stop the stack
+normally with Ctrl-C after recording results. Physical acceptance remains the
+operator's responsibility.

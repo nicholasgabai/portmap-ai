@@ -127,6 +127,49 @@ def test_listener_cannot_inherit_established_conversation_aliases():
         assert dict(details)["Session ID"] == dict(details)["Flow Key"] == "not applicable"
 
 
+def test_listener_scope_cannot_claim_reconstructed_flow_provenance():
+    listener = socket_row(status="LISTEN", evidence_origin="reconstructed_socket_flow")
+    original = copy.deepcopy(listener)
+    report = build_milestone_v_runtime_bridge([listener], generated_at=RECEIVED)
+    observation = report["observations"][0]
+    assert listener == original
+    assert observation["identity_scope"] == "listener"
+    assert observation["evidence_origin"] == "listener_socket_observation"
+    assert observation["observation_id"]
+    assert observation["session_id"] == observation["flow_key"] == ""
+    assert report["flow_events"] == []
+    for details in (
+        gui._finding_detail_rows(gui._active_risk_finding_rows([], [observation])[0]),
+        gui._ai_detail_rows(gui._ai_provider_model_rows([{**observation, "ai_provider": "heuristic"}])[0]),
+    ):
+        fields = dict(details)
+        assert fields["Evidence Origin"] == "listener_socket_observation"
+        assert fields["Flow Key"] == fields["Session ID"] == "not applicable"
+
+
+@pytest.mark.parametrize("timestamp", [None, "2026-07-04 22:19:22", EVENT])
+def test_legacy_finding_id_is_not_a_canonical_observation_reference(tmp_path, timestamp):
+    legacy = {"finding_id": "finding-only-reference", "node_id": "worker-example", "port": 22,
+              "protocol": "tcp", "status": "ESTABLISHED", "ai_provider": "heuristic",
+              "event_timestamp": timestamp}
+    original = copy.deepcopy(legacy)
+    with SQLiteStore(tmp_path / "legacy.sqlite") as store:
+        LocalStorageRepository(store).insert_finding(legacy)
+    with SQLiteStore(tmp_path / "legacy.sqlite") as store:
+        loaded = LocalStorageRepository(store).list_findings()[0]
+        assert all(loaded[key] == value for key, value in original.items())
+    model = build_probabilistic_application_model(loaded, generated_at=RECEIVED)
+    assert model["observation_context"]["observation_id"] == "-"
+    assert model["learning_profile_history"]["observation_records"][0]["observation_id"] == ""
+    for details in (
+        gui._finding_detail_rows(gui._active_risk_finding_rows([], [loaded])[0]),
+        gui._ai_detail_rows(gui._ai_provider_model_rows([loaded])[0]),
+    ):
+        fields = dict(details)
+        assert fields["Observation ID"] == fields["Flow Key"] == fields["Session ID"] == "not available"
+    assert legacy == original
+
+
 def test_incomplete_socket_does_not_generate_a_session_reference():
     identity = observation_identity({"node_id": "worker-example", "port": 22, "status": "ESTABLISHED", "event_timestamp": EVENT})
     assert identity["identity_scope"] == "socket"

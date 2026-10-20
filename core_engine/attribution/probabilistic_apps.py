@@ -633,7 +633,6 @@ def _observation_context(observation: dict[str, Any], evidence: dict[str, Any]) 
     observation_id = _safe_context_text(
         observation.get("observation_id")
         or observation.get("event_id")
-        or observation.get("finding_id")
         or observation.get("packet_id")
         or observation.get("record_id")
     )

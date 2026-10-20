@@ -3,12 +3,14 @@ import json
 import logging
 from types import SimpleNamespace
 from datetime import datetime
+from zipfile import ZipFile
 
 import pytest
 
 from core_engine import dispatcher, worker_node
 from core_engine.api import create_local_api_app
 from core_engine.attribution import build_probabilistic_application_model
+from core_engine.export import build_operational_export_bundle, export_operational_bundle_json
 from core_engine.flows.session_tracking import normalize_socket_observations
 from core_engine.history.snapshot_store import rotate_historical_snapshots
 from core_engine.history.snapshots import build_historical_snapshot
@@ -135,7 +137,13 @@ def test_legacy_ambiguous_or_missing_event_time_never_becomes_receipt_time(tmp_p
         observation_timestamps({"timestamp": datetime(2026, 7, 4, 22, 19, 22)}, strict=True)
 
 
-def test_worker_master_sqlite_ai_api_tui_round_trip(tmp_path, monkeypatch):
+@pytest.mark.parametrize("changes", [
+    pytest.param({}, id="tcp-ipv4"),
+    pytest.param({"local": "[2001:db8::10]:51515", "remote": "[2001:db8::20]:22"}, id="tcp-ipv6"),
+    pytest.param({"protocol": "UDP", "status": "NONE", "remote": "198.51.100.20:53", "service_name": "dns", "program": "resolver"}, id="connected-udp"),
+    pytest.param({"local": "192.0.2.10:22", "port": 22, "remote": "-", "status": "LISTEN"}, id="listener"),
+])
+def test_worker_master_sqlite_ai_api_tui_round_trip(tmp_path, monkeypatch, changes):
     monkeypatch.setattr(worker_node, "utc_now_iso", lambda: EVENT)
     def score(row, use_ml=False):
         row["ai_provider"] = "heuristic"
@@ -144,7 +152,7 @@ def test_worker_master_sqlite_ai_api_tui_round_trip(tmp_path, monkeypatch):
     monkeypatch.setattr(dispatcher, "utc_timestamp", lambda: INGESTED)
     path = tmp_path / "events.jsonl"
     monkeypatch.setattr(dispatcher, "MASTER_LOG", path)
-    payload = worker_node.build_payload("worker-a", [socket_row(timestamp="2026-07-04T22:19:22-04:00")], logging.getLogger("test"), False)
+    payload = worker_node.build_payload("worker-a", [socket_row(timestamp="2026-07-04T22:19:22-04:00", **changes)], logging.getLogger("test"), False)
     before = copy.deepcopy(payload)
     # Use the actual transport codec without opening sockets.
     from core_engine.telemetry_framing import decode_json_frame, encode_json_frame
@@ -152,7 +160,8 @@ def test_worker_master_sqlite_ai_api_tui_round_trip(tmp_path, monkeypatch):
     assert payload == before
     event = json.loads(path.read_text().splitlines()[0])
     observation = event["observations"][0]
-    for key in ("observation_id", "session_id", "flow_key", "event_timestamp"):
+    identity_fields = ("observation_id", "session_id", "flow_key", "node_id", "local_address", "remote_address", "local_port", "remote_port", "address_family", "identity_scope", "evidence_origin", "event_timestamp")
+    for key in identity_fields:
         assert observation[key] == payload["ports"][0][key]
     assert observation["ingested_at"] == event["ingested_at"] == INGESTED
     record = {**observation, "event_id": observation["observation_id"], "event_type": "network_observation", "severity": "low", "source": "worker", "message": "Socket metadata observed"}
@@ -170,10 +179,26 @@ def test_worker_master_sqlite_ai_api_tui_round_trip(tmp_path, monkeypatch):
         finding = repository.list_findings()[0]
         assert all(finding[key] == value for key, value in record.items())
         json.dumps(response)
+        bundle = build_operational_export_bundle(repository=repository, generated_at=INGESTED)
+        exported = json.loads(export_operational_bundle_json(bundle))["findings"][0]
+        for key in (*identity_fields, "ingested_at"):
+            if key == "flow_key" and record[key]:
+                assert exported[key].startswith("<redacted:")
+            else:
+                assert exported[key] == record[key]
+        local_bundle = build_operational_export_bundle(repository=repository, generated_at=INGESTED, redact=False)
+        local_export = json.loads(export_operational_bundle_json(local_bundle))["findings"][0]
+        for key in (*identity_fields, "ingested_at"):
+            assert local_export[key] == record[key]
+        assert bundle["local_only"] is True
+        assert bundle["raw_payload_stored"] is bundle["automatic_changes"] is False
     model = build_probabilistic_application_model(persisted, generated_at=INGESTED)
     for context in (model["observation_context"], model["learning_profile_history"]["observation_records"][0]):
         for key in ("observation_id", "session_id", "flow_key", "event_timestamp", "ingested_at"):
-            assert context[key] == persisted[key]
+            expected = persisted[key]
+            if context is model["observation_context"] and expected == "":
+                expected = "-"
+            assert context[key] == expected
     assert model["behavior_graph"]["summary"]["event_timestamp"] == EVENT
     assert model["behavior_graph"]["investigation_chains"][0]["related_observation"] == persisted["observation_id"]
     scans = gui_app._scan_rows_from_telemetry([event])
@@ -184,8 +209,36 @@ def test_worker_master_sqlite_ai_api_tui_round_trip(tmp_path, monkeypatch):
         assert details["Observation ID"] == persisted["observation_id"]
         assert details["Event Time UTC"] == "2026-07-05 02:19:22 UTC"
         assert details["Ingested At UTC"] == "2026-07-05 02:19:52 UTC"
+        for label, key in (("Flow Key", "flow_key"), ("Session ID", "session_id")):
+            assert details[label] == (persisted[key] or "not applicable")
+    if observation["identity_scope"] == "listener":
+        assert observation["observation_id"]
+        assert observation["evidence_origin"] == "listener_socket_observation"
+        assert observation["session_id"] == observation["flow_key"] == ""
+        assert event["flows"] == []
+        assert gui_app._packet_activity_rows(build_flow_report(event["flows"])["flows"]) == []
+    else:
+        assert event["flows"][0]["pcap_generated"] is False
+        packet_flow = build_flow_report(event["flows"])["flows"][0]
+        assert packet_flow["event_count"] == packet_flow["socket_observation_count"] == 1
+        assert packet_flow["captured_packet_count"] == packet_flow["packet_count"] == packet_flow["captured_bytes"] == 0
+        assert packet_flow["counter_provenance"] == "socket_observation"
+        packet = gui_app._packet_activity_rows([packet_flow])[0]
+        for key in ("observation_id", "flow_key", "session_id"):
+            assert packet[key] == observation[key]
+        packet_details = dict(gui_app._packet_detail_rows(packet))
+        assert packet_details["Packets"] == "not measured" and packet_details["Bytes"] == "-"
+        assert packet["mode"] == "read_only" and packet["execution"] == "not performed"
+        assert packet["event_time_utc"] == "2026-07-05 02:19:22 UTC"
+        assert packet["ingested_at_utc"] == "2026-07-05 02:19:52 UTC"
+    from core_engine import log_exporter
+    monkeypatch.setattr(log_exporter, "ensure_runtime_dirs", lambda: None)
+    monkeypatch.setattr(log_exporter, "LOG_DIR", tmp_path)
+    monkeypatch.setattr(log_exporter, "utc_now_iso", lambda: INGESTED)
+    archive_path = log_exporter.export_logs(output_dir=tmp_path / "exports", include_state=False)
+    with ZipFile(archive_path) as archive:
+        assert archive.read(f"{tmp_path.name}/{path.name}") == path.read_bytes()
     assert model["automated_action"] is False
-    assert event["flows"][0]["pcap_generated"] is False
 
 
 def test_flow_aggregation_does_not_combine_workers_or_lose_duration():
@@ -199,6 +252,72 @@ def test_flow_aggregation_does_not_combine_workers_or_lose_duration():
     assert {flow["node_id"] for flow in flows} == {"worker-a", "worker-b"}
     for row in gui_app._packet_activity_rows(flows):
         assert dict(gui_app._packet_detail_rows(row))["Conversation Duration"] == "30s"
+
+
+def test_worker_resampling_replay_and_reloaded_views_preserve_identity_lifecycle(tmp_path, monkeypatch):
+    path = tmp_path / "master_events.log"
+    monkeypatch.setattr(dispatcher, "MASTER_LOG", path)
+    monkeypatch.setattr(gui_app, "MASTER_EVENTS_LOG", path)
+    monkeypatch.setattr(gui_app, "FLOW_EVENTS_LOG", tmp_path / "absent-flow-source.jsonl")
+    monkeypatch.setattr(worker_node, "get_score", lambda row, use_ml=False: 0.4)
+    def unexpected_action(*args, **kwargs):
+        pytest.fail("Read-only telemetry must not invoke remediation")
+    monkeypatch.setattr(dispatcher, "handle_remediation", unexpected_action)
+    rows = [socket_row(remote=peer, ai_provider="heuristic") for peer in ("198.51.100.20:22", "198.51.100.21:22")]
+    rows.append(socket_row(local="192.0.2.10:22", port=22, remote="-", status="LISTEN", ai_provider="heuristic"))
+    for row in rows:
+        row.pop("timestamp")
+        row.pop("node_id")
+    original = copy.deepcopy(rows)
+    logger = logging.getLogger("test-lifecycle")
+    snapshots = []
+    for instant in (EVENT, INGESTED):
+        monkeypatch.setattr(worker_node, "utc_now_iso", lambda: instant)
+        monkeypatch.setattr(dispatcher, "utc_timestamp", lambda: "2026-07-05T02:20:02Z")
+        for node in ("worker-a", "worker-b"):
+            payload = worker_node.build_payload(node, rows, logger, False)
+            snapshots.append(payload)
+            assert dispatcher.dispatch_alert(json.loads(json.dumps(payload)), logger=logger) is None
+    assert rows == original
+    for first, second in zip(snapshots[:2], snapshots[2:]):
+        assert first["scan_snapshot"]["snapshot_id"] == second["scan_snapshot"]["snapshot_id"]
+        for before, after in zip(first["ports"], second["ports"]):
+            assert before["observation_id"] != after["observation_id"]
+            assert before["session_id"] == after["session_id"]
+            assert before["flow_key"] == after["flow_key"]
+    # Recreate the same worker sample after serialization, without retaining any bridge state.
+    restarted_payload = worker_node.build_payload("worker-b", rows, logger, False)
+    assert restarted_payload == snapshots[-1]
+    dispatcher.dispatch_alert(restarted_payload, logger=logger)
+    events = [json.loads(line) for line in path.read_text().splitlines()]
+    samples = [row for event in events[:4] for row in event["observations"]]
+    assert len(samples) == len({row["observation_id"] for row in samples}) == 12
+    db_path = tmp_path / "samples.sqlite"
+    with SQLiteStore(db_path) as store:
+        repository = LocalStorageRepository(store)
+        for sample in samples:
+            repository.insert_event({**sample, "event_id": sample["observation_id"], "event_type": "network_observation", "severity": "low", "source": "worker", "message": "Socket metadata"})
+    with SQLiteStore(db_path) as store:
+        status, response = create_local_api_app(repository=LocalStorageRepository(store)).get("/events")
+        assert status == 200
+        assert {row["observation_id"] for row in response["items"]} == {row["observation_id"] for row in samples}
+    expected_current = {row["observation_id"] for event in events[2:4] for row in event["observations"]}
+    # Fresh dashboard instances reload persisted logs; no server or live collector is started.
+    first_dashboard, restarted_dashboard = gui_app.PortMapDashboard(), gui_app.PortMapDashboard()
+    for dashboard in (first_dashboard, restarted_dashboard, restarted_dashboard):
+        scans = dashboard._load_scan_results()
+        assert {row["observation_id"] for row in scans} == expected_current
+        for view in (gui_app._active_risk_finding_rows([], scans), gui_app._ai_provider_model_rows(gui_app._ai_events_from_sources(scan_results=scans))):
+            assert {row["observation_id"] for row in view} == expected_current
+        flows = dashboard._load_flow_visualization()["flows"]
+        assert len(flows) == 4
+        assert len({flow["source_flow_key"] for flow in flows}) == 4
+        for flow in flows:
+            assert flow["event_count"] == flow["socket_observation_count"] == 2
+            assert flow["captured_packet_count"] == flow["captured_bytes"] == 0
+            assert len(flow["observation_ids"]) == 2 and flow["observation_id"] == ""
+            assert flow["duration_seconds"] == 30
+            assert set(flow["observation_ids"]) <= {row["observation_id"] for row in samples}
 
 
 def test_sqlite_legacy_records_are_preserved_verbatim(tmp_path):
@@ -234,17 +353,23 @@ def test_snapshot_retention_orders_aware_instants_without_rewriting_legacy():
     assert legacy["snapshot_timestamp"] == "2026-07-04 22:19:22"
 
 
-def test_risk_decision_retains_the_selected_observation_time_and_identity(tmp_path, monkeypatch):
+@pytest.mark.parametrize("changes", [
+    {},
+    {"status": "LISTEN", "local": "192.0.2.10:22", "port": 22, "remote": "-"},
+    {"protocol": "UDP", "status": "NONE"},
+    {"local": "[2001:db8::10]:51515", "remote": "[2001:db8::20]:22"},
+])
+def test_risk_decision_retains_the_selected_observation_time_and_identity(tmp_path, monkeypatch, changes):
     monkeypatch.setattr(dispatcher, "MASTER_LOG", tmp_path / "events.jsonl")
     risk_path = tmp_path / "risk.jsonl"
     monkeypatch.setattr(dispatcher, "REMEDIATION_LOG", risk_path)
     monkeypatch.setattr(dispatcher, "utc_timestamp", lambda: INGESTED)
     monkeypatch.setattr(dispatcher, "record_audit_event", lambda *args, **kwargs: None)
     monkeypatch.setattr(dispatcher, "handle_remediation", lambda *args: SimpleNamespace(action="prompt_operator", reason="metadata review", score=0.8, mode="prompt"))
-    dispatcher.dispatch_alert({"node_id": "worker-a", "timestamp": INGESTED, "ports": [socket_row(score=0.8)]}, settings={})
+    dispatcher.dispatch_alert({"node_id": "worker-a", "timestamp": INGESTED, "ports": [socket_row(score=0.8, **changes)]}, settings={})
     event = json.loads((tmp_path / "events.jsonl").read_text().splitlines()[0])
     risk = json.loads(risk_path.read_text().splitlines()[0])
-    for key in ("observation_id", "flow_key", "session_id", "event_timestamp", "ingested_at"):
+    for key in ("observation_id", "flow_key", "session_id", "event_timestamp", "ingested_at", "identity_scope", "evidence_origin", "local_address", "remote_address"):
         assert risk[key] == event["observations"][0][key]
     assert risk["timestamp"] == risk["event_timestamp"] == EVENT
     assert risk["dry_run"] is True

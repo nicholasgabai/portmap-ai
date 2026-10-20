@@ -128,7 +128,7 @@ def observation_identity(row: dict[str, Any], *, node_id: str = "", event_timest
         **basis, "identity_version": IDENTITY_VERSION,
         "observation_id": observation_id or "", "session_id": session or "", "flow_key": flow,
         "observation_type": "listener" if basis["identity_scope"] == "listener" else "established_conversation" if str(_first(row, "transport_state", "socket_state", "status", "state") or "").lower() == "established" else "socket_conversation",
-        "evidence_origin": _first(row, "evidence_origin") or ("listener_socket_observation" if basis["identity_scope"] == "listener" else "reconstructed_socket_flow"),
+        "evidence_origin": "listener_socket_observation" if basis["identity_scope"] == "listener" else _first(row, "evidence_origin") or "reconstructed_socket_flow",
     }
     if basis["identity_scope"] == "listener":
         # Old aliases must not reintroduce conversation IDs downstream.
