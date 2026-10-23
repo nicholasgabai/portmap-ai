@@ -1,6 +1,7 @@
 import logging
 import json
 from contextlib import contextmanager
+from io import BytesIO
 from types import SimpleNamespace
 from urllib import error
 
@@ -76,7 +77,7 @@ def test_worker_logs_safe_socket_collection_diagnostics(monkeypatch, caplog):
     {"worker_id": "worker-stable"},
     {"node_id": "worker-stable", "worker_id": "legacy-other"},
 ])
-def test_worker_loop_recovers_registration_and_preserves_node_identity_on_restart(tmp_path, monkeypatch, identity):
+def test_worker_loop_recovers_registration_and_preserves_node_identity_on_restart(tmp_path, monkeypatch, identity, caplog):
     state = OrchestratorState(state_file=tmp_path / "state.json")
     available = False
     calls, samples = [], []
@@ -93,8 +94,9 @@ def test_worker_loop_recovers_registration_and_preserves_node_identity_on_restar
         else:
             try:
                 result = state.record_heartbeat(payload["node_id"], payload["status"], payload["meta"])
-            except KeyError:
-                raise error.HTTPError(req.full_url, 404, "unknown worker", {}, None)
+            except KeyError as exc:
+                body = BytesIO(json.dumps({"error": str(exc)}).encode("utf-8"))
+                raise error.HTTPError(req.full_url, 404, "unknown worker", {"Content-Type": "application/json"}, body) from exc
         yield SimpleNamespace(read=lambda: json.dumps(result).encode())
     sleeps = 0
     def next_cycle(interval):
@@ -119,6 +121,10 @@ def test_worker_loop_recovers_registration_and_preserves_node_identity_on_restar
                      ("heartbeat", "worker-stable"), ("register", "worker-stable"),
                      ("heartbeat", "worker-stable")]
     assert samples == ["worker-stable", "worker-stable"]
+    assert state.get_node("worker-stable")["status"] == "online"
+    assert len(state.list_nodes()) == 1
+    assert state.get_metrics()["registers"] == state.get_metrics()["heartbeats"] == 1
+    assert 'Heartbeat failed HTTP 404 unknown worker: {"error":' in caplog.text
     state = OrchestratorState(state_file=tmp_path / "state.json")
     state.register_node("worker-other", "worker", "192.0.2.11")
     worker_node.run_worker(config, {}, logger)
